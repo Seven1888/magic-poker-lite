@@ -36,7 +36,9 @@ export function setupEntryFeatures(root = globalThis.document) {
   root.querySelector('#entry-title').textContent = 'HOW TO PLAY';
   root.querySelector('#entry-title').insertAdjacentHTML('beforebegin','<span class="entry-brand">MAGIC POKER · DUEL</span>');
   root.querySelector('#entry-start span').textContent = 'PLAY';
-  root.querySelector('#entry-start').setAttribute('autofocus','');
+  // Focusing the bottom PLAY button scrolls short iPhone/landscape dialogs past
+  // the tutorial and close button before the player has seen them.
+  root.querySelector('#buyin-dialog .dialog-close').setAttribute('autofocus','');
   root.querySelector('#entry-start').insertAdjacentHTML('beforebegin','<div class="entry-start-hint">CHOOSE BET · TAP PLAY TO START</div>');
   select(0);
 }

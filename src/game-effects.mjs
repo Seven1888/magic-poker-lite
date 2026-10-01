@@ -33,9 +33,9 @@ export function createGameEffects({root = globalThis.document, reducedMotion = f
 
   /** Call from a user gesture. Returns false when audio is unavailable/blocked. */
   async function unlock() {
-    if (destroyed) return false;
+    if (destroyed || doc.hidden) return false;
     try {
-      if (!context) {
+      if (!context || context.state === 'closed') {
         const AudioContextClass = view.AudioContext || view.webkitAudioContext;
         if (!AudioContextClass) return false;
         context = new AudioContextClass();
@@ -44,11 +44,20 @@ export function createGameEffects({root = globalThis.document, reducedMotion = f
         master.connect(context.destination);
       }
       if (context.state === 'suspended' || context.state === 'interrupted') await context.resume();
-      unlocked = !destroyed && context.state === 'running';
+      unlocked = !destroyed && !doc.hidden && context.state === 'running';
       return unlocked;
     } catch {
       unlocked = false;
       return false;
+    }
+  }
+
+  /** Mobile app switches can interrupt Web Audio without unloading the page. */
+  function suspendAudio() {
+    unlocked = false;
+    stopVoices();
+    if (context && context.state !== 'closed') {
+      try { Promise.resolve(context.suspend()).catch(() => {}); } catch { /* Unavailable while the page is suspended. */ }
     }
   }
 
@@ -65,7 +74,7 @@ export function createGameEffects({root = globalThis.document, reducedMotion = f
   /** Does not create or resume AudioContext; unlock() owns gesture activation. */
   function play(name) {
     const notes = Object.hasOwn(sounds, name) ? sounds[name] : null;
-    if (!notes || destroyed || muted || !unlocked || context?.state !== 'running') return false;
+    if (!notes || destroyed || doc.hidden || muted || !unlocked || context?.state !== 'running') return false;
     const start = context.currentTime;
     try {
       for (const [frequency, offset, duration, type, peak] of notes) {
@@ -231,5 +240,5 @@ export function createGameEffects({root = globalThis.document, reducedMotion = f
     master = null;
   }
 
-  return {unlock, setMuted, play, deal, reveal, destroy};
+  return {unlock, suspendAudio, setMuted, play, deal, reveal, animate: animateCard, destroy};
 }

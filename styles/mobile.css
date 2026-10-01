@@ -1,0 +1,85 @@
+/* Mobile browser chrome and safe areas live outside the unchanged 400 × 860 scene. */
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --viewport-gutter: 0px;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+html { height: 100%; overflow-x: hidden; overflow-y: auto; }
+body {
+  height: auto;
+  min-height: var(--viewport-height, 100svh);
+  padding: calc(var(--safe-top) + var(--viewport-gutter)) calc(var(--safe-right) + var(--viewport-gutter))
+    calc(var(--safe-bottom) + var(--viewport-gutter)) calc(var(--safe-left) + var(--viewport-gutter));
+  overflow: visible;
+  overscroll-behavior-y: contain;
+}
+html[data-stage-scroll='true'] body { align-items: start; }
+.game-shell { flex-shrink: 0; }
+.game img { -webkit-user-drag: none; -webkit-touch-callout: none; }
+@media (min-width: 721px) and (min-height: 601px) { :root { --viewport-gutter: 32px; } }
+
+/* Every dialog remains inside the current visible viewport, including an open keyboard.
+   Explicit ID selectors override the entrance/result height rules loaded earlier. */
+dialog, #buyin-dialog, #result-dialog, #blind-dialog {
+  position: fixed;
+  inset-block-start: calc(var(--viewport-offset-top, 0px) + var(--safe-top) + 12px);
+  inset-block-end: calc(100% - var(--viewport-height, 100svh) - var(--viewport-offset-top, 0px) + var(--safe-bottom) + 12px);
+  inset-inline-start: calc(var(--safe-left) + 12px);
+  inset-inline-end: calc(var(--safe-right) + 12px);
+  margin: auto;
+  max-width: calc(100% - var(--safe-left) - var(--safe-right) - 24px);
+  max-height: calc(var(--viewport-height, 100svh) - var(--safe-top) - var(--safe-bottom) - 24px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scroll-padding-block: 12px;
+}
+dialog .dialog-close, #buyin-dialog .dialog-close {
+  min-width: 44px; min-height: 44px; font-size: 26px; line-height: 40px;
+  top: 6px; right: 6px;
+}
+dialog input:not([type='checkbox']), dialog select, dialog textarea { font-size: max(16px, 1em); }
+#buyin-dialog #entry-bet { font-size: 32px; }
+dialog summary { touch-action: manipulation; }
+.entry-feature-nav { min-height: 44px; height: auto; gap: 12px; }
+.entry-feature-nav > button, .entry-feature-nav [data-feature] { width: 44px; height: 44px; }
+.entry-feature-nav > div { gap: 0; }
+.entry-feature-nav [data-feature]:after { left: 18px; top: 18px; }
+#buyin-dialog .entry-bet-picker button { width: 44px; height: 44px; }
+#buyin-dialog .entry-bet-presets button { min-height: 44px; }
+#buyin-dialog .entry-details summary,
+#result-dialog .result-hand-details > summary,
+#result-dialog .result-accounting > summary,
+.jackpot-details summary, .rules-details summary { min-height: 44px; align-content: center; }
+#result-dialog #result-leave, #reset-demo { min-height: 44px; }
+.workbench-link { min-height: 44px; }
+
+/* Expand small informational hit areas without moving cards or changing table coordinates. */
+.topbar .icon-button { position: relative; }
+.topbar .icon-button:after, .pot-inspect:after, .hand-plaque:after {
+  content: ''; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: max(100%, calc(44px / var(--stage-scale, 1)));
+  height: max(100%, calc(44px / var(--stage-scale, 1)));
+}
+.hand-plaque:after { top: auto; bottom: 0; transform: translateX(-50%); }
+@media (max-width: 359px) {
+  #buyin-dialog .entry-bet-presets { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  #buyin-dialog #entry-title { font-size: 22px; }
+  .jp-rule-icons { flex-wrap: wrap; }
+}
+@media (max-height: 650px) {
+  /* Keep the first feature in view while the primary action stays reachable. */
+  #buyin-dialog .entry-start { position: sticky; bottom: 0; z-index: 10; }
+  dialog .dialog-close, #buyin-dialog .dialog-close, #result-dialog .dialog-close {
+    position: sticky; float: right; top: 0; right: auto; z-index: 12;
+    margin-block-end: -44px; margin-inline-end: -6px;
+  }
+}
+@media (hover: none) {
+  .action:hover:not(:disabled) { translate: none; }
+}

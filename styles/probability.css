@@ -270,3 +270,12 @@ tbody tr:hover td { background:#223753; }
   .jackpot-sample-note { margin-left:14px; margin-right:14px; }
 }
 @media(prefers-reduced-motion:reduce) { .field input[type="checkbox"]:before,.jackpot-tiers { transition:none; } }
+
+/* Keep the lab usable around phone cutouts and with iOS text-field focus. */
+html { -webkit-text-size-adjust:100%; text-size-adjust:100%; }
+body { padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px); }
+@media (pointer:coarse) {
+  .field input:not([type="checkbox"]),.field select,.report-heading select { font-size:16px; min-height:44px; }
+  .lab-toolbar { top:env(safe-area-inset-top,0px); }
+  .lab-toolbar button,.deal-preset button,.result-exports button { min-height:44px; }
+}

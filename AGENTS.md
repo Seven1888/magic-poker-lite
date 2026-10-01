@@ -2,6 +2,14 @@
 
 本規範僅適用 Magic Poker Lite。2026-09-29 使用者已授權製作遊戲、機率工具與詳細流程／案例／數學文件，只製作一款新遊戲。
 
+## 最新 v17：手機相容與公開部署（2026-10-01）
+
+使用者已要求公開 HTTPS Demo，並優先處理 Android／iPhone 自適應。公開站以 GitHub Pages 與 `.github/workflows/pages.yml` 部署；`npm run build` 只打包必要公開檔至 dist，該目錄不提交。`.openai/hosting.json` 是未發布的本機註冊紀錄，已忽略；不是目前網站的部署來源。
+
+`styles/mobile.css` 最後載入，安全區在原 400×860 舞台外計算。`stage-fit` 追蹤 visualViewport；長屏沿用原比例，短屏／橫屏最低比例 0.75 並允許垂直捲動，窄於 300px 時仍以寬度優先避免水平溢出。此規格覆蓋歷史「不硬設最小比例」。彈窗依可視高度限制、手勢目標擴大；入口預設焦點改到關閉按鈕，避免短屏自動捲過圖解。
+
+音效在下一次 pointerup／keydown／click 重試解鎖，hidden/pagehide 停止聲音；決策／結果動畫沿用 watchdog，不能因等待卡住或重扣款。機率工具禁止儲存時仍能初始化。這些只改呈現與相容性，不改引擎、牌局 RNG 或派彩。測試及瀏覽器驗證見 [手機與部署紀錄](docs/06-mobile-and-deployment.md)；原三款永久唯讀。
+
 ## 最新 v16 入口覆蓋（2026-10-01）
 
 每次頁面載入在 render 後由 setupBuyin 自動開啟同一入場視窗。三頁圖解為 See the odds／Best5／Jackpot，以左右箭頭與圓點切換；BET ＋／−、六個預設值、balance／minimum 與 PLAY 一直留在同窗。調整 BET 只更新介面，不扣款或抽 RNG；按 PLAY 才建立 session、抽盲。正常下一手不重彈，關閉後可由桌面 PLAY 重開。示例機率必須標 `EXAMPLE ODDS`；JP 金額依 BET 計算，關閉設定時顯示 OFF。

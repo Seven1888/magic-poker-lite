@@ -22,9 +22,13 @@ const effects=createGameEffects({root:document,reducedMotion:reduceMotion});
 let soundOn=true;
 try{soundOn=localStorage.getItem('magic-poker-lite:sound')!=='off';}catch{}
 effects.setMuted(!soundOn);$('sound-toggle').checked=soundOn;
-document.addEventListener('pointerdown',()=>{effects.unlock();},{once:true});
-document.addEventListener('keydown',()=>{effects.unlock();},{once:true});
-document.addEventListener('click',e=>{if(e.target.closest('button:not(:disabled)'))effects.play('click');});
+// Touch release/click are user activations on mobile Safari. Retry after every
+// gesture because an app switch or phone call can suspend an unlocked context.
+document.addEventListener('pointerup',()=>{if(soundOn)effects.unlock();},{passive:true});
+document.addEventListener('keydown',e=>{if(soundOn&&!e.repeat)effects.unlock();});
+document.addEventListener('click',e=>{if(soundOn&&e.target.closest('button:not(:disabled)'))effects.unlock().then(ready=>{if(ready)effects.play('click');});});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)effects.suspendAudio();});
+window.addEventListener('pagehide',()=>effects.suspendAudio());
 fitStage({shell:$('game-shell'),stage:$('game')});
 let shownHand=null,shownBoard=0,shownReveal=0,dealt={player:0,npc:0},settlementReleased=false;
 let showdownViewCache={key:'',value:null};
@@ -69,7 +73,7 @@ document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',
 const openHelp=()=>{const c=hand?.config||session?.config||config;$('help-fee').textContent=`A ${pct(1-c.targetRtp)} fee is taken from the matched pot before payout, including ties. Uncalled chips are returned in full, with no fee.`;show('help-dialog');};
 const openHistory=()=>{renderHistory();show('history-dialog');};
 $('menu-button').onclick=()=>show('menu-dialog');
-$('sound-toggle').onchange=e=>{soundOn=e.target.checked;effects.setMuted(!soundOn);if(soundOn){effects.unlock();effects.play('click');}try{localStorage.setItem('magic-poker-lite:sound',soundOn?'on':'off');}catch{}};
+$('sound-toggle').onchange=e=>{soundOn=e.target.checked;effects.setMuted(!soundOn);if(soundOn)effects.unlock().then(ready=>{if(ready)effects.play('click');});try{localStorage.setItem('magic-poker-lite:sound',soundOn?'on':'off');}catch{}};
 document.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>{$('menu-dialog').close();if(b.dataset.open==='help-dialog')openHelp();else show(b.dataset.open);});
 $('menu-history').onclick=()=>{$('menu-dialog').close();openHistory();};
 $('menu-balance').onclick=()=>{$('menu-dialog').close();$('balance-button').click();};
@@ -346,7 +350,7 @@ async function continuePlay(){
       paintDistribution(distribution,{title:'OPPONENT DECIDING…',status:STREETS[hand.street],caption:'',mode:'drawing'});
       const marker=document.createElement('div');marker.className='draw-marker';$('probability-track').append(marker);
       const motion=decisionMotion(hand.config.animationMs,selected.roll,{reducedMotion:reduceMotion}),sweepMs=Math.min(450,motion.duration);
-      if(sweepMs>0){const animation=marker.animate(motion.keyframes,{duration:sweepMs,easing:'linear',fill:'forwards'});await animation.finished.catch(()=>{});}
+      if(sweepMs>0)await effects.animate(marker,motion.keyframes,{duration:sweepMs,easing:'linear',fill:'forwards'});
       lastResponse=entry;
       paintDistribution(distribution,{status:'RESULT',selected:selected.type,roll:selected.roll,mode:'result',resultAction:selected});
       await delay(Math.max(0,motion.duration-sweepMs));
@@ -388,7 +392,7 @@ function showResult(){
   $('settlement').innerHTML=(r.jackpot?`<div class="result-jp">${icon('crown')}${tierNames[r.jackpot.tier]} <b>+${money(r.jackpot.award)}</b></div>`:'')+'<div class="ledger-head"><span>Chip details</span><span>You</span><span>Opponent</span></div>'+rows.map(([label,key])=>`<div class="ledger-row ${key==='profit'?'total':''}"><span>${label}</span><span>${money(r.player[key])}</span><span>${money(r.npc[key])}</span></div>`).join('');
   $('result-note').textContent='Matched wager = chips matched by your opponent. Uncalled chips are returned in full, with no fee.';
   $('next-hand').innerHTML=`${icon('play')}${Math.min(...Object.values(session.stacks))<.01?'CHOOSE BET':'NEXT HAND'}`;show('result-dialog');
-  if(!reduceMotion&&p.profit>0)$('result-award-value').animate([{transform:'scale(.65)',filter:'brightness(2.4)'},{transform:'scale(1.1)',filter:'brightness(1.3)',offset:.65},{transform:'scale(1)',filter:'brightness(1)'}],{duration:1100,easing:'cubic-bezier(.2,.9,.3,1)'});
+  if(!reduceMotion&&p.profit>0)effects.animate($('result-award-value'),[{transform:'scale(.65)',filter:'brightness(2.4)'},{transform:'scale(1.1)',filter:'brightness(1.3)',offset:.65},{transform:'scale(1)',filter:'brightness(1)'}],{duration:1100,easing:'cubic-bezier(.2,.9,.3,1)'});
 }
 function renderHistory(){
   function steps(rows,draws){let html='';for(const street of Object.keys(STREETS)){const group=rows.filter(x=>x.street===street);if(!group.length)continue;html+=`<div class="history-header">${STREETS[street]}</div>`;

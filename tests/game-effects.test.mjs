@@ -168,3 +168,67 @@ test('destroy releases the between-card hold and missing animation support still
   await fallback.deal([card], {onLand: target => fallback.reveal([target], {holdMs: 0, onReveal: item => { item.face = 'front'; }})});
   assert.equal(card.face, 'front'); assert.equal(card.style.scale, '');
 });
+
+test('decision motion uses the same watchdog and unsupported-animation fallback as cards', async () => {
+  const f = fixture(), effects = createGameEffects({root: f.doc}), marker = f.card('marker');
+  let finished = false;
+  const pending = effects.animate(marker, [{left: '0%'}, {left: '40%'}], {duration: 450, fill: 'forwards'}).then(() => { finished = true; });
+  await f.tick(529); assert.equal(finished, false);
+  await f.tick(1); await pending;
+  assert.equal(finished, true); assert.equal(f.animations[0].cancelled, true);
+  marker.animate = undefined;
+  await effects.animate(marker, [], {duration: 450});
+  assert.equal(f.timers.size, 0);
+});
+
+function audioFixture() {
+  const f = fixture(), contexts = [], oscillators = [];
+  const parameter = () => ({value: 0, cancelScheduledValues() {}, setValueAtTime() {}, exponentialRampToValueAtTime() {}});
+  class FakeAudioContext {
+    constructor() { this.state = 'suspended'; this.currentTime = 0; this.destination = {}; this.resumes = 0; this.suspends = 0; contexts.push(this); }
+    createGain() { return {gain: parameter(), connect() {}, disconnect() {}}; }
+    createOscillator() {
+      const oscillator = {frequency: parameter(), onended: null, disconnects: 0, connect() {}, start() {}, stop() {}, disconnect() { this.disconnects++; }};
+      oscillators.push(oscillator); return oscillator;
+    }
+    resume() { this.resumes++; if(this.blocked)return Promise.reject(new Error('Gesture required'));this.state = 'running'; return Promise.resolve(); }
+    suspend() { this.suspends++; this.state = 'suspended'; return Promise.resolve(); }
+    close() { this.state = 'closed'; return Promise.resolve(); }
+  }
+  f.doc.defaultView.AudioContext = FakeAudioContext;
+  return {...f, contexts, oscillators};
+}
+
+test('audio remains lazy, pauses for app switches and resumes on a later gesture', async () => {
+  const f = audioFixture(), effects = createGameEffects({root: f.doc});
+  assert.equal(effects.play('deal'), false); assert.equal(f.contexts.length, 0);
+  assert.equal(await effects.unlock(), true);
+  const context = f.contexts[0];
+  assert.equal(context.resumes, 1); assert.equal(effects.play('deal'), true);
+  f.doc.hidden = true;
+  effects.suspendAudio();
+  assert.equal(context.suspends, 1); assert.ok(f.oscillators.every(oscillator => oscillator.disconnects === 1));
+  assert.equal(effects.play('win'), false); assert.equal(await effects.unlock(), false);
+  assert.equal(context.resumes, 1, 'background callbacks cannot reactivate audio');
+  f.doc.hidden = false;
+  assert.equal(effects.play('click'), false, 'restoring a page still requires a gesture');
+  assert.equal(await effects.unlock(), true); assert.equal(context.resumes, 2);
+  assert.equal(effects.play('click'), true); assert.equal(f.contexts.length, 1);
+  context.state = 'interrupted';
+  assert.equal(effects.play('deal'), false);
+  assert.equal(await effects.unlock(), true); assert.equal(context.resumes, 3);
+  effects.destroy();
+});
+
+test('blocked audio can retry and muting survives app-switch recovery', async () => {
+  const f = audioFixture(), effects = createGameEffects({root: f.doc});
+  await effects.unlock();
+  const context = f.contexts[0];
+  context.state = 'suspended'; context.blocked = true;
+  assert.equal(await effects.unlock(), false); assert.equal(effects.play('click'), false);
+  context.blocked = false; effects.setMuted(true);
+  assert.equal(await effects.unlock(), true); assert.equal(effects.play('click'), false);
+  effects.setMuted(false); assert.equal(effects.play('click'), true);
+  effects.destroy();
+  assert.equal(await effects.unlock(), false); assert.equal(effects.play('click'), false);
+});

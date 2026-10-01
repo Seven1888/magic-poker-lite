@@ -4,6 +4,15 @@
 
 目前入口為 **v16 圖解教學與 BET 設定**，牌桌為 **v15 持牌怪獸、原位最佳五張與逐張攤牌**。這是一款使用虛擬籌碼的本機遊戲原型，未接帳號、支付或後端持久錢包。
 
+## 公開 Demo 與手機支援
+
+- [Magic Poker Lite Demo](https://seven1888.github.io/magic-poker-lite/)
+- [機率工具](https://seven1888.github.io/magic-poker-lite/probability.html)
+
+v17 補上 iPhone／Android 安全區、動態網址列高度、短屏與橫屏捲動、較大觸控目標及可捲動彈窗；音效可在切換 App 後由下一次手勢重新啟用。無法使用瀏覽器儲存時仍可開啟遊戲與工具。原有玩法、RNG 與帳務不變。
+
+GitHub Actions 在 `main` 更新後執行測試、`npm run build`，再將 `dist/` 部署至 GitHub Pages。部署包只含遊戲、機率工具、必要素材與公開說明；Git、測試、憑證及本機 QA 不會成為網站檔案。詳細驗證與限制見 [手機與部署紀錄](docs/06-mobile-and-deployment.md)。
+
 ## 本機啟動
 
 需要 **Node.js 20+**，不需 `npm install`。在此資料夾執行：

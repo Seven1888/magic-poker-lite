@@ -8,6 +8,11 @@ node_modules/
 !.env.example
 .DS_Store
 Thumbs.db
+/dist/
+/.sites-runtime/
+/.sites-checkout*/
+# Unpublished hosting registration retained locally; production uses GitHub Pages.
+/.openai/hosting.json
 
 # Generated QA, screenshots and simulations stay local.
 # The probability lab reads this one historical baseline at runtime.
