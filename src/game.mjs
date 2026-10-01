@@ -13,6 +13,8 @@ import {renderJackpotWin} from './jackpot-view.mjs';
 import {getCurrentHandView} from './hand-view.mjs';
 import {decisionMotion} from './decision-motion.mjs';
 import {getShowdownView} from './showdown-view.mjs';
+import {GAME_SPEED,atGameSpeed} from './presentation-timing.mjs';
+document.documentElement.style.setProperty('--game-speed',String(GAME_SPEED));
 const $=id=>document.getElementById(id);
 let config=loadConfig(),session=null,hand=null,busy=false,drawLog=[],lastResponse=null,handArchive=[],equityCache='',toastTimer,closedTable=null,phase='';
 let selectedBet=config.bigBlind,entryBase=config,betValues=betOptions(config),demoAssets=config.buyIn;
@@ -32,8 +34,8 @@ window.addEventListener('pagehide',()=>effects.suspendAudio());
 fitStage({shell:$('game-shell'),stage:$('game')});
 let shownHand=null,shownBoard=0,shownReveal=0,dealt={player:0,npc:0},settlementReleased=false;
 let showdownViewCache={key:'',value:null};
-const delay=ms=>new Promise(r=>setTimeout(r,ms));
-function toast(message){$('toast').textContent=message;$('toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('show'),3500);}
+const delay=ms=>new Promise(r=>setTimeout(r,atGameSpeed(ms)));
+function toast(message){$('toast').textContent=message;$('toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('show'),atGameSpeed(3500));}
 function show(id){if(!$(id).open)$(id).showModal();}
 const hud=()=>getHudSnapshot({session,hand,config,closedTable,busy});
 const amount=value=>value===null||value===undefined?'—':money(value);
@@ -60,7 +62,7 @@ function decorateMenu(){
  const reset=document.createElement('button');reset.id='reset-demo';reset.className='text-button wide';reset.textContent='↻ Reset demo chips';reset.onclick=()=>{if(busy||hand?.status==='playing')return;session=null;hand=null;closedTable=null;config=loadConfig();demoAssets=config.buyIn;selectedBet=config.bigBlind;handArchive=[];drawLog=[];lastResponse=null;$('menu-dialog').close();render();setupBuyin();};
  $('menu-dialog').append(reset);
  const rules=document.querySelector('#help-dialog .rules');
- rules.innerHTML=`<li>${icon('chip')}<b>Choose BET · Draw blinds</b><span>Only BIG BLIND posts BET. The other seat starts at 0. First draw: 50/50; seats alternate each hand.</span></li><li>${icon('cards')}<b>2 hole cards + 5 board cards</b><div class="rule-card-flow"><span>2</span><i>＋</i><span>3</span><i>→</i><span>1</span><i>→</i><span>1</span></div><span>PREFLOP → FLOP → TURN → RIVER</span></li><li>${icon('call')}<b>Your move · Their response</b><span>Fold, call or raise. Check when no bet is due. One raise per street.</span></li><li>${icon('crown')}<b>Best 5 of 7</b><span>A fold ends the hand. Otherwise, compare at showdown. Special hands earn a Jackpot bonus.</span></li>`;
+ rules.innerHTML=`<li>${icon('chip')}<b>Choose BET · Draw turn order</b><span>First or second: 50/50 for the first preflop round; positions alternate each hand. Only BIG BLIND posts BET. The other seat starts at 0.</span></li><li>${icon('cards')}<b>2 hole cards + 5 board cards</b><div class="rule-card-flow"><span>2</span><i>＋</i><span>3</span><i>→</i><span>1</span><i>→</i><span>1</span></div><span>PREFLOP → FLOP → TURN → RIVER</span></li><li>${icon('call')}<b>Your move · Their response</b><span>BET opens betting this round. RAISE increases an existing bet. CALL matches it; CHECK costs 0. One raise per street.</span></li><li>${icon('crown')}<b>Best 5 of 7</b><span>A fold ends the hand. Otherwise, compare at showdown. Special hands earn a Jackpot bonus.</span></li>`;
  const fees=document.createElement('details');fees.className='rules-details';fees.innerHTML='<summary>Hand highlights, turn order & pot fee ⓘ</summary><p>Gold edges mark your complete best five, including kickers. Before five cards are visible, all your visible cards glow. Red edges mark the opponent’s best five using only their revealed hole cards and the board. Shared cards can carry both gold and red edges.</p><p>CHECK costs 0. If the opponent has not acted, they may still CHECK or BET in the same street. Two CHECKs close the street; after the next card is dealt, the new street begins.</p><p>This demo uses a single forced big blind. SB acts first preflop and posts 0; BB posts BET and acts first after the flop. Choosing a BET level does not charge chips. Both seats follow the same rule. The bar shows opponent action odds, not your win chance.</p><p id="help-fee"></p>';
  rules.after(fees);
  document.querySelector('#help-dialog>p.muted').textContent='Standard 52-card deck, no jokers. Starting-hand boosts only redraw weak hole cards during the deal. Jackpot awards use the actual showdown hand.';
@@ -109,7 +111,7 @@ function updateEntry(){
  document.querySelector('.feature-jp-tiers').hidden=!jackpotOn;
  $('bet-minus').disabled=index<=0;$('bet-plus').disabled=index===betValues.length-1;
  $('entry-start').disabled=available<minimum||busy;$('buyin-error').textContent=available<minimum?'Not enough chips. Choose a lower BET.':'';
- $('fee-notice').textContent=`Choosing BET does not charge chips. Minimum balance: ${money(minimum)}. Both players start with the same balance. Blinds are first drawn 50/50, then alternate. Only BB automatically posts ${money(selectedBet)}; SB starts at 0 and pays only when calling or raising. Pot fee: ${pct(1-entryBase.targetRtp)}. Uncalled bets are refunded in full. Demo chips only.`;
+ $('fee-notice').textContent=`Choosing BET does not charge chips. Minimum balance: ${money(minimum)}. Both players start with the same balance. The first preflop turn is drawn 50/50; positions alternate each hand. Only BB automatically posts ${money(selectedBet)}; SB starts at 0 and pays only when calling or raising. Pot fee: ${pct(1-entryBase.targetRtp)}. Uncalled bets are refunded in full. Demo chips only.`;
 }
 $('bet-minus').onclick=()=>{selectedBet=betValues[Math.max(0,betValues.indexOf(selectedBet)-1)];updateEntry();};
 $('bet-plus').onclick=()=>{selectedBet=betValues[Math.min(betValues.length-1,betValues.indexOf(selectedBet)+1)];updateEntry();};
@@ -117,16 +119,16 @@ $('buyin-form').onsubmit=async e=>{e.preventDefault();if(busy)return;
   try{
    config=tableConfig(entryBase,selectedBet,bankroll());const seed=crypto.getRandomValues(new Uint32Array(1))[0];
    session=createSession(config,seed,{firstSmallBlind:'random'});hand=null;handArchive=[];closedTable=null;lastResponse=null;drawLog=[];
-   $('buyin-dialog').close();busy=true;render();await showBlindDraw();busy=false;await newHand();
+   $('buyin-dialog').close();busy=true;render();await showTurnDraw();busy=false;await newHand();
   }catch(error){busy=false;phase='';$('blind-dialog').close();$('buyin-error').textContent=translateError(error);show('buyin-dialog');render();}
 };
-async function showBlindDraw(){
- const sb=session.firstSmallBlind;
- $('blind-dialog').dataset.draw='drawing';$('blind-name').textContent='DRAWING YOUR POSITION';$('blind-result').textContent='';$('draw-player').textContent='?';delete $('draw-player').dataset.blind;show('blind-dialog');
+async function showTurnDraw(){
+ const actsFirst=session.firstSmallBlind==='player';
+ $('blind-dialog').dataset.draw='drawing';$('blind-name').textContent='DRAWING TURN ORDER';$('blind-result').textContent='';$('draw-player').textContent='?';delete $('draw-player').dataset.blind;show('blind-dialog');
  await delay(reduceMotion?0:1200);
- const small=sb==='player';$('draw-player').textContent=small?'SB':'BB';$('draw-player').dataset.blind=small?'small':'big';
- $('blind-dialog').dataset.draw='revealed';$('blind-name').textContent=small?'SMALL BLIND':'BIG BLIND';
- $('blind-result').textContent=small?'NO AUTO BET · YOU ACT FIRST':`POST ${money(config.bigBlind)} · OPPONENT ACTS FIRST`;
+ $('draw-player').textContent=actsFirst?'1ST':'2ND';$('draw-player').dataset.blind=actsFirst?'small':'big';
+ $('blind-dialog').dataset.draw='revealed';$('blind-name').textContent=actsFirst?'FIRST':'SECOND';
+ $('blind-result').textContent=actsFirst?'YOU ACT FIRST':'YOU ACT SECOND';
  effects.play('chip');await delay(reduceMotion?150:1800);$('blind-dialog').close();
 }
 function leaveTable(){

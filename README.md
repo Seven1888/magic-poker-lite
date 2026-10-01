@@ -6,6 +6,8 @@
 
 ## 公開 Demo 與手機支援
 
+v18 將整體動畫與等待調為 1.2 倍速；開局抽選簡化為 FIRST／SECOND，POT 籌碼集中在金額後方，決策預覽左側標籤採主操作按鈕造型。只調整呈現，既有行動順序、下注與派彩規則不變。
+
 - [Magic Poker Lite Demo](https://seven1888.github.io/magic-poker-lite/)
 - [機率工具](https://seven1888.github.io/magic-poker-lite/probability.html)
 

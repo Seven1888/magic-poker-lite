@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createGameEffects} from '../src/game-effects.mjs';
+import {atGameSpeed} from '../src/presentation-timing.mjs';
 
 const flush = async () => { for (let i = 0; i < 20; i++) await Promise.resolve(); };
 
@@ -52,17 +53,17 @@ test('deal hides pending cards, preserves caller order and awaits every landing 
   assert.equal(cards[0].style.visibility, 'visible');
   assert.ok(cards.slice(1).every(card => card.style.visibility === 'hidden'));
   assert.equal(f.animations.length, 1);
-  assert.equal(f.animations[0].options.duration, 280);
+  assert.equal(f.animations[0].options.duration, atGameSpeed(280));
   f.animations[0].finish(); await flush();
   assert.deepEqual(landed, [['player1', 0]]);
   assert.equal(f.animations.length, 1);
   releaseFirst(); await flush();
-  await f.tick(49); assert.equal(f.animations.length, 1);
+  await f.tick(atGameSpeed(50) - 1); assert.equal(f.animations.length, 1);
   await f.tick(1); assert.equal(f.animations.length, 2);
   for (let index = 1; index < cards.length; index++) {
     assert.equal(f.animations[index].card, cards[index]);
     f.animations[index].finish(); await flush();
-    if (index < cards.length - 1) await f.tick(50);
+    if (index < cards.length - 1) await f.tick(atGameSpeed(50));
   }
   await pending;
   assert.deepEqual(landed, cards.map((card, index) => [card.name, index]));
@@ -86,16 +87,16 @@ test('reveal swaps each back only at the midpoint and finishes the first card be
     revealed.push(index); card.face = 'front';
   }});
   assert.equal(f.animations.length, 1); assert.equal(f.animations[0].face, 'back');
-  assert.equal(f.animations[0].options.duration, 130); assert.deepEqual(revealed, []);
+  assert.equal(f.animations[0].options.duration, atGameSpeed(130)); assert.deepEqual(revealed, []);
   f.animations[0].finish(); await flush();
   assert.deepEqual(revealed, [0]); assert.equal(cards[1].face, 'back');
-  assert.equal(f.animations[1].face, 'front'); assert.equal(f.animations[1].options.duration, 170);
+  assert.equal(f.animations[1].face, 'front'); assert.equal(f.animations[1].options.duration, atGameSpeed(170));
   f.animations[1].finish(); await flush();
-  await f.tick(169); assert.equal(f.animations.length, 2);
+  await f.tick(atGameSpeed(170) - 1); assert.equal(f.animations.length, 2);
   await f.tick(1); assert.equal(f.animations.length, 3); assert.equal(f.animations[2].face, 'back');
   f.animations[2].finish(); await flush();
   assert.deepEqual(revealed, [0, 1]);
-  f.animations[3].finish(); await flush(); await f.tick(170); await pending;
+  f.animations[3].finish(); await flush(); await f.tick(atGameSpeed(170)); await pending;
   assert.ok(cards.every(card => card.style.scale === '' && card.dataset.motion === undefined));
 });
 
@@ -103,12 +104,12 @@ test('a landing callback can await a short reveal before the next card leaves th
   const f = fixture(), effects = createGameEffects({root: f.doc}), cards = [f.card('first'), f.card('second')];
   const pending = effects.deal(cards, {onLand: card => effects.reveal([card], {holdMs: 35, onReveal: target => { target.face = 'front'; }})});
   f.animations[0].finish(); await flush();
-  assert.equal(f.animations[1].options.duration, 130); assert.equal(f.animations[1].cancelled, false);
+  assert.equal(f.animations[1].options.duration, atGameSpeed(130)); assert.equal(f.animations[1].cancelled, false);
   f.animations[1].finish(); await flush(); f.animations[2].finish(); await flush();
-  await f.tick(35); assert.equal(f.animations.length, 3);
-  await f.tick(50); assert.equal(f.animations[3].card, cards[1]);
+  await f.tick(atGameSpeed(35)); assert.equal(f.animations.length, 3);
+  await f.tick(atGameSpeed(50)); assert.equal(f.animations[3].card, cards[1]);
   f.animations[3].finish(); await flush(); f.animations[4].finish(); await flush(); f.animations[5].finish(); await flush();
-  await f.tick(35); await pending;
+  await f.tick(atGameSpeed(35)); await pending;
   assert.ok(cards.every(card => card.face === 'front'));
 });
 
@@ -138,7 +139,7 @@ test('a watchdog lands the card when animation.finished never settles', async ()
   let landed = false;
   const pending = effects.deal([card], {onLand() { landed = true; }});
   assert.equal(f.timers.size, 1);
-  await f.tick(359); assert.equal(landed, false);
+  await f.tick(atGameSpeed(280) + 79); assert.equal(landed, false);
   await f.tick(1); await pending;
   assert.equal(landed, true); assert.equal(f.animations[0].cancelled, true); assert.equal(f.timers.size, 0);
 });
@@ -172,8 +173,10 @@ test('destroy releases the between-card hold and missing animation support still
 test('decision motion uses the same watchdog and unsupported-animation fallback as cards', async () => {
   const f = fixture(), effects = createGameEffects({root: f.doc}), marker = f.card('marker');
   let finished = false;
-  const pending = effects.animate(marker, [{left: '0%'}, {left: '40%'}], {duration: 450, fill: 'forwards'}).then(() => { finished = true; });
-  await f.tick(529); assert.equal(finished, false);
+  const pending = effects.animate(marker, [{left: '0%'}, {left: '40%'}], {duration: 450, delay: 120, fill: 'forwards'}).then(() => { finished = true; });
+  assert.equal(f.animations[0].options.duration, 375);
+  assert.equal(f.animations[0].options.delay, 100);
+  await f.tick(554); assert.equal(finished, false);
   await f.tick(1); await pending;
   assert.equal(finished, true); assert.equal(f.animations[0].cancelled, true);
   marker.animate = undefined;
@@ -182,13 +185,13 @@ test('decision motion uses the same watchdog and unsupported-animation fallback 
 });
 
 function audioFixture() {
-  const f = fixture(), contexts = [], oscillators = [];
-  const parameter = () => ({value: 0, cancelScheduledValues() {}, setValueAtTime() {}, exponentialRampToValueAtTime() {}});
+  const f = fixture(), contexts = [], oscillators = [], gains = [];
+  const parameter = () => ({value: 0, changes: [], cancelScheduledValues() {}, setValueAtTime(value, time) {this.changes.push({value, time});}, exponentialRampToValueAtTime(value, time) {this.changes.push({value, time});}});
   class FakeAudioContext {
     constructor() { this.state = 'suspended'; this.currentTime = 0; this.destination = {}; this.resumes = 0; this.suspends = 0; contexts.push(this); }
-    createGain() { return {gain: parameter(), connect() {}, disconnect() {}}; }
+    createGain() { const gain = {gain: parameter(), connect() {}, disconnect() {}};gains.push(gain);return gain; }
     createOscillator() {
-      const oscillator = {frequency: parameter(), onended: null, disconnects: 0, connect() {}, start() {}, stop() {}, disconnect() { this.disconnects++; }};
+      const oscillator = {frequency: parameter(), onended: null, disconnects: 0, connect() {}, start(time) {this.startTime = time;}, stop(time) {this.stopTime = time;}, disconnect() { this.disconnects++; }};
       oscillators.push(oscillator); return oscillator;
     }
     resume() { this.resumes++; if(this.blocked)return Promise.reject(new Error('Gesture required'));this.state = 'running'; return Promise.resolve(); }
@@ -196,8 +199,23 @@ function audioFixture() {
     close() { this.state = 'closed'; return Promise.resolve(); }
   }
   f.doc.defaultView.AudioContext = FakeAudioContext;
-  return {...f, contexts, oscillators};
+  return {...f, contexts, oscillators, gains};
 }
+
+test('audio beats and envelopes run at 1.2x while pitches and the audio clock are unchanged', async () => {
+  const f = audioFixture(), effects = createGameEffects({root: f.doc});
+  await effects.unlock(); f.contexts[0].currentTime = 10;
+  assert.equal(effects.play('win'), true);
+  const near = (actual, expected) => assert.ok(Math.abs(actual - expected) < 1e-12);
+  assert.deepEqual(f.oscillators.map(note => note.frequency.changes[0].value), [523.25, 659.25, 783.99]);
+  near(f.oscillators[0].startTime, 10);
+  near(f.oscillators[1].startTime, 10.0625);
+  near(f.oscillators[2].startTime, 10.125);
+  near(f.gains[3].gain.changes[1].time, 10.125 + .008 / 1.2);
+  near(f.gains[3].gain.changes[2].time, 10.275);
+  near(f.oscillators[2].stopTime, 10.2875);
+  effects.destroy();
+});
 
 test('audio remains lazy, pauses for app switches and resumes on a later gesture', async () => {
   const f = audioFixture(), effects = createGameEffects({root: f.doc});

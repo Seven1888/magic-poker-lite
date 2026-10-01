@@ -35,7 +35,7 @@ body:before{background-image:linear-gradient(#030818bb,#030818e8),url('../assets
 #blind-dialog{max-width:350px;padding:25px 22px 20px;background:radial-gradient(ellipse at 50% 36%,#493357,#172640 63%,#0c1830);border:2px solid #e1ba71;box-shadow:inset 0 0 0 4px #26334a,0 20px 60px #000b}
 #blind-dialog h2{font-size:25px;letter-spacing:2px;margin:0 0 25px;color:#ffe5ad}
 .blind-single{display:flex;justify-content:center;align-items:center;height:144px}
-.blind-single .draw-chip{width:116px;height:116px;font-size:40px;border-width:10px;box-shadow:0 0 0 3px #bd914d,0 7px #0d1931,0 10px #b88f4e,0 15px 24px #0006,0 0 30px #e8c47733}
+.blind-single .draw-chip{width:116px;height:116px;font-size:34px;letter-spacing:-1px;border-width:10px;box-shadow:0 0 0 3px #bd914d,0 7px #0d1931,0 10px #b88f4e,0 15px 24px #0006,0 0 30px #e8c47733}
 #blind-name{display:block;font-size:23px;letter-spacing:1px;color:#ffdfa0;margin-top:21px;min-height:30px}
 #blind-dialog[data-draw='drawing'] #blind-name{font-size:15px;letter-spacing:1px}
 #blind-result{font-size:12px;line-height:19px;min-height:38px;margin:7px 0 0;color:#f5e5c5}
@@ -53,7 +53,7 @@ body:before{background-image:linear-gradient(#030818bb,#030818e8),url('../assets
 .deck-button img{position:absolute;left:13px;top:2px;width:39px;height:50px;object-fit:fill;border-radius:5px;transform:rotate(16deg);border:1px solid #ffe4a3;box-shadow:0 2px 4px #13203b88;z-index:2}
 .deck-button span{left:3px;right:0;bottom:0;min-width:0;height:17px;font-size:9px;line-height:15px;border:1px solid #bca36e;border-radius:9px;background:linear-gradient(#294a68,#102641);color:#fff1c8;z-index:3;box-shadow:0 2px 4px #08091d99}
 
-/* Prize is centred on the table; stacks frame it from either side. */
+/* The amount stays in front of one compact, centred pile of decorative chips. */
 .pot-display{left:15px;right:15px;height:77px}
 .pot-summary,.pot{display:block;width:100%;height:77px}
 .pot-display:before{inset:4px 18px -3px;background:radial-gradient(ellipse at 50% 63%,#ffcf5d40,transparent 67%)}
@@ -63,13 +63,13 @@ body:before{background-image:linear-gradient(#030818bb,#030818e8),url('../assets
 .pot strong,.game[data-state='idle'] .pot strong{left:117px;right:117px;top:17px;font-size:46px;line-height:51px;color:#fff0b2;z-index:3;text-shadow:0 2px #b6742c,0 3px #754621,0 6px 6px #210b18,0 0 15px #efb7495c}
 .pot strong.compact-amount{font-size:28px}
 .pot-inspect{right:103px;top:0;font-size:11px}
-#pot-chips{left:0;bottom:1px;width:100%;height:67px;transform:none;filter:drop-shadow(0 5px 3px #200b14a6)}
+#pot-chips{left:50%;bottom:1px;width:112px;height:64px;transform:translateX(-50%);z-index:1;opacity:.9;filter:drop-shadow(0 5px 3px #200b14a6)}
 #pot-chips .chip-stack{position:absolute;left:auto;right:auto;bottom:0;width:34px;height:52px;margin:0;transform:none}
-#pot-chips .chip-stack-1{left:22px;bottom:5px;z-index:3;transform:rotate(-8deg)}
-#pot-chips .chip-stack-2{left:49px;bottom:15px;z-index:1;transform:rotate(7deg)}
-#pot-chips .chip-stack-3{right:86px;bottom:12px;z-index:1;transform:rotate(-6deg)}
-#pot-chips .chip-stack-4{right:60px;bottom:2px;z-index:3;transform:rotate(8deg)}
-#pot-chips .chip-stack-5{left:80px;bottom:0;z-index:4;transform:rotate(-4deg) scale(.84);transform-origin:bottom center}
+#pot-chips .chip-stack-1{left:10px;bottom:3px;z-index:2;transform:rotate(-4deg)}
+#pot-chips .chip-stack-2{left:29px;bottom:12px;z-index:1;transform:rotate(3deg)}
+#pot-chips .chip-stack-3{left:49px;bottom:10px;z-index:1;transform:rotate(-3deg)}
+#pot-chips .chip-stack-4{left:68px;bottom:2px;z-index:2;transform:rotate(4deg)}
+#pot-chips .chip-stack-5{left:39px;bottom:0;z-index:3;transform:rotate(-2deg) scale(.9);transform-origin:bottom center}
 #pot-chips .casino-chip{--chip-body:#274c92;--chip-dark:#102246;position:absolute;width:34px;height:16px;left:0;bottom:calc(var(--chip-index,0)*4px);border:1px solid #e8d099;border-radius:50%;background:repeating-conic-gradient(from 8deg,#fff0c7 0deg 15deg,var(--chip-body) 15deg 55deg,#fff0c7 55deg 70deg,var(--chip-body) 70deg 120deg);box-shadow:0 2px 0 var(--chip-dark),0 3px 0 #d2b678,0 4px 1px #0e152d}
 #pot-chips .casino-chip:after{content:'';position:absolute;inset:3px 6px;border:1px solid #eedaa988;border-radius:50%;background:radial-gradient(ellipse at 40% 25%,#a5c3e2,var(--chip-body) 53%,var(--chip-dark));box-shadow:0 1px 1px #05132388}
 #pot-chips .chip-stack-2 .casino-chip,#pot-chips .chip-stack-4 .casino-chip{--chip-body:#ae384d;--chip-dark:#5c1e34}
@@ -108,6 +108,6 @@ body:before{background-image:linear-gradient(#030818bb,#030818e8),url('../assets
 #result-dialog[data-outcome='loss'] .result-crown{color:#c9a9c8;text-shadow:0 2px #6d477b}
 #result-dialog[data-outcome='loss'] #result-award-value{color:#dfcad6;font-size:55px;text-shadow:0 3px #6d4b62,0 6px 6px #110d21}
 #result-dialog[data-outcome='tie'] #result-title,#result-dialog[data-outcome='returned'] #result-title{font-size:35px;line-height:1.08;transform:none}
-#result-dialog[data-outcome='win'][open] .result-hero{animation:prize-enter .55s cubic-bezier(.2,.85,.3,1)}
+#result-dialog[data-outcome='win'][open] .result-hero{animation:prize-enter calc(.55s / var(--game-speed, 1)) cubic-bezier(.2,.85,.3,1)}
 @keyframes prize-enter{from{opacity:0;transform:scale(.78) translateY(12px)}to{opacity:1;transform:scale(1) translateY(0)}}
 @media(prefers-reduced-motion:reduce){#result-dialog[data-outcome='win'][open] .result-hero{animation:none}}

@@ -1,3 +1,5 @@
+import {atGameSpeed} from './presentation-timing.mjs';
+
 /** Presentation only: no game state, card markup, or random-number access. */
 export function createGameEffects({root = globalThis.document, reducedMotion = false} = {}) {
   if (!root) throw new TypeError('createGameEffects needs a document or DOM root.');
@@ -81,12 +83,12 @@ export function createGameEffects({root = globalThis.document, reducedMotion = f
         const oscillator = context.createOscillator();
         const gain = context.createGain();
         const voice = {oscillator, gain};
-        const at = start + offset;
+        const at = start + atGameSpeed(offset), noteDuration = atGameSpeed(duration);
         oscillator.type = type;
         oscillator.frequency.setValueAtTime(frequency, at);
         gain.gain.setValueAtTime(.0001, at);
-        gain.gain.exponentialRampToValueAtTime(peak, at + .008);
-        gain.gain.exponentialRampToValueAtTime(.0001, at + duration);
+        gain.gain.exponentialRampToValueAtTime(peak, at + atGameSpeed(.008));
+        gain.gain.exponentialRampToValueAtTime(.0001, at + noteDuration);
         oscillator.connect(gain);
         gain.connect(master);
         voices.add(voice);
@@ -96,7 +98,7 @@ export function createGameEffects({root = globalThis.document, reducedMotion = f
           voices.delete(voice);
         };
         oscillator.start(at);
-        oscillator.stop(at + duration + .015);
+        oscillator.stop(at + noteDuration + atGameSpeed(.015));
       }
       return true;
     } catch {
@@ -124,7 +126,7 @@ export function createGameEffects({root = globalThis.document, reducedMotion = f
     return new Promise(resolve => {
       let timer;
       const record = {finish() { unschedule(timer); pauses.delete(record); resolve(); }};
-      pauses.add(record); timer = schedule(record.finish, ms);
+      pauses.add(record); timer = schedule(record.finish, atGameSpeed(ms));
     });
   }
 
@@ -132,8 +134,9 @@ export function createGameEffects({root = globalThis.document, reducedMotion = f
   function animateCard(card, keyframes, options) {
     flights.get(card)?.finish();
     if (destroyed || reducedMotion || typeof card.animate !== 'function') return Promise.resolve();
+    const timing = {...options, duration: atGameSpeed(options.duration), delay: atGameSpeed(options.delay || 0)};
     let animation;
-    try { animation = card.animate(keyframes, options); } catch { return Promise.resolve(); }
+    try { animation = card.animate(keyframes, timing); } catch { return Promise.resolve(); }
     return new Promise(resolve => {
       let done = false, timer;
       const record = {finish() {
@@ -145,7 +148,7 @@ export function createGameEffects({root = globalThis.document, reducedMotion = f
       }};
       flights.set(card, record);
       // A broken/throttled finished promise must not strand the presentation flow.
-      timer = schedule(record.finish, options.duration + (options.delay || 0) + 80);
+      timer = schedule(record.finish, timing.duration + timing.delay + 80);
       if (animation.finished?.then) animation.finished.then(record.finish, record.finish);
     });
   }

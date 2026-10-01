@@ -1,3 +1,5 @@
+import {atGameSpeed} from './presentation-timing.mjs';
+
 /** Read-only pot presentation. It never calls the game RNG or mutates a hand. */
 export function createPotView({root = globalThis.document, reducedMotion = false, locale = 'zh'} = {}) {
   if (!root) throw new TypeError('createPotView needs a document or DOM root.');
@@ -115,16 +117,17 @@ export function createPotView({root = globalThis.document, reducedMotion = false
     if (pot) delete pot.dataset.flow;
     if (!arrived || !changed || reducedMotion || typeof pot?.animate !== 'function') return;
     try {
+      const duration = atGameSpeed(240);
       const animation = pot.animate([
         {filter: 'brightness(1)', transform: 'scale(1)'},
         {filter: 'brightness(1.35)', transform: 'scale(1.04)', offset: .35},
         {filter: 'brightness(1)', transform: 'scale(1)'}
-      ], {duration: 240, easing: 'ease-out'});
-      trackAnimation(animation, {flow: 'arrival', duration: 240});
+      ], {duration, easing: 'ease-out'});
+      trackAnimation(animation, {flow: 'arrival', duration});
     } catch { /* Numeric accounting is already visible when feedback is unavailable. */ }
   }
 
-  function fly(seat, amount, flow, {delay = 0, duration = 1000} = {}) {
+  function fly(seat, amount, flow, {delay = 0, duration = 1000, wait = 0} = {}) {
     if (reducedMotion || amount <= 0) return 0;
     const layer = nodes['pot-flight-layer'];
     const rect = layer?.getBoundingClientRect?.();
@@ -154,16 +157,19 @@ export function createPotView({root = globalThis.document, reducedMotion = false
     if (typeof el.animate !== 'function') { el.remove(); return 0; }
     const transform = (point, scale) => `translate3d(${point.x}px,${point.y}px,0) translate(-50%,-50%) scale(${scale})`;
     const midpoint = {x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 - 32};
+    // The pending-flight wait is already wall-clock time. Only authored timings
+    // are converted here, so a final call still reaches the pot before a payout.
+    const actualDuration = atGameSpeed(duration), actualDelay = wait + atGameSpeed(delay);
     let animation;
     try { animation = el.animate([
       {transform: transform(from, 0.72), opacity: 0, offset: 0},
       {transform: transform(from, 0.9), opacity: 1, offset: 0.1},
       {transform: transform(midpoint, 1.05), opacity: 1, offset: 0.52},
       {transform: transform(to, 0.82), opacity: 0, offset: 1}
-    ], {duration, delay, easing: 'cubic-bezier(.22,.72,.25,1)', fill: 'both'}); }
+    ], {duration: actualDuration, delay: actualDelay, easing: 'cubic-bezier(.22,.72,.25,1)', fill: 'both'}); }
     catch { el.remove(); return 0; }
-    trackAnimation(animation, {flow, duration, delay, remove: () => el.remove()});
-    return delay + duration;
+    trackAnimation(animation, {flow, duration: actualDuration, delay: actualDelay, remove: () => el.remove()});
+    return actualDelay + actualDuration;
   }
 
   function render(hand, config = hand?.config, {deferSettlement = false} = {}) {
@@ -237,12 +243,12 @@ export function createPotView({root = globalThis.document, reducedMotion = false
     const contributionUntil = Math.max(time, ...[...motions].filter(motion => motion.flow === 'contribution').map(motion => motion.end));
     const wait = reducedMotion ? 0 : Math.max(0, contributionUntil - time);
     let finish = 0;
-    refunds.forEach(seat => { finish = Math.max(finish, fly(seat, numeric(result[seat].refund), 'refund', {delay: wait, duration: 1100})); });
+    refunds.forEach(seat => { finish = Math.max(finish, fly(seat, numeric(result[seat].refund), 'refund', {wait, duration: 1100})); });
     recipients.forEach((seat, index) => { finish = Math.max(finish, fly(seat, numeric(result[seat].netReturn), 'payout', {
-      delay: wait + (refunds.length ? 160 : 0) + index * 40, duration: 1100
+      wait, delay: (refunds.length ? 160 : 0) + index * 40, duration: 1100
     })); });
-    settlementUntil = time + Math.min(1000, finish);
+    settlementUntil = time + Math.min(atGameSpeed(1000), finish);
   }
 
-  return {render, whenIdle, settledDelay: () => reducedMotion ? 0 : Math.max(0, Math.min(1000, Math.ceil(settlementUntil - now())))};
+  return {render, whenIdle, settledDelay: () => reducedMotion ? 0 : Math.max(0, Math.min(Math.ceil(atGameSpeed(1000)), Math.ceil(settlementUntil - now())))};
 }

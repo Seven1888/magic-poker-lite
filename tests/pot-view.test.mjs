@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createPotView} from '../src/pot-view.mjs';
 import {createSession, startHand, applyAction, legalActions} from '../src/engine.mjs';
+import {atGameSpeed} from '../src/presentation-timing.mjs';
 
 function fakeDocument() {
   let time = 1000;
@@ -129,7 +130,7 @@ test('same-hand rerenders do not replay payments; a raise animates only its addi
   assert.equal(text(doc, 'pot-value'), '10'); await finishMotion(doc); await view.whenIdle();
   assert.equal(text(doc, 'pot-value'), '30'); assert.equal(text(doc, 'pot-event'), '你加注 +20');
   view.render(hand); assert.equal(flights(doc).length, 2);
-  assert.ok(flights(doc).every(flight => flight.animations[0].options.duration === 1000 && flight.animations[0].options.delay <= 80));
+  assert.ok(flights(doc).every(flight => flight.animations[0].options.duration === atGameSpeed(1000) && flight.animations[0].options.delay <= atGameSpeed(80)));
 });
 
 test('fold settlement separates refund from net award and shows matched contributions', async () => {
@@ -145,14 +146,40 @@ test('fold settlement separates refund from net award and shows matched contribu
   const payouts = flights(doc).filter(flight => flight.dataset.flow === 'payout');
   assert.equal(refund.length, 1); assert.equal(refund[0].children[1].textContent, '退款 10');
   assert.equal(payouts.length, 1); assert.equal(payouts[0].children[1].textContent, '+19.2');
-  assert.equal(refund[0].animations[0].options.duration, 1100);
-  assert.equal(payouts[0].animations[0].options.duration, 1100);
+  assert.equal(refund[0].animations[0].options.duration, atGameSpeed(1100));
+  assert.equal(payouts[0].animations[0].options.duration, atGameSpeed(1100));
   assert.equal(payouts[0].dataset.seat, 'player');
   const count = flights(doc).length, delay = view.settledDelay();
-  assert.ok(delay > 0 && delay <= 1000);
+  assert.ok(delay > 0 && delay <= Math.ceil(atGameSpeed(1000)));
   view.render(hand); assert.equal(flights(doc).length, count); assert.equal(view.settledDelay(), delay);
   doc.tick(100); assert.equal(view.settledDelay(), delay - 100);
   doc.tick(1000); assert.equal(view.settledDelay(), 0);
+});
+
+test('1.2x refunds wait for the remaining real flight time and watchdogs keep their safety margin', async t => {
+  const timers = new Map(); let timerId = 0;
+  t.mock.method(globalThis, 'setTimeout', (callback, delay) => {timers.set(++timerId, {callback, delay});return timerId;});
+  t.mock.method(globalThis, 'clearTimeout', id => timers.delete(id));
+  const doc = fakeDocument(), view = createPotView({root: doc});
+  const hand = startHand(createSession({}, 102));
+  view.render(hand); applyAction(hand, 'raise'); view.render(hand);
+  doc.tick(200); applyAction(hand, 'fold');
+  const snapshot = JSON.stringify(hand), rng = hand.rng.state();
+  view.render(hand);
+  const refund = flights(doc).find(flight => flight.dataset.flow === 'refund').animations[0].options;
+  const payout = flights(doc).find(flight => flight.dataset.flow === 'payout').animations[0].options;
+  const near = (actual, expected) => assert.ok(Math.abs(actual - expected) < 1e-9);
+  near(refund.delay, 1000 / 1.2 - 200);
+  near(payout.delay, refund.delay + 160 / 1.2);
+  near(refund.duration, 1100 / 1.2); near(payout.duration, 1100 / 1.2);
+  const deadlines = [...timers.values()].map(timer => timer.delay);
+  for (const flight of flights(doc)) {
+    const {duration, delay} = flight.animations[0].options;
+    assert.ok(deadlines.some(deadline => Math.abs(deadline - duration - delay - 80) < 1e-9));
+  }
+  await finishMotion(doc); await view.whenIdle();
+  assert.equal(timers.size, 0);
+  assert.equal(JSON.stringify(hand), snapshot); assert.equal(hand.rng.state(), rng);
 });
 
 test('tie settlement splits net awards to both stack endpoints, after final matched call', () => {
@@ -164,7 +191,7 @@ test('tie settlement splits net awards to both stack endpoints, after final matc
   assert.ok(payouts.every(p => p.children[1].textContent === '+9.6'));
   assert.match(text(doc, 'pot-event'), /^平分/); assert.match(text(doc, 'pot-detail'), /無未跟注退款/);
   assert.ok(payouts.every(p => p.animations[0].options.delay >= 300));
-  assert.ok(view.settledDelay() <= 1000);
+  assert.ok(view.settledDelay() <= Math.ceil(atGameSpeed(1000)));
 });
 
 test('reduced motion renders all accounting immediately without flying chips or wait', () => {
@@ -345,7 +372,7 @@ test('numbers and chip stacks wait for the whole inbound bundle; idle includes o
   flights(doc)[1].animations[0].finish(); await Promise.resolve();
   assert.equal(text(doc, 'pot-value'), '20'); assert.ok(chipCount() >= 15);
   assert.equal(pot.dataset.flow, undefined); assert.equal(pot.animations.length, 1);
-  assert.equal(pot.animations[0].options.duration, 240);
+  assert.equal(pot.animations[0].options.duration, 200);
   assert.equal(idle, false, 'numeric update happens before idle is allowed to resolve');
   view.render(hand); assert.equal(pot.animations.length, 1);
   pot.animations[0].finish(); await waiting; assert.equal(idle, true);
