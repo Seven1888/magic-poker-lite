@@ -72,7 +72,29 @@ export function createSession(config = {}, seed = 123, options = {}) {
   const blindDraw = choice === 'random' ? {smallBlind: firstSmallBlind, probability: 0.5} : null;
   return {config: normalized, seed, rng, firstSmallBlind, blindDraw,
     stacks: {player: normalized.buyIn, npc: normalized.buyIn}, handNumber: 0, fees: 0,
-    jackpotAwards: 0, jackpotTierCounts: {royal: 0, straightFlush: 0, quads: 0}};
+    jackpotAwards: 0, jackpotTierCounts: {royal: 0, straightFlush: 0, quads: 0},
+    opponentBankrollRefreshes: []};
+}
+
+/** Optional demo-only inter-hand adjustment; never part of pot settlement or simulation. */
+export function syncOpponentBankroll(session) {
+  const hand = session?.activeHand;
+  if (!hand || hand.session !== session || hand.handNumber !== session.handNumber
+    || hand.status !== 'settled' || !hand.result) {
+    throw new Error('Opponent chips can refresh only after the current hand has settled.');
+  }
+  const previous = session.opponentBankrollRefreshes.at(-1);
+  if (previous?.handNumber === hand.handNumber) return previous;
+  const before = session.stacks.npc, after = session.stacks.player;
+  if (![before, after].every(value => Number.isFinite(value) && value >= 0)) {
+    throw new RangeError('Opponent chip refresh requires finite, nonnegative balances.');
+  }
+  const event = Object.freeze({type: 'demo-opponent-bankroll-refresh', handNumber: hand.handNumber,
+    before, after, adjustment: round(after - before)});
+  // The settled hand keeps its closing balances even as the next hand is played.
+  session.stacks = {...session.stacks, npc: after};
+  session.opponentBankrollRefreshes.push(event);
+  return event;
 }
 
 function pickPair(available, rng) {

@@ -131,10 +131,10 @@ export function createGameEffects({root = globalThis.document, reducedMotion = f
   }
 
   /** Always release the flight record before the caller's next phase/callback. */
-  function animateCard(card, keyframes, options) {
+  function animateCard(card, keyframes, options, {speed} = {}) {
     flights.get(card)?.finish();
     if (destroyed || reducedMotion || typeof card.animate !== 'function') return Promise.resolve();
-    const timing = {...options, duration: atGameSpeed(options.duration), delay: atGameSpeed(options.delay || 0)};
+    const timing = {...options, duration: atGameSpeed(options.duration, speed), delay: atGameSpeed(options.delay || 0, speed)};
     let animation;
     try { animation = card.animate(keyframes, timing); } catch { return Promise.resolve(); }
     return new Promise(resolve => {

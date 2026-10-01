@@ -1,4 +1,4 @@
-# Engine API contract · single big blind + entry + Jackpot · 2026-09-30
+# Engine API contract · single big blind + entry + Jackpot + demo opponent refresh · 2026-10-01
 
 All modules are dependency-free ESM. Import from `./src/engine.mjs`. All currency values are chip units, rounded internally to six decimals; the UI may display two decimals. Card identifiers are `As`, `Kh`, `Td`, `2c` (`s h d c`; ace is `A`, ten is `T`).
 
@@ -46,13 +46,36 @@ session = {
   config, seed, rng, firstSmallBlind:'player'|'npc',
   blindDraw:{smallBlind:'player'|'npc',probability:0.5}|null,
   stacks:{player:config.buyIn,npc:config.buyIn}, handNumber:0, fees:0,
-  jackpotAwards:0, jackpotTierCounts:{royal:0,straightFlush:0,quads:0}
+  jackpotAwards:0, jackpotTierCounts:{royal:0,straightFlush:0,quads:0},
+  opponentBankrollRefreshes:[]
 }
 ```
 
 Fixed player/NPC choice consumes no blind RNG draw and sets `blindDraw=null`. RNG is callable and has `.clone()` and `.state()`. No raw blind roll is returned. Seed/RNG/deck/deal audit are engine debug state and must not be exposed in player history.
 
-`startHand(session)` mutates session.handNumber; returns hand. It alternates from `session.firstSmallBlind` (odd hand uses first choice, even hand uses the other seat). Throws if either stack is below .01. Buy-in is matched once at session creation; following hands retain both balances. It pays only from `hand.bigBlind`, using `min(config.bigBlind, stack)`; the opening history contains a `bigBlind` payment and no zero-cost `smallBlind` payment. Short stacks use the normal all-in/uncalled-refund rules. For simulations each sample starts an independent equal-stack hand, begins with player SB, and alternates positions; these are not continuous-wallet simulations.
+`startHand(session)` mutates session.handNumber; returns hand. It alternates from `session.firstSmallBlind` (odd hand uses first choice, even hand uses the other seat). Throws if either stack is below .01. Buy-in is matched once at session creation; following hands use the current session balances. The public demo explicitly refreshes the opponent after each settlement using `syncOpponentBankroll`; `startHand` itself never refills either seat. It pays only from `hand.bigBlind`, using `min(config.bigBlind, stack)`; the opening history contains a `bigBlind` payment and no zero-cost `smallBlind` payment. Short stacks use the normal all-in/uncalled-refund rules. For simulations each sample starts an independent equal-stack hand, begins with player SB, and alternates positions; these are not continuous-wallet simulations.
+
+### Demo opponent bankroll refresh（局間對手資產刷新）
+
+`syncOpponentBankroll(session)` 為遊戲控制器明確呼叫的局間 DEMO API。每手退款／底池派彩／JP 演出完成後，包含玩家或 NPC 棄牌，將對手可用資產調整成玩家當下的實際資產，再顯示本手結果。它只接受 `session.activeHand` 已 `settled`、具有 `result`、屬於同一 session 且 `handNumber` 等於目前局號；未開局、進行中或不符身分時擲出錯誤。玩家資產不變；玩家為 0 時對手也調為 0，`startHand` 仍拒絕開新手，不自動補資。
+
+回傳並在 `session.opponentBankrollRefreshes` 附加一筆凍結事件，金額沿用六位小數精度；零差額仍記錄一次。同一手重複呼叫回傳原事件，不再修改資產或增加紀錄：
+
+```js
+{
+  type:'demo-opponent-bankroll-refresh',
+  handNumber:1,
+  before:990,             // NPC 真正牌局結算後、刷新前資產
+  after:1009.2,           // 玩家當下資產，含正常已入帳的 JP
+  adjustment:19.2         // after - before；可正、負或零
+}
+```
+
+刷新會建立新的 `session.stacks` 物件；已結手牌的 `hand.stacks` 保留本手原始結算資產，不會被刷新或下一手下注覆寫。`hand.result`、`history`、所有退款／派彩／JP／費用欄位及 RNG 均不變。後續 `startHand` 從新的 session 資產建立 `stacksBefore`，照常只扣一次大盲並輪替位置。
+
+`adjustment` 是獨立的 DEMO NPC 資金補入／收回事件，不屬於底池返還、玩家收入、JP 或 RTP。每手原有結算守恆仍以 `result.*.stackAfter` 驗算；採用刷新的連續 session 則應核對：`目前雙方 session.stacks 總和 + session.fees = 初始雙方 buyIn 總和 + session.jackpotAwards + Σ adjustment`。不得把刷新後的 NPC 資產當成本手牌局派彩，或用未納入 adjustment 的舊連續資產公式對帳。
+
+引擎結算、`playAutomatedHand`、`simulate`、預覽及 Probability Lab 不會自動呼叫此 API；工具仍是原本的獨立等資產模擬算法。此功能也不更動 `targetRtp`、發牌、NPC 行動分布或任何隨機抽樣。
 
 Example below: BET 10, player SB, both seats start with 1000. Only NPC has posted 10.
 
@@ -89,7 +112,7 @@ hand.result = {
 
 `netReturn` remains POT-only and excludes refunds. `totalReturn=netReturn+jackpotAward`; `baseProfit=netReturn-matchedWager`; `profit=totalReturn-matchedWager`. `stackAfter=stackBefore-totalContribution+refund+totalReturn` includes the extra award. Top-level `net` sums both POT returns; top-level `totalReturn` sums both total returns. `gross + refunds == all paid contributions`; total final stacks + fee == total initial stacks + Jackpot award. `session.fees` and `session.jackpotAwards` accumulate separately. Settlement is guarded against paying twice; cloned preview sessions also clone Jackpot tier counters.
 
-From that opening state, independent examples are:
+From that opening state, independent examples below report the hand's settlement balances before the optional demo opponent refresh:
 
 - Player `call`: deduct 10, contributions become 10/10, POT 20, stacks 990/990; NPC retains its preflop check/raise option.
 - Player `raise`, then NPC `fold`: player pays 20, contributions are 20/10; refund player 10, matched wagers 10 each, settled POT 20, fee .8, player `netReturn` 19.2, final stacks 1009.2/990.

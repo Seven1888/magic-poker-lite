@@ -1,14 +1,14 @@
 import {atGameSpeed} from './presentation-timing.mjs';
 
 /** Read-only pot presentation. It never calls the game RNG or mutates a hand. */
-export function createPotView({root = globalThis.document, reducedMotion = false, locale = 'zh'} = {}) {
+export function createPotView({root = globalThis.document, reducedMotion = false, locale = 'zh', onPhase} = {}) {
   if (!root) throw new TypeError('createPotView needs a document or DOM root.');
   const doc = root.ownerDocument || root;
   const lookup = id => root.getElementById?.(id) || root.querySelector?.(`#${id}`) || null;
   const nodes = Object.fromEntries([
     'pot-display', 'pot-value', 'pot-label', 'pot-detail', 'pot-chips', 'pot-event',
     'contribution-player', 'contribution-npc', 'pot-flight-layer', 'player-stack', 'npc-stack',
-    'player-cards', 'npc-cards'
+    'player-cards', 'npc-cards', 'player-bankroll-chips', 'npc-bankroll-chips'
   ].map(id => [id, lookup(id)]));
   const clock = doc.defaultView?.performance || globalThis.performance;
   const now = () => clock?.now?.() ?? Date.now();
@@ -28,6 +28,13 @@ export function createPotView({root = globalThis.document, reducedMotion = false
   let paid = {player: 0, npc: 0}, seenHistory = 0, settled = false;
   let settlementUntil = 0, chipSignature = '';
   let generation = 0, pendingPot = null, displayedTotal = 0;
+  let settlementPlan = null, advancingSettlement = false;
+
+  function notifyPhase(flow, entries = []) {
+    if (typeof onPhase !== 'function') return;
+    const event = {flow, seats: entries.map(item => item.seat), amounts: Object.fromEntries(entries.map(item => [item.seat, item.amount]))};
+    try { Promise.resolve(onPhase(event)).catch(() => {}); } catch { /* A presentation observer cannot block chips or settlement. */ }
+  }
 
   const write = (id, text) => {
     if (!nodes[id]) return;
@@ -36,6 +43,7 @@ export function createPotView({root = globalThis.document, reducedMotion = false
   };
   function clearFlights() {
     generation++; pendingPot = null;
+    settlementPlan?.finish(); settlementPlan = null;
     if (nodes['pot-display']) delete nodes['pot-display'].dataset.flow;
     for (const motion of [...motions]) {
       try { motion.animation.cancel?.(); } catch { /* An unavailable animation is already idle. */ }
@@ -47,8 +55,8 @@ export function createPotView({root = globalThis.document, reducedMotion = false
   // Include arrival feedback spawned by a finishing flight. A new hand ends old waits.
   const whenIdle = async () => {
     const startedGeneration = generation;
-    while (generation === startedGeneration && motions.size) {
-      await Promise.all([...motions].map(motion => motion.done));
+    while (generation === startedGeneration && (motions.size || settlementPlan)) {
+      await Promise.all([...motions].map(motion => motion.done).concat(settlementPlan ? [settlementPlan.done] : []));
     }
   };
 
@@ -90,13 +98,17 @@ export function createPotView({root = globalThis.document, reducedMotion = false
   }
 
   function trackAnimation(animation, {flow, duration, delay = 0, remove = () => {}}) {
+    const epoch = generation;
     let resolveDone, timer, completed = false;
     const motion = {animation, flow, end: now() + delay + duration,
       done: new Promise(resolve => { resolveDone = resolve; }), complete: null};
     motion.complete = () => {
       if (completed) return;
       completed = true; clearTimeout(timer); remove(); motions.delete(motion);
-      if (flow === 'contribution' && ![...motions].some(item => item.flow === 'contribution')) commitPot(true);
+      if (epoch === generation) {
+        if (flow === 'contribution' && ![...motions].some(item => item.flow === 'contribution')) commitPot(true);
+        advanceSettlement();
+      }
       resolveDone();
     };
     motions.add(motion);
@@ -127,16 +139,19 @@ export function createPotView({root = globalThis.document, reducedMotion = false
     } catch { /* Numeric accounting is already visible when feedback is unavailable. */ }
   }
 
-  function fly(seat, amount, flow, {delay = 0, duration = 1000, wait = 0} = {}) {
+  function fly(seat, amount, flow, {delay = 0, duration = 1000} = {}) {
     if (reducedMotion || amount <= 0) return 0;
     const layer = nodes['pot-flight-layer'];
     const rect = layer?.getBoundingClientRect?.();
     if (!layer || !rect || rect.width <= 0 || rect.height <= 0) return 0;
     const scaleX = layer.offsetWidth > 0 ? rect.width / layer.offsetWidth : 1;
     const scaleY = layer.offsetHeight > 0 ? rect.height / layer.offsetHeight : 1;
-    const stackPoint = center(nodes[`${seat}-stack`], rect, scaleX, scaleY)
+    const stackPoint = center(nodes[`${seat}-bankroll-chips`], rect, scaleX, scaleY)
+      || center(nodes[`${seat}-stack`], rect, scaleX, scaleY)
       || center(nodes[`${seat}-cards`], rect, scaleX, scaleY);
-    const potPoint = center(nodes['pot-display'] || nodes['pot-value'], rect, scaleX, scaleY);
+    const potPoint = center(nodes['pot-chips'], rect, scaleX, scaleY)
+      || center(nodes['pot-display'], rect, scaleX, scaleY)
+      || center(nodes['pot-value'], rect, scaleX, scaleY);
     if (!stackPoint || !potPoint) return 0;
     const inbound = flow === 'contribution';
     const from = inbound ? stackPoint : potPoint, to = inbound ? potPoint : stackPoint;
@@ -157,9 +172,7 @@ export function createPotView({root = globalThis.document, reducedMotion = false
     if (typeof el.animate !== 'function') { el.remove(); return 0; }
     const transform = (point, scale) => `translate3d(${point.x}px,${point.y}px,0) translate(-50%,-50%) scale(${scale})`;
     const midpoint = {x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 - 32};
-    // The pending-flight wait is already wall-clock time. Only authored timings
-    // are converted here, so a final call still reaches the pot before a payout.
-    const actualDuration = atGameSpeed(duration), actualDelay = wait + atGameSpeed(delay);
+    const actualDuration = atGameSpeed(duration), actualDelay = atGameSpeed(delay);
     let animation;
     try { animation = el.animate([
       {transform: transform(from, 0.72), opacity: 0, offset: 0},
@@ -172,8 +185,40 @@ export function createPotView({root = globalThis.document, reducedMotion = false
     return actualDelay + actualDuration;
   }
 
+  // Advance synchronously at phase boundaries. Completed flights can create an
+  // arrival pulse, and no refund/payout begins until every current motion ends.
+  function advanceSettlement() {
+    if (advancingSettlement || !settlementPlan || motions.size) return;
+    advancingSettlement = true;
+    try {
+      while (settlementPlan && !motions.size) {
+        const plan = settlementPlan;
+        if (plan.generation !== generation) return;
+        let flow, entries;
+        if (plan.stage === 'contribution') {
+          plan.stage = 'refund'; flow = 'refund'; entries = plan.refunds;
+        } else if (plan.stage === 'refund') {
+          pendingPot = {total: numeric(plan.result.pot), config: plan.config}; commitPot();
+          plan.stage = 'payout'; flow = 'payout'; entries = plan.recipients;
+        } else {
+          pendingPot = {total: 0, config: plan.config}; commitPot();
+          write('pot-label', copy.pot);
+          settlementPlan = null; settlementUntil = 0; plan.finish();
+          notifyPhase('complete');
+          return;
+        }
+        if (entries.length) {
+          if (nodes['pot-display']) nodes['pot-display'].dataset.flow = flow;
+          notifyPhase(flow, entries);
+          if (settlementPlan !== plan || plan.generation !== generation) return;
+          entries.forEach(({seat, amount}, index) => fly(seat, amount, flow, {duration: 1100, delay: index * 40}));
+          settlementUntil = Math.max(now(), ...[...motions].map(motion => motion.end));
+        }
+      }
+    } finally { advancingSettlement = false; }
+  }
+
   function render(hand, config = hand?.config, {deferSettlement = false} = {}) {
-    const time = now();
     if (!hand) {
       clearFlights(); hasHand = false; currentSession = currentNumber = null;
       paid = {player: 0, npc: 0}; seenHistory = 0; settled = false;
@@ -192,10 +237,13 @@ export function createPotView({root = globalThis.document, reducedMotion = false
       displayedTotal = 0; write('pot-value', '0'); drawChips(0, config);
       write('pot-event', '');
     }
+    // The terminal presentation owns its pot total through completion. A stale
+    // or repeated render must neither launch another sequence nor refill it.
+    if (settled) return;
     const pendingResult = hand.status === 'settled' ? hand.result : null;
     // Once displayed, settlement cannot be rolled back by a stale defer render.
     const result = pendingResult && (!deferSettlement || settled) ? pendingResult : null;
-    const total = pendingResult && !result
+    const total = pendingResult
       ? seats.reduce((sum, seat) => sum + numeric(hand.contributions?.[seat]), 0)
       : numeric(result?.pot ?? hand.pot);
     write('pot-label', result ? copy.settled : copy.pot);
@@ -206,11 +254,11 @@ export function createPotView({root = globalThis.document, reducedMotion = false
     const newPayments = history.slice(seenHistory).filter(event => labels[event.type] && numeric(event.amount) > 0);
     seenHistory = history.length;
     const additions = seats.map(seat => ({seat, amount: Math.max(0, numeric(hand.contributions?.[seat]) - paid[seat])})).filter(item => item.amount > 0.0000001);
-    if (!settled) additions.forEach(({seat, amount}, index) => {
-      fly(seat, amount, 'contribution', {duration: 1000, delay: index * 80});
-    });
     for (const seat of seats) paid[seat] = numeric(hand.contributions?.[seat]);
     pendingPot = {total, config};
+    additions.forEach(({seat, amount}, index) => {
+      fly(seat, amount, 'contribution', {duration: 1000, delay: index * 80});
+    });
     if ([...motions].some(motion => motion.flow === 'contribution')) {
       if (nodes['pot-display']) nodes['pot-display'].dataset.flow = 'contribution';
     } else commitPot();
@@ -222,6 +270,7 @@ export function createPotView({root = globalThis.document, reducedMotion = false
         const events = isBlinds ? newPayments : newPayments.slice(-1);
         write('pot-event', events.map(event => `${name(event.actor)}${english ? ' · ' : ''}${labels[event.type]} +${money(event.amount)}`).join(' · '));
       }
+      if (additions.length) notifyPhase('contribution', additions);
       return;
     }
 
@@ -236,18 +285,15 @@ export function createPotView({root = globalThis.document, reducedMotion = false
       ? `${seat === 'player' ? 'You receive' : 'Opponent receives'} ${money(result[seat].netReturn)}`
       : `${name(seat)}領回 ${money(result[seat].netReturn)}`).join(' · ');
     write('pot-event', `${result.winner === 'tie' ? copy.split : ''}${payoutText || copy.ended}${copy.divider}${copy.fee} ${money(result.fee)}`);
-    if (settled) return;
     settled = true;
-
-    // Finish any last call before the award; refunds are separate labelled flights.
-    const contributionUntil = Math.max(time, ...[...motions].filter(motion => motion.flow === 'contribution').map(motion => motion.end));
-    const wait = reducedMotion ? 0 : Math.max(0, contributionUntil - time);
-    let finish = 0;
-    refunds.forEach(seat => { finish = Math.max(finish, fly(seat, numeric(result[seat].refund), 'refund', {wait, duration: 1100})); });
-    recipients.forEach((seat, index) => { finish = Math.max(finish, fly(seat, numeric(result[seat].netReturn), 'payout', {
-      wait, delay: (refunds.length ? 160 : 0) + index * 40, duration: 1100
-    })); });
-    settlementUntil = time + Math.min(atGameSpeed(1000), finish);
+    let finish;
+    const done = new Promise(resolve => {finish = resolve;});
+    settlementPlan = {generation, stage: 'contribution', result, config, done, finish,
+      refunds: refunds.map(seat => ({seat, amount: numeric(result[seat].refund)})),
+      recipients: recipients.map(seat => ({seat, amount: numeric(result[seat].netReturn)}))};
+    settlementUntil = Math.max(now(), ...[...motions].map(motion => motion.end));
+    if (additions.length) notifyPhase('contribution', additions);
+    advanceSettlement();
   }
 
   return {render, whenIdle, settledDelay: () => reducedMotion ? 0 : Math.max(0, Math.min(Math.ceil(atGameSpeed(1000)), Math.ceil(settlementUntil - now())))};

@@ -170,18 +170,25 @@ test('destroy releases the between-card hold and missing animation support still
   assert.equal(card.face, 'front'); assert.equal(card.style.scale, '');
 });
 
-test('decision motion uses the same watchdog and unsupported-animation fallback as cards', async () => {
-  const f = fixture(), effects = createGameEffects({root: f.doc}), marker = f.card('marker');
-  let finished = false;
-  const pending = effects.animate(marker, [{left: '0%'}, {left: '40%'}], {duration: 450, delay: 120, fill: 'forwards'}).then(() => { finished = true; });
-  assert.equal(f.animations[0].options.duration, 375);
-  assert.equal(f.animations[0].options.delay, 100);
-  await f.tick(554); assert.equal(finished, false);
-  await f.tick(1); await pending;
-  assert.equal(finished, true); assert.equal(f.animations[0].cancelled, true);
-  marker.animate = undefined;
-  await effects.animate(marker, [], {duration: 450});
-  assert.equal(f.timers.size, 0);
+test('original-speed decisions preserve the watchdog and fallback while other motion stays at 1.2x', async () => {
+  for (const {speed, duration, delay, deadline} of [
+    {speed: undefined, duration: 375, delay: 100, deadline: 555},
+    {speed: 1, duration: 450, delay: 120, deadline: 650}
+  ]) {
+    const f = fixture(), effects = createGameEffects({root: f.doc}), marker = f.card('marker');
+    let finished = false;
+    const pending = effects.animate(marker, [{left: '0%'}, {left: '40%'}], {duration: 450, delay: 120, fill: 'forwards'}, {speed}).then(() => { finished = true; });
+    assert.equal(f.animations[0].options.duration, duration);
+    assert.equal(f.animations[0].options.delay, delay);
+    await f.tick(deadline - 1); assert.equal(finished, false);
+    await f.tick(1); await pending;
+    assert.equal(finished, true); assert.equal(f.animations[0].cancelled, true);
+    marker.animate = undefined;
+    await effects.animate(marker, [], {duration: 450}, {speed});
+    assert.equal(f.timers.size, 0);
+  }
+  assert.equal(atGameSpeed(900, 1), 900, 'opponent result reading time is not accelerated');
+  assert.equal(atGameSpeed(900), 750, 'other presentation retains its faster default');
 });
 
 function audioFixture() {

@@ -21,11 +21,14 @@ body:before{background-image:linear-gradient(#030818bb,#030818e8),url('../assets
 .table-cue strong{font-size:22px}
 
 /* The opponent's best five are the real table cards, never a second row. */
-.showdown-preview{height:67px;top:293px;display:flex;justify-content:center;padding:5px 18px;border:0;background:radial-gradient(ellipse,#370f25cf,transparent 75%);box-shadow:none}
-.showdown-caption{gap:3px;min-width:210px}
+.showdown-preview{height:81px;top:293px;display:flex;justify-content:center;padding:5px 8px;border:0;background:radial-gradient(ellipse,#370f25cf,transparent 75%);box-shadow:none}
+.showdown-caption{gap:3px;min-width:0;width:100%}
 .showdown-caption small{color:#ffb5af;font-size:10px;letter-spacing:2.5px}
-.showdown-caption strong{font-size:25px;line-height:28px;color:#fff0df;text-shadow:0 2px #67182c,0 0 10px #ff435273}
+.showdown-caption strong{font-size:37.5px;line-height:42px;white-space:nowrap;letter-spacing:-.5px;color:#fff0df;text-shadow:0 2px #67182c,0 0 10px #ff435273}
 .showdown-caption>span{color:#edb0b2;font-size:9px}
+/* Enlarge the whole player plaque by 50%; keep its lower edge above the controls. */
+.hand-plaque{top:97px;width:300px;height:48px;padding:0 16.5px 1.5px;font-size:21px;line-height:25.5px;letter-spacing:.9px}
+.game[data-deciding='true'] .response-panel,.game[data-deciding='true'] .decision-emblem{--game-speed:1}
 #npc-cards .card.npc-best,#board .card.npc-best{outline:2px solid #ffd2c5;outline-offset:1px;box-shadow:0 0 0 4px #ef334b,0 0 13px 3px #ff3d4bce,0 0 24px #f31d4566,0 5px 9px #1a071d88}
 #npc-cards .card.npc-best:before,#board .card.npc-best:before{content:'';position:absolute;inset:0;border:2px solid #ff6674;border-radius:inherit;pointer-events:none;box-shadow:inset 0 0 7px #ff274599;z-index:3}
 #board .card.best.npc-best{outline:2px solid #ff5261;outline-offset:5px;box-shadow:0 0 0 3px #ffd467,0 0 0 6px #c72640,0 0 15px 5px #ff526180,0 6px 10px #14071866}
