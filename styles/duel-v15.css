@@ -1,0 +1,113 @@
+/* Duel pacing, on-table hand comparison and prize presentation. */
+.game{--duel-art:url('../assets/duel-scene-v15-hold-neutral.png')}
+.game[data-winner='player']{--duel-art:url('../assets/duel-scene-v15-hold-frown.png')}
+.game[data-winner='npc']{--duel-art:url('../assets/duel-scene-v15-hold-smile.png')}
+.game .scene-closeup,.game[data-winner] .scene-closeup{background-image:var(--duel-art)}
+body:before{background-image:linear-gradient(#030818bb,#030818e8),url('../assets/duel-scene-v15-hold-neutral.png')}
+.npc-grip{position:absolute;left:0;top:0;width:400px;height:360px;z-index:6;pointer-events:none;background:var(--duel-art) center -14px/568px 1221.2px no-repeat;clip-path:path('M 127 258 C 136 247 151 246 160 249 C 172 254 163 263 150 264 C 160 264 165 270 162 277 C 159 284 149 285 138 283 L 126 274 Z M 275 258 C 266 247 251 246 242 249 C 230 254 239 263 252 264 C 242 264 237 270 240 277 C 243 284 253 285 264 283 L 276 274 Z')}
+.game[data-presentation='hole-deal'] .npc-grip{visibility:hidden}
+.npc-cards{animation:none!important;translate:0 0}
+.blind-token{display:none!important}
+
+/* Every label stays inside its actual probability segment. */
+.preview-outcome{container-type:inline-size;justify-content:flex-start;padding-top:1px;overflow:hidden}
+.preview-outcome>span{font-size:clamp(6px,28cqw,12px);line-height:14px}
+.preview-outcome>b{font-size:clamp(7px,32cqw,16px);line-height:18px;font-weight:900}
+.preview-outcome-key{display:none}
+.game .response-panel[data-mode='result']{padding-top:4px}
+.game .response-panel[data-mode='result'] .response-heading{margin-bottom:4px}
+.game .response-panel[data-mode='result'] .probability-legend{margin-top:5px}
+.game .response-panel[data-mode='result'] .legend-item b{font-size:15px}
+.table-cue strong{font-size:22px}
+
+/* The opponent's best five are the real table cards, never a second row. */
+.showdown-preview{height:67px;top:293px;display:flex;justify-content:center;padding:5px 18px;border:0;background:radial-gradient(ellipse,#370f25cf,transparent 75%);box-shadow:none}
+.showdown-caption{gap:3px;min-width:210px}
+.showdown-caption small{color:#ffb5af;font-size:10px;letter-spacing:2.5px}
+.showdown-caption strong{font-size:25px;line-height:28px;color:#fff0df;text-shadow:0 2px #67182c,0 0 10px #ff435273}
+.showdown-caption>span{color:#edb0b2;font-size:9px}
+#npc-cards .card.npc-best,#board .card.npc-best{outline:2px solid #ffd2c5;outline-offset:1px;box-shadow:0 0 0 4px #ef334b,0 0 13px 3px #ff3d4bce,0 0 24px #f31d4566,0 5px 9px #1a071d88}
+#npc-cards .card.npc-best:before,#board .card.npc-best:before{content:'';position:absolute;inset:0;border:2px solid #ff6674;border-radius:inherit;pointer-events:none;box-shadow:inset 0 0 7px #ff274599;z-index:3}
+#board .card.best.npc-best{outline:2px solid #ff5261;outline-offset:5px;box-shadow:0 0 0 3px #ffd467,0 0 0 6px #c72640,0 0 15px 5px #ff526180,0 6px 10px #14071866}
+#board .card.best.npc-best:before{border:0;box-shadow:none}
+
+/* A single player position draw; the other seat is implied. */
+#blind-dialog{max-width:350px;padding:25px 22px 20px;background:radial-gradient(ellipse at 50% 36%,#493357,#172640 63%,#0c1830);border:2px solid #e1ba71;box-shadow:inset 0 0 0 4px #26334a,0 20px 60px #000b}
+#blind-dialog h2{font-size:25px;letter-spacing:2px;margin:0 0 25px;color:#ffe5ad}
+.blind-single{display:flex;justify-content:center;align-items:center;height:144px}
+.blind-single .draw-chip{width:116px;height:116px;font-size:40px;border-width:10px;box-shadow:0 0 0 3px #bd914d,0 7px #0d1931,0 10px #b88f4e,0 15px 24px #0006,0 0 30px #e8c47733}
+#blind-name{display:block;font-size:23px;letter-spacing:1px;color:#ffdfa0;margin-top:21px;min-height:30px}
+#blind-dialog[data-draw='drawing'] #blind-name{font-size:15px;letter-spacing:1px}
+#blind-result{font-size:12px;line-height:19px;min-height:38px;margin:7px 0 0;color:#f5e5c5}
+#blind-dialog .blind-odds{margin:15px 0 0;border-radius:8px;border-color:#c7a16066}
+#blind-dialog .blind-odds span{font-size:9px;letter-spacing:.5px;padding:9px 2px;color:#deebf5;background:#264d76}
+#blind-dialog .blind-odds span+span{background:#80562b;color:#fff0d1}
+#blind-dialog .blind-odds b{display:block;margin-top:3px;font-size:17px}
+#blind-dialog[data-draw='revealed'] .blind-odds{opacity:.65}
+
+/* Original poker backs form a compact, tangible deck. */
+.deck-button{top:515px;right:9px;width:59px;height:66px;isolation:isolate;filter:none}
+.deck-button:before,.deck-button:after{content:'';position:absolute;width:39px;height:50px;border:1px solid #e6c98c;border-radius:5px;background:url('../assets/cards/back-blue.png') center/100% 100%;box-shadow:0 2px #d5c09b,0 4px #334461,0 6px #d4bf9e,0 8px 8px #120b23a6}
+.deck-button:before{left:7px;top:8px;transform:rotate(4deg);z-index:0}
+.deck-button:after{left:10px;top:5px;transform:rotate(10deg);z-index:1}
+.deck-button img{position:absolute;left:13px;top:2px;width:39px;height:50px;object-fit:fill;border-radius:5px;transform:rotate(16deg);border:1px solid #ffe4a3;box-shadow:0 2px 4px #13203b88;z-index:2}
+.deck-button span{left:3px;right:0;bottom:0;min-width:0;height:17px;font-size:9px;line-height:15px;border:1px solid #bca36e;border-radius:9px;background:linear-gradient(#294a68,#102641);color:#fff1c8;z-index:3;box-shadow:0 2px 4px #08091d99}
+
+/* Prize is centred on the table; stacks frame it from either side. */
+.pot-display{left:15px;right:15px;height:77px}
+.pot-summary,.pot{display:block;width:100%;height:77px}
+.pot-display:before{inset:4px 18px -3px;background:radial-gradient(ellipse at 50% 63%,#ffcf5d40,transparent 67%)}
+.pot-display:after{left:32px;right:54px;bottom:5px;height:30px;transform:rotate(-1deg);border-color:#eabd6677}
+.pot:before{inset:8px 80px 2px;background:radial-gradient(ellipse,#28081788,transparent 72%)}
+.pot>span:first-child,.game[data-state='idle'] .pot>span:first-child{left:110px;right:110px;top:1px;font-size:10px;line-height:14px;letter-spacing:3px;z-index:3}
+.pot strong,.game[data-state='idle'] .pot strong{left:117px;right:117px;top:17px;font-size:46px;line-height:51px;color:#fff0b2;z-index:3;text-shadow:0 2px #b6742c,0 3px #754621,0 6px 6px #210b18,0 0 15px #efb7495c}
+.pot strong.compact-amount{font-size:28px}
+.pot-inspect{right:103px;top:0;font-size:11px}
+#pot-chips{left:0;bottom:1px;width:100%;height:67px;transform:none;filter:drop-shadow(0 5px 3px #200b14a6)}
+#pot-chips .chip-stack{position:absolute;left:auto;right:auto;bottom:0;width:34px;height:52px;margin:0;transform:none}
+#pot-chips .chip-stack-1{left:22px;bottom:5px;z-index:3;transform:rotate(-8deg)}
+#pot-chips .chip-stack-2{left:49px;bottom:15px;z-index:1;transform:rotate(7deg)}
+#pot-chips .chip-stack-3{right:86px;bottom:12px;z-index:1;transform:rotate(-6deg)}
+#pot-chips .chip-stack-4{right:60px;bottom:2px;z-index:3;transform:rotate(8deg)}
+#pot-chips .chip-stack-5{left:80px;bottom:0;z-index:4;transform:rotate(-4deg) scale(.84);transform-origin:bottom center}
+#pot-chips .casino-chip{--chip-body:#274c92;--chip-dark:#102246;position:absolute;width:34px;height:16px;left:0;bottom:calc(var(--chip-index,0)*4px);border:1px solid #e8d099;border-radius:50%;background:repeating-conic-gradient(from 8deg,#fff0c7 0deg 15deg,var(--chip-body) 15deg 55deg,#fff0c7 55deg 70deg,var(--chip-body) 70deg 120deg);box-shadow:0 2px 0 var(--chip-dark),0 3px 0 #d2b678,0 4px 1px #0e152d}
+#pot-chips .casino-chip:after{content:'';position:absolute;inset:3px 6px;border:1px solid #eedaa988;border-radius:50%;background:radial-gradient(ellipse at 40% 25%,#a5c3e2,var(--chip-body) 53%,var(--chip-dark));box-shadow:0 1px 1px #05132388}
+#pot-chips .chip-stack-2 .casino-chip,#pot-chips .chip-stack-4 .casino-chip{--chip-body:#ae384d;--chip-dark:#5c1e34}
+#pot-chips .chip-stack-5 .casino-chip{--chip-body:#d4a14f;--chip-dark:#80532a}
+
+/* Slot-style result card. Hero amount is the real payout, net remains labelled. */
+#result-dialog{width:min(380px,calc(100vw - 24px));max-height:calc(100dvh - 32px);padding:18px 20px 13px;text-align:center;border:2px solid #cda15b;border-radius:24px;background:radial-gradient(ellipse at 50% 22%,#663750 0,#281b36 46%,#11182b 80%);box-shadow:inset 0 0 0 4px #221d32,inset 0 0 0 5px #dbb3714d,0 0 40px #ffd16d26,0 25px 80px #000b;overflow-x:hidden;overflow-y:auto;isolation:isolate}
+#result-dialog::backdrop{background:#080918a6;backdrop-filter:blur(3px)}
+#result-dialog .dialog-close{right:12px;top:12px;z-index:5;background:#20162ed9;border:1px solid #d2ac6966;color:#efd9b0}
+.result-hero{position:relative;padding:2px 0 8px;isolation:isolate}
+.result-hero:before{content:'';position:absolute;inset:-40px -65px -10px;z-index:-1;background:repeating-conic-gradient(from 4deg at 50% 53%,#f3c56312 0deg 7deg,transparent 7deg 24deg);mask-image:radial-gradient(ellipse,#000 15%,transparent 70%);pointer-events:none}
+.result-crown{display:grid;place-items:center;width:54px;height:44px;margin:0 auto 5px;font:bold 41px/44px Georgia;color:#ffe499;text-shadow:0 2px #b56a2f,0 4px #64332a,0 0 20px #ffbf5777}
+#result-kicker{font-size:9px;letter-spacing:2px;color:#d8b7ad;margin:0 0 9px}
+#result-title{font:900 48px/.95 'Arial Black',Impact,var(--font);letter-spacing:-1px;margin:9px -5px 16px;color:#ffe5a2;text-shadow:0 1px #fffbd1,0 3px #dc9846,0 5px #a7602e,0 8px #582c26,0 10px 10px #0a091ccc;-webkit-text-stroke:.6px #fbd279;transform:rotate(-3deg)}
+.result-award{position:relative;margin:0 -7px;padding:10px 6px 12px;border-top:1px solid #f1c98055;border-bottom:1px solid #f1c98055;background:radial-gradient(ellipse,#edab3836,transparent 70%)}
+.result-award small{display:block;font-size:10px;font-weight:800;letter-spacing:3px;color:#efcb8f}
+#result-award-value{display:block;font:900 clamp(44px,15vw,68px)/1.2 'Arial Black',var(--font);font-variant-numeric:tabular-nums;letter-spacing:-2px;color:#fff0b1;text-shadow:0 2px #e2aa58,0 4px #b2762e,0 6px #674026,0 9px 9px #140c21,0 0 22px #ffca5766;white-space:nowrap}
+#result-award-value.compact{font-size:42px;letter-spacing:-1px}
+#result-profit{display:inline-flex;align-items:center;gap:9px;margin:12px 0 4px;padding:5px 11px;border:1px solid #d5b77255;border-radius:14px;background:#20182799;font-size:16px;line-height:20px;color:#fff1c1}
+#result-profit:before{content:'NET RESULT';font-size:8px;letter-spacing:1px;color:#cdbbca;display:inline-block;margin:0}
+#result-profit.negative{color:#f0a0a7}
+#result-reason{font-size:11px;line-height:17px;margin:6px 0 0;color:#dbc9d7}
+#result-dialog .result-overview{grid-template-columns:repeat(auto-fit,minmax(75px,1fr));margin:8px 0 2px;gap:8px}
+#result-dialog .result-overview>div{flex-direction:row;flex-wrap:wrap;justify-content:center;padding:7px 4px;background:#130f2266;border-color:#b9996340}
+#result-dialog .result-overview .ui-icon{display:none}
+#result-dialog .result-overview small{width:100%;font-size:8px;letter-spacing:1px}
+#result-dialog .result-overview b{font-size:18px}
+.result-hand-details>summary,#result-dialog .result-accounting>summary{display:flex;justify-content:space-between;align-items:center;padding:10px 2px;font-size:10px;color:#cbb5cf;border-bottom:1px solid #bba3742b;list-style:none;cursor:pointer}
+.result-hand-details>summary::-webkit-details-marker{display:none}
+#result-dialog .result-hands{margin:12px 0;gap:12px}
+#result-dialog #result-note{display:none}
+#result-dialog #next-hand{margin:15px 0 3px;min-height:56px;padding:11px 12px;font-size:22px;font-weight:900;letter-spacing:1px;border:2px solid #ffdda0;border-radius:13px;background:linear-gradient(#d94f58,#ab2440 54%,#771d37);color:#fff0cc;text-shadow:0 2px #76203c;box-shadow:inset 0 2px #ffbaa077,inset 0 -3px #681833,0 4px #5b3528,0 6px 8px #070819}
+#result-dialog #result-leave{font-size:10px;color:#bea8c3;margin:7px 0 0;padding:6px}
+#result-dialog[data-outcome='loss']{background:radial-gradient(ellipse at 50% 22%,#423246,#211b32 49%,#11182b 85%);border-color:#9d8394;box-shadow:inset 0 0 0 4px #201b2d,0 25px 80px #000b}
+#result-dialog[data-outcome='loss'] #result-title{font-size:34px;line-height:1.1;color:#e9c4d1;text-shadow:0 2px #8b577a,0 5px #3e2446,0 8px 8px #0a091ccc;-webkit-text-stroke:0;transform:none}
+#result-dialog[data-outcome='loss'] .result-crown{color:#c9a9c8;text-shadow:0 2px #6d477b}
+#result-dialog[data-outcome='loss'] #result-award-value{color:#dfcad6;font-size:55px;text-shadow:0 3px #6d4b62,0 6px 6px #110d21}
+#result-dialog[data-outcome='tie'] #result-title,#result-dialog[data-outcome='returned'] #result-title{font-size:35px;line-height:1.08;transform:none}
+#result-dialog[data-outcome='win'][open] .result-hero{animation:prize-enter .55s cubic-bezier(.2,.85,.3,1)}
+@keyframes prize-enter{from{opacity:0;transform:scale(.78) translateY(12px)}to{opacity:1;transform:scale(1) translateY(0)}}
+@media(prefers-reduced-motion:reduce){#result-dialog[data-outcome='win'][open] .result-hero{animation:none}}

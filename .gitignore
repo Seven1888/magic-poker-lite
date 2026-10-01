@@ -1,0 +1,36 @@
+node_modules/
+.playwright-cli/
+*.log
+
+# Local credentials and machine files
+.env
+.env.*
+!.env.example
+.DS_Store
+Thumbs.db
+
+# Generated QA, screenshots and simulations stay local.
+# The probability lab reads this one historical baseline at runtime.
+/output/*
+!/output/math-validation.json
+
+# Historical research and unused presentation files
+/docs/01-existing-games.md
+/docs/02-game-concepts.md
+/docs/03-market-bridge.md
+/styles/fantasy.css
+
+# Unused art drafts; keep assets referenced by the loaded stylesheets.
+/assets/masked-*
+/assets/duel-scene-v7.*
+/assets/duel-scene-v8.*
+/assets/duel-scene-v9.*
+/assets/duel-scene-v2.prompt.txt
+/assets/duel-scene-v4.prompt.txt
+/assets/duel-scene-v5.prompt.txt
+/assets/duel-scene-v10.prompt.txt
+/assets/duel-scene-v14.prompts.txt
+/assets/legacy/original-scene-s3.jpg
+/assets/legacy/original-table.png
+/assets/legacy/buff-panel.png
+/assets/legacy/round-panel.png

@@ -1,0 +1,68 @@
+/* Feature-first entrance. Fixed controls stay below all three illustrated pages. */
+#buyin-dialog{width:384px;padding:17px 18px 10px;max-height:calc(100dvh - 24px);background:radial-gradient(ellipse at 50% 10%,#463758,#19263e 55%,#101a30);scrollbar-width:thin;scrollbar-color:#af915a #16233a}
+#buyin-dialog .entry-brand{display:block;text-align:center;font-size:9px;letter-spacing:2.2px;color:#bca7aa;margin:0 28px 2px}
+#buyin-dialog #entry-title{font:900 25px/32px 'Arial Black',var(--font);letter-spacing:1px;margin:0 20px 9px;color:#ffe3a0;text-shadow:0 2px #9b643b,0 4px #392435}
+#buyin-dialog .dialog-close{top:10px;right:10px;width:29px;height:29px;font-size:22px}
+.entry-features{border:1px solid #c1a47777;border-radius:15px;overflow:hidden;background:linear-gradient(#122541,#151b32);box-shadow:inset 0 0 0 3px #09182a55}
+.feature-page[hidden],.feature-jp-tiers[hidden]{display:none!important}
+.feature-page{min-height:245px;text-align:center}
+.feature-art{height:167px;position:relative;overflow:hidden;background:radial-gradient(ellipse at 50% 50%,#554266,#131d36 75%)}
+.feature-page h3{font:900 21px/26px 'Arial Black',var(--font);color:#ffe4aa;margin:8px 3px 3px;letter-spacing:.2px;text-shadow:0 2px #563b32}
+#buyin-dialog .feature-page p{font-size:11px;line-height:15px;color:#d4dced;margin:0 8px 10px}
+.feature-boss{position:absolute;inset:0;background:url('../assets/duel-scene-v15-hold-neutral.png') center -8px/310px 620px;mask-image:linear-gradient(#000 75%,transparent)}
+.feature-seat{position:absolute;top:11px;left:12px;display:flex;flex-direction:column;gap:1px;color:#eee2c2;font-size:10px;font-weight:800;letter-spacing:1px;text-shadow:0 2px 4px #000}
+.feature-seat b{font:italic 900 26px Georgia;color:#ffc985}
+.feature-boss-cards{position:absolute;top:100px;left:calc(50% - 39px);width:78px;height:46px;display:flex;gap:2px;justify-content:center}
+.feature-boss-cards img{width:33px;height:43px;border-radius:3px;transform:rotate(-9deg);filter:drop-shadow(0 2px 3px #081227)}
+.feature-boss-cards img+img{transform:rotate(9deg)}
+.feature-odds{position:absolute;left:35px;right:35px;bottom:17px;display:flex;height:32px;border:1px solid #ffe0a4;border-radius:5px;overflow:hidden;box-shadow:0 2px 6px #080d20}
+.feature-odds>span{width:70%;display:flex;flex-direction:column;justify-content:center;font-size:9px;line-height:12px;font-weight:900;color:#fff4dd;background:linear-gradient(#d76569,#ae303f)}
+.feature-odds>span+span{width:30%;background:linear-gradient(#9060c1,#58398b);border-left:1px solid #ecbdd577}
+.feature-odds b{font-size:13px;line-height:13px}
+.feature-example{position:absolute;bottom:3px;left:0;right:0;font-size:7px;letter-spacing:1px;color:#acbdd4}
+.feature-hole{position:absolute;left:13px;top:26px;display:flex;gap:4px;width:82px;justify-content:center}
+.feature-hole img{width:37px;height:auto;aspect-ratio:220/283;border-radius:3px}
+.feature-hole span{position:absolute;top:61px;white-space:nowrap;font-size:9px;letter-spacing:1px;color:#f8d990}
+.feature-plus{position:absolute;left:99px;top:38px;font-size:22px;color:#caac78}
+.feature-shared{position:absolute;left:124px;right:10px;top:17px;height:104px;padding:10px 6px;background:linear-gradient(#6b1b36,#361b32);border:1px solid #d7ac6c77;border-radius:9px}
+.feature-shared small{display:block;font-size:8px;letter-spacing:.6px;color:#f4d3af;margin-bottom:10px}
+.feature-shared>div{display:flex;gap:3px;justify-content:center;align-items:center}
+.feature-shared img{width:calc((100% - 12px)/5);min-width:0;aspect-ratio:220/283;border-radius:2px}
+.feature-best{outline:1px solid #fff6bd;box-shadow:0 0 0 2px #eabd50,0 0 9px #ffbc5c99}
+.feature-streets{position:absolute;bottom:12px;left:11px;right:11px;display:flex;justify-content:space-evenly;align-items:center;color:#e9d19c;font-size:8px;font-weight:800;letter-spacing:.2px}
+.feature-streets i{font:15px Georgia;color:#a18b79}
+.feature-jackpot{background:radial-gradient(ellipse at 50% 65%,#76513555,#241e3d 58%,#141c33)}
+.feature-royal{display:flex;justify-content:center;gap:3px;position:absolute;left:0;right:0;top:16px}
+.feature-royal img{width:36px;aspect-ratio:220/283;border-radius:3px;box-shadow:0 2px 6px #080a27;transform:rotate(-12deg) translateY(5px)}
+.feature-royal img:nth-child(2){transform:rotate(-6deg) translateY(1px)}
+.feature-royal img:nth-child(3){transform:none}
+.feature-royal img:nth-child(4){transform:rotate(6deg) translateY(1px)}
+.feature-royal img:nth-child(5){transform:rotate(12deg) translateY(5px)}
+.feature-jp-label{position:absolute;top:77px;left:0;right:0;color:#ead090;font-size:9px;font-weight:800;letter-spacing:1px}
+#entry-jp-award{position:absolute;top:87px;left:0;right:0;font:900 37px/44px 'Arial Black',var(--font);color:#ffe8a2;text-shadow:0 2px #d2a255,0 4px #6f462a,0 0 18px #ffb85466;font-variant-numeric:tabular-nums}
+.feature-jp-tiers{position:absolute;bottom:7px;left:10px;right:10px;display:flex;justify-content:center;gap:16px;color:#b8c6e0;font-size:7px}
+.feature-jp-tiers b{color:#f6d591;font-size:10px;margin-left:3px}
+.entry-feature-nav{display:flex;align-items:center;justify-content:center;gap:22px;height:34px}
+.entry-feature-nav>button{width:38px;height:31px;background:transparent;font:27px/29px Georgia;color:#efcc8f;border:0;padding:0}
+.entry-feature-nav>div{display:flex;gap:7px}
+.entry-feature-nav [data-feature]{width:22px;height:26px;border:0;padding:0;background:transparent;position:relative}
+.entry-feature-nav [data-feature]:after{content:'';position:absolute;top:9px;left:7px;width:8px;height:8px;border-radius:50%;background:#4d5a73;border:1px solid #968879}
+.entry-feature-nav [aria-current='true']:after{background:#ffe1a0;border-color:#ffeabc;box-shadow:0 0 8px #e3b86b88}
+#buyin-dialog .entry-bet-label{margin-top:2px;border-top:1px solid #e3c38133;padding-top:10px}
+#buyin-dialog .entry-bet-label label{font-size:12px}
+#buyin-dialog .entry-bet-picker{margin:2px 0 8px;gap:22px}
+#buyin-dialog #entry-bet{height:43px;font-size:32px;line-height:39px}
+#buyin-dialog .entry-bet-picker button{width:39px;height:39px}
+#buyin-dialog .entry-bet-presets{grid-template-columns:repeat(6,minmax(0,1fr));gap:5px;margin-bottom:11px}
+#buyin-dialog .entry-bet-presets button{height:34px;border-radius:8px;border-width:1px;padding:2px}
+#buyin-dialog .entry-bet-presets strong{font-size:14px;line-height:23px}
+#buyin-dialog .entry-bet-chip{display:none}
+#buyin-dialog .entry-bet-presets button.selected:after{width:13px;height:13px;font-size:9px;line-height:10px;border-width:1px;right:-2px;top:-4px}
+#buyin-dialog .entry-funds{padding:7px 0;border-radius:7px;background:#0a16284d;gap:4px}
+#buyin-dialog .entry-funds small{font-size:8px;letter-spacing:.7px;line-height:13px}
+#buyin-dialog .entry-funds strong{font-size:17px;line-height:20px}
+.entry-start-hint{text-align:center;color:#d9c8a7;font-size:8px;font-weight:700;letter-spacing:.8px;margin-top:11px}
+#buyin-dialog .entry-start{margin:6px 0 4px;min-height:56px;font-size:26px;line-height:28px;padding:9px 35px 11px;border-width:2px;border-radius:14px;background:linear-gradient(#e15c65,#b52c45 55%,#761c36);box-shadow:inset 0 2px #ffd5a488,inset 0 -3px #681932,0 4px #674228,0 7px 11px #060b22;text-shadow:0 2px #73162d}
+#buyin-dialog .entry-start:focus-visible{outline:2px solid #fff3cb;outline-offset:3px}
+#buyin-dialog .entry-details summary{padding:7px 5px 2px;font-size:9px}
+@media(max-width:359px){#buyin-dialog{padding:15px 12px 9px}.feature-page{min-height:235px}.feature-art{height:157px}.feature-page h3{font-size:19px}.feature-hole{left:9px;width:71px}.feature-hole img{width:32px}.feature-plus{left:87px}.feature-shared{left:109px;right:8px;padding-left:5px;padding-right:5px}.feature-hole span{top:55px}.feature-jp-tiers{gap:10px}.feature-jp-tiers span{font-size:6px}.feature-jp-label{font-size:8px}.feature-royal{top:10px}#entry-jp-award{top:79px}.feature-jp-label{top:69px}}

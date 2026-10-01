@@ -1,0 +1,5 @@
+Use case: precise-object-edit. Asset type: 887 x 1774 full-scene portrait game background.
+Image 1 is the EDIT TARGET: the new neutral monster holding-pose background. Image 2 is ONLY a mouth-expression reference from the older background.
+Make a tiny localized mouth edit only, within the existing mouth region around x400–540,y228–272. Keep Image 1 pixel-aligned: preserve its exact two bent arms and two pinching hands in front of its chest, including all fingertips and silhouettes; do not restore the old table-edge hands from Image 2. Preserve eyes, ears, face outline, body, texture, camera, table, hall, lighting, and every other element.
+Do not draw cards, transparent cards, outlines, text, UI, or extra fingers/hands. The cards are supplied dynamically by the game.
+Replace only the slightly open two-tooth neutral mouth in Image 1 with the small closed, upward-cornered smile curve in Image 2. No visible teeth, no tongue, no open mouth. Keep the rest of Image 1 unchanged. Opaque image; retain exact 887 x 1774 canvas.

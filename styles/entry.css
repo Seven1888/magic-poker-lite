@@ -1,0 +1,127 @@
+/* BET entry only. Assets and minimum funding come from the game controller. */
+#buyin-dialog {
+  width: 374px; max-width: calc(100vw - 24px); max-height: calc(100svh - 24px);
+  padding: 22px 20px 12px; border: 3px solid #dbb878; border-radius: 25px;
+  background: radial-gradient(ellipse at 50% 18%, #365272 0, #182b46 42%, #101c34 83%);
+  box-shadow: inset 0 0 0 3px #412d1f, inset 0 0 0 5px #a77b43, 0 20px 70px #000d;
+  overflow: auto;
+}
+#buyin-dialog::backdrop { background: #020814c9; backdrop-filter: blur(7px); }
+#buyin-dialog #buyin-form { margin: 0; }
+#buyin-dialog .dialog-close {
+  width: 31px; height: 31px; top: 12px; right: 12px; border-radius: 50%;
+  border: 2px solid #dbb779; background: linear-gradient(#5d89a1, #244966 50%, #142e4d);
+  color: #fff0cc; line-height: 25px; box-shadow: 0 2px 0 #07162d, inset 0 1px #c1d0d3;
+}
+#buyin-dialog #entry-title {
+  margin: 0 27px 6px; text-align: center; font-size: 25px; font-weight: 900;
+  letter-spacing: 3px; line-height: 37px; color: #ffe8b3;
+  text-shadow: 0 2px #5a3c25, 0 3px 4px #040a15;
+}
+#buyin-dialog .entry-tableau { position: relative; height: 129px; isolation: isolate; }
+#buyin-dialog .entry-felt {
+  position: absolute; left: 11px; right: 11px; bottom: 4px; height: 66px; z-index: -1;
+  border: 4px solid #bc8647; border-bottom-width: 8px; border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 22%, #d22936, #9e172c 64%, #661124);
+  box-shadow: inset 0 0 0 2px #f7ce8d, inset 0 0 0 5px #591d24, inset 0 0 20px #370c20,
+    0 4px 0 #4b2b1e, 0 6px 0 #d1a15c, 0 13px 9px #060d2088;
+}
+#buyin-dialog .entry-card-fan { position: absolute; width: 105px; height: 106px; top: 4px; left: calc(50% - 53px); }
+#buyin-dialog .entry-card-fan img {
+  position: absolute; left: 3px; width: 63px; height: 81px; border-radius: 6px;
+  transform: rotate(-15deg); box-shadow: 0 4px 7px #071329a6;
+}
+#buyin-dialog .entry-card-fan img + img { left: 40px; top: 2px; transform: rotate(16deg); }
+#buyin-dialog .entry-chip-pile { position: relative; width: 92px; height: 49px; filter: drop-shadow(0 5px 2px #24050f99); }
+#buyin-dialog .entry-main-pile { position: absolute; left: calc(50% - 46px); bottom: 17px; transform: scale(1.2); transform-origin: center bottom; }
+#buyin-dialog .entry-chip-pile > span { position: absolute; width: 35px; bottom: 4px; left: 0; }
+#buyin-dialog .entry-chip-pile > span:nth-child(2) { left: 27px; bottom: 8px; z-index: 1; }
+#buyin-dialog .entry-chip-pile > span:nth-child(3) { left: 56px; bottom: 0; z-index: 2; }
+#buyin-dialog .entry-chip-pile i {
+  display: block; width: 35px; height: 13px; margin-top: -8px; border: 1px solid #c4984d;
+  border-radius: 50%; background: repeating-conic-gradient(from 15deg, #efdbaa 0deg 24deg, #386c9b 25deg 70deg, #e9d19d 71deg 84deg);
+  box-shadow: 0 3px 0 #102a48, 0 4px 0 #d2ae69, inset 0 0 0 3px #31577c, inset 0 0 0 4px #c4d2d4;
+  position: relative;
+}
+#buyin-dialog .entry-chip-pile > span:nth-child(2) i {
+  background: repeating-conic-gradient(from 15deg, #fff0bb 0deg 24deg, #b7772b 25deg 70deg, #f6da96 71deg 84deg);
+  box-shadow: 0 3px 0 #825024, 0 4px 0 #e1b264, inset 0 0 0 3px #c68c36, inset 0 0 0 4px #ffe2a0;
+}
+#buyin-dialog .entry-bet-label { display: flex; justify-content: center; gap: 10px; align-items: baseline; margin-top: 12px; }
+#buyin-dialog .entry-bet-label label { font-size: 11px; font-weight: 800; color: #ead5ac; letter-spacing: 1px; }
+#buyin-dialog #entry-blinds { font-size: 10px; color: #9fb3ce; font-variant-numeric: tabular-nums; }
+#buyin-dialog .entry-bet-picker { display: flex; align-items: center; justify-content: center; gap: 13px; margin: 3px 0 13px; }
+#buyin-dialog .entry-bet-picker button {
+  width: 39px; height: 39px; padding: 0; border: 2px solid #d7b778; border-radius: 50%;
+  background: linear-gradient(#467fa4, #224869 57%, #102a4c); color: #fff0ca;
+  font: 700 29px/34px var(--font); box-shadow: inset 0 1px #b9d2e2, 0 3px #081326;
+}
+#buyin-dialog .entry-bet-picker button:disabled { opacity: .38; filter: grayscale(.5); }
+#buyin-dialog #entry-bet {
+  appearance: textfield; width: 150px; min-width: 0; height: 49px; padding: 3px 4px;
+  border: 0; border-bottom: 1px solid #bd945849; border-radius: 0; background: transparent;
+  color: #fff1b6; font-size: 37px; font-weight: 900; line-height: 43px; text-align: center;
+  font-variant-numeric: tabular-nums; text-shadow: 0 2px #624621; box-shadow: none;
+}
+#buyin-dialog #entry-bet::-webkit-inner-spin-button,
+#buyin-dialog #entry-bet::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+#buyin-dialog .entry-bet-presets { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 0 0 16px; }
+#buyin-dialog .entry-bet-presets button {
+  position: relative; min-width: 0; height: 46px; border: 2px solid #73869d; border-radius: 13px;
+  padding: 4px; color: #e1e6eb; background: linear-gradient(#365570, #162d4d 70%, #0a1d36);
+  box-shadow: inset 0 1px #abc6d966, 0 3px 0 #061024; display: flex; align-items: center;
+  justify-content: center; gap: 5px; transition: border-color .14s, filter .14s, translate .14s;
+}
+#buyin-dialog .entry-bet-presets button.selected {
+  border-color: #ffe1a0; color: #fff0c4; background: linear-gradient(#548da0, #2d5969 70%, #193e52);
+  box-shadow: inset 0 0 0 1px #b38b49, 0 3px 0 #74502d, 0 0 15px #f3c87520;
+}
+#buyin-dialog .entry-bet-presets button.selected:after {
+  content: '✓'; position: absolute; right: -5px; top: -6px; width: 19px; height: 19px; border: 2px solid #ffdda0;
+  border-radius: 50%; background: #be8d42; color: #17263a; font-size: 12px; font-weight: 900; line-height: 14px;
+}
+#buyin-dialog .entry-bet-presets button:active { translate: 0 2px; }
+#buyin-dialog .entry-bet-chip {
+  display: block; flex: none; width: 17px; height: 17px; border-radius: 50%; border: 1px solid #e1ba77;
+  background: repeating-conic-gradient(#e8d298 0deg 15deg, #59889e 16deg 65deg);
+  box-shadow: inset 0 0 0 3px #254b69, inset 0 0 0 4px #a3c1c6, 0 2px #081629;
+}
+#buyin-dialog .entry-bet-presets strong { min-width: 0; font-size: 19px; font-weight: 900; line-height: 25px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+#buyin-dialog .entry-funds { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; margin: 0 1px; }
+#buyin-dialog .entry-funds > div { display: flex; gap: 8px; align-items: center; justify-content: center; min-width: 0; }
+#buyin-dialog .entry-funds > div + div { border-left: 1px solid #a7b4c233; }
+#buyin-dialog .entry-funds small { display: block; color: #b0bed0; font-size: 10px; line-height: 16px; }
+#buyin-dialog .entry-funds strong { display: block; color: #f2d9a9; font-size: 18px; font-weight: 800; line-height: 23px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+#buyin-dialog .entry-wallet { position: relative; flex: none; width: 28px; height: 23px; border: 1px solid #f3dca8; border-radius: 5px; background: linear-gradient(#deb976, #967042); box-shadow: inset 0 2px #ffe2a5, 0 3px #070f20; }
+#buyin-dialog .entry-wallet:after { content: '•'; position: absolute; width: 13px; height: 11px; right: -3px; top: 7px; background: #c29250; border: 1px solid #fff0b8; border-radius: 3px; color: #ffecc3; font-size: 15px; line-height: 7px; text-align: center; }
+#buyin-dialog .entry-minimum-icon { position: relative; flex: none; width: 24px; height: 28px; }
+#buyin-dialog .entry-minimum-icon:before { content: ''; position: absolute; bottom: 0; left: 1px; width: 21px; height: 10px; border: 1px solid #f3d393; border-radius: 50%; background: #dab06e; box-shadow: 0 -4px #8d652f, 0 -5px #ecc685, 0 -9px #8d652f, 0 -10px #ecc685, 0 -14px #8d652f, 0 -15px #ecc685; }
+#buyin-dialog #buyin-error { color: #ffc0be; font-size: 11px; line-height: 16px; text-align: center; margin: 8px 0 4px; }
+#buyin-dialog #buyin-error:empty { display: none; }
+#buyin-dialog .entry-start {
+  position: relative; width: 100%; min-height: 62px; margin: 17px 0 6px; padding: 10px 38px 13px;
+  border: 3px solid #e8c386; border-radius: 20px; background: linear-gradient(#9ac57e 0%, #5a9b50 32%, #36773c 58%, #225430 100%);
+  box-shadow: inset 0 2px #d6edb0, inset 0 -4px #143d29, 0 4px 0 #654324, 0 7px 12px #030d2399;
+  color: #fff3d3; font-size: 25px; font-weight: 900; letter-spacing: 2px; line-height: 30px;
+  text-shadow: 0 2px 1px #21492e; transition: filter .14s, translate .14s;
+}
+#buyin-dialog .entry-start:before { content: ''; position: absolute; inset: 4px 12px auto; height: 17px; border-radius: 12px 12px 50% 50%; background: linear-gradient(#f0ffc657, transparent); pointer-events: none; }
+#buyin-dialog .entry-start i { position: absolute; right: 20px; top: 10px; font-style: normal; font-size: 32px; line-height: 31px; }
+#buyin-dialog .entry-start:active:not(:disabled) { translate: 0 3px; }
+#buyin-dialog .entry-start:disabled { opacity: .55; filter: grayscale(.5); }
+#buyin-dialog .entry-details { padding: 0 1px; color: #a4b4c9; font-size: 10px; }
+#buyin-dialog .entry-details summary { display: flex; align-items: center; justify-content: center; gap: 7px; padding: 10px 5px 3px; list-style: none; cursor: pointer; }
+#buyin-dialog .entry-details summary::-webkit-details-marker { display: none; }
+#buyin-dialog .entry-details summary span { font-size: 15px; line-height: 12px; transition: transform .15s; }
+#buyin-dialog .entry-details[open] summary span { transform: rotate(180deg); }
+#buyin-dialog .entry-details[open] summary { margin-bottom: 7px; }
+#buyin-dialog #fee-notice { display: block; text-align: center; color: #aebfd3; font-size: 10px; line-height: 18px; margin: 0; }
+@media (max-width: 359px) {
+  #buyin-dialog { padding-left: 15px; padding-right: 15px; }
+  #buyin-dialog .entry-bet-presets { gap: 7px; }
+  #buyin-dialog #entry-bet { width: 124px; }
+  #buyin-dialog .entry-funds { gap: 8px; }
+  #buyin-dialog .entry-funds > div { gap: 6px; }
+  #buyin-dialog .entry-funds strong { font-size: 16px; }
+}
+@media (prefers-reduced-motion: reduce) { #buyin-dialog button, #buyin-dialog .entry-details summary span { transition: none; } }

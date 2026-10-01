@@ -1,0 +1,100 @@
+/* HUD v4: minimal table, centered opponent cards, Boss Duel action / wallet layout.
+   The stage stays 400 × 860. All original games remain read-only. */
+[hidden]{display:none!important}
+body:before{background-image:linear-gradient(#030818bb,#030818e8),url('../assets/duel-scene-v4.png')}
+.topbar{height:57px;justify-content:flex-end;padding:0 13px;background:none;pointer-events:none}
+.icon-button{pointer-events:auto;width:34px;height:34px;border-radius:6px;border:1px solid #e8bf6a;background:linear-gradient(#3e759a,#173b65 52%,#0d254a);box-shadow:inset 0 0 0 2px #092044,0 3px 5px #0008;font-size:24px;font-weight:400;line-height:30px}
+/* Display-only Jackpot. Original card / atlas assets; no payout or RNG coupling. */
+.jackpot-badge{position:absolute;top:6px;left:5px;width:128px;height:94px;z-index:6;pointer-events:none;user-select:none;text-align:center;filter:drop-shadow(0 3px 4px #020719b3)}
+.jackpot-fan{position:absolute;inset:2px 0 auto;height:50px}
+.jackpot-fan img{position:absolute;left:48px;top:5px;width:29px;height:38px;border-radius:3px;transform-origin:50% 105%;box-shadow:0 1px 2px #040b20b3}
+.jackpot-fan img:nth-child(1){transform:translateX(-20px) rotate(-29deg)}
+.jackpot-fan img:nth-child(2){transform:translateX(-10px) rotate(-15deg)}
+.jackpot-fan img:nth-child(3){transform:translateY(-3px)}
+.jackpot-fan img:nth-child(4){transform:translateX(10px) rotate(15deg)}
+.jackpot-fan img:nth-child(5){transform:translateX(20px) rotate(29deg)}
+.jackpot-plaque{position:absolute;left:0;top:45px;width:128px;height:43px;background:url('../assets/legacy/original-ui-atlas.png') 0 -158px/182px 246px no-repeat}
+.jackpot-title{position:absolute;left:0;right:0;top:35px;color:#ffda63;font:900 22px/25px 'Arial Black','Segoe UI',sans-serif;letter-spacing:-.6px;-webkit-text-stroke:.55px #61380f;text-shadow:0 2px #5b2d10,0 3px #27130c,1px 0 #fff0b2,-1px 0 #fff0b2}
+.jackpot-amount{position:absolute;left:0;right:0;top:58px;color:#fff1a6;font:900 21px/25px 'Segoe UI',sans-serif;letter-spacing:.3px;text-shadow:0 2px 1px #06214b,1px 0 #06214b,-1px 0 #06214b;font-variant-numeric:tabular-nums}
+.jackpot-demo{position:absolute;left:0;right:0;top:87px;color:#e2cc9a;font:700 7px/7px 'Segoe UI',sans-serif;letter-spacing:1px;text-shadow:0 1px 2px #000}
+.jackpot-glint{position:absolute;width:13px;height:13px;top:47px;left:113px;background:#fff7d0;clip-path:polygon(50% 0,60% 39%,100% 50%,60% 60%,50% 100%,40% 60%,0 50%,40% 40%);filter:drop-shadow(0 0 3px #ffe699);animation:jackpot-sparkle 4.8s ease-in-out infinite}
+@keyframes jackpot-sparkle{0%,38%,66%,100%{opacity:0;transform:scale(.5)}49%,55%{opacity:1;transform:scale(1)}}
+@media(prefers-reduced-motion:reduce){.jackpot-glint{animation:none;opacity:.6}}
+.opponent{top:0;height:350px;pointer-events:none;z-index:4}
+.npc-cards{position:absolute;left:50%;right:auto;top:268px;bottom:auto;display:flex;gap:4px;width:max-content;transform:translateX(-50%);filter:drop-shadow(0 9px 5px #190e2588);animation:npc-card-breathe 4s ease-in-out infinite;will-change:translate}
+.npc-cards .card{width:67px;height:90px;border-radius:6px}
+.npc-cards .card:first-child{transform:rotate(-8deg) translateY(2px)}
+.npc-cards .card:last-child{transform:rotate(8deg) translateY(2px)}
+.game[data-npc-state='thinking'] .npc-cards{animation:npc-card-thinking 1.15s ease-in-out infinite;filter:drop-shadow(0 0 10px #64b9ff77)}
+.game[data-state='settled'] .npc-cards{animation:none}
+@keyframes npc-card-breathe{0%,100%{translate:0 0}50%{translate:0 -3px}}
+@keyframes npc-card-thinking{0%,100%{translate:0 -2px}50%{translate:0 -7px}}
+.deck-button{position:absolute;left:auto;right:15px;top:310px;width:76px;height:61px;padding:0;background:none;color:#f9e5b8;z-index:5;filter:drop-shadow(0 5px 3px #0008)}
+.deck-button img{width:70px;height:50px;object-fit:contain;display:block;margin:0 auto}
+.deck-button span{position:absolute;bottom:0;left:4px;right:4px;border:1px solid #97b9ce88;border-radius:10px;background:linear-gradient(#27496d,#112746);font-size:9px;padding:1px 5px;box-shadow:inset 0 0 0 1px #091529}
+.deck-button b{font-size:11px;color:#fff;margin-left:5px;font-variant-numeric:tabular-nums}
+.deck-button:disabled{opacity:.85}
+.felt{top:374px;height:190px}
+.pot-display{left:16px;right:16px;height:84px}
+.pot-summary{display:flex;justify-content:center;height:76px}
+.pot{width:190px;height:76px}
+.pot strong{font-size:43px;line-height:1.02}
+.pot strong.compact-amount{font-size:29px;line-height:1.5}
+.pot>span:first-child{font-size:10px;letter-spacing:3px}
+.pot-inspect{right:calc(50% - 60px);top:-2px}
+#pot-chips{height:22px;margin-top:1px}
+#pot-event{top:71px;font-size:10px;line-height:14px}
+.game[data-state='playing'] #pot-event{width:1px;height:1px;clip:rect(0,0,0,0);overflow:hidden;white-space:nowrap}
+#pot-display[data-settled='true'] #pot-event{top:61px}
+#pot-display[data-settled='true'] #pot-detail{top:77px;font-size:9px}
+.game[data-state='idle'] .pot strong{font-size:43px;font-weight:700;line-height:1.02;letter-spacing:1px}
+.game[data-state='idle'] .pot>span:first-child{font-size:10px;letter-spacing:3px}
+.streets{top:95px;height:14px}
+.streets span{font-size:10px}
+.board{top:115px;height:80px;left:17px;right:17px;gap:7px}
+.board .card{width:62px;height:80px}
+.card.blank{border:1px solid #eac3874a;background:linear-gradient(#3e102526,#220a23a8);box-shadow:inset 0 0 10px #1808197a;color:#eacba75c}
+.response-panel{top:574px;left:16px;right:16px;width:auto;height:60px;padding:6px 13px 5px;background:linear-gradient(110deg,#1c3456f7,#0b1933fa);border-color:#d1af68;box-shadow:inset 0 0 0 2px #030d26,0 5px 8px #0006}
+.response-heading{font-size:11px}
+.response-heading>span:last-child{font-size:9px}
+.probability-legend{gap:12px;font-size:11px}
+.probability-track{height:12px}
+.probability-track:has(.empty-track){height:24px;background:#0713299c;box-shadow:inset 0 0 0 1px #aaa77928;border:0}
+.empty-track{font-size:10px;letter-spacing:.2px;line-height:16px;color:#c3cfe2;padding:3px}
+.game[data-state='idle'] .response-panel{visibility:hidden}
+.player-area{top:642px;height:89px;padding:0;min-height:0;max-height:none;pointer-events:none}
+.player-cards{top:0;gap:4px}
+.player-cards .card{width:64px;height:82px}
+.game[data-actor='player'][data-state='playing'] .player-area:before{content:'';position:absolute;width:160px;height:52px;left:120px;bottom:-3px;z-index:-1;background:radial-gradient(ellipse,#f7cf6660,transparent 70%);filter:blur(5px)}
+/* Same emphasis and colors as Boss Duel: green / large red / purple. */
+.controls{top:auto;bottom:43px;height:86px;padding:0 4px;margin:0;background:linear-gradient(transparent,#050b2160);isolation:isolate}
+.action-buttons{height:86px;min-height:0;display:grid;grid-template-columns:29% 42% 29%;gap:0;align-items:center}
+.action{position:relative;flex:none;width:100%;height:62px;min-height:0;padding:4px 1px 8px;gap:1px;border:0;border-radius:7px;background-size:100% 100%;font-size:20px;line-height:1.12;filter:drop-shadow(0 4px 4px #0009);text-shadow:0 2px 1px #182014,1px 0 #22321b,-1px 0 #22321b;transition:filter .15s,translate .15s}
+.action-name{display:block;letter-spacing:1px}
+.action .action-cost{font-size:14px;font-weight:800;line-height:17px;letter-spacing:0;font-variant-numeric:tabular-nums}
+.action.fold{background:transparent url('../assets/legacy/button-green.png') center/100% 100% no-repeat;color:#fff3d2;filter:drop-shadow(0 4px 4px #0009)}
+.action.raise,.action.bet{background:transparent url('../assets/legacy/button-purple.png') center/100% 100% no-repeat;text-shadow:0 2px 1px #401839,1px 0 #401839,-1px 0 #401839}
+.action.call,.action.check,.round-cta .action{height:86px;background:transparent url('../assets/legacy/button-red.png') center/100% 100% no-repeat;font-size:25px;gap:2px;padding:7px 3px 12px;text-shadow:0 2px 1px #721d12,1px 0 #721d12,-1px 0 #721d12}
+.action.call .action-cost,.action.check .action-cost{font-size:18px;line-height:22px}
+.action:disabled{opacity:.56;filter:grayscale(.35) brightness(.68) drop-shadow(0 3px 3px #0008)}
+.action:focus-visible{outline:2px solid #fff1b1;outline-offset:-5px}
+.round-cta{position:absolute;inset:0 29%;height:86px;z-index:2;display:flex}
+.round-cta .action{letter-spacing:1px}
+.round-cta .action>span{font-size:10px;font-weight:800;letter-spacing:1.5px;line-height:17px;color:#ffe4bb}
+.controls:has(.round-cta:not([hidden])) .main-action{visibility:hidden}
+.asset-dock{position:absolute;left:0;right:0;bottom:0;top:auto;height:43px;display:grid;grid-template-columns:1fr 1fr;align-items:center;border:0;border-top:2px solid #967143;background:linear-gradient(#56341f,#2d1b15 38%,#1c1210);box-shadow:inset 0 1px #e0b87e66,0 -2px 6px #0006;z-index:6;padding:0 8px;gap:10px}
+.asset-main,.total-bet-asset{display:flex;align-items:center;min-width:0;height:38px;padding:0;gap:7px;background:none;border:0;color:inherit}
+.asset-main:disabled{opacity:1}
+.asset-number{display:flex;flex-direction:column;min-width:0;flex:1;text-align:center}
+.asset-dock small{display:block;color:#d9c2a0;font:700 9px/12px var(--font);letter-spacing:1px;white-space:nowrap}
+.asset-dock strong{display:block;height:20px;padding:1px 4px;border:1px solid #7b573655;border-radius:2px;background:#170d08;box-shadow:inset 0 1px 3px #0008;color:#fff1d9;font-size:13px;font-weight:800;line-height:17px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.wallet-icon{position:relative;flex:none;width:23px;height:20px;margin-top:11px;border:1px solid #ddbb71;border-radius:3px;background:linear-gradient(#e9c47b,#b27a2a);box-shadow:inset 0 1px #fff0b9,0 2px 2px #0007}
+.wallet-icon:before{content:'';position:absolute;width:12px;height:5px;top:-5px;left:4px;border:1px solid #c9a460;border-bottom:0;border-radius:2px 2px 0 0;background:#d9b05e;transform:rotate(-12deg)}
+.wallet-icon:after{content:'•';position:absolute;right:-2px;top:5px;width:10px;height:8px;border:1px solid #896224;border-radius:2px;background:#dbb15b;color:#8e621e;line-height:6px}
+.coin-icon{position:relative;flex:none;width:22px;height:20px;margin-top:10px}
+.coin-icon:before,.coin-icon:after{content:'';position:absolute;bottom:1px;left:1px;width:13px;height:8px;border:1px solid #d9b574;border-radius:50%;background:linear-gradient(#ffe3a4,#b28034);box-shadow:0 -3px #b2833b,0 -4px #edce8d,0 -7px #a9772e,0 -8px #d9b574}
+.coin-icon:after{left:10px;bottom:0;width:11px;height:7px;box-shadow:0 -3px #b2833b,0 -4px #edce8d}
+dialog{width:380px;max-width:calc(100vw - 24px);max-height:calc(100svh - 28px);border:2px solid #c6a35f;border-radius:12px;background:radial-gradient(ellipse at top,#2d486b,#12213e 60%,#0b172c);padding:28px 22px 22px;box-shadow:inset 0 0 0 3px #08152d,0 25px 80px #000d;scrollbar-width:thin;scrollbar-color:#958359 #14233e}dialog h2{font-size:22px;margin:8px 0 14px}dialog .eyebrow{padding-right:26px;letter-spacing:2.5px}.dialog-close{width:32px;height:32px;right:9px;top:8px;border:1px solid #bca36a77;border-radius:6px;background:#0a1930;color:#ebd1a0;font-size:25px;line-height:27px;padding:0;z-index:2}dialog p{font-size:12px;line-height:1.75;margin:10px 0 15px}dialog input{font-size:27px;font-weight:800;text-align:center}.buyin-presets button{padding:10px 3px;font-size:13px}.buyin-presets button.selected{background:linear-gradient(#566991,#263d60);border-color:#f0c977;color:#fff0bd}.buyin-presets button:focus-visible{outline-offset:1px}.primary.wide{min-height:47px}.result-profit{margin:6px 0 12px;font-size:40px}.result-profit:before{content:'本手淨損益';display:block;color:#b8c8df;font:11px var(--font);letter-spacing:1px;margin-bottom:4px}.result-profit.negative{color:#efb8c1}.result-hands{background:#07162b77;padding:10px;border:1px solid #a89d6933;border-radius:5px}.result-hands>div{width:48%}.result-hands b{font-size:16px;color:#f7e4bc}.settlement .ledger-row{line-height:1.5;padding:5px 0;border-bottom:1px solid #c2a15e15;font-size:11px;grid-template-columns:1.3fr 1fr 1fr;gap:4px}.settlement .ledger-head{line-height:1.5;padding:5px 0;background:#0a1a3266;font-size:10px;grid-template-columns:1.3fr 1fr 1fr}.settlement .ledger-row.total{border-top:1px solid #d6b16666;border-bottom:1px solid #d6b16666;background:#e1bd5711;font-weight:700}.settlement .ledger-row>span:not(:first-child){align-self:center;color:#ece5d4}.settlement .ledger-row.total>span{color:#ffdf99}.text-button.wide{min-height:38px;margin-top:5px;border:1px solid #8492ac44;border-radius:6px}.menu-grid{display:grid;gap:8px}.menu-grid>button{display:flex;justify-content:space-between;align-items:center;padding:13px 12px;color:#f8e5b9;background:linear-gradient(100deg,#2a4163,#182d4d);border:1px solid #bda05d5c;border-radius:6px;font-size:14px;font-weight:700}.menu-grid span{font-size:10px;font-weight:400;color:#c4cde0}.sound-setting{display:flex;align-items:center;justify-content:space-between;padding:16px 1px;border-bottom:1px solid #bda05d44;font-size:13px;color:#f5e2bd}.sound-setting small{display:block;color:#aebcd0;font-size:10px;margin-top:4px}.sound-setting input{appearance:none;width:43px;height:25px;padding:0;border:1px solid #8291ad;background:#091731;border-radius:18px;position:relative;cursor:pointer}.sound-setting input:before{content:'';position:absolute;top:3px;left:3px;width:17px;height:17px;border-radius:50%;background:#97abc4;transition:left .15s}.sound-setting input:checked{background:#276175;border-color:#70d6cb}.sound-setting input:checked:before{left:21px;background:#d8fff6}.workbench-link{display:flex;justify-content:space-between;margin-top:16px;font-size:12px;color:#d3bd8f}.workbench-link span{font-size:10px;color:#a2b3cc}.info-pair{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid #ac956a33;color:#bfcbde;font-size:12px;gap:12px}.info-pair b{color:#ffdf9f;font-size:17px;font-variant-numeric:tabular-nums}.deck-summary{display:flex;align-items:center;justify-content:center;gap:30px;background:#07172b66;border:1px solid #b39f7333;border-radius:8px;padding:15px}.deck-summary>img{width:100px;height:72px;object-fit:contain}.deck-summary strong{display:block;color:#ffe3a5;font-size:40px;line-height:1.1}.deck-summary span{font-size:11px;color:#b4c2d8}.rank-list{display:grid;gap:5px}.rank-row{display:grid;grid-template-columns:20px 67px 1fr;align-items:center;gap:5px;border:1px solid #ad905633;background:#08172d66;border-radius:5px;padding:7px}.rank-row>i{font-size:12px;color:#a6b7d0;font-style:normal}.rank-row>b{font-size:12px;color:#f1d8aa}.rank-example{display:flex;justify-content:flex-end;gap:2px}.rank-example .card{width:27px;height:36px;border-radius:3px;box-shadow:none}.history-empty{text-align:center;padding:35px 0;color:#c8d5e7}.history-empty b{display:block;font-size:16px;color:#efd59e;margin-bottom:7px}.history-card{border:1px solid #ad986b55;border-radius:6px;background:#0a1b34a8;margin:10px 0;padding:10px}.history-card summary{display:flex;justify-content:space-between;align-items:center;cursor:pointer;font-size:12px;color:#f1dfb9;gap:8px}.history-card summary b{font-variant-numeric:tabular-nums;font-size:17px;color:#f6cf8c}.history-card summary b.negative{color:#e8a3ae}.history-card small{display:block;font-size:10px;color:#a7b7ce;margin-top:3px}.history-card p{margin:8px 0;font-size:10px}.history-row{padding:7px 0}.history-header{font-size:11px;margin-top:11px}.history-row small{font-size:10px}.history-row em{font-size:11px}#toast{z-index:1000;bottom:25px;font-size:12px}
+.result-best5{display:flex;gap:3px;margin-top:8px}.result-best5 .card{width:calc((100% - 12px)/5);max-width:28px;height:auto;aspect-ratio:220/283;border-radius:3px;box-shadow:none}.result-hands b{font-size:13px;font-weight:700}.result-hands small{font-size:9px}
+.menu-grid>button:disabled{opacity:.45}
+@media(prefers-reduced-motion:reduce){.sound-setting input:before{transition:none}.npc-cards,.game[data-npc-state='thinking'] .npc-cards{animation:none;will-change:auto}}

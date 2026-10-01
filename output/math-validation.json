@@ -1,0 +1,5555 @@
+{
+  "version": "heads-up-v1",
+  "generatedAt": "2026-09-29T13:20:26.086Z",
+  "command": "node tests/validate-math.mjs",
+  "economicRule": "每手未跟注款項退款。雙方已匹配投注形成競爭底池；底池勝方或平手各方按 gross × 0.96 領回。4% 從 gross 收取，雙方對稱。",
+  "reference": "對稱手牌分布＋相同策略＋輪替大小盲時，玩家grossRTP期望100%，netRTP期望96%。實際玩家策略或不對稱重抽設定會改变玩家RTP。",
+  "dealOrder": "每手先發給小盲；大小盲輪替，因此玩家與NPC輪流先進行弱起手重抽。",
+  "runs": [
+    {
+      "id": "natural-balanced",
+      "hands": 100000,
+      "seed": 20260929,
+      "policy": "balanced",
+      "config": {
+        "targetRtp": 0.96,
+        "smallBlind": 5,
+        "bigBlind": 10,
+        "minBuyIn": 200,
+        "maxBuyIn": 2000,
+        "buyIn": 1000,
+        "betSize": {
+          "preflop": 10,
+          "flop": 20,
+          "turn": 40,
+          "river": 40
+        },
+        "maxRaises": 1,
+        "animationMs": 850,
+        "npc": {
+          "fold": 0.2,
+          "call": 0.6,
+          "raise": 0.2,
+          "check": 0.65,
+          "bet": 0.35,
+          "strengthInfluence": 1,
+          "priceInfluence": 0.6
+        },
+        "deal": {
+          "player": {
+            "rerollChance": 0,
+            "maxRerolls": 0,
+            "targetScore": 0.48,
+            "manual": []
+          },
+          "npc": {
+            "rerollChance": 0,
+            "maxRerolls": 0,
+            "targetScore": 0.48,
+            "manual": []
+          }
+        }
+      },
+      "wagers": 3062405,
+      "refunds": 553230,
+      "grossReturns": 3050350,
+      "netReturns": 2928336.000001,
+      "fees": 244992.4,
+      "playerFees": 122014,
+      "wins": 48905,
+      "losses": 49567,
+      "ties": 1528,
+      "folds": 31927,
+      "npcFolds": 31480,
+      "showdowns": 36593,
+      "totalActions": 551728,
+      "conservationError": 0,
+      "batches": [
+        {
+          "hands": 250,
+          "wagers": 6665,
+          "netReturns": 6201.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7955,
+          "netReturns": 7478.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7460,
+          "netReturns": 6336
+        },
+        {
+          "hands": 250,
+          "wagers": 6845,
+          "netReturns": 6268.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7405,
+          "netReturns": 7353.6
+        },
+        {
+          "hands": 250,
+          "wagers": 6745,
+          "netReturns": 6451.2
+        },
+        {
+          "hands": 250,
+          "wagers": 6355,
+          "netReturns": 5097.6
+        },
+        {
+          "hands": 250,
+          "wagers": 6950,
+          "netReturns": 8217.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8470,
+          "netReturns": 8822.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7240,
+          "netReturns": 7632
+        },
+        {
+          "hands": 250,
+          "wagers": 7645,
+          "netReturns": 7075.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8305,
+          "netReturns": 7372.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7465,
+          "netReturns": 6681.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7095,
+          "netReturns": 6393.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7230,
+          "netReturns": 6777.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7555,
+          "netReturns": 7449.6
+        },
+        {
+          "hands": 250,
+          "wagers": 6440,
+          "netReturns": 7017.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7855,
+          "netReturns": 7113.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7170,
+          "netReturns": 7065.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8060,
+          "netReturns": 8601.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8805,
+          "netReturns": 7747.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8220,
+          "netReturns": 7123.2
+        },
+        {
+          "hands": 250,
+          "wagers": 6785,
+          "netReturns": 6172.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8190,
+          "netReturns": 7699.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7840,
+          "netReturns": 7728
+        },
+        {
+          "hands": 250,
+          "wagers": 7855,
+          "netReturns": 7209.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8205,
+          "netReturns": 8246.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8275,
+          "netReturns": 6720
+        },
+        {
+          "hands": 250,
+          "wagers": 7170,
+          "netReturns": 6825.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7565,
+          "netReturns": 6585.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7080,
+          "netReturns": 7833.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8265,
+          "netReturns": 9436.8
+        },
+        {
+          "hands": 250,
+          "wagers": 6495,
+          "netReturns": 6835.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8190,
+          "netReturns": 7929.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7415,
+          "netReturns": 6345.6
+        },
+        {
+          "hands": 250,
+          "wagers": 6955,
+          "netReturns": 6643.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8505,
+          "netReturns": 6374.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7735,
+          "netReturns": 6796.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7605,
+          "netReturns": 8044.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7215,
+          "netReturns": 7075.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7855,
+          "netReturns": 8476.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8395,
+          "netReturns": 6835.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7485,
+          "netReturns": 7699.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8055,
+          "netReturns": 8966.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7675,
+          "netReturns": 7392
+        },
+        {
+          "hands": 250,
+          "wagers": 8315,
+          "netReturns": 7267.2
+        },
+        {
+          "hands": 250,
+          "wagers": 9205,
+          "netReturns": 8640
+        },
+        {
+          "hands": 250,
+          "wagers": 8260,
+          "netReturns": 7027.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7670,
+          "netReturns": 6480
+        },
+        {
+          "hands": 250,
+          "wagers": 7265,
+          "netReturns": 6979.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8330,
+          "netReturns": 7113.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7390,
+          "netReturns": 6384
+        },
+        {
+          "hands": 250,
+          "wagers": 7620,
+          "netReturns": 7401.6
+        },
+        {
+          "hands": 250,
+          "wagers": 9100,
+          "netReturns": 10339.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7390,
+          "netReturns": 6595.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7495,
+          "netReturns": 6547.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8300,
+          "netReturns": 8390.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7275,
+          "netReturns": 7152
+        },
+        {
+          "hands": 250,
+          "wagers": 7945,
+          "netReturns": 8102.4
+        },
+        {
+          "hands": 250,
+          "wagers": 6990,
+          "netReturns": 6681.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7870,
+          "netReturns": 7392
+        },
+        {
+          "hands": 250,
+          "wagers": 8025,
+          "netReturns": 5798.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7115,
+          "netReturns": 6480
+        },
+        {
+          "hands": 250,
+          "wagers": 7110,
+          "netReturns": 6969.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7625,
+          "netReturns": 6028.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7785,
+          "netReturns": 7468.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8135,
+          "netReturns": 8160
+        },
+        {
+          "hands": 250,
+          "wagers": 8065,
+          "netReturns": 6720
+        },
+        {
+          "hands": 250,
+          "wagers": 7740,
+          "netReturns": 8112
+        },
+        {
+          "hands": 250,
+          "wagers": 7460,
+          "netReturns": 6604.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8070,
+          "netReturns": 6768
+        },
+        {
+          "hands": 250,
+          "wagers": 7310,
+          "netReturns": 6489.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7580,
+          "netReturns": 7516.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8275,
+          "netReturns": 8227.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7100,
+          "netReturns": 6163.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7075,
+          "netReturns": 6873.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8105,
+          "netReturns": 7056
+        },
+        {
+          "hands": 250,
+          "wagers": 8125,
+          "netReturns": 6979.2
+        },
+        {
+          "hands": 250,
+          "wagers": 6995,
+          "netReturns": 7680
+        },
+        {
+          "hands": 250,
+          "wagers": 7580,
+          "netReturns": 6720
+        },
+        {
+          "hands": 250,
+          "wagers": 7990,
+          "netReturns": 7708.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7940,
+          "netReturns": 7478.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7870,
+          "netReturns": 9043.2
+        },
+        {
+          "hands": 250,
+          "wagers": 6900,
+          "netReturns": 6681.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7440,
+          "netReturns": 7708.8
+        },
+        {
+          "hands": 250,
+          "wagers": 6840,
+          "netReturns": 6038.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7240,
+          "netReturns": 7132.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7315,
+          "netReturns": 7257.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8350,
+          "netReturns": 9062.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7610,
+          "netReturns": 7670.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8100,
+          "netReturns": 8438.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7055,
+          "netReturns": 6374.4
+        },
+        {
+          "hands": 250,
+          "wagers": 6970,
+          "netReturns": 8256
+        },
+        {
+          "hands": 250,
+          "wagers": 7760,
+          "netReturns": 8697.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7575,
+          "netReturns": 5884.8
+        },
+        {
+          "hands": 250,
+          "wagers": 6685,
+          "netReturns": 6960
+        },
+        {
+          "hands": 250,
+          "wagers": 7905,
+          "netReturns": 8150.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8510,
+          "netReturns": 7852.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7825,
+          "netReturns": 6777.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8030,
+          "netReturns": 6969.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7415,
+          "netReturns": 7276.8
+        },
+        {
+          "hands": 250,
+          "wagers": 6990,
+          "netReturns": 6758.4
+        },
+        {
+          "hands": 250,
+          "wagers": 6885,
+          "netReturns": 6316.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7865,
+          "netReturns": 6940.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7565,
+          "netReturns": 6230.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7630,
+          "netReturns": 6585.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7210,
+          "netReturns": 6940.8
+        },
+        {
+          "hands": 250,
+          "wagers": 6920,
+          "netReturns": 6028.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7400,
+          "netReturns": 7824
+        },
+        {
+          "hands": 250,
+          "wagers": 7780,
+          "netReturns": 7094.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7675,
+          "netReturns": 6681.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7295,
+          "netReturns": 7036.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7885,
+          "netReturns": 6796.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7615,
+          "netReturns": 7795.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7545,
+          "netReturns": 6950.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7320,
+          "netReturns": 6249.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7905,
+          "netReturns": 7219.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7070,
+          "netReturns": 5836.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8375,
+          "netReturns": 8457.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7355,
+          "netReturns": 7459.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7775,
+          "netReturns": 6604.8
+        },
+        {
+          "hands": 250,
+          "wagers": 6600,
+          "netReturns": 6326.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8390,
+          "netReturns": 7219.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7150,
+          "netReturns": 8592
+        },
+        {
+          "hands": 250,
+          "wagers": 7585,
+          "netReturns": 7027.2
+        },
+        {
+          "hands": 250,
+          "wagers": 6850,
+          "netReturns": 6643.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7860,
+          "netReturns": 7862.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7345,
+          "netReturns": 6105.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7675,
+          "netReturns": 9168
+        },
+        {
+          "hands": 250,
+          "wagers": 7850,
+          "netReturns": 6249.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8140,
+          "netReturns": 8976
+        },
+        {
+          "hands": 250,
+          "wagers": 8000,
+          "netReturns": 8553.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7680,
+          "netReturns": 6720
+        },
+        {
+          "hands": 250,
+          "wagers": 8210,
+          "netReturns": 9273.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7775,
+          "netReturns": 7372.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8390,
+          "netReturns": 8860.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7340,
+          "netReturns": 7123.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7625,
+          "netReturns": 6768
+        },
+        {
+          "hands": 250,
+          "wagers": 7200,
+          "netReturns": 6729.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8235,
+          "netReturns": 7478.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7490,
+          "netReturns": 7756.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8195,
+          "netReturns": 8284.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8210,
+          "netReturns": 8121.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7965,
+          "netReturns": 7545.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7970,
+          "netReturns": 6604.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7375,
+          "netReturns": 8006.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8000,
+          "netReturns": 7209.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7540,
+          "netReturns": 7497.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7240,
+          "netReturns": 8793.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7395,
+          "netReturns": 5865.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7235,
+          "netReturns": 7968
+        },
+        {
+          "hands": 250,
+          "wagers": 9130,
+          "netReturns": 8755.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8980,
+          "netReturns": 8006.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8340,
+          "netReturns": 8083.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8370,
+          "netReturns": 9283.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7485,
+          "netReturns": 6998.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7110,
+          "netReturns": 7344
+        },
+        {
+          "hands": 250,
+          "wagers": 6710,
+          "netReturns": 5779.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7365,
+          "netReturns": 6518.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7940,
+          "netReturns": 7056
+        },
+        {
+          "hands": 250,
+          "wagers": 7690,
+          "netReturns": 8611.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7175,
+          "netReturns": 6844.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7995,
+          "netReturns": 7545.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7265,
+          "netReturns": 6796.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7360,
+          "netReturns": 7257.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7800,
+          "netReturns": 7401.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7885,
+          "netReturns": 7718.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7635,
+          "netReturns": 7123.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8485,
+          "netReturns": 7881.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7305,
+          "netReturns": 6787.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7575,
+          "netReturns": 7843.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7915,
+          "netReturns": 6652.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8695,
+          "netReturns": 8563.2
+        },
+        {
+          "hands": 250,
+          "wagers": 6795,
+          "netReturns": 6720
+        },
+        {
+          "hands": 250,
+          "wagers": 7090,
+          "netReturns": 7008
+        },
+        {
+          "hands": 250,
+          "wagers": 7975,
+          "netReturns": 6758.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8065,
+          "netReturns": 7449.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8175,
+          "netReturns": 7843.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7400,
+          "netReturns": 7200
+        },
+        {
+          "hands": 250,
+          "wagers": 7860,
+          "netReturns": 6105.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7465,
+          "netReturns": 7305.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7730,
+          "netReturns": 7065.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7145,
+          "netReturns": 6470.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7235,
+          "netReturns": 7728
+        },
+        {
+          "hands": 250,
+          "wagers": 7435,
+          "netReturns": 7728
+        },
+        {
+          "hands": 250,
+          "wagers": 7065,
+          "netReturns": 6451.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8065,
+          "netReturns": 7555.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7895,
+          "netReturns": 8025.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7870,
+          "netReturns": 7833.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7520,
+          "netReturns": 8256
+        },
+        {
+          "hands": 250,
+          "wagers": 7980,
+          "netReturns": 6969.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8050,
+          "netReturns": 8428.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7520,
+          "netReturns": 7958.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8020,
+          "netReturns": 8313.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7075,
+          "netReturns": 6316.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7860,
+          "netReturns": 7641.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7635,
+          "netReturns": 7862.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7930,
+          "netReturns": 6249.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8655,
+          "netReturns": 8764.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8170,
+          "netReturns": 9177.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7070,
+          "netReturns": 6624
+        },
+        {
+          "hands": 250,
+          "wagers": 6765,
+          "netReturns": 6393.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7300,
+          "netReturns": 6604.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7195,
+          "netReturns": 7507.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7620,
+          "netReturns": 7680
+        },
+        {
+          "hands": 250,
+          "wagers": 7255,
+          "netReturns": 6038.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7540,
+          "netReturns": 7372.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7870,
+          "netReturns": 6825.6
+        },
+        {
+          "hands": 250,
+          "wagers": 6720,
+          "netReturns": 6105.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8565,
+          "netReturns": 7545.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7195,
+          "netReturns": 7104
+        },
+        {
+          "hands": 250,
+          "wagers": 7165,
+          "netReturns": 6547.2
+        },
+        {
+          "hands": 250,
+          "wagers": 6795,
+          "netReturns": 6777.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7830,
+          "netReturns": 7334.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7680,
+          "netReturns": 7756.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7435,
+          "netReturns": 7747.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8715,
+          "netReturns": 9811.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8885,
+          "netReturns": 8505.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8505,
+          "netReturns": 7622.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8100,
+          "netReturns": 6585.6
+        },
+        {
+          "hands": 250,
+          "wagers": 6940,
+          "netReturns": 7065.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7790,
+          "netReturns": 7478.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7600,
+          "netReturns": 7142.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8810,
+          "netReturns": 8275.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7805,
+          "netReturns": 7996.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7820,
+          "netReturns": 8131.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8465,
+          "netReturns": 7075.2
+        },
+        {
+          "hands": 250,
+          "wagers": 6795,
+          "netReturns": 6211.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7765,
+          "netReturns": 5923.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7515,
+          "netReturns": 7363.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7970,
+          "netReturns": 7680
+        },
+        {
+          "hands": 250,
+          "wagers": 7365,
+          "netReturns": 6710.4
+        },
+        {
+          "hands": 250,
+          "wagers": 6980,
+          "netReturns": 6624
+        },
+        {
+          "hands": 250,
+          "wagers": 6835,
+          "netReturns": 6345.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7565,
+          "netReturns": 7632
+        },
+        {
+          "hands": 250,
+          "wagers": 7900,
+          "netReturns": 7708.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7660,
+          "netReturns": 7852.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7530,
+          "netReturns": 7257.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7120,
+          "netReturns": 6326.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7735,
+          "netReturns": 7747.2
+        },
+        {
+          "hands": 250,
+          "wagers": 6940,
+          "netReturns": 7008
+        },
+        {
+          "hands": 250,
+          "wagers": 7105,
+          "netReturns": 7920
+        },
+        {
+          "hands": 250,
+          "wagers": 7710,
+          "netReturns": 7881.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7175,
+          "netReturns": 7718.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7720,
+          "netReturns": 6950.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7400,
+          "netReturns": 7670.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7835,
+          "netReturns": 7161.6
+        },
+        {
+          "hands": 250,
+          "wagers": 6790,
+          "netReturns": 6768
+        },
+        {
+          "hands": 250,
+          "wagers": 7980,
+          "netReturns": 5875.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7810,
+          "netReturns": 7910.4
+        },
+        {
+          "hands": 250,
+          "wagers": 6595,
+          "netReturns": 6144
+        },
+        {
+          "hands": 250,
+          "wagers": 7595,
+          "netReturns": 6787.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8130,
+          "netReturns": 7478.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7785,
+          "netReturns": 6566.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8130,
+          "netReturns": 6796.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7715,
+          "netReturns": 6163.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7080,
+          "netReturns": 6595.2
+        },
+        {
+          "hands": 250,
+          "wagers": 6540,
+          "netReturns": 6316.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8135,
+          "netReturns": 7728
+        },
+        {
+          "hands": 250,
+          "wagers": 7015,
+          "netReturns": 6758.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7240,
+          "netReturns": 6384
+        },
+        {
+          "hands": 250,
+          "wagers": 7120,
+          "netReturns": 6960
+        },
+        {
+          "hands": 250,
+          "wagers": 6950,
+          "netReturns": 6201.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7930,
+          "netReturns": 7497.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7495,
+          "netReturns": 7382.4
+        },
+        {
+          "hands": 250,
+          "wagers": 6845,
+          "netReturns": 6393.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7705,
+          "netReturns": 8054.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7815,
+          "netReturns": 6528
+        },
+        {
+          "hands": 250,
+          "wagers": 8505,
+          "netReturns": 9590.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7765,
+          "netReturns": 8515.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7300,
+          "netReturns": 7065.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8000,
+          "netReturns": 7507.2
+        },
+        {
+          "hands": 250,
+          "wagers": 9035,
+          "netReturns": 8668.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8045,
+          "netReturns": 8150.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7315,
+          "netReturns": 7324.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7835,
+          "netReturns": 7161.6
+        },
+        {
+          "hands": 250,
+          "wagers": 6700,
+          "netReturns": 6364.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7545,
+          "netReturns": 6153.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7225,
+          "netReturns": 7056
+        },
+        {
+          "hands": 250,
+          "wagers": 8285,
+          "netReturns": 7296
+        },
+        {
+          "hands": 250,
+          "wagers": 8240,
+          "netReturns": 9168
+        },
+        {
+          "hands": 250,
+          "wagers": 8150,
+          "netReturns": 7420.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7700,
+          "netReturns": 8102.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7385,
+          "netReturns": 6816
+        },
+        {
+          "hands": 250,
+          "wagers": 7845,
+          "netReturns": 6892.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7335,
+          "netReturns": 8256
+        },
+        {
+          "hands": 250,
+          "wagers": 7615,
+          "netReturns": 7296
+        },
+        {
+          "hands": 250,
+          "wagers": 7125,
+          "netReturns": 7094.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8560,
+          "netReturns": 7123.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8130,
+          "netReturns": 7699.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7135,
+          "netReturns": 7324.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7660,
+          "netReturns": 7420.8
+        },
+        {
+          "hands": 250,
+          "wagers": 6895,
+          "netReturns": 7305.6
+        },
+        {
+          "hands": 250,
+          "wagers": 6650,
+          "netReturns": 6892.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8635,
+          "netReturns": 8006.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7435,
+          "netReturns": 8073.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8010,
+          "netReturns": 7180.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7155,
+          "netReturns": 6326.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7380,
+          "netReturns": 8313.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7700,
+          "netReturns": 6816
+        },
+        {
+          "hands": 250,
+          "wagers": 8070,
+          "netReturns": 8803.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7835,
+          "netReturns": 7084.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8845,
+          "netReturns": 8582.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7850,
+          "netReturns": 6662.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8480,
+          "netReturns": 8131.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7570,
+          "netReturns": 7113.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7815,
+          "netReturns": 7046.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7935,
+          "netReturns": 7814.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8765,
+          "netReturns": 6451.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7405,
+          "netReturns": 6691.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7355,
+          "netReturns": 8371.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7905,
+          "netReturns": 6883.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8120,
+          "netReturns": 8227.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7030,
+          "netReturns": 6499.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8270,
+          "netReturns": 7555.2
+        },
+        {
+          "hands": 250,
+          "wagers": 6960,
+          "netReturns": 5990.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7870,
+          "netReturns": 7670.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8510,
+          "netReturns": 8553.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7575,
+          "netReturns": 8256
+        },
+        {
+          "hands": 250,
+          "wagers": 7090,
+          "netReturns": 7939.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8405,
+          "netReturns": 8025.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7810,
+          "netReturns": 8064
+        },
+        {
+          "hands": 250,
+          "wagers": 7615,
+          "netReturns": 6835.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7790,
+          "netReturns": 5779.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7485,
+          "netReturns": 5884.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7040,
+          "netReturns": 6326.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7325,
+          "netReturns": 7968
+        },
+        {
+          "hands": 250,
+          "wagers": 7720,
+          "netReturns": 7123.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8250,
+          "netReturns": 8620.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7290,
+          "netReturns": 6854.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7335,
+          "netReturns": 6969.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7085,
+          "netReturns": 5568
+        },
+        {
+          "hands": 250,
+          "wagers": 7120,
+          "netReturns": 7123.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8490,
+          "netReturns": 6528
+        },
+        {
+          "hands": 250,
+          "wagers": 7960,
+          "netReturns": 7027.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7120,
+          "netReturns": 7776
+        },
+        {
+          "hands": 250,
+          "wagers": 8180,
+          "netReturns": 7132.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7975,
+          "netReturns": 8870.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8115,
+          "netReturns": 7891.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8350,
+          "netReturns": 8179.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8025,
+          "netReturns": 7776
+        },
+        {
+          "hands": 250,
+          "wagers": 6825,
+          "netReturns": 7171.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7145,
+          "netReturns": 6691.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8025,
+          "netReturns": 9235.2
+        },
+        {
+          "hands": 250,
+          "wagers": 6925,
+          "netReturns": 7315.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7420,
+          "netReturns": 5318.4
+        },
+        {
+          "hands": 250,
+          "wagers": 6905,
+          "netReturns": 6067.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8300,
+          "netReturns": 8332.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7575,
+          "netReturns": 7248
+        },
+        {
+          "hands": 250,
+          "wagers": 7665,
+          "netReturns": 7008
+        },
+        {
+          "hands": 250,
+          "wagers": 7020,
+          "netReturns": 8236.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8210,
+          "netReturns": 8524.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8000,
+          "netReturns": 7948.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7365,
+          "netReturns": 7276.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7625,
+          "netReturns": 7401.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7710,
+          "netReturns": 6297.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7565,
+          "netReturns": 8544
+        },
+        {
+          "hands": 250,
+          "wagers": 8285,
+          "netReturns": 7603.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7650,
+          "netReturns": 6979.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7900,
+          "netReturns": 7488
+        },
+        {
+          "hands": 250,
+          "wagers": 8410,
+          "netReturns": 9369.6
+        },
+        {
+          "hands": 250,
+          "wagers": 6760,
+          "netReturns": 6576
+        },
+        {
+          "hands": 250,
+          "wagers": 7240,
+          "netReturns": 6192
+        },
+        {
+          "hands": 250,
+          "wagers": 6655,
+          "netReturns": 6844.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8030,
+          "netReturns": 7334.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7125,
+          "netReturns": 6604.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7090,
+          "netReturns": 7411.2
+        },
+        {
+          "hands": 250,
+          "wagers": 6985,
+          "netReturns": 6336
+        },
+        {
+          "hands": 250,
+          "wagers": 7430,
+          "netReturns": 6249.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7640,
+          "netReturns": 7718.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8255,
+          "netReturns": 6902.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8425,
+          "netReturns": 7622.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8310,
+          "netReturns": 8025.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7750,
+          "netReturns": 7459.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7335,
+          "netReturns": 7603.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7165,
+          "netReturns": 6892.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8030,
+          "netReturns": 6988.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8220,
+          "netReturns": 6720
+        },
+        {
+          "hands": 250,
+          "wagers": 7080,
+          "netReturns": 6480
+        },
+        {
+          "hands": 250,
+          "wagers": 8020,
+          "netReturns": 8304
+        },
+        {
+          "hands": 250,
+          "wagers": 7575,
+          "netReturns": 7574.4
+        },
+        {
+          "hands": 250,
+          "wagers": 6770,
+          "netReturns": 6576
+        },
+        {
+          "hands": 250,
+          "wagers": 7815,
+          "netReturns": 7872
+        },
+        {
+          "hands": 250,
+          "wagers": 8560,
+          "netReturns": 8294.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8055,
+          "netReturns": 6508.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8395,
+          "netReturns": 9388.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8305,
+          "netReturns": 8908.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7740,
+          "netReturns": 7641.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7835,
+          "netReturns": 5721.6
+        },
+        {
+          "hands": 250,
+          "wagers": 6935,
+          "netReturns": 6316.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8115,
+          "netReturns": 7401.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7690,
+          "netReturns": 8716.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7625,
+          "netReturns": 7689.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8340,
+          "netReturns": 9139.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7680,
+          "netReturns": 7392
+        },
+        {
+          "hands": 250,
+          "wagers": 7120,
+          "netReturns": 8092.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8060,
+          "netReturns": 6624
+        },
+        {
+          "hands": 250,
+          "wagers": 7455,
+          "netReturns": 7027.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7780,
+          "netReturns": 7372.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7765,
+          "netReturns": 6652.8
+        }
+      ],
+      "method": "每手雙方重設相同帶入、大小盲輪替；NPC 使用 balanced，玩家使用選定策略。有效投注排除未跟注退款。96% 為對稱條件參考；策略或手牌設定不對稱時不保證玩家 RTP。95% CI 使用獨立牌局比值估計器。",
+      "rtp": 0.956221009305104,
+      "grossRtp": 0.9960635513591442,
+      "standardError": 0.004520845174059783,
+      "ci95": [
+        0.9473601527639468,
+        0.9650818658462612
+      ]
+    },
+    {
+      "id": "redraw-balanced",
+      "hands": 100000,
+      "seed": 20260930,
+      "policy": "balanced",
+      "config": {
+        "targetRtp": 0.96,
+        "smallBlind": 5,
+        "bigBlind": 10,
+        "minBuyIn": 200,
+        "maxBuyIn": 2000,
+        "buyIn": 1000,
+        "betSize": {
+          "preflop": 10,
+          "flop": 20,
+          "turn": 40,
+          "river": 40
+        },
+        "maxRaises": 1,
+        "animationMs": 850,
+        "npc": {
+          "fold": 0.2,
+          "call": 0.6,
+          "raise": 0.2,
+          "check": 0.65,
+          "bet": 0.35,
+          "strengthInfluence": 1,
+          "priceInfluence": 0.6
+        },
+        "deal": {
+          "player": {
+            "rerollChance": 0.75,
+            "maxRerolls": 2,
+            "targetScore": 0.48,
+            "manual": []
+          },
+          "npc": {
+            "rerollChance": 0.75,
+            "maxRerolls": 2,
+            "targetScore": 0.48,
+            "manual": []
+          }
+        }
+      },
+      "wagers": 3345410,
+      "refunds": 576270,
+      "grossReturns": 3365610,
+      "netReturns": 3230985.600001,
+      "fees": 267632.8,
+      "playerFees": 134624.4,
+      "wins": 49316,
+      "losses": 49295,
+      "ties": 1389,
+      "folds": 30611,
+      "npcFolds": 30351,
+      "showdowns": 39038,
+      "totalActions": 585645,
+      "conservationError": 0,
+      "batches": [
+        {
+          "hands": 250,
+          "wagers": 9020,
+          "netReturns": 8284.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7720,
+          "netReturns": 6489.6
+        },
+        {
+          "hands": 250,
+          "wagers": 9115,
+          "netReturns": 7852.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8390,
+          "netReturns": 7478.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7920,
+          "netReturns": 6892.8
+        },
+        {
+          "hands": 250,
+          "wagers": 9060,
+          "netReturns": 8851.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8805,
+          "netReturns": 8428.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8885,
+          "netReturns": 7881.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8435,
+          "netReturns": 7228.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7505,
+          "netReturns": 7353.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8205,
+          "netReturns": 7603.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8445,
+          "netReturns": 6729.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7955,
+          "netReturns": 7276.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8435,
+          "netReturns": 8640
+        },
+        {
+          "hands": 250,
+          "wagers": 8315,
+          "netReturns": 7824
+        },
+        {
+          "hands": 250,
+          "wagers": 8705,
+          "netReturns": 7392
+        },
+        {
+          "hands": 250,
+          "wagers": 8185,
+          "netReturns": 7545.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8480,
+          "netReturns": 7219.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8500,
+          "netReturns": 8332.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8395,
+          "netReturns": 8611.2
+        },
+        {
+          "hands": 250,
+          "wagers": 9350,
+          "netReturns": 9648
+        },
+        {
+          "hands": 250,
+          "wagers": 7560,
+          "netReturns": 6604.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7710,
+          "netReturns": 8006.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7870,
+          "netReturns": 7017.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8400,
+          "netReturns": 9014.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8795,
+          "netReturns": 7353.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8020,
+          "netReturns": 7545.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8355,
+          "netReturns": 8467.2
+        },
+        {
+          "hands": 250,
+          "wagers": 9095,
+          "netReturns": 9676.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8900,
+          "netReturns": 8582.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8120,
+          "netReturns": 7046.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8840,
+          "netReturns": 7862.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8055,
+          "netReturns": 8428.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7950,
+          "netReturns": 6700.8
+        },
+        {
+          "hands": 250,
+          "wagers": 9190,
+          "netReturns": 9628.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8215,
+          "netReturns": 8064
+        },
+        {
+          "hands": 250,
+          "wagers": 7985,
+          "netReturns": 7814.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8995,
+          "netReturns": 9292.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7975,
+          "netReturns": 8112
+        },
+        {
+          "hands": 250,
+          "wagers": 9030,
+          "netReturns": 7238.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7740,
+          "netReturns": 7766.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7950,
+          "netReturns": 7449.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7820,
+          "netReturns": 7526.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8490,
+          "netReturns": 7843.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8560,
+          "netReturns": 7718.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8445,
+          "netReturns": 8284.8
+        },
+        {
+          "hands": 250,
+          "wagers": 9055,
+          "netReturns": 7171.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8870,
+          "netReturns": 8803.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8670,
+          "netReturns": 8371.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8915,
+          "netReturns": 7852.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8595,
+          "netReturns": 8284.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8235,
+          "netReturns": 8246.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7700,
+          "netReturns": 6739.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7900,
+          "netReturns": 7910.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8100,
+          "netReturns": 8755.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8125,
+          "netReturns": 8112
+        },
+        {
+          "hands": 250,
+          "wagers": 8485,
+          "netReturns": 8342.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8455,
+          "netReturns": 8400
+        },
+        {
+          "hands": 250,
+          "wagers": 8000,
+          "netReturns": 8995.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7100,
+          "netReturns": 7833.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7550,
+          "netReturns": 7228.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8050,
+          "netReturns": 9638.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8245,
+          "netReturns": 7113.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8195,
+          "netReturns": 7968
+        },
+        {
+          "hands": 250,
+          "wagers": 8915,
+          "netReturns": 8745.6
+        },
+        {
+          "hands": 250,
+          "wagers": 9165,
+          "netReturns": 8889.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8590,
+          "netReturns": 8467.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8585,
+          "netReturns": 8822.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8185,
+          "netReturns": 8601.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8455,
+          "netReturns": 9686.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8375,
+          "netReturns": 9139.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8140,
+          "netReturns": 8966.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8675,
+          "netReturns": 8956.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8655,
+          "netReturns": 7891.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8555,
+          "netReturns": 8505.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8470,
+          "netReturns": 8611.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7735,
+          "netReturns": 7603.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8295,
+          "netReturns": 8016
+        },
+        {
+          "hands": 250,
+          "wagers": 8105,
+          "netReturns": 7190.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8055,
+          "netReturns": 8428.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7815,
+          "netReturns": 7027.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8490,
+          "netReturns": 8208
+        },
+        {
+          "hands": 250,
+          "wagers": 9060,
+          "netReturns": 8668.8
+        },
+        {
+          "hands": 250,
+          "wagers": 9005,
+          "netReturns": 8659.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8510,
+          "netReturns": 7708.8
+        },
+        {
+          "hands": 250,
+          "wagers": 9160,
+          "netReturns": 10022.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8365,
+          "netReturns": 8179.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8505,
+          "netReturns": 8659.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8900,
+          "netReturns": 9196.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7865,
+          "netReturns": 7785.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7765,
+          "netReturns": 7977.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8345,
+          "netReturns": 9657.6
+        },
+        {
+          "hands": 250,
+          "wagers": 10845,
+          "netReturns": 10800
+        },
+        {
+          "hands": 250,
+          "wagers": 8445,
+          "netReturns": 7968
+        },
+        {
+          "hands": 250,
+          "wagers": 7690,
+          "netReturns": 6403.2
+        },
+        {
+          "hands": 250,
+          "wagers": 9110,
+          "netReturns": 10003.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8260,
+          "netReturns": 8236.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8985,
+          "netReturns": 8486.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8985,
+          "netReturns": 10022.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8395,
+          "netReturns": 8121.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8480,
+          "netReturns": 6739.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8605,
+          "netReturns": 8428.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8095,
+          "netReturns": 7075.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8285,
+          "netReturns": 7449.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8850,
+          "netReturns": 8832
+        },
+        {
+          "hands": 250,
+          "wagers": 7875,
+          "netReturns": 8745.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8225,
+          "netReturns": 6604.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7210,
+          "netReturns": 6422.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7475,
+          "netReturns": 7113.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8240,
+          "netReturns": 8697.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7935,
+          "netReturns": 6057.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8430,
+          "netReturns": 9744
+        },
+        {
+          "hands": 250,
+          "wagers": 8130,
+          "netReturns": 7872
+        },
+        {
+          "hands": 250,
+          "wagers": 7890,
+          "netReturns": 6729.6
+        },
+        {
+          "hands": 250,
+          "wagers": 9255,
+          "netReturns": 8736
+        },
+        {
+          "hands": 250,
+          "wagers": 7850,
+          "netReturns": 8409.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8110,
+          "netReturns": 7641.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8600,
+          "netReturns": 8400
+        },
+        {
+          "hands": 250,
+          "wagers": 7725,
+          "netReturns": 7881.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7965,
+          "netReturns": 7046.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8520,
+          "netReturns": 7305.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8375,
+          "netReturns": 8611.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8065,
+          "netReturns": 7584
+        },
+        {
+          "hands": 250,
+          "wagers": 9040,
+          "netReturns": 8121.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7360,
+          "netReturns": 7036.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7795,
+          "netReturns": 6940.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8365,
+          "netReturns": 7929.6
+        },
+        {
+          "hands": 250,
+          "wagers": 9720,
+          "netReturns": 9331.2
+        },
+        {
+          "hands": 250,
+          "wagers": 6735,
+          "netReturns": 5750.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8295,
+          "netReturns": 7363.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8360,
+          "netReturns": 7747.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8335,
+          "netReturns": 7564.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7875,
+          "netReturns": 7603.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8790,
+          "netReturns": 8995.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8710,
+          "netReturns": 8793.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8320,
+          "netReturns": 8524.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8800,
+          "netReturns": 8188.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8805,
+          "netReturns": 10233.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8065,
+          "netReturns": 7920
+        },
+        {
+          "hands": 250,
+          "wagers": 8935,
+          "netReturns": 8342.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8635,
+          "netReturns": 7065.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8915,
+          "netReturns": 7814.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8190,
+          "netReturns": 7881.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7690,
+          "netReturns": 7507.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7050,
+          "netReturns": 6969.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8525,
+          "netReturns": 7574.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8220,
+          "netReturns": 8294.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7855,
+          "netReturns": 7814.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8340,
+          "netReturns": 7228.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7950,
+          "netReturns": 7334.4
+        },
+        {
+          "hands": 250,
+          "wagers": 9380,
+          "netReturns": 10012.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8740,
+          "netReturns": 9532.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7720,
+          "netReturns": 7132.8
+        },
+        {
+          "hands": 250,
+          "wagers": 9095,
+          "netReturns": 9043.2
+        },
+        {
+          "hands": 250,
+          "wagers": 6920,
+          "netReturns": 6297.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8385,
+          "netReturns": 8083.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8395,
+          "netReturns": 8889.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8420,
+          "netReturns": 6921.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7200,
+          "netReturns": 6566.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8705,
+          "netReturns": 8620.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7705,
+          "netReturns": 7977.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7960,
+          "netReturns": 7305.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7555,
+          "netReturns": 8179.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8555,
+          "netReturns": 6892.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7625,
+          "netReturns": 7411.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8630,
+          "netReturns": 7593.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8530,
+          "netReturns": 8822.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8195,
+          "netReturns": 7737.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7940,
+          "netReturns": 7104
+        },
+        {
+          "hands": 250,
+          "wagers": 8980,
+          "netReturns": 8342.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7675,
+          "netReturns": 7286.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8050,
+          "netReturns": 6892.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8595,
+          "netReturns": 8841.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8095,
+          "netReturns": 7968
+        },
+        {
+          "hands": 250,
+          "wagers": 7620,
+          "netReturns": 6470.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8390,
+          "netReturns": 7920
+        },
+        {
+          "hands": 250,
+          "wagers": 8580,
+          "netReturns": 8198.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8220,
+          "netReturns": 7804.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8965,
+          "netReturns": 9014.4
+        },
+        {
+          "hands": 250,
+          "wagers": 6470,
+          "netReturns": 5155.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8375,
+          "netReturns": 8937.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8785,
+          "netReturns": 8160
+        },
+        {
+          "hands": 250,
+          "wagers": 7675,
+          "netReturns": 8352
+        },
+        {
+          "hands": 250,
+          "wagers": 8360,
+          "netReturns": 8668.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8930,
+          "netReturns": 8284.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8850,
+          "netReturns": 8476.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8420,
+          "netReturns": 7958.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8050,
+          "netReturns": 7017.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8550,
+          "netReturns": 7881.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8600,
+          "netReturns": 7977.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8700,
+          "netReturns": 8563.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8985,
+          "netReturns": 9369.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7685,
+          "netReturns": 7334.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8045,
+          "netReturns": 8284.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7745,
+          "netReturns": 6969.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8295,
+          "netReturns": 8083.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8265,
+          "netReturns": 8112
+        },
+        {
+          "hands": 250,
+          "wagers": 8515,
+          "netReturns": 9993.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7155,
+          "netReturns": 7881.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7425,
+          "netReturns": 7545.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8360,
+          "netReturns": 8352
+        },
+        {
+          "hands": 250,
+          "wagers": 8370,
+          "netReturns": 7900.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7680,
+          "netReturns": 7238.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8185,
+          "netReturns": 7344
+        },
+        {
+          "hands": 250,
+          "wagers": 9075,
+          "netReturns": 7728
+        },
+        {
+          "hands": 250,
+          "wagers": 8985,
+          "netReturns": 8064
+        },
+        {
+          "hands": 250,
+          "wagers": 7585,
+          "netReturns": 7699.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8280,
+          "netReturns": 8832
+        },
+        {
+          "hands": 250,
+          "wagers": 8250,
+          "netReturns": 7392
+        },
+        {
+          "hands": 250,
+          "wagers": 8745,
+          "netReturns": 8563.2
+        },
+        {
+          "hands": 250,
+          "wagers": 9230,
+          "netReturns": 8246.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8515,
+          "netReturns": 8016
+        },
+        {
+          "hands": 250,
+          "wagers": 8205,
+          "netReturns": 7929.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7740,
+          "netReturns": 6595.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8025,
+          "netReturns": 7257.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8280,
+          "netReturns": 7824
+        },
+        {
+          "hands": 250,
+          "wagers": 8045,
+          "netReturns": 8227.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8835,
+          "netReturns": 9187.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8025,
+          "netReturns": 8563.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8460,
+          "netReturns": 9168
+        },
+        {
+          "hands": 250,
+          "wagers": 8620,
+          "netReturns": 7718.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7780,
+          "netReturns": 7056
+        },
+        {
+          "hands": 250,
+          "wagers": 8425,
+          "netReturns": 9331.2
+        },
+        {
+          "hands": 250,
+          "wagers": 9275,
+          "netReturns": 8438.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8340,
+          "netReturns": 6835.2
+        },
+        {
+          "hands": 250,
+          "wagers": 9500,
+          "netReturns": 10387.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8905,
+          "netReturns": 8313.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7805,
+          "netReturns": 7190.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8885,
+          "netReturns": 8313.6
+        },
+        {
+          "hands": 250,
+          "wagers": 9000,
+          "netReturns": 8976
+        },
+        {
+          "hands": 250,
+          "wagers": 8190,
+          "netReturns": 8054.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8670,
+          "netReturns": 7747.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8325,
+          "netReturns": 6988.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8360,
+          "netReturns": 7420.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8260,
+          "netReturns": 7756.8
+        },
+        {
+          "hands": 250,
+          "wagers": 9285,
+          "netReturns": 9513.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8705,
+          "netReturns": 8774.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8190,
+          "netReturns": 9235.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7720,
+          "netReturns": 7440
+        },
+        {
+          "hands": 250,
+          "wagers": 8585,
+          "netReturns": 8793.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8185,
+          "netReturns": 7056
+        },
+        {
+          "hands": 250,
+          "wagers": 9050,
+          "netReturns": 7689.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8280,
+          "netReturns": 9273.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8940,
+          "netReturns": 8275.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8610,
+          "netReturns": 8083.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8090,
+          "netReturns": 7728
+        },
+        {
+          "hands": 250,
+          "wagers": 7115,
+          "netReturns": 5414.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8355,
+          "netReturns": 7372.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8605,
+          "netReturns": 8428.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8515,
+          "netReturns": 8611.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8060,
+          "netReturns": 8736
+        },
+        {
+          "hands": 250,
+          "wagers": 7850,
+          "netReturns": 6566.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8390,
+          "netReturns": 8448
+        },
+        {
+          "hands": 250,
+          "wagers": 8285,
+          "netReturns": 7862.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8160,
+          "netReturns": 7708.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8540,
+          "netReturns": 8659.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8935,
+          "netReturns": 8064
+        },
+        {
+          "hands": 250,
+          "wagers": 9055,
+          "netReturns": 9129.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8130,
+          "netReturns": 6182.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8815,
+          "netReturns": 8841.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7770,
+          "netReturns": 8294.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8410,
+          "netReturns": 8726.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8205,
+          "netReturns": 7545.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7620,
+          "netReturns": 6662.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8510,
+          "netReturns": 8678.4
+        },
+        {
+          "hands": 250,
+          "wagers": 9130,
+          "netReturns": 9283.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8010,
+          "netReturns": 7977.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8035,
+          "netReturns": 7612.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8575,
+          "netReturns": 8640
+        },
+        {
+          "hands": 250,
+          "wagers": 7945,
+          "netReturns": 8131.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7655,
+          "netReturns": 7488
+        },
+        {
+          "hands": 250,
+          "wagers": 8315,
+          "netReturns": 7209.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8310,
+          "netReturns": 8620.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8085,
+          "netReturns": 7651.2
+        },
+        {
+          "hands": 250,
+          "wagers": 9030,
+          "netReturns": 8409.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8515,
+          "netReturns": 8985.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7795,
+          "netReturns": 7766.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7770,
+          "netReturns": 8390.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7625,
+          "netReturns": 6441.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7905,
+          "netReturns": 8774.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8050,
+          "netReturns": 8227.2
+        },
+        {
+          "hands": 250,
+          "wagers": 9475,
+          "netReturns": 8678.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7100,
+          "netReturns": 7488
+        },
+        {
+          "hands": 250,
+          "wagers": 8225,
+          "netReturns": 6787.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7530,
+          "netReturns": 7507.2
+        },
+        {
+          "hands": 250,
+          "wagers": 9160,
+          "netReturns": 8304
+        },
+        {
+          "hands": 250,
+          "wagers": 8715,
+          "netReturns": 9139.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7555,
+          "netReturns": 6480
+        },
+        {
+          "hands": 250,
+          "wagers": 9190,
+          "netReturns": 9369.6
+        },
+        {
+          "hands": 250,
+          "wagers": 9415,
+          "netReturns": 8304
+        },
+        {
+          "hands": 250,
+          "wagers": 8285,
+          "netReturns": 8179.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7935,
+          "netReturns": 7584
+        },
+        {
+          "hands": 250,
+          "wagers": 8420,
+          "netReturns": 8256
+        },
+        {
+          "hands": 250,
+          "wagers": 8740,
+          "netReturns": 7881.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8865,
+          "netReturns": 8054.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8600,
+          "netReturns": 7267.2
+        },
+        {
+          "hands": 250,
+          "wagers": 9060,
+          "netReturns": 7766.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8670,
+          "netReturns": 8361.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8960,
+          "netReturns": 8774.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8355,
+          "netReturns": 8054.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7430,
+          "netReturns": 7958.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8195,
+          "netReturns": 9417.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8555,
+          "netReturns": 7996.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8150,
+          "netReturns": 9542.4
+        },
+        {
+          "hands": 250,
+          "wagers": 9790,
+          "netReturns": 10339.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8530,
+          "netReturns": 7718.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8645,
+          "netReturns": 9187.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7850,
+          "netReturns": 7200
+        },
+        {
+          "hands": 250,
+          "wagers": 9100,
+          "netReturns": 9465.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7435,
+          "netReturns": 7084.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8295,
+          "netReturns": 9148.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8550,
+          "netReturns": 8889.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8590,
+          "netReturns": 8044.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8340,
+          "netReturns": 8035.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8005,
+          "netReturns": 7776
+        },
+        {
+          "hands": 250,
+          "wagers": 7795,
+          "netReturns": 7536
+        },
+        {
+          "hands": 250,
+          "wagers": 8415,
+          "netReturns": 8256
+        },
+        {
+          "hands": 250,
+          "wagers": 8790,
+          "netReturns": 8563.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7900,
+          "netReturns": 7132.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8580,
+          "netReturns": 7276.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8180,
+          "netReturns": 6796.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8660,
+          "netReturns": 7228.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7900,
+          "netReturns": 7276.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7985,
+          "netReturns": 7804.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8790,
+          "netReturns": 7843.2
+        },
+        {
+          "hands": 250,
+          "wagers": 9090,
+          "netReturns": 8803.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8565,
+          "netReturns": 7584
+        },
+        {
+          "hands": 250,
+          "wagers": 9275,
+          "netReturns": 9849.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8000,
+          "netReturns": 8035.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8510,
+          "netReturns": 9312
+        },
+        {
+          "hands": 250,
+          "wagers": 8570,
+          "netReturns": 8140.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8280,
+          "netReturns": 7286.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7705,
+          "netReturns": 7833.6
+        },
+        {
+          "hands": 250,
+          "wagers": 6930,
+          "netReturns": 6499.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8260,
+          "netReturns": 7776
+        },
+        {
+          "hands": 250,
+          "wagers": 8885,
+          "netReturns": 8265.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8800,
+          "netReturns": 9763.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7940,
+          "netReturns": 6950.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7745,
+          "netReturns": 7555.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8120,
+          "netReturns": 7622.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8115,
+          "netReturns": 8227.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7800,
+          "netReturns": 6384
+        },
+        {
+          "hands": 250,
+          "wagers": 8495,
+          "netReturns": 8812.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7900,
+          "netReturns": 8227.2
+        },
+        {
+          "hands": 250,
+          "wagers": 9730,
+          "netReturns": 9254.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7630,
+          "netReturns": 7027.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8955,
+          "netReturns": 9302.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8650,
+          "netReturns": 9600
+        },
+        {
+          "hands": 250,
+          "wagers": 8780,
+          "netReturns": 9139.2
+        },
+        {
+          "hands": 250,
+          "wagers": 9630,
+          "netReturns": 8160
+        },
+        {
+          "hands": 250,
+          "wagers": 8890,
+          "netReturns": 9475.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7550,
+          "netReturns": 6748.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8835,
+          "netReturns": 8112
+        },
+        {
+          "hands": 250,
+          "wagers": 8740,
+          "netReturns": 7996.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8855,
+          "netReturns": 7948.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8710,
+          "netReturns": 8112
+        },
+        {
+          "hands": 250,
+          "wagers": 8630,
+          "netReturns": 6998.4
+        },
+        {
+          "hands": 250,
+          "wagers": 7750,
+          "netReturns": 7507.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8710,
+          "netReturns": 6105.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8730,
+          "netReturns": 10089.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7540,
+          "netReturns": 7440
+        },
+        {
+          "hands": 250,
+          "wagers": 8935,
+          "netReturns": 9398.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8220,
+          "netReturns": 7257.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8405,
+          "netReturns": 7612.8
+        },
+        {
+          "hands": 250,
+          "wagers": 9000,
+          "netReturns": 9705.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8060,
+          "netReturns": 7612.8
+        },
+        {
+          "hands": 250,
+          "wagers": 9380,
+          "netReturns": 9340.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8335,
+          "netReturns": 9158.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8215,
+          "netReturns": 9129.6
+        },
+        {
+          "hands": 250,
+          "wagers": 9055,
+          "netReturns": 9945.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7660,
+          "netReturns": 7372.8
+        },
+        {
+          "hands": 250,
+          "wagers": 9125,
+          "netReturns": 9916.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8995,
+          "netReturns": 7363.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7440,
+          "netReturns": 6883.2
+        },
+        {
+          "hands": 250,
+          "wagers": 9100,
+          "netReturns": 10233.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8730,
+          "netReturns": 8352
+        },
+        {
+          "hands": 250,
+          "wagers": 8885,
+          "netReturns": 9907.2
+        },
+        {
+          "hands": 250,
+          "wagers": 9055,
+          "netReturns": 9225.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8725,
+          "netReturns": 9331.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8715,
+          "netReturns": 8438.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8090,
+          "netReturns": 7219.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7280,
+          "netReturns": 6393.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8580,
+          "netReturns": 8073.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8435,
+          "netReturns": 8553.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8570,
+          "netReturns": 8457.6
+        },
+        {
+          "hands": 250,
+          "wagers": 7270,
+          "netReturns": 6950.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8830,
+          "netReturns": 7747.2
+        },
+        {
+          "hands": 250,
+          "wagers": 7860,
+          "netReturns": 7161.6
+        },
+        {
+          "hands": 250,
+          "wagers": 9045,
+          "netReturns": 8505.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8095,
+          "netReturns": 8284.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8995,
+          "netReturns": 9091.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8565,
+          "netReturns": 7996.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7945,
+          "netReturns": 6720
+        },
+        {
+          "hands": 250,
+          "wagers": 8780,
+          "netReturns": 8582.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8640,
+          "netReturns": 8870.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8385,
+          "netReturns": 8976
+        },
+        {
+          "hands": 250,
+          "wagers": 8795,
+          "netReturns": 8937.6
+        },
+        {
+          "hands": 250,
+          "wagers": 8670,
+          "netReturns": 8630.4
+        },
+        {
+          "hands": 250,
+          "wagers": 8435,
+          "netReturns": 8188.8
+        },
+        {
+          "hands": 250,
+          "wagers": 7010,
+          "netReturns": 7132.8
+        }
+      ],
+      "method": "每手雙方重設相同帶入、大小盲輪替；NPC 使用 balanced，玩家使用選定策略。有效投注排除未跟注退款。96% 為對稱條件參考；策略或手牌設定不對稱時不保證玩家 RTP。95% CI 使用獨立牌局比值估計器。",
+      "rtp": 0.9657965989224107,
+      "grossRtp": 1.006038123877193,
+      "standardError": 0.004405029322813199,
+      "ci95": [
+        0.9571627414496968,
+        0.9744304563951245
+      ]
+    },
+    {
+      "id": "redraw-call",
+      "hands": 20000,
+      "seed": 20260931,
+      "policy": "call",
+      "config": {
+        "targetRtp": 0.96,
+        "smallBlind": 5,
+        "bigBlind": 10,
+        "minBuyIn": 200,
+        "maxBuyIn": 2000,
+        "buyIn": 1000,
+        "betSize": {
+          "preflop": 10,
+          "flop": 20,
+          "turn": 40,
+          "river": 40
+        },
+        "maxRaises": 1,
+        "animationMs": 850,
+        "npc": {
+          "fold": 0.2,
+          "call": 0.6,
+          "raise": 0.2,
+          "check": 0.65,
+          "bet": 0.35,
+          "strengthInfluence": 1,
+          "priceInfluence": 0.6
+        },
+        "deal": {
+          "player": {
+            "rerollChance": 0.75,
+            "maxRerolls": 2,
+            "targetScore": 0.48,
+            "manual": []
+          },
+          "npc": {
+            "rerollChance": 0.75,
+            "maxRerolls": 2,
+            "targetScore": 0.48,
+            "manual": []
+          }
+        }
+      },
+      "wagers": 765405,
+      "refunds": 10975,
+      "grossReturns": 694580,
+      "netReturns": 666796.8,
+      "fees": 61232.4,
+      "playerFees": 27783.2,
+      "wins": 10696,
+      "losses": 8676,
+      "ties": 628,
+      "folds": 0,
+      "npcFolds": 2195,
+      "showdowns": 17805,
+      "totalActions": 154079,
+      "conservationError": 0,
+      "batches": [
+        {
+          "hands": 250,
+          "wagers": 8690,
+          "netReturns": 7824
+        },
+        {
+          "hands": 250,
+          "wagers": 9440,
+          "netReturns": 8217.6
+        },
+        {
+          "hands": 250,
+          "wagers": 9545,
+          "netReturns": 8736
+        },
+        {
+          "hands": 250,
+          "wagers": 9940,
+          "netReturns": 8880
+        },
+        {
+          "hands": 250,
+          "wagers": 10040,
+          "netReturns": 9648
+        },
+        {
+          "hands": 250,
+          "wagers": 9550,
+          "netReturns": 8092.8
+        },
+        {
+          "hands": 250,
+          "wagers": 9425,
+          "netReturns": 7593.6
+        },
+        {
+          "hands": 250,
+          "wagers": 9705,
+          "netReturns": 8649.6
+        },
+        {
+          "hands": 250,
+          "wagers": 10085,
+          "netReturns": 10118.4
+        },
+        {
+          "hands": 250,
+          "wagers": 9015,
+          "netReturns": 7584
+        },
+        {
+          "hands": 250,
+          "wagers": 9830,
+          "netReturns": 8928
+        },
+        {
+          "hands": 250,
+          "wagers": 8845,
+          "netReturns": 7987.2
+        },
+        {
+          "hands": 250,
+          "wagers": 9515,
+          "netReturns": 7420.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8955,
+          "netReturns": 8131.2
+        },
+        {
+          "hands": 250,
+          "wagers": 10630,
+          "netReturns": 9340.8
+        },
+        {
+          "hands": 250,
+          "wagers": 9700,
+          "netReturns": 8083.2
+        },
+        {
+          "hands": 250,
+          "wagers": 9345,
+          "netReturns": 8553.6
+        },
+        {
+          "hands": 250,
+          "wagers": 9590,
+          "netReturns": 8160
+        },
+        {
+          "hands": 250,
+          "wagers": 9915,
+          "netReturns": 8995.2
+        },
+        {
+          "hands": 250,
+          "wagers": 9830,
+          "netReturns": 9024
+        },
+        {
+          "hands": 250,
+          "wagers": 9215,
+          "netReturns": 6624
+        },
+        {
+          "hands": 250,
+          "wagers": 9155,
+          "netReturns": 7468.8
+        },
+        {
+          "hands": 250,
+          "wagers": 9185,
+          "netReturns": 8044.8
+        },
+        {
+          "hands": 250,
+          "wagers": 9285,
+          "netReturns": 9187.2
+        },
+        {
+          "hands": 250,
+          "wagers": 9055,
+          "netReturns": 8352
+        },
+        {
+          "hands": 250,
+          "wagers": 9770,
+          "netReturns": 8534.4
+        },
+        {
+          "hands": 250,
+          "wagers": 10895,
+          "netReturns": 9744
+        },
+        {
+          "hands": 250,
+          "wagers": 8760,
+          "netReturns": 7574.4
+        },
+        {
+          "hands": 250,
+          "wagers": 9670,
+          "netReturns": 9100.8
+        },
+        {
+          "hands": 250,
+          "wagers": 10090,
+          "netReturns": 8102.4
+        },
+        {
+          "hands": 250,
+          "wagers": 10090,
+          "netReturns": 8668.8
+        },
+        {
+          "hands": 250,
+          "wagers": 9335,
+          "netReturns": 8140.8
+        },
+        {
+          "hands": 250,
+          "wagers": 9990,
+          "netReturns": 9168
+        },
+        {
+          "hands": 250,
+          "wagers": 8890,
+          "netReturns": 7824
+        },
+        {
+          "hands": 250,
+          "wagers": 9410,
+          "netReturns": 8428.8
+        },
+        {
+          "hands": 250,
+          "wagers": 10435,
+          "netReturns": 8169.6
+        },
+        {
+          "hands": 250,
+          "wagers": 10170,
+          "netReturns": 8985.6
+        },
+        {
+          "hands": 250,
+          "wagers": 9420,
+          "netReturns": 8188.8
+        },
+        {
+          "hands": 250,
+          "wagers": 9455,
+          "netReturns": 8121.6
+        },
+        {
+          "hands": 250,
+          "wagers": 9280,
+          "netReturns": 7747.2
+        },
+        {
+          "hands": 250,
+          "wagers": 9595,
+          "netReturns": 8899.2
+        },
+        {
+          "hands": 250,
+          "wagers": 8820,
+          "netReturns": 7488
+        },
+        {
+          "hands": 250,
+          "wagers": 10195,
+          "netReturns": 7920
+        },
+        {
+          "hands": 250,
+          "wagers": 9955,
+          "netReturns": 7564.8
+        },
+        {
+          "hands": 250,
+          "wagers": 8035,
+          "netReturns": 7660.8
+        },
+        {
+          "hands": 250,
+          "wagers": 9395,
+          "netReturns": 7737.6
+        },
+        {
+          "hands": 250,
+          "wagers": 10420,
+          "netReturns": 8188.8
+        },
+        {
+          "hands": 250,
+          "wagers": 9495,
+          "netReturns": 8073.6
+        },
+        {
+          "hands": 250,
+          "wagers": 9570,
+          "netReturns": 8640
+        },
+        {
+          "hands": 250,
+          "wagers": 9335,
+          "netReturns": 7881.6
+        },
+        {
+          "hands": 250,
+          "wagers": 9895,
+          "netReturns": 9744
+        },
+        {
+          "hands": 250,
+          "wagers": 9390,
+          "netReturns": 8284.8
+        },
+        {
+          "hands": 250,
+          "wagers": 9885,
+          "netReturns": 7440
+        },
+        {
+          "hands": 250,
+          "wagers": 8885,
+          "netReturns": 8419.2
+        },
+        {
+          "hands": 250,
+          "wagers": 9310,
+          "netReturns": 8275.2
+        },
+        {
+          "hands": 250,
+          "wagers": 10365,
+          "netReturns": 9302.4
+        },
+        {
+          "hands": 250,
+          "wagers": 9665,
+          "netReturns": 8582.4
+        },
+        {
+          "hands": 250,
+          "wagers": 10185,
+          "netReturns": 8764.8
+        },
+        {
+          "hands": 250,
+          "wagers": 9490,
+          "netReturns": 9590.4
+        },
+        {
+          "hands": 250,
+          "wagers": 9645,
+          "netReturns": 7132.8
+        },
+        {
+          "hands": 250,
+          "wagers": 9080,
+          "netReturns": 8544
+        },
+        {
+          "hands": 250,
+          "wagers": 9080,
+          "netReturns": 7996.8
+        },
+        {
+          "hands": 250,
+          "wagers": 10165,
+          "netReturns": 8716.8
+        },
+        {
+          "hands": 250,
+          "wagers": 9810,
+          "netReturns": 8841.6
+        },
+        {
+          "hands": 250,
+          "wagers": 9480,
+          "netReturns": 8812.8
+        },
+        {
+          "hands": 250,
+          "wagers": 9705,
+          "netReturns": 7900.8
+        },
+        {
+          "hands": 250,
+          "wagers": 9055,
+          "netReturns": 7776
+        },
+        {
+          "hands": 250,
+          "wagers": 9675,
+          "netReturns": 8102.4
+        },
+        {
+          "hands": 250,
+          "wagers": 9880,
+          "netReturns": 7651.2
+        },
+        {
+          "hands": 250,
+          "wagers": 9645,
+          "netReturns": 8956.8
+        },
+        {
+          "hands": 250,
+          "wagers": 9400,
+          "netReturns": 8448
+        },
+        {
+          "hands": 250,
+          "wagers": 9880,
+          "netReturns": 6537.6
+        },
+        {
+          "hands": 250,
+          "wagers": 9715,
+          "netReturns": 9724.8
+        },
+        {
+          "hands": 250,
+          "wagers": 9080,
+          "netReturns": 6720
+        },
+        {
+          "hands": 250,
+          "wagers": 9530,
+          "netReturns": 7968
+        },
+        {
+          "hands": 250,
+          "wagers": 9750,
+          "netReturns": 9936
+        },
+        {
+          "hands": 250,
+          "wagers": 9195,
+          "netReturns": 7305.6
+        },
+        {
+          "hands": 250,
+          "wagers": 9365,
+          "netReturns": 7804.8
+        },
+        {
+          "hands": 250,
+          "wagers": 9875,
+          "netReturns": 9052.8
+        },
+        {
+          "hands": 250,
+          "wagers": 9365,
+          "netReturns": 8265.6
+        }
+      ],
+      "method": "每手雙方重設相同帶入、大小盲輪替；NPC 使用 balanced，玩家使用選定策略。有效投注排除未跟注退款。96% 為對稱條件參考；策略或手牌設定不對稱時不保證玩家 RTP。95% CI 使用獨立牌局比值估計器。",
+      "rtp": 0.871168597017221,
+      "grossRtp": 0.9074672885596514,
+      "standardError": 0.008315945630342773,
+      "ci95": [
+        0.8548693435817493,
+        0.8874678504526928
+      ]
+    },
+    {
+      "id": "redraw-aggressive",
+      "hands": 20000,
+      "seed": 20260932,
+      "policy": "aggressive",
+      "config": {
+        "targetRtp": 0.96,
+        "smallBlind": 5,
+        "bigBlind": 10,
+        "minBuyIn": 200,
+        "maxBuyIn": 2000,
+        "buyIn": 1000,
+        "betSize": {
+          "preflop": 10,
+          "flop": 20,
+          "turn": 40,
+          "river": 40
+        },
+        "maxRaises": 1,
+        "animationMs": 850,
+        "npc": {
+          "fold": 0.2,
+          "call": 0.6,
+          "raise": 0.2,
+          "check": 0.65,
+          "bet": 0.35,
+          "strengthInfluence": 1,
+          "priceInfluence": 0.6
+        },
+        "deal": {
+          "player": {
+            "rerollChance": 0.75,
+            "maxRerolls": 2,
+            "targetScore": 0.48,
+            "manual": []
+          },
+          "npc": {
+            "rerollChance": 0.75,
+            "maxRerolls": 2,
+            "targetScore": 0.48,
+            "manual": []
+          }
+        }
+      },
+      "wagers": 1075325,
+      "refunds": 231220,
+      "grossReturns": 1190650,
+      "netReturns": 1143024,
+      "fees": 86026,
+      "playerFees": 47626,
+      "wins": 14084,
+      "losses": 5638,
+      "ties": 278,
+      "folds": 1102,
+      "npcFolds": 10615,
+      "showdowns": 8283,
+      "totalActions": 132482,
+      "conservationError": 0,
+      "batches": [
+        {
+          "hands": 250,
+          "wagers": 13590,
+          "netReturns": 15139.2
+        },
+        {
+          "hands": 250,
+          "wagers": 12365,
+          "netReturns": 12585.6
+        },
+        {
+          "hands": 250,
+          "wagers": 13655,
+          "netReturns": 13728
+        },
+        {
+          "hands": 250,
+          "wagers": 12935,
+          "netReturns": 13382.4
+        },
+        {
+          "hands": 250,
+          "wagers": 12240,
+          "netReturns": 13555.2
+        },
+        {
+          "hands": 250,
+          "wagers": 13310,
+          "netReturns": 13382.4
+        },
+        {
+          "hands": 250,
+          "wagers": 13360,
+          "netReturns": 13564.8
+        },
+        {
+          "hands": 250,
+          "wagers": 12280,
+          "netReturns": 13276.8
+        },
+        {
+          "hands": 250,
+          "wagers": 13775,
+          "netReturns": 15254.4
+        },
+        {
+          "hands": 250,
+          "wagers": 13465,
+          "netReturns": 14409.6
+        },
+        {
+          "hands": 250,
+          "wagers": 13195,
+          "netReturns": 13228.8
+        },
+        {
+          "hands": 250,
+          "wagers": 13760,
+          "netReturns": 13862.4
+        },
+        {
+          "hands": 250,
+          "wagers": 13510,
+          "netReturns": 14841.6
+        },
+        {
+          "hands": 250,
+          "wagers": 13315,
+          "netReturns": 15168
+        },
+        {
+          "hands": 250,
+          "wagers": 15225,
+          "netReturns": 14409.6
+        },
+        {
+          "hands": 250,
+          "wagers": 12830,
+          "netReturns": 13526.4
+        },
+        {
+          "hands": 250,
+          "wagers": 13385,
+          "netReturns": 15619.2
+        },
+        {
+          "hands": 250,
+          "wagers": 13665,
+          "netReturns": 13545.6
+        },
+        {
+          "hands": 250,
+          "wagers": 13500,
+          "netReturns": 14294.4
+        },
+        {
+          "hands": 250,
+          "wagers": 14585,
+          "netReturns": 14083.2
+        },
+        {
+          "hands": 250,
+          "wagers": 13330,
+          "netReturns": 15398.4
+        },
+        {
+          "hands": 250,
+          "wagers": 13065,
+          "netReturns": 14928
+        },
+        {
+          "hands": 250,
+          "wagers": 13570,
+          "netReturns": 15484.8
+        },
+        {
+          "hands": 250,
+          "wagers": 13260,
+          "netReturns": 15062.4
+        },
+        {
+          "hands": 250,
+          "wagers": 12470,
+          "netReturns": 13718.4
+        },
+        {
+          "hands": 250,
+          "wagers": 13720,
+          "netReturns": 15475.2
+        },
+        {
+          "hands": 250,
+          "wagers": 13705,
+          "netReturns": 14438.4
+        },
+        {
+          "hands": 250,
+          "wagers": 11550,
+          "netReturns": 12691.2
+        },
+        {
+          "hands": 250,
+          "wagers": 13830,
+          "netReturns": 15686.4
+        },
+        {
+          "hands": 250,
+          "wagers": 15390,
+          "netReturns": 13555.2
+        },
+        {
+          "hands": 250,
+          "wagers": 14225,
+          "netReturns": 14544
+        },
+        {
+          "hands": 250,
+          "wagers": 12705,
+          "netReturns": 13219.2
+        },
+        {
+          "hands": 250,
+          "wagers": 12690,
+          "netReturns": 13132.8
+        },
+        {
+          "hands": 250,
+          "wagers": 13090,
+          "netReturns": 13948.8
+        },
+        {
+          "hands": 250,
+          "wagers": 13725,
+          "netReturns": 15312
+        },
+        {
+          "hands": 250,
+          "wagers": 13930,
+          "netReturns": 15571.2
+        },
+        {
+          "hands": 250,
+          "wagers": 14325,
+          "netReturns": 15993.6
+        },
+        {
+          "hands": 250,
+          "wagers": 13015,
+          "netReturns": 13219.2
+        },
+        {
+          "hands": 250,
+          "wagers": 13545,
+          "netReturns": 15964.8
+        },
+        {
+          "hands": 250,
+          "wagers": 14865,
+          "netReturns": 17347.2
+        },
+        {
+          "hands": 250,
+          "wagers": 14145,
+          "netReturns": 13939.2
+        },
+        {
+          "hands": 250,
+          "wagers": 13720,
+          "netReturns": 14275.2
+        },
+        {
+          "hands": 250,
+          "wagers": 14380,
+          "netReturns": 16627.2
+        },
+        {
+          "hands": 250,
+          "wagers": 12730,
+          "netReturns": 13881.6
+        },
+        {
+          "hands": 250,
+          "wagers": 13515,
+          "netReturns": 15254.4
+        },
+        {
+          "hands": 250,
+          "wagers": 14390,
+          "netReturns": 15264
+        },
+        {
+          "hands": 250,
+          "wagers": 14185,
+          "netReturns": 16444.8
+        },
+        {
+          "hands": 250,
+          "wagers": 13780,
+          "netReturns": 14832
+        },
+        {
+          "hands": 250,
+          "wagers": 12525,
+          "netReturns": 13190.4
+        },
+        {
+          "hands": 250,
+          "wagers": 13010,
+          "netReturns": 13555.2
+        },
+        {
+          "hands": 250,
+          "wagers": 13905,
+          "netReturns": 13996.8
+        },
+        {
+          "hands": 250,
+          "wagers": 13875,
+          "netReturns": 14025.6
+        },
+        {
+          "hands": 250,
+          "wagers": 13465,
+          "netReturns": 15388.8
+        },
+        {
+          "hands": 250,
+          "wagers": 13190,
+          "netReturns": 14227.2
+        },
+        {
+          "hands": 250,
+          "wagers": 12390,
+          "netReturns": 12038.4
+        },
+        {
+          "hands": 250,
+          "wagers": 12680,
+          "netReturns": 13257.6
+        },
+        {
+          "hands": 250,
+          "wagers": 13360,
+          "netReturns": 13987.2
+        },
+        {
+          "hands": 250,
+          "wagers": 13580,
+          "netReturns": 14745.6
+        },
+        {
+          "hands": 250,
+          "wagers": 12620,
+          "netReturns": 12528
+        },
+        {
+          "hands": 250,
+          "wagers": 12855,
+          "netReturns": 15369.6
+        },
+        {
+          "hands": 250,
+          "wagers": 14105,
+          "netReturns": 16972.8
+        },
+        {
+          "hands": 250,
+          "wagers": 12305,
+          "netReturns": 13219.2
+        },
+        {
+          "hands": 250,
+          "wagers": 13760,
+          "netReturns": 13516.8
+        },
+        {
+          "hands": 250,
+          "wagers": 12695,
+          "netReturns": 14400
+        },
+        {
+          "hands": 250,
+          "wagers": 13750,
+          "netReturns": 14803.2
+        },
+        {
+          "hands": 250,
+          "wagers": 11980,
+          "netReturns": 12556.8
+        },
+        {
+          "hands": 250,
+          "wagers": 13560,
+          "netReturns": 13920
+        },
+        {
+          "hands": 250,
+          "wagers": 13485,
+          "netReturns": 14160
+        },
+        {
+          "hands": 250,
+          "wagers": 14130,
+          "netReturns": 13353.6
+        },
+        {
+          "hands": 250,
+          "wagers": 13190,
+          "netReturns": 13968
+        },
+        {
+          "hands": 250,
+          "wagers": 13200,
+          "netReturns": 14841.6
+        },
+        {
+          "hands": 250,
+          "wagers": 13710,
+          "netReturns": 16723.2
+        },
+        {
+          "hands": 250,
+          "wagers": 13665,
+          "netReturns": 13478.4
+        },
+        {
+          "hands": 250,
+          "wagers": 13670,
+          "netReturns": 14160
+        },
+        {
+          "hands": 250,
+          "wagers": 14120,
+          "netReturns": 15120
+        },
+        {
+          "hands": 250,
+          "wagers": 12455,
+          "netReturns": 12134.4
+        },
+        {
+          "hands": 250,
+          "wagers": 13655,
+          "netReturns": 12873.6
+        },
+        {
+          "hands": 250,
+          "wagers": 14610,
+          "netReturns": 13920
+        },
+        {
+          "hands": 250,
+          "wagers": 13760,
+          "netReturns": 15532.8
+        },
+        {
+          "hands": 250,
+          "wagers": 13270,
+          "netReturns": 10992
+        }
+      ],
+      "method": "每手雙方重設相同帶入、大小盲輪替；NPC 使用 balanced，玩家使用選定策略。有效投注排除未跟注退款。96% 為對稱條件參考；策略或手牌設定不對稱時不保證玩家 RTP。95% CI 使用獨立牌局比值估計器。",
+      "rtp": 1.062956780508146,
+      "grossRtp": 1.1072466463627275,
+      "standardError": 0.009227076801148423,
+      "ci95": [
+        1.044871709977895,
+        1.0810418510383968
+      ]
+    },
+    {
+      "id": "redraw-tight",
+      "hands": 20000,
+      "seed": 20260933,
+      "policy": "tight",
+      "config": {
+        "targetRtp": 0.96,
+        "smallBlind": 5,
+        "bigBlind": 10,
+        "minBuyIn": 200,
+        "maxBuyIn": 2000,
+        "buyIn": 1000,
+        "betSize": {
+          "preflop": 10,
+          "flop": 20,
+          "turn": 40,
+          "river": 40
+        },
+        "maxRaises": 1,
+        "animationMs": 850,
+        "npc": {
+          "fold": 0.2,
+          "call": 0.6,
+          "raise": 0.2,
+          "check": 0.65,
+          "bet": 0.35,
+          "strengthInfluence": 1,
+          "priceInfluence": 0.6
+        },
+        "deal": {
+          "player": {
+            "rerollChance": 0.75,
+            "maxRerolls": 2,
+            "targetScore": 0.48,
+            "manual": []
+          },
+          "npc": {
+            "rerollChance": 0.75,
+            "maxRerolls": 2,
+            "targetScore": 0.48,
+            "manual": []
+          }
+        }
+      },
+      "wagers": 370230,
+      "refunds": 45910,
+      "grossReturns": 321970,
+      "netReturns": 309091.2,
+      "fees": 29618.4,
+      "playerFees": 12878.8,
+      "wins": 6647,
+      "losses": 13154,
+      "ties": 199,
+      "folds": 10677,
+      "npcFolds": 3496,
+      "showdowns": 5827,
+      "totalActions": 95905,
+      "conservationError": 0,
+      "batches": [
+        {
+          "hands": 250,
+          "wagers": 4760,
+          "netReturns": 3868.8
+        },
+        {
+          "hands": 250,
+          "wagers": 5205,
+          "netReturns": 4838.4
+        },
+        {
+          "hands": 250,
+          "wagers": 3990,
+          "netReturns": 2697.6
+        },
+        {
+          "hands": 250,
+          "wagers": 4750,
+          "netReturns": 3955.2
+        },
+        {
+          "hands": 250,
+          "wagers": 4590,
+          "netReturns": 4492.8
+        },
+        {
+          "hands": 250,
+          "wagers": 4905,
+          "netReturns": 4358.4
+        },
+        {
+          "hands": 250,
+          "wagers": 4145,
+          "netReturns": 3580.8
+        },
+        {
+          "hands": 250,
+          "wagers": 4640,
+          "netReturns": 3004.8
+        },
+        {
+          "hands": 250,
+          "wagers": 4510,
+          "netReturns": 4099.2
+        },
+        {
+          "hands": 250,
+          "wagers": 5020,
+          "netReturns": 5059.2
+        },
+        {
+          "hands": 250,
+          "wagers": 4570,
+          "netReturns": 3772.8
+        },
+        {
+          "hands": 250,
+          "wagers": 4670,
+          "netReturns": 3763.2
+        },
+        {
+          "hands": 250,
+          "wagers": 5075,
+          "netReturns": 5222.4
+        },
+        {
+          "hands": 250,
+          "wagers": 4160,
+          "netReturns": 3628.8
+        },
+        {
+          "hands": 250,
+          "wagers": 4560,
+          "netReturns": 3820.8
+        },
+        {
+          "hands": 250,
+          "wagers": 4090,
+          "netReturns": 2361.6
+        },
+        {
+          "hands": 250,
+          "wagers": 5030,
+          "netReturns": 4780.8
+        },
+        {
+          "hands": 250,
+          "wagers": 5190,
+          "netReturns": 4464
+        },
+        {
+          "hands": 250,
+          "wagers": 3900,
+          "netReturns": 2688
+        },
+        {
+          "hands": 250,
+          "wagers": 4585,
+          "netReturns": 3907.2
+        },
+        {
+          "hands": 250,
+          "wagers": 4410,
+          "netReturns": 3724.8
+        },
+        {
+          "hands": 250,
+          "wagers": 4755,
+          "netReturns": 3907.2
+        },
+        {
+          "hands": 250,
+          "wagers": 4090,
+          "netReturns": 3129.6
+        },
+        {
+          "hands": 250,
+          "wagers": 4495,
+          "netReturns": 3801.6
+        },
+        {
+          "hands": 250,
+          "wagers": 4350,
+          "netReturns": 3676.8
+        },
+        {
+          "hands": 250,
+          "wagers": 4630,
+          "netReturns": 3686.4
+        },
+        {
+          "hands": 250,
+          "wagers": 4295,
+          "netReturns": 2572.8
+        },
+        {
+          "hands": 250,
+          "wagers": 4330,
+          "netReturns": 3705.6
+        },
+        {
+          "hands": 250,
+          "wagers": 4615,
+          "netReturns": 4070.4
+        },
+        {
+          "hands": 250,
+          "wagers": 4375,
+          "netReturns": 3600
+        },
+        {
+          "hands": 250,
+          "wagers": 4690,
+          "netReturns": 3667.2
+        },
+        {
+          "hands": 250,
+          "wagers": 4555,
+          "netReturns": 4819.2
+        },
+        {
+          "hands": 250,
+          "wagers": 4305,
+          "netReturns": 3283.2
+        },
+        {
+          "hands": 250,
+          "wagers": 4550,
+          "netReturns": 3196.8
+        },
+        {
+          "hands": 250,
+          "wagers": 4920,
+          "netReturns": 5078.4
+        },
+        {
+          "hands": 250,
+          "wagers": 4820,
+          "netReturns": 3350.4
+        },
+        {
+          "hands": 250,
+          "wagers": 4820,
+          "netReturns": 5040
+        },
+        {
+          "hands": 250,
+          "wagers": 4840,
+          "netReturns": 3897.6
+        },
+        {
+          "hands": 250,
+          "wagers": 4610,
+          "netReturns": 3849.6
+        },
+        {
+          "hands": 250,
+          "wagers": 4295,
+          "netReturns": 3148.8
+        },
+        {
+          "hands": 250,
+          "wagers": 4625,
+          "netReturns": 3158.4
+        },
+        {
+          "hands": 250,
+          "wagers": 4595,
+          "netReturns": 3984
+        },
+        {
+          "hands": 250,
+          "wagers": 5380,
+          "netReturns": 4627.2
+        },
+        {
+          "hands": 250,
+          "wagers": 4140,
+          "netReturns": 2918.4
+        },
+        {
+          "hands": 250,
+          "wagers": 5355,
+          "netReturns": 5558.4
+        },
+        {
+          "hands": 250,
+          "wagers": 4445,
+          "netReturns": 3763.2
+        },
+        {
+          "hands": 250,
+          "wagers": 4330,
+          "netReturns": 2899.2
+        },
+        {
+          "hands": 250,
+          "wagers": 4170,
+          "netReturns": 3254.4
+        },
+        {
+          "hands": 250,
+          "wagers": 5275,
+          "netReturns": 5126.4
+        },
+        {
+          "hands": 250,
+          "wagers": 4800,
+          "netReturns": 2822.4
+        },
+        {
+          "hands": 250,
+          "wagers": 4460,
+          "netReturns": 3849.6
+        },
+        {
+          "hands": 250,
+          "wagers": 4510,
+          "netReturns": 4022.4
+        },
+        {
+          "hands": 250,
+          "wagers": 4760,
+          "netReturns": 3888
+        },
+        {
+          "hands": 250,
+          "wagers": 4565,
+          "netReturns": 3792
+        },
+        {
+          "hands": 250,
+          "wagers": 4260,
+          "netReturns": 3043.2
+        },
+        {
+          "hands": 250,
+          "wagers": 4725,
+          "netReturns": 3897.6
+        },
+        {
+          "hands": 250,
+          "wagers": 5100,
+          "netReturns": 4512
+        },
+        {
+          "hands": 250,
+          "wagers": 4480,
+          "netReturns": 3667.2
+        },
+        {
+          "hands": 250,
+          "wagers": 5185,
+          "netReturns": 3888
+        },
+        {
+          "hands": 250,
+          "wagers": 5405,
+          "netReturns": 4857.6
+        },
+        {
+          "hands": 250,
+          "wagers": 4830,
+          "netReturns": 3465.6
+        },
+        {
+          "hands": 250,
+          "wagers": 4690,
+          "netReturns": 3782.4
+        },
+        {
+          "hands": 250,
+          "wagers": 4190,
+          "netReturns": 3196.8
+        },
+        {
+          "hands": 250,
+          "wagers": 4575,
+          "netReturns": 2928
+        },
+        {
+          "hands": 250,
+          "wagers": 4725,
+          "netReturns": 4713.6
+        },
+        {
+          "hands": 250,
+          "wagers": 4745,
+          "netReturns": 3820.8
+        },
+        {
+          "hands": 250,
+          "wagers": 4015,
+          "netReturns": 3600
+        },
+        {
+          "hands": 250,
+          "wagers": 4670,
+          "netReturns": 4051.2
+        },
+        {
+          "hands": 250,
+          "wagers": 4985,
+          "netReturns": 4886.4
+        },
+        {
+          "hands": 250,
+          "wagers": 5025,
+          "netReturns": 3648
+        },
+        {
+          "hands": 250,
+          "wagers": 4245,
+          "netReturns": 3792
+        },
+        {
+          "hands": 250,
+          "wagers": 4790,
+          "netReturns": 3715.2
+        },
+        {
+          "hands": 250,
+          "wagers": 3965,
+          "netReturns": 2803.2
+        },
+        {
+          "hands": 250,
+          "wagers": 4080,
+          "netReturns": 3830.4
+        },
+        {
+          "hands": 250,
+          "wagers": 4710,
+          "netReturns": 3523.2
+        },
+        {
+          "hands": 250,
+          "wagers": 4705,
+          "netReturns": 4368
+        },
+        {
+          "hands": 250,
+          "wagers": 5290,
+          "netReturns": 4972.8
+        },
+        {
+          "hands": 250,
+          "wagers": 4395,
+          "netReturns": 3273.6
+        },
+        {
+          "hands": 250,
+          "wagers": 4790,
+          "netReturns": 4771.2
+        },
+        {
+          "hands": 250,
+          "wagers": 5150,
+          "netReturns": 4848
+        }
+      ],
+      "method": "每手雙方重設相同帶入、大小盲輪替；NPC 使用 balanced，玩家使用選定策略。有效投注排除未跟注退款。96% 為對稱條件參考；策略或手牌設定不對稱時不保證玩家 RTP。95% CI 使用獨立牌局比值估計器。",
+      "rtp": 0.8348626529455002,
+      "grossRtp": 0.8696485968181941,
+      "standardError": 0.010925008577210609,
+      "ci95": [
+        0.8134496361341674,
+        0.856275669756833
+      ]
+    }
+  ]
+}

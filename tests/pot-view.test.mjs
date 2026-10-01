@@ -1,0 +1,363 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {createPotView} from '../src/pot-view.mjs';
+import {createSession, startHand, applyAction, legalActions} from '../src/engine.mjs';
+
+function fakeDocument() {
+  let time = 1000;
+  const created = [], elements = new Map();
+  const doc = {
+    defaultView: {performance: {now: () => time}},
+    getElementById: id => elements.get(id),
+    createElement: tag => new Element(tag),
+    tick: delta => { time += delta; }, created, elements
+  };
+  class Element {
+    constructor(tag, id = '') {
+      this.tagName = tag; this.id = id; this.ownerDocument = doc; this.textContent = '';
+      this.className = ''; this.dataset = {}; this.children = []; this.attributes = {};
+      this.style = {setProperty(key, value) { this[key] = value; }};
+      this.rect = {left: 50, top: 400, width: 200, height: 80}; this.animations = [];
+      created.push(this);
+    }
+    append(...items) { this.children.push(...items); for (const child of items) child.parent = this; }
+    replaceChildren(...items) { for (const child of this.children) child.parent = null; this.children = []; this.append(...items); }
+    remove() { if (this.parent) this.parent.children = this.parent.children.filter(child => child !== this); this.parent = null; this.removed = true; }
+    setAttribute(key, value) { this.attributes[key] = value; }
+    getBoundingClientRect() { return this.rect; }
+    animate(keyframes, options) {
+      let finish, reject;
+      const animation = {keyframes, options,
+        finished: new Promise((resolve, fail) => { finish = resolve; reject = fail; }),
+        finish() { this.completed = true; finish(); },
+        cancel() { this.cancelled = true; reject(new Error('Animation cancelled')); }};
+      this.animations.push(animation); return animation;
+    }
+  }
+  for (const id of ['pot-display', 'pot-value', 'pot-label', 'pot-detail', 'pot-chips', 'pot-event', 'contribution-player', 'contribution-npc', 'pot-flight-layer', 'player-stack', 'npc-stack']) elements.set(id, new Element('div', id));
+  elements.get('pot-flight-layer').rect = {left: 10, top: 20, width: 390, height: 800};
+  elements.get('player-stack').rect = {left: 200, top: 650, width: 100, height: 30};
+  elements.get('npc-stack').rect = {left: 200, top: 160, width: 100, height: 30};
+  return doc;
+}
+
+const flights = doc => doc.created.filter(element => element.className === 'flying-chip');
+const finishFlights = doc => flights(doc).forEach(flight => flight.animations[0]?.finish());
+async function finishMotion(doc) {
+  // Flight completion creates arrival feedback in a microtask; finish that too.
+  for (let pass = 0; pass < 3; pass++) {
+    for (const element of doc.created) for (const animation of element.animations) {
+      if (!animation.completed && !animation.cancelled) animation.finish();
+    }
+    await Promise.resolve();
+  }
+}
+const text = (doc, id) => doc.getElementById(id).textContent;
+function passive(hand) {
+  while (hand.status === 'playing') applyAction(hand, legalActions(hand).find(action => action.type === 'check' || action.type === 'call').type);
+}
+
+function scaleLayout(doc, scaleX, scaleY) {
+  const layer = doc.getElementById('pot-flight-layer'), origin = {...layer.rect};
+  layer.offsetWidth = origin.width; layer.offsetHeight = origin.height;
+  for (const element of doc.elements.values()) {
+    const rect = element.rect;
+    element.rect = {
+      left: origin.left + (rect.left - origin.left) * scaleX,
+      top: origin.top + (rect.top - origin.top) * scaleY,
+      width: rect.width * scaleX, height: rect.height * scaleY
+    };
+  }
+}
+
+function assertFlightPoint(flight, frame, expectedX, expectedY) {
+  const match = /translate3d\(([^,]+)px,([^,]+)px,0\)/.exec(flight.animations[0].keyframes[frame].transform);
+  assert.ok(match, 'flight keyframe contains a position');
+  assert.ok(Math.abs(Number(match[1]) - expectedX) < 1e-8, `expected x=${expectedX}, got ${match[1]}`);
+  assert.ok(Math.abs(Number(match[2]) - expectedY) < 1e-8, `expected y=${expectedY}, got ${match[2]}`);
+}
+
+test('pot view renders only the big blind and never changes the hand, balances or RNG', async () => {
+  const doc = fakeDocument(), view = createPotView({root: doc});
+  const hand = startHand(createSession({}, 20));
+  const snapshot = JSON.stringify(hand), seed = hand.rng.state();
+  view.render(hand, hand.config);
+  assert.equal(text(doc, 'pot-value'), '0'); await finishMotion(doc); await view.whenIdle();
+  assert.equal(text(doc, 'pot-label'), '底池 POT'); assert.equal(text(doc, 'pot-value'), '10');
+  assert.equal(text(doc, 'contribution-player'), '0'); assert.equal(text(doc, 'contribution-npc'), '10');
+  assert.doesNotMatch(text(doc, 'pot-event'), /小盲/); assert.match(text(doc, 'pot-event'), /對手大盲 \+10/);
+  assert.equal(flights(doc).length, 1);
+  assert.ok(flights(doc).every(flight => flight.dataset.flow === 'contribution'));
+  assert.ok(flights(doc).every(flight => flight.children[0].className === 'flying-chip-group'
+    && flight.children[0].children.length >= 3 && flight.children[0].children.length <= 5));
+  assert.ok(flights(doc).every(flight => flight.children.length === 2 && flight.children[1].className === 'amount'));
+  assert.equal(JSON.stringify(hand), snapshot); assert.equal(hand.rng.state(), seed);
+});
+
+test('missing or hidden stack labels use visible card groups for chip flights at a scaled viewport', () => {
+  for (const mode of ['missing', 'hidden']) {
+    const doc = fakeDocument();
+    for (const [seat, top] of [['player', 580], ['npc', 220]]) {
+      const cards = doc.createElement('div');
+      cards.rect = {left: 160, top, width: 140, height: 90};
+      doc.elements.set(`${seat}-cards`, cards);
+      if (mode === 'missing') doc.elements.delete(`${seat}-stack`);
+      else doc.elements.get(`${seat}-stack`).rect = {left: 0, top: 0, width: 0, height: 0};
+    }
+    scaleLayout(doc, .75, .75);
+    const view = createPotView({root: doc}), hand = startHand(createSession({}, 20));
+    view.render(hand);
+    const contributions = flights(doc).filter(flight => flight.dataset.flow === 'contribution');
+    assert.equal(contributions.length, 1);
+    for (const flight of contributions) assertFlightPoint(flight, 0, 220, flight.dataset.seat === 'player' ? 605 : 245);
+    passive(hand); view.render(hand);
+    const payouts = flights(doc).filter(flight => flight.dataset.flow === 'payout');
+    assert.equal(payouts.length, 2);
+    for (const flight of payouts) assertFlightPoint(flight, 3, 220, flight.dataset.seat === 'player' ? 605 : 245);
+  }
+});
+
+test('same-hand rerenders do not replay payments; a raise animates only its additional amount', async () => {
+  const doc = fakeDocument(), view = createPotView({root: doc});
+  const hand = startHand(createSession({}, 102));
+  view.render(hand); view.render(hand); view.render({...hand});
+  assert.equal(flights(doc).length, 1);
+  await finishMotion(doc); await view.whenIdle(); assert.equal(text(doc, 'pot-value'), '10');
+  applyAction(hand, 'raise'); view.render(hand);
+  assert.equal(flights(doc).length, 2);
+  assert.equal(flights(doc).at(-1).children[1].textContent, '+20');
+  assert.equal(text(doc, 'pot-value'), '10'); await finishMotion(doc); await view.whenIdle();
+  assert.equal(text(doc, 'pot-value'), '30'); assert.equal(text(doc, 'pot-event'), '你加注 +20');
+  view.render(hand); assert.equal(flights(doc).length, 2);
+  assert.ok(flights(doc).every(flight => flight.animations[0].options.duration === 1000 && flight.animations[0].options.delay <= 80));
+});
+
+test('fold settlement separates refund from net award and shows matched contributions', async () => {
+  const doc = fakeDocument(), view = createPotView({root: doc});
+  const hand = startHand(createSession({}, 102));
+  view.render(hand); applyAction(hand, 'raise'); view.render(hand); applyAction(hand, 'fold'); view.render(hand);
+  await finishMotion(doc); await view.whenIdle();
+  assert.equal(text(doc, 'pot-value'), '20'); assert.equal(text(doc, 'pot-label'), '已結算底池');
+  assert.equal(text(doc, 'contribution-player'), '10'); assert.equal(text(doc, 'contribution-npc'), '10');
+  assert.match(text(doc, 'pot-detail'), /你退回 10/);
+  assert.equal(text(doc, 'pot-event'), '你領回 19.2｜費用 0.8');
+  const refund = flights(doc).filter(flight => flight.dataset.flow === 'refund');
+  const payouts = flights(doc).filter(flight => flight.dataset.flow === 'payout');
+  assert.equal(refund.length, 1); assert.equal(refund[0].children[1].textContent, '退款 10');
+  assert.equal(payouts.length, 1); assert.equal(payouts[0].children[1].textContent, '+19.2');
+  assert.equal(refund[0].animations[0].options.duration, 1100);
+  assert.equal(payouts[0].animations[0].options.duration, 1100);
+  assert.equal(payouts[0].dataset.seat, 'player');
+  const count = flights(doc).length, delay = view.settledDelay();
+  assert.ok(delay > 0 && delay <= 1000);
+  view.render(hand); assert.equal(flights(doc).length, count); assert.equal(view.settledDelay(), delay);
+  doc.tick(100); assert.equal(view.settledDelay(), delay - 100);
+  doc.tick(1000); assert.equal(view.settledDelay(), 0);
+});
+
+test('tie settlement splits net awards to both stack endpoints, after final matched call', () => {
+  const doc = fakeDocument(), view = createPotView({root: doc});
+  const hand = startHand(createSession({}, 20));
+  view.render(hand); passive(hand); assert.equal(hand.result.winner, 'tie'); view.render(hand);
+  const payouts = flights(doc).filter(flight => flight.dataset.flow === 'payout');
+  assert.equal(payouts.length, 2); assert.deepEqual(payouts.map(p => p.dataset.seat), ['player', 'npc']);
+  assert.ok(payouts.every(p => p.children[1].textContent === '+9.6'));
+  assert.match(text(doc, 'pot-event'), /^平分/); assert.match(text(doc, 'pot-detail'), /無未跟注退款/);
+  assert.ok(payouts.every(p => p.animations[0].options.delay >= 300));
+  assert.ok(view.settledDelay() <= 1000);
+});
+
+test('reduced motion renders all accounting immediately without flying chips or wait', () => {
+  const doc = fakeDocument(), view = createPotView({root: doc, reducedMotion: true});
+  const hand = startHand(createSession({}, 101));
+  view.render(hand); applyAction(hand, 'fold'); view.render(hand);
+  assert.equal(flights(doc).length, 0); assert.equal(view.settledDelay(), 0);
+  assert.equal(text(doc, 'pot-value'), '0'); assert.match(text(doc, 'pot-detail'), /對手退回 10/);
+  assert.equal(text(doc, 'pot-event'), '本手結束｜費用 0');
+});
+
+test('new hands cancel old flights; leaving the table resets the pot and animation deadline', () => {
+  const doc = fakeDocument(), view = createPotView({root: doc});
+  const session = createSession({}, 66); const first = startHand(session);
+  view.render(first); applyAction(first, 'fold'); view.render(first);
+  const old = [...flights(doc)]; const next = startHand(session); view.render(next);
+  assert.ok(old.every(flight => flight.removed && flight.animations[0].cancelled));
+  assert.equal(text(doc, 'pot-value'), '0', 'new blind chips have not arrived yet'); assert.equal(view.settledDelay(), 0);
+  view.render(null, session.config);
+  assert.equal(text(doc, 'pot-value'), '0'); assert.equal(text(doc, 'pot-event'), '');
+  assert.equal(doc.getElementById('pot-flight-layer').children.length, 0);
+});
+
+test('chip stacks are capped and flight coordinates are relative to the supplied layer', async () => {
+  const doc = fakeDocument(), view = createPotView({root: doc});
+  const hand = startHand(createSession({}, 40, {firstSmallBlind: 'npc'}));
+  hand.pot = 1000000; view.render(hand);
+  await finishMotion(doc); await view.whenIdle();
+  const stacks = doc.getElementById('pot-chips').children;
+  assert.equal(stacks.length, 5); assert.ok(stacks.every(stack => stack.children.length <= 10));
+  assert.equal(stacks.reduce((sum, stack) => sum + stack.children.length, 0), 50);
+  const inbound = flights(doc).find(flight => flight.dataset.seat === 'player');
+  assert.match(inbound.animations[0].keyframes[0].transform, /translate3d\(240px,645px,0\)/);
+  assert.equal(inbound.style.pointerEvents, 'none');
+});
+
+test('hidden or missing endpoints skip motion while keeping accounting and a zero wait', () => {
+  const doc = fakeDocument(); doc.getElementById('pot-flight-layer').rect.width = 0;
+  const view = createPotView({root: doc}); const hand = startHand(createSession({}, 99));
+  view.render(hand); applyAction(hand, 'fold'); view.render(hand);
+  assert.equal(flights(doc).length, 0); assert.equal(view.settledDelay(), 0);
+  assert.equal(text(doc, 'pot-value'), '0');
+});
+
+test('scale(.8) converts viewport centers back to stage coordinates for inbound chips', async () => {
+  const doc = fakeDocument(); scaleLayout(doc, .8, .8);
+  const hand = startHand(createSession({}, 102, {firstSmallBlind: 'npc'}));
+  const snapshot = JSON.stringify(hand);
+  createPotView({root: doc}).render(hand);
+  const inbound = flights(doc).find(flight => flight.dataset.seat === 'player');
+  assertFlightPoint(inbound, 0, 240, 645);
+  assertFlightPoint(inbound, 3, 140, 420);
+  await finishMotion(doc);
+  assert.equal(text(doc, 'pot-value'), '10');
+  assert.equal(JSON.stringify(hand), snapshot);
+});
+
+test('nonuniform scale uses separate axes for contributions, refunds and payout destinations', async () => {
+  const doc = fakeDocument(); scaleLayout(doc, .8, .6);
+  const view = createPotView({root: doc});
+  const hand = startHand(createSession({}, 102));
+  view.render(hand);
+  const npcInbound = flights(doc).find(flight => flight.dataset.seat === 'npc');
+  assertFlightPoint(npcInbound, 0, 240, 155);
+  assertFlightPoint(npcInbound, 3, 140, 420);
+  applyAction(hand, 'raise'); view.render(hand);
+  applyAction(hand, 'fold'); view.render(hand);
+  for (const flow of ['refund', 'payout']) {
+    const outbound = flights(doc).find(flight => flight.dataset.flow === flow);
+    assertFlightPoint(outbound, 0, 140, 420);
+    assertFlightPoint(outbound, 3, 240, 645);
+  }
+  await finishMotion(doc); await view.whenIdle();
+  assert.equal(text(doc, 'pot-value'), '20');
+  assert.equal(text(doc, 'pot-event'), '你領回 19.2｜費用 0.8');
+});
+
+test('deferred final call finishes before payouts; repeated renders never replay or mutate the hand', async () => {
+  const doc = fakeDocument(), view = createPotView({root: doc});
+  const hand = startHand(createSession({jackpotEnabled: false}, 20));
+  while (hand.street !== 'river') applyAction(hand, legalActions(hand).find(action => ['check', 'call'].includes(action.type)).type);
+  applyAction(hand, 'bet'); view.render(hand); await finishMotion(doc); await view.whenIdle();
+  applyAction(hand, 'call'); assert.equal(hand.status, 'settled');
+  const before = JSON.stringify(hand), rngBefore = hand.rng.state(), previousCount = flights(doc).length;
+  view.render(hand, hand.config, {deferSettlement: true});
+  view.render({...hand}, hand.config, {deferSettlement: true});
+  assert.equal(flights(doc).length, previousCount + 1, 'only the final actual call enters the pot');
+  const incoming = flights(doc).at(-1);
+  assert.equal(incoming.dataset.flow, 'contribution'); assert.equal(incoming.children[1].textContent, '+40');
+  assert.equal(text(doc, 'pot-label'), '底池 POT');
+  assert.equal(doc.getElementById('pot-display').dataset.settled, 'false');
+  assert.doesNotMatch(text(doc, 'pot-event'), /領回|費用|平分/);
+  let incomingDone = false;
+  const incomingWait = view.whenIdle().then(() => { incomingDone = true; });
+  await Promise.resolve(); assert.equal(incomingDone, false);
+  incoming.animations[0].finish(); await Promise.resolve(); assert.equal(incomingDone, false, 'arrival pulse is part of idle');
+  await finishMotion(doc); await incomingWait; assert.equal(incomingDone, true);
+
+  view.render(hand, hand.config, {deferSettlement: false});
+  const payouts = flights(doc).filter(flight => flight.dataset.flow === 'payout');
+  assert.equal(payouts.length, 2); assert.ok(payouts.every(flight => flight.animations[0].options.delay < 100));
+  const settledCount = flights(doc).length; view.render(hand); view.render(hand, hand.config, {deferSettlement: true});
+  assert.equal(flights(doc).length, settledCount); assert.equal(text(doc, 'pot-label'), '已結算底池');
+  let paidOut = false; const payoutWait = view.whenIdle().then(() => { paidOut = true; });
+  payouts[0].animations[0].finish(); await Promise.resolve(); assert.equal(paidOut, false);
+  payouts[1].animations[0].finish(); await payoutWait; assert.equal(paidOut, true);
+  assert.equal(doc.getElementById('pot-flight-layer').children.length, 0);
+  assert.equal(JSON.stringify(hand), before); assert.equal(hand.rng.state(), rngBefore);
+});
+
+test('deferring a fold keeps unmatched chips in the displayed pot until distinct refund and payout flights', async () => {
+  const doc = fakeDocument(), view = createPotView({root: doc});
+  const hand = startHand(createSession({}, 102));
+  applyAction(hand, 'raise'); view.render(hand); await finishMotion(doc); await view.whenIdle();
+  applyAction(hand, 'fold'); const snapshot = JSON.stringify(hand);
+  view.render(hand, hand.config, {deferSettlement: true}); await view.whenIdle();
+  assert.equal(text(doc, 'pot-value'), '30'); assert.equal(text(doc, 'contribution-player'), '20');
+  assert.equal(text(doc, 'contribution-npc'), '10'); assert.doesNotMatch(text(doc, 'pot-detail'), /退回/);
+  assert.ok(flights(doc).every(flight => flight.dataset.flow === 'contribution'));
+  view.render(hand);
+  assert.equal(text(doc, 'pot-value'), '20'); assert.equal(text(doc, 'contribution-player'), '10');
+  assert.equal(flights(doc).filter(flight => flight.dataset.flow === 'refund').length, 1);
+  assert.equal(flights(doc).filter(flight => flight.dataset.flow === 'payout').length, 1);
+  finishFlights(doc); await view.whenIdle(); assert.equal(JSON.stringify(hand), snapshot);
+});
+
+test('whenIdle resolves cancelled work independently from the next hand and leaving clears all flights', async () => {
+  const doc = fakeDocument(), view = createPotView({root: doc});
+  const session = createSession({}, 66), first = startHand(session);
+  view.render(first); const oldWait = view.whenIdle(); const oldFlights = [...flights(doc)];
+  applyAction(first, 'fold'); const next = startHand(session); view.render(next);
+  await oldWait;
+  assert.ok(oldFlights.every(flight => flight.removed && flight.animations[0].cancelled));
+  assert.equal(doc.getElementById('pot-flight-layer').children.length, 1, 'old wait does not cancel new flights');
+  const nextWait = view.whenIdle(); view.render(null); await nextWait; await view.whenIdle();
+  assert.equal(doc.getElementById('pot-flight-layer').children.length, 0);
+});
+
+test('no WAAPI and reduced motion never block whenIdle while deferred accounting remains explicit', async () => {
+  for (const mode of ['no-waapi', 'reduced']) {
+    const doc = fakeDocument();
+    if (mode === 'no-waapi') {
+      const create = doc.createElement;
+      doc.createElement = tag => { const element = create(tag); element.animate = undefined; return element; };
+    }
+    const view = createPotView({root: doc, reducedMotion: mode === 'reduced'});
+    const hand = startHand(createSession({}, 20));
+    view.render(hand); await view.whenIdle(); passive(hand);
+    view.render(hand, hand.config, {deferSettlement: true}); await view.whenIdle();
+    assert.equal(text(doc, 'pot-label'), '底池 POT');
+    view.render(hand); await view.whenIdle();
+    assert.equal(text(doc, 'pot-label'), '已結算底池'); assert.equal(view.settledDelay(), 0);
+    assert.equal(doc.getElementById('pot-flight-layer').children.length, 0);
+  }
+});
+
+test('five decorative stacks grow with pot-to-bet ratio, within 15 to 50 chips', () => {
+  const doc = fakeDocument(), view = createPotView({root: doc, reducedMotion: true});
+  const hand = startHand(createSession({}, 40));
+  const count = () => doc.getElementById('pot-chips').children.reduce((sum, stack) => sum + stack.children.length, 0);
+  hand.pot = .01; view.render(hand); assert.equal(count(), 15);
+  hand.pot = 100; view.render(hand); const mid = count(); assert.ok(mid > 15 && mid < 50);
+  view.render(hand, {...hand.config, bigBlind: 100}); assert.ok(count() < mid);
+  hand.pot = 1e6; view.render(hand); assert.equal(count(), 50);
+  view.render(null); assert.equal(count(), 0);
+});
+
+test('numbers and chip stacks wait for the whole inbound bundle; idle includes one arrival pulse', async () => {
+  const doc = fakeDocument(), view = createPotView({root: doc});
+  const hand = startHand(createSession({}, 20)), pot = doc.getElementById('pot-display');
+  const chipCount = () => doc.getElementById('pot-chips').children.reduce((sum, stack) => sum + stack.children.length, 0);
+  applyAction(hand, 'call'); view.render(hand); view.render(hand);
+  assert.equal(text(doc, 'pot-value'), '0'); assert.equal(chipCount(), 0);
+  assert.equal(pot.dataset.flow, 'contribution'); assert.equal(flights(doc).length, 2);
+  let idle = false; const waiting = view.whenIdle().then(() => { idle = true; });
+  flights(doc)[0].animations[0].finish(); await Promise.resolve(); view.render(hand);
+  assert.equal(text(doc, 'pot-value'), '0'); assert.equal(chipCount(), 0);
+  flights(doc)[1].animations[0].finish(); await Promise.resolve();
+  assert.equal(text(doc, 'pot-value'), '20'); assert.ok(chipCount() >= 15);
+  assert.equal(pot.dataset.flow, undefined); assert.equal(pot.animations.length, 1);
+  assert.equal(pot.animations[0].options.duration, 240);
+  assert.equal(idle, false, 'numeric update happens before idle is allowed to resolve');
+  view.render(hand); assert.equal(pot.animations.length, 1);
+  pot.animations[0].finish(); await waiting; assert.equal(idle, true);
+});
+
+test('compact amount tracks the displayed string and clears when leaving the table', async () => {
+  const doc = fakeDocument(), view = createPotView({root: doc});
+  const toggles = new Map();
+  doc.getElementById('pot-value').classList = {toggle: (key, enabled) => toggles.set(key, enabled)};
+  const hand = startHand(createSession({}, 20)); hand.pot = 1234567;
+  view.render(hand); assert.equal(toggles.get('compact-amount'), false);
+  await finishMotion(doc); await view.whenIdle();
+  assert.equal(text(doc, 'pot-value'), '1,234,567'); assert.equal(toggles.get('compact-amount'), true);
+  view.render(null); assert.equal(toggles.get('compact-amount'), false);
+});
