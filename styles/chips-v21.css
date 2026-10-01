@@ -1,0 +1,54 @@
+/* Matte clay chips share one perspective and lighting across the table and flights. */
+.game .casino-chip {
+  --chip-art: url('../assets/chip-midnight-v21.svg');
+  display: block; position: absolute; padding: 0; border: 0; border-radius: 0;
+  background: var(--chip-art) center / 100% 100% no-repeat; box-shadow: none;
+}
+.game .casino-chip::before, .game .casino-chip::after { content: none; display: none; }
+.game .chip-stack-2 .casino-chip, .game .chip-stack-4 .casino-chip {
+  --chip-art: url('../assets/chip-garnet-v21.svg');
+}
+.game .chip-stack-3 .casino-chip { --chip-art: url('../assets/chip-ivory-v21.svg'); }
+
+.bankroll-pile { filter: none; }
+.bankroll-pile .chip-stack { width: 32px; height: 36px; left: 0; bottom: 0; }
+.bankroll-pile .chip-stack-2 { left: 21px; bottom: 5px; z-index: 1; }
+.bankroll-pile .chip-stack-3 { left: 42px; bottom: 0; z-index: 2; }
+.game .bankroll-pile .casino-chip {
+  width: 32px; height: 20px; left: 0; bottom: calc(var(--chip-index, 0) * 3px);
+}
+.game[data-active-seat='player'] .table-bankroll-player .bankroll-pile,
+.game[data-active-seat='npc'] .table-bankroll-npc .bankroll-pile { filter: brightness(1.08); }
+
+#pot-chips { opacity: 1; filter: none; }
+#pot-chips .chip-stack { width: 38px; height: 52px; }
+#pot-chips .chip-stack-1 { left: 3px; bottom: 1px; transform: rotate(-3deg); }
+#pot-chips .chip-stack-2 { left: 24px; bottom: 11px; transform: rotate(2deg); }
+#pot-chips .chip-stack-3 { left: 47px; bottom: 9px; transform: rotate(-2deg); }
+#pot-chips .chip-stack-4 { left: 69px; bottom: 0; transform: rotate(3deg); }
+#pot-chips .chip-stack-5 { left: 37px; bottom: -3px; transform: rotate(-2deg); }
+.game #pot-chips .casino-chip {
+  width: 38px; height: 23.75px; left: 0; bottom: calc(var(--chip-index, 0) * 3px);
+  border: 0; border-radius: 0; background: var(--chip-art) center / 100% 100% no-repeat; box-shadow: none;
+}
+.game #pot-chips .casino-chip::after { display: none; }
+
+/* The moving object is the chip stack itself, with a small separate amount. */
+.game .flying-chip,
+.game .flying-chip[data-flow='refund'],
+.game .flying-chip[data-flow='payout'] {
+  gap: 3px; padding: 0; border: 0; border-radius: 0; background: none;
+  box-shadow: none; filter: drop-shadow(0 5px 3px #100b1666);
+}
+.game .flying-chip-group { width: 46px; height: 40px; }
+.game .flying-chip-group .casino-chip {
+  width: 38px; height: 23.75px; left: calc(var(--chip-index, 0) * 1.2px);
+  bottom: calc(2px + var(--chip-index, 0) * 3px);
+}
+.game .flying-chip-group .casino-chip:nth-child(3n + 2) { --chip-art: url('../assets/chip-garnet-v21.svg'); }
+.game .flying-chip-group .casino-chip:nth-child(3n) { --chip-art: url('../assets/chip-ivory-v21.svg'); }
+.game .flying-chip b {
+  padding: 2px 4px; border-radius: 4px; background: #17212ad9;
+  font-size: 17px; line-height: 21px; font-weight: 800; color: #f5ead1;
+  text-shadow: 0 1px 2px #060c10;
+}

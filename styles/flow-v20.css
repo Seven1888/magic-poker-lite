@@ -3,52 +3,12 @@
 .game .scene-closeup, .game .npc-grip { filter: saturate(.9) brightness(.95); }
 .game .scene-light { background: linear-gradient(#03081655, transparent 16%, transparent 68%, #07091466); }
 
-.bankroll-hud {
-  position: absolute; z-index: 7; left: 10px; top: 8px; width: 304px; height: 50px;
-  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
-}
-.bankroll-panel {
-  position: relative; min-width: 0; height: 50px; padding: 6px 9px; border: 1px solid #a3917059; border-radius: 9px;
-  display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 2px;
-  color: #fff0c8; background: linear-gradient(#1a2b41ee, #101a2bef); box-shadow: 0 2px 5px #05091666;
-  text-align: left; font-variant-numeric: tabular-nums; transition: border-color calc(.18s / var(--game-speed, 1));
-}
-.bankroll-panel small { font-size: 9px; line-height: 11px; font-weight: 700; letter-spacing: 1px; color: #bdc7d4; }
-.bankroll-panel strong { max-width: 100%; font-size: 23px; line-height: 25px; font-weight: 800; white-space: nowrap; }
-.bankroll-panel:disabled { opacity: 1; }
-button.bankroll-panel:after {
-  content: ''; position: absolute; left: 0; top: 50%; width: 100%;
-  height: max(100%, calc(44px / var(--stage-scale, 1))); transform: translateY(-50%);
-}
-.game[data-active-seat='player'] .bankroll-panel[data-bankroll-seat='player'],
-.game[data-active-seat='npc'] .bankroll-panel[data-bankroll-seat='npc'] {
-  border-color: #f3d68a; background: linear-gradient(#33415bec, #18263dec); box-shadow: 0 0 0 1px #e7c77744;
-}
-.topbar { z-index: 8; }
-
-/* A compact prize-table entry leaves balances and the opponent's face clear. */
-.jackpot-badge {
-  top: 73px; left: 12px; width: 78px; height: 34px; border: 1px solid #c6a65b66; border-radius: 7px;
-  background: linear-gradient(#222e40e8, #101b2fe8); box-shadow: none; filter: none;
-}
-.jackpot-badge .jackpot-fan, .jackpot-badge .jackpot-plaque,
-.jackpot-badge .jackpot-demo, .jackpot-badge .jackpot-glint { display: none; }
-.jackpot-badge .jackpot-title {
-  top: 3px; font: 700 8px/10px var(--font); letter-spacing: 1.1px;
-  color: #d4bd89; text-shadow: none; -webkit-text-stroke: 0;
-}
-.jackpot-badge .jackpot-amount { top: 13px; font-size: 15px; line-height: 17px; color: #fff0be; text-shadow: none; }
-.jackpot-badge:hover:not(:disabled) { filter: brightness(1.1); }
-.jackpot-badge:after {
-  content: ''; position: absolute; left: 0; top: 0; width: 100%; height: max(100%, calc(44px / var(--stage-scale, 1)));
-}
-
-/* The same exact balances appear beside their physical chip-flight anchors. */
+/* Table chip sources supplement the original bottom balance and total-bet dock. */
 .table-bankroll {
   position: absolute; z-index: 6; width: 78px; height: 68px; pointer-events: none;
   color: #fff1ca; text-align: center; font-variant-numeric: tabular-nums;
 }
-.table-bankroll-npc { right: 12px; top: 219px; }
+.table-bankroll-npc { right: 12px; top: 521px; }
 .table-bankroll-player { left: 11px; top: 607px; }
 .table-bankroll > small {
   position: absolute; top: 0; left: 0; right: 0; font-size: 8px; line-height: 11px;
@@ -63,16 +23,6 @@ button.bankroll-panel:after {
 }
 .bankroll-pile .chip-stack-2 { left: 25px; bottom: 4px; z-index: 1; }
 .bankroll-pile .chip-stack-3 { left: 43px; bottom: 0; z-index: 2; }
-.bankroll-pile .casino-chip {
-  position: absolute; left: 0; bottom: calc(var(--chip-index, 0) * 3px); width: 24px; height: 11px;
-  border: 1px solid #edd19b; border-radius: 50%;
-  background: repeating-conic-gradient(from 8deg, #ffedac 0deg 20deg, #2462a4 20deg 67deg, #ffedac 67deg 88deg, #2462a4 88deg 120deg);
-  box-shadow: 0 2px #153b68, 0 3px #d5ae55, 0 4px 1px #120d23;
-}
-.bankroll-pile .casino-chip:after {
-  content: ''; position: absolute; inset: 2px 4px; border: 1px solid #e7c06f; border-radius: 50%;
-  background: linear-gradient(#6aa9dc, #18528a); box-shadow: none;
-}
 .table-bankroll > strong {
   position: absolute; bottom: 0; left: 0; right: 0; min-height: 20px; padding: 1px 3px;
   border: 1px solid #e5c98366; border-radius: 10px; background: #111e32ed;
@@ -106,13 +56,13 @@ button.bankroll-panel:after {
 .table-cue small { font-size: 14px; line-height: 19px; font-weight: 700; color: #e0d0ad; }
 .game[data-presentation='refresh'] .table-cue strong { color: #e7e7ff; }
 .game #player-win-rate { display: none !important; }
-.deck-button { opacity: .85; }
-.controls { bottom: 14px; }
+.deck-button { left: 12px; right: auto; opacity: .85; }
+.controls { bottom: 43px; }
+/* Preserve the 50% larger hand plaque while separating it from the restored controls. */
+.hand-plaque { top: 91px; }
 .game[data-busy='true'] .action { pointer-events: none; cursor: wait; translate: none; }
 .game[data-busy='true'] .action:not(.chosen-action) { opacity: .35; filter: saturate(.35) brightness(.65); }
 .game[data-busy='true'] .action.chosen-action {
   opacity: 1; filter: brightness(1.05) drop-shadow(0 0 5px #ffe0a45c); translate: none;
 }
 .game[data-deciding='true'] .decision-veil { opacity: .35; backdrop-filter: none; }
-
-@media (prefers-reduced-motion: reduce) { .bankroll-panel { transition: none; } }

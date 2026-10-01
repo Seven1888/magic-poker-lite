@@ -272,7 +272,7 @@ function render(){
   const h=hud();$('game').dataset.busy=String(busy);
   $('game').dataset.state=hand?.result&&!settlementReleased?'playing':hand?.status||'idle';$('game').dataset.actor=busy?'':hand?.actor||'';$('game').dataset.street=hand?visibleStreet():'';updateExpression(settlementReleased?hand?.result?.winner||'':'');
   renderBankrolls();
- $('balance-label').textContent='YOUR CHIPS';
+ $('balance-label').textContent='BALANCE';
   $('total-bet').textContent=money(h.playerCommitted);
   $('bring-in-label').textContent=`${session||hand?'TABLE BUY-IN':closedTable?'LAST BUY-IN':'STARTING CHIPS'} ${money(h.buyIn)}`;
   for(const seat of ['player','npc'])$(seat+'-blind').hidden=true;
