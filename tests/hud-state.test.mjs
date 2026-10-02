@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {getHudSnapshot} from '../src/hud-state.mjs';
 import {createSession, startHand, applyAction, legalActions} from '../src/engine.mjs';
+import {money} from '../src/shared.mjs';
 
 function passiveAction(hand) {
   applyAction(hand, legalActions(hand).find(action => action.type === 'check' || action.type === 'call').type);
@@ -32,18 +33,37 @@ test('deck counter follows real draws 48 to 45 to 44 to 43 and keeps 52 cards ac
 test('live commitments reduce available funds without pretending that unsettled bets are losses', () => {
   const session = createSession({}, 102), hand = startHand(session);
   let hud = getHudSnapshot({session, hand});
-  assert.equal(hud.playerBalance, 1000); assert.equal(hud.npcBalance, 990);
-  assert.equal(hud.playerCommitted, 0); assert.equal(hud.npcCommitted, 10);
-  assert.equal(hud.playerStreetPaid, 0); assert.equal(hud.npcStreetPaid, 10);
+  assert.equal(hud.playerBalance, 995); assert.equal(hud.npcBalance, 990);
+  assert.equal(hud.playerCommitted, 5); assert.equal(hud.npcCommitted, 10);
+  assert.equal(hud.playerStreetPaid, 5); assert.equal(hud.npcStreetPaid, 10);
   assert.equal(hud.settledTableProfit, 0); assert.equal(hud.npcSettledTableProfit, 0);
-  assert.equal(hud.callAmount, 10); assert.equal(hud.maxStreetTotal, 1000);
+  assert.equal(hud.callAmount, 5); assert.equal(hud.maxStreetTotal, 1000);
   assert.equal(hud.dealerSeat, 'player'); assert.equal(hud.playerSeat, 'SB'); assert.equal(hud.npcSeat, 'BB');
   const raise = hud.actions.find(action => action.type === 'raise');
-  assert.equal(raise.amount, 20); assert.equal(raise.to, 20);
+  assert.equal(raise.amount, 15); assert.equal(raise.to, 20);
   applyAction(hand, 'raise'); hud = getHudSnapshot({session, hand});
   assert.equal(hud.playerBalance, 980); assert.equal(hud.playerCommitted, 20);
   assert.equal(hud.settledTableProfit, 0); assert.deepEqual(hud.actions, []);
   assert.equal(hud.turnLabel, '面具客行動中');
+});
+
+test('fractional blind HUD and money labels agree with opening commitments, calls and the settled ledger', () => {
+  const session = createSession({bigBlind: .03, jackpotEnabled: false}, 42), hand = startHand(session);
+  const opening = getHudSnapshot({session, hand});
+  assert.equal(opening.playerSeat, 'SB'); assert.equal(opening.npcSeat, 'BB');
+  assert.equal(opening.smallBlind, .015); assert.equal(opening.bigBlind, .03);
+  assert.equal(opening.playerCommitted, .015); assert.equal(money(opening.playerCommitted), '0.015');
+  assert.equal(opening.playerBalance, 999.985); assert.equal(money(opening.playerBalance), '999.985');
+  assert.equal(opening.callAmount, .015); assert.equal(opening.turnLabel, '輪到你 · 跟注需 0.015');
+  assert.equal(money(opening.actions.find(action => action.type === 'call').amount), '0.015');
+  applyAction(hand, 'fold');
+  const settled = getHudSnapshot({session, hand});
+  assert.equal(money(settled.playerBalance), '999.985');
+  assert.equal(money(settled.npcBalance), '1,000.0138');
+  assert.equal(money(hand.result.npc.refund), '0.015');
+  assert.equal(money(hand.result.npc.netReturn), '0.0288');
+  assert.equal(money(hand.result.fee), '0.0012');
+  assert.equal(money(settled.settledTableProfit), '-0.015');
 });
 
 test('refund settlement and the following hand retain genuine cumulative table profit', () => {
@@ -57,7 +77,7 @@ test('refund settlement and the following hand retain genuine cumulative table p
   assert.equal(hud.balanceLabel, '桌上可用'); assert.equal(hud.turnLabel, '本手已結算');
   assert.equal(hud.maxStreetTotal, 0); assert.deepEqual(hud.actions, []);
   const next = startHand(session), nextHud = getHudSnapshot({session, hand: next});
-  assert.equal(nextHud.playerBalance, 999.2); assert.equal(nextHud.npcBalance, 990);
+  assert.equal(nextHud.playerBalance, 999.2); assert.equal(nextHud.npcBalance, 985);
   assert.equal(nextHud.settledTableProfit, 9.2); assert.equal(nextHud.npcSettledTableProfit, -10);
   assert.equal(nextHud.dealerSeat, 'npc'); assert.equal(nextHud.playerSeat, 'BB');
   assert.equal(nextHud.buyIn, 1000); assert.equal(nextHud.deckRemaining, 48);
@@ -80,8 +100,8 @@ test('active hand settings and live stacks take priority over pending config and
   const hand = startHand(session);
   const args = {session, hand, config: {buyIn: 2000, smallBlind: 50, bigBlind: 100}, closedTable: {playerBalance: 12, npcBalance: 13, buyIn: 100, settledTableProfit: -88}};
   let hud = getHudSnapshot(args);
-  assert.equal(hud.buyIn, 800); assert.equal(hud.playerBalance, 800);
-  assert.equal(hud.smallBlind, 0); assert.equal(hud.bigBlind, 6); assert.equal(hud.increment, 12);
+  assert.equal(hud.buyIn, 800); assert.equal(hud.playerBalance, 797);
+  assert.equal(hud.smallBlind, 3); assert.equal(hud.bigBlind, 6); assert.equal(hud.increment, 12);
   assert.equal(hud.settledTableProfit, 0); assert.equal(hud.balanceLabel, '桌上可用');
   while (hand.street === 'preflop') passiveAction(hand);
   hud = getHudSnapshot(args); assert.equal(hud.increment, 24); assert.equal(hud.playerStreetPaid, 0);
@@ -94,7 +114,7 @@ test('action list follows legal player actions and busy state without inventing 
   assert.equal(hud.actions.find(action => action.type === 'raise').allIn, true);
   assert.ok(hud.actions.every(action => action.type !== 'allin'));
   hud = getHudSnapshot({session, hand, busy: true});
-  assert.deepEqual(hud.actions, []); assert.equal(hud.callAmount, 10); assert.equal(hud.turnLabel, '牌局處理中');
+  assert.deepEqual(hud.actions, []); assert.equal(hud.callAmount, 5); assert.equal(hud.turnLabel, '牌局處理中');
   applyAction(hand, 'raise'); hud = getHudSnapshot({session, hand});
   assert.deepEqual(hud.actions, []); assert.equal(hud.callAmount, 0);
   applyAction(hand, 'call'); hud = getHudSnapshot({session, hand});

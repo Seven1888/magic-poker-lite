@@ -10,7 +10,7 @@ const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
 const number = (n, fallback) => Number.isFinite(Number(n)) ? Number(n) : fallback;
 const epsilon = 1e-7;
 export const DEFAULT_CONFIG = Object.freeze({
-  targetRtp: 0.96, jackpotEnabled: true, smallBlind: 0, bigBlind: 10,
+  targetRtp: 0.96, jackpotEnabled: true, smallBlind: 5, bigBlind: 10,
   minBuyIn: 200, maxBuyIn: 2000, buyIn: 1000,
   betSize: Object.freeze({preflop: 10, flop: 20, turn: 40, river: 40}),
   maxRaises: 1, animationMs: 850,
@@ -30,8 +30,8 @@ export function normalizeConfig(source = {}) {
   const config = {
     targetRtp: clamp(number(source.targetRtp, d.targetRtp), 0.5, 1),
     jackpotEnabled: source.jackpotEnabled ?? d.jackpotEnabled,
-    // Retain the legacy key for imported settings; the non-BB seat posts nothing.
-    smallBlind: 0, bigBlind,
+    // Derive the small blind, including for imported settings from the single-blind version.
+    smallBlind: round(bigBlind / 2), bigBlind,
     minBuyIn, maxBuyIn, buyIn: round(clamp(number(source.buyIn, d.buyIn), minBuyIn, maxBuyIn)),
     betSize: {}, maxRaises: 1, animationMs: Math.round(clamp(number(source.animationMs, d.animationMs), 0, 3000)),
     npc: {}, deal: {}
@@ -154,8 +154,8 @@ export function startHand(session) {
   };
   // Non-enumerable pointer prevents JSON snapshots from acquiring circular references.
   Object.defineProperty(session, 'activeHand', {value: hand, writable: true, configurable: true, enumerable: false});
-  // Choosing BET is free. Only the drawn big-blind seat posts automatically.
-  // smallBlind remains the preflop-first position identifier, not a paid blind.
+  // Choosing BET is free. Both seats post only when the hand starts.
+  pay(hand, smallBlind, session.config.smallBlind, 'smallBlind');
   pay(hand, bigBlind, session.config.bigBlind, 'bigBlind');
   hand.currentBet = Math.max(...Object.values(hand.streetBets));
   resolveForcedState(hand);
@@ -424,11 +424,11 @@ export function simulate(config = {}, {hands = 10000, seed = 123, policy = 'bala
   const session = createSession(normalized, seed);
   const emptyTiers = () => ({royal: 0, straightFlush: 0, quads: 0});
   const newBatch = () => ({hands: 0, wagers: 0, netReturns: 0, totalReturns: 0, jackpotAwards: 0, tierCounts: emptyTiers()});
-  const result = {ruleSet: 'single-big-blind-v1', hands, seed, policy, config: normalized, wagers: 0, refunds: 0, grossReturns: 0, netReturns: 0,
+  const result = {ruleSet: 'heads-up-two-blinds-v1', hands, seed, policy, config: normalized, wagers: 0, refunds: 0, grossReturns: 0, netReturns: 0,
     totalReturns: 0, jackpotAwards: 0, tierCounts: emptyTiers(),
     fees: 0, playerFees: 0, wins: 0, losses: 0, ties: 0, folds: 0, npcFolds: 0, showdowns: 0, totalActions: 0,
     conservationError: 0, batches: [],
-    method: '每手雙方重設相同帶入、輪替大盲；只有大盲自動投入，另一方開局投入0。NPC 使用 balanced，玩家使用選定策略。有效投注排除未跟注退款，開局棄牌形成零匹配底池亦不收費。96% 僅為底池對稱條件參考，含JP總RTP另外計算，策略或手牌不對稱亦會改變RTP。95% CI 為獨立牌局比值近似；JP稀有，零命中不代表機率為零，少量樣本不能確認稀有JP尾端。'};
+    method: '每手雙方重設相同帶入、輪替大小盲；小盲自動投入0.5 BET、大盲自動投入1 BET，短籌碼按可用額投入。NPC 使用 balanced，玩家使用選定策略。有效投注排除未跟注退款；小盲開局棄牌仍損失已付小盲，雙方匹配底池依返還係數結算。96% 僅為底池對稱條件參考，含JP總RTP另外計算，策略或手牌不對稱亦會改變RTP。95% CI 為獨立牌局比值近似；JP稀有，零命中不代表機率為零，少量樣本不能確認稀有JP尾端。'};
   let sumX2 = 0, sumBaseY2 = 0, sumBaseXY = 0, sumTotalY2 = 0, sumTotalXY = 0;
   let batch = newBatch();
   for (let i = 0; i < hands; i++) {

@@ -5,5 +5,5 @@ export function minimumAssets(config,bet){return round(config.minBuyIn/config.bi
 export function tableConfig(config,bet,assets){
  if(!Number.isFinite(bet)||bet<.02||!Number.isFinite(assets)||assets<minimumAssets(config,bet))throw new Error('Not enough chips. Choose a lower BET.');
  const ratio=bet/config.bigBlind;
- return normalizeConfig({...config,bigBlind:bet,smallBlind:0,buyIn:assets,minBuyIn:minimumAssets(config,bet),maxBuyIn:Math.max(assets,round(config.maxBuyIn*ratio)),betSize:Object.fromEntries(Object.entries(config.betSize).map(([k,v])=>[k,round(v*ratio)]))});
+ return normalizeConfig({...config,bigBlind:bet,smallBlind:round(bet/2),buyIn:assets,minBuyIn:minimumAssets(config,bet),maxBuyIn:Math.max(assets,round(config.maxBuyIn*ratio)),betSize:Object.fromEntries(Object.entries(config.betSize).map(([k,v])=>[k,round(v*ratio)]))});
 }

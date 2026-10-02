@@ -50,7 +50,7 @@ test('showdown wins, losses and ties refresh only opponent demo chips, preservin
   }
 });
 
-test('both player and opponent folds refresh, including a zero-cost opening fold', () => {
+test('both player and opponent folds refresh, including loss of the posted small blind', () => {
   for (const folded of ['player', 'npc', 'opening']) {
     const hand = fixture();
     if (folded === 'npc') {applyAction(hand, 'raise'); applyAction(hand, 'fold');}
@@ -58,7 +58,7 @@ test('both player and opponent folds refresh, including a zero-cost opening fold
     else applyAction(hand, 'fold');
     assert.equal(hand.result.reason, 'fold');
     assert.equal(hand.result.folded, folded === 'npc' ? 'npc' : 'player');
-    near(assertRefresh(hand).adjustment, folded === 'npc' ? 19.2 : folded === 'player' ? -19.2 : 0);
+    near(assertRefresh(hand).adjustment, folded === 'npc' ? 19.2 : folded === 'player' ? -19.2 : -9.6);
   }
 });
 
@@ -91,7 +91,7 @@ test('only the current settled hand may refresh; the next hand uses refreshed st
   const next = startHand(session);
   assert.deepEqual(next.stacksBefore, {player: firstEvent.after, npc: firstEvent.after});
   assert.equal(next.smallBlind, 'npc'); assert.equal(next.bigBlind, 'player');
-  near(next.stacks.player, firstEvent.after - 10); assert.equal(next.stacks.npc, firstEvent.after);
+  near(next.stacks.player, firstEvent.after - 10); near(next.stacks.npc, firstEvent.after - 5);
   assert.deepEqual(first.stacks, settledStacks, 'the old hand retains its final chip snapshot');
   assert.throws(() => syncOpponentBankroll(session), /current hand has settled/);
   applyAction(next, 'raise'); applyAction(next, 'fold');

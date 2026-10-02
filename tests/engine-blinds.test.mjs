@@ -54,10 +54,10 @@ test('either opening seat follows legal preflop order, keeps the big-blind optio
     assert.equal(hand.smallBlind, small); assert.equal(hand.bigBlind, big); assert.equal(hand.actor, small);
     assert.deepEqual(types(hand), ['fold', 'call', 'raise']);
     assert.deepEqual(legalActions(hand, big), []);
-    assert.equal(legalActions(hand).find(action => action.type === 'call').amount, 10);
-    assert.equal(hand.contributions[small], 0); assert.equal(hand.contributions[big], 10);
-    assert.equal(hand.stacks[small], 1000); assert.equal(hand.stacks[big], 990);
-    assert.deepEqual(hand.history.map(event => [event.actor, event.type, event.amount]), [[big, 'bigBlind', 10]]);
+    assert.equal(legalActions(hand).find(action => action.type === 'call').amount, 5);
+    assert.equal(hand.contributions[small], 5); assert.equal(hand.contributions[big], 10);
+    assert.equal(hand.stacks[small], 995); assert.equal(hand.stacks[big], 990);
+    assert.deepEqual(hand.history.map(event => [event.actor, event.type, event.amount]), [[small, 'smallBlind', 5], [big, 'bigBlind', 10]]);
     applyAction(hand, 'call');
     assert.equal(hand.actor, big); assert.equal(hand.street, 'preflop');
     assert.deepEqual(types(hand), ['check', 'raise']);
@@ -78,7 +78,7 @@ test('the entry choice stays fixed while successive hands alternate and carry ba
       const hand = startHand(session), expected = index % 2 === 0 ? initial : other(initial);
       assert.equal(hand.smallBlind, expected); assert.equal(hand.actor, expected);
       assert.deepEqual(hand.stacksBefore, previousStacks);
-      assert.equal(hand.stacks[expected], previousStacks[expected]);
+      assert.equal(hand.stacks[expected], Math.round((previousStacks[expected] - 5) * 1e6) / 1e6);
       assert.equal(hand.stacks[other(expected)], previousStacks[other(expected)] - 10);
       applyAction(hand, 'fold');
       assert.equal(session.firstSmallBlind, initial); assert.deepEqual(session.blindDraw, initialDraw);

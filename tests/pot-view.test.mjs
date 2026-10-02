@@ -78,21 +78,44 @@ function assertFlightPoint(flight, frame, expectedX, expectedY) {
   assert.ok(Math.abs(Number(match[2]) - expectedY) < 1e-8, `expected y=${expectedY}, got ${match[2]}`);
 }
 
-test('pot view renders only the big blind and never changes the hand, balances or RNG', async () => {
+test('pot view renders both blinds and never changes the hand, balances or RNG', async () => {
   const doc = fakeDocument(), view = createPotView({root: doc});
   const hand = startHand(createSession({}, 20));
   const snapshot = JSON.stringify(hand), seed = hand.rng.state();
   view.render(hand, hand.config);
   assert.equal(text(doc, 'pot-value'), '0'); await finishMotion(doc); await view.whenIdle();
-  assert.equal(text(doc, 'pot-label'), '底池 POT'); assert.equal(text(doc, 'pot-value'), '10');
-  assert.equal(text(doc, 'contribution-player'), '0'); assert.equal(text(doc, 'contribution-npc'), '10');
-  assert.doesNotMatch(text(doc, 'pot-event'), /小盲/); assert.match(text(doc, 'pot-event'), /對手大盲 \+10/);
-  assert.equal(flights(doc).length, 1);
+  assert.equal(text(doc, 'pot-label'), '底池 POT'); assert.equal(text(doc, 'pot-value'), '15');
+  assert.equal(text(doc, 'contribution-player'), '5'); assert.equal(text(doc, 'contribution-npc'), '10');
+  assert.match(text(doc, 'pot-event'), /你小盲 \+5/); assert.match(text(doc, 'pot-event'), /對手大盲 \+10/);
+  assert.equal(flights(doc).length, 2);
   assert.ok(flights(doc).every(flight => flight.dataset.flow === 'contribution'));
   assert.ok(flights(doc).every(flight => flight.children[0].className === 'flying-chip-group'
     && flight.children[0].children.length >= 3 && flight.children[0].children.length <= 5));
   assert.ok(flights(doc).every(flight => flight.children.length === 2 && flight.children[1].className === 'amount'));
   assert.equal(JSON.stringify(hand), snapshot); assert.equal(hand.rng.state(), seed);
+});
+
+test('fractional blinds show the exact pot, posted chips, uncalled refund and net payout', async () => {
+  const doc = fakeDocument(), view = createPotView({root: doc, locale: 'en'});
+  const hand = startHand(createSession({bigBlind: .03, jackpotEnabled: false}, 42));
+  view.render(hand);
+  await finishMotion(doc); await view.whenIdle();
+  assert.equal(hand.pot, .045); assert.equal(text(doc, 'pot-value'), '0.045');
+  assert.equal(text(doc, 'contribution-player'), '0.015'); assert.equal(text(doc, 'contribution-npc'), '0.03');
+  assert.match(text(doc, 'pot-event'), /Small blind \+0\.015/);
+  const posted = Object.fromEntries(flights(doc).map(flight => [flight.dataset.seat, flight.children[1].textContent]));
+  assert.deepEqual(posted, {player: '+0.015', npc: '+0.03'});
+  applyAction(hand, 'fold');
+  const snapshot = JSON.stringify(hand);
+  view.render(hand);
+  await finishMotion(doc); await view.whenIdle();
+  assert.equal(text(doc, 'pot-value'), '0');
+  assert.match(text(doc, 'pot-detail'), /Matched: 0\.015 each/);
+  assert.match(text(doc, 'pot-detail'), /Opponent: refund 0\.015/);
+  assert.equal(flights(doc).find(flight => flight.dataset.flow === 'refund').children[1].textContent, 'Refund 0.015');
+  assert.equal(flights(doc).find(flight => flight.dataset.flow === 'payout').children[1].textContent, '+0.0288');
+  assert.equal(text(doc, 'pot-event'), 'Opponent receives 0.0288 | Fee 0.0012');
+  assert.equal(JSON.stringify(hand), snapshot);
 });
 
 test('missing or hidden stack labels use visible card groups for chip flights at a scaled viewport', async () => {
@@ -109,7 +132,7 @@ test('missing or hidden stack labels use visible card groups for chip flights at
     const view = createPotView({root: doc}), hand = startHand(createSession({}, 20));
     view.render(hand);
     const contributions = flights(doc).filter(flight => flight.dataset.flow === 'contribution');
-    assert.equal(contributions.length, 1);
+    assert.equal(contributions.length, 2);
     for (const flight of contributions) assertFlightPoint(flight, 0, 220, flight.dataset.seat === 'player' ? 605 : 245);
     passive(hand); view.render(hand);
     await finishMotion(doc); await view.whenIdle();
@@ -123,14 +146,14 @@ test('same-hand rerenders do not replay payments; a raise animates only its addi
   const doc = fakeDocument(), view = createPotView({root: doc});
   const hand = startHand(createSession({}, 102));
   view.render(hand); view.render(hand); view.render({...hand});
-  assert.equal(flights(doc).length, 1);
-  await finishMotion(doc); await view.whenIdle(); assert.equal(text(doc, 'pot-value'), '10');
-  applyAction(hand, 'raise'); view.render(hand);
   assert.equal(flights(doc).length, 2);
-  assert.equal(flights(doc).at(-1).children[1].textContent, '+20');
-  assert.equal(text(doc, 'pot-value'), '10'); await finishMotion(doc); await view.whenIdle();
-  assert.equal(text(doc, 'pot-value'), '30'); assert.equal(text(doc, 'pot-event'), '你加注 +20');
-  view.render(hand); assert.equal(flights(doc).length, 2);
+  await finishMotion(doc); await view.whenIdle(); assert.equal(text(doc, 'pot-value'), '15');
+  applyAction(hand, 'raise'); view.render(hand);
+  assert.equal(flights(doc).length, 3);
+  assert.equal(flights(doc).at(-1).children[1].textContent, '+15');
+  assert.equal(text(doc, 'pot-value'), '15'); await finishMotion(doc); await view.whenIdle();
+  assert.equal(text(doc, 'pot-value'), '30'); assert.equal(text(doc, 'pot-event'), '你加注 +15');
+  view.render(hand); assert.equal(flights(doc).length, 3);
   assert.ok(flights(doc).every(flight => flight.animations[0].options.duration === atGameSpeed(1000) && flight.animations[0].options.delay <= atGameSpeed(80)));
 });
 
@@ -205,8 +228,8 @@ test('reduced motion renders all accounting immediately without flying chips or 
   const hand = startHand(createSession({}, 101));
   view.render(hand); applyAction(hand, 'fold'); view.render(hand);
   assert.equal(flights(doc).length, 0); assert.equal(view.settledDelay(), 0);
-  assert.equal(text(doc, 'pot-value'), '0'); assert.match(text(doc, 'pot-detail'), /對手退回 10/);
-  assert.equal(text(doc, 'pot-event'), '本手結束｜費用 0');
+  assert.equal(text(doc, 'pot-value'), '0'); assert.match(text(doc, 'pot-detail'), /對手退回 5/);
+  assert.equal(text(doc, 'pot-event'), '對手領回 9.6｜費用 0.4');
 });
 
 test('new hands cancel old flights; leaving the table resets the pot and animation deadline', () => {
@@ -251,7 +274,7 @@ test('scale(.8) converts viewport centers back to stage coordinates for inbound 
   assertFlightPoint(inbound, 0, 240, 645);
   assertFlightPoint(inbound, 3, 140, 420);
   await finishMotion(doc);
-  assert.equal(text(doc, 'pot-value'), '10');
+  assert.equal(text(doc, 'pot-value'), '15');
   assert.equal(JSON.stringify(hand), snapshot);
 });
 
@@ -339,7 +362,7 @@ test('whenIdle resolves cancelled work independently from the next hand and leav
   applyAction(first, 'fold'); const next = startHand(session); view.render(next);
   await oldWait;
   assert.ok(oldFlights.every(flight => flight.removed && flight.animations[0].cancelled));
-  assert.equal(doc.getElementById('pot-flight-layer').children.length, 1, 'old wait does not cancel new flights');
+  assert.equal(doc.getElementById('pot-flight-layer').children.length, 2, 'old wait does not cancel new flights');
   const nextWait = view.whenIdle(); view.render(null); await nextWait; await view.whenIdle();
   assert.equal(doc.getElementById('pot-flight-layer').children.length, 0);
 });
@@ -375,7 +398,7 @@ test('chip piles are preferred flight endpoints, including scaled outbound refun
   scaleLayout(doc, .8, .6);
   const view = createPotView({root: doc}), hand = startHand(createSession({}, 102));
   view.render(hand);
-  const incoming = flights(doc)[0];
+  const incoming = flights(doc).find(flight => flight.dataset.seat === 'npc');
   assertFlightPoint(incoming, 0, 110, 185); assertFlightPoint(incoming, 3, 195, 405);
   applyAction(hand, 'raise'); applyAction(hand, 'fold'); view.render(hand);
   await finishMotion(doc); await view.whenIdle();
@@ -442,7 +465,7 @@ test('a new hand cancels every pending settlement phase without releasing old re
     assert.deepEqual(phases.slice(previousNotifications), ['contribution']);
     await finishMotion(doc); await view.whenIdle();
     assert.deepEqual(phases.slice(previousNotifications), ['contribution'], 'old sequence cannot continue after cancellation');
-    assert.equal(text(doc, 'pot-value'), '10');
+    assert.equal(text(doc, 'pot-value'), '15');
     view.render(null); assert.equal(text(doc, 'pot-value'), '0');
   }
 });

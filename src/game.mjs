@@ -62,7 +62,8 @@ function presentTransferPhase({flow,seats,amounts}){
  const detail=seats.map(seat=>`${seat==='player'?'YOU':'OPPONENT'} +${money(amounts[seat])}`).join(' · ');
  if(flow==='contribution'){
   const event=hand.history.slice().reverse().find(item=>seats.includes(item.actor)&&item.amount>0);
-  const action=event?.type==='bigBlind'?'OPENING BET':LABELS[event?.type]||'BET';
+  const isBlind=event?.type==='bigBlind'||event?.type==='smallBlind';
+  const action=isBlind?(seats.length>1?'POST BLINDS':LABELS[event.type]):LABELS[event?.type]||'BET';
   const label=event?.actor==='npc'&&event.type==='call'?'CHIPS TO POT':`${who} ${action}`;
   setTableCue('contribution',label,{seat:seats.length===1?seats[0]:'',detail:`${seats.map(seat=>money(amounts[seat])).join(' + ')} → POT`});
  }else if(flow==='refund')setTableCue('refund','UNCALLED CHIPS BACK',{seat:seats.length===1?seats[0]:'',detail});
@@ -96,8 +97,8 @@ function decorateMenu(){
  const reset=document.createElement('button');reset.id='reset-demo';reset.className='text-button wide';reset.textContent='↻ Reset demo chips';reset.onclick=()=>{if(busy||hand?.status==='playing')return;session=null;hand=null;closedTable=null;config=loadConfig();demoAssets=config.buyIn;selectedBet=config.bigBlind;handArchive=[];drawLog=[];lastResponse=null;$('menu-dialog').close();render();setupBuyin();};
  $('menu-dialog').append(reset);
  const rules=document.querySelector('#help-dialog .rules');
- rules.innerHTML=`<li>${icon('chip')}<b>Choose BET · Draw turn order</b><span>First or second: 50/50 for the first preflop round; positions alternate each hand. Only BIG BLIND posts BET. The other seat starts at 0.</span></li><li>${icon('cards')}<b>2 hole cards + 5 board cards</b><div class="rule-card-flow"><span>2</span><i>＋</i><span>3</span><i>→</i><span>1</span><i>→</i><span>1</span></div><span>PREFLOP → FLOP → TURN → RIVER</span></li><li>${icon('call')}<b>Your move · Their response</b><span>BET opens betting this round. RAISE increases an existing bet. CALL matches it; CHECK costs 0. One raise per street.</span></li><li>${icon('crown')}<b>Best 5 of 7</b><span>A fold ends the hand. Otherwise, compare at showdown. Special hands earn a Jackpot bonus.</span></li>`;
- const fees=document.createElement('details');fees.className='rules-details';fees.innerHTML='<summary>Hand highlights, turn order & pot fee ⓘ</summary><p>Gold edges mark your complete best five, including kickers. Before five cards are visible, all your visible cards glow. Red edges mark the opponent’s best five using only their revealed hole cards and the board. Shared cards can carry both gold and red edges.</p><p>CHECK costs 0. If the opponent has not acted, they may still CHECK or BET in the same street. Two CHECKs close the street; the next shared cards are then revealed for the new street.</p><p>This demo uses a single forced big blind. SB acts first preflop and posts 0; BB posts BET and acts first after the flop. Choosing a BET level does not charge chips. Both seats follow the same rule. FOLD and RAISE badges on your buttons show opponent response chances, not your win chance. Other responses are omitted; the percentages need not total 100%.</p><p>After every hand, including folds, the opponent’s demo chips reset to match your remaining chips. Your own balance keeps the actual winnings and losses.</p><p id="help-fee"></p>';
+ rules.innerHTML=`<li>${icon('chip')}<b>Choose BET · Draw your blind</b><span>SMALL BLIND posts ½ BET; BIG BLIND posts 1 BET. Your first blind is drawn 50/50; positions alternate each hand. Small blind acts first preflop; big blind acts first after the flop.</span></li><li>${icon('cards')}<b>2 hole cards + 5 board cards</b><div class="rule-card-flow"><span>2</span><i>＋</i><span>3</span><i>→</i><span>1</span><i>→</i><span>1</span></div><span>PREFLOP → FLOP → TURN → RIVER</span></li><li>${icon('call')}<b>Your move · Their response</b><span>BET opens betting this round. RAISE increases an existing bet. CALL matches it; CHECK costs 0. One raise per street.</span></li><li>${icon('crown')}<b>Best 5 of 7</b><span>A fold ends the hand. Otherwise, compare at showdown. Special hands earn a Jackpot bonus.</span></li>`;
+ const fees=document.createElement('details');fees.className='rules-details';fees.innerHTML='<summary>Hand highlights, turn order & pot fee ⓘ</summary><p>Gold edges mark your complete best five, including kickers. Before five cards are visible, all your visible cards glow. Red edges mark the opponent’s best five using only their revealed hole cards and the board. Shared cards can carry both gold and red edges.</p><p>CHECK costs 0. If the opponent has not acted, they may still CHECK or BET in the same street. Two CHECKs close the street; the next shared cards are then revealed for the new street.</p><p>Both seats post before cards are dealt: SMALL BLIND pays ½ BET and BIG BLIND pays 1 BET. Small blind acts first preflop and can fold, call the remaining ½ BET, or raise. Big blind acts first after the flop. Folding forfeits chips already committed, except any uncalled excess. Choosing a BET level does not charge chips. Both seats follow the same rule. FOLD and RAISE badges on your buttons show opponent response chances, not your win chance. Other responses are omitted; the percentages need not total 100%.</p><p>After every hand, including folds, the opponent’s demo chips reset to match your remaining chips. Your own balance keeps the actual winnings and losses.</p><p id="help-fee"></p>';
  rules.after(fees);
  document.querySelector('#help-dialog>p.muted').textContent='Standard 52-card deck, no jokers. Starting-hand boosts only redraw weak hole cards during the deal. Jackpot awards use the actual showdown hand.';
  const ledger=$('settlement'),details=document.createElement('details');details.className='result-accounting';details.innerHTML=`<summary>${icon('wallet')}Chip details <span>⌄</span></summary>`;ledger.replaceWith(details);details.append(ledger);
@@ -137,7 +138,7 @@ function setupBuyin(){
 function updateEntry(){
  const available=bankroll(),minimum=minimumAssets(entryBase,selectedBet),index=betValues.indexOf(selectedBet);
  updateBetSelection(selectedBet);$('entry-assets').textContent=money(available);$('entry-minimum').textContent=money(minimum);
- $('entry-blinds').textContent='ONLY BB POSTS';
+ $('entry-blinds').textContent=`SB ${blindAmount(selectedBet/2)} · BB ${blindAmount(selectedBet)}`;
  const jackpotOn=entryBase.jackpotEnabled!==false;
  $('entry-jp-award').textContent=jackpotOn?money(quoteJackpot('royal',selectedBet).award):'OFF';
  $('entry-jp-label').textContent=jackpotOn?'ROYAL FLUSH · 200× BET':'JACKPOT DISABLED';
@@ -145,7 +146,7 @@ function updateEntry(){
  document.querySelector('.feature-jp-tiers').hidden=!jackpotOn;
  $('bet-minus').disabled=index<=0;$('bet-plus').disabled=index===betValues.length-1;
  $('entry-start').disabled=available<minimum||busy;$('buyin-error').textContent=available<minimum?'Not enough chips. Choose a lower BET.':'';
- $('fee-notice').textContent=`Choosing BET does not charge chips. Minimum balance: ${money(minimum)}. The opponent matches your balance after every hand, including folds. The first preflop turn is drawn 50/50; positions alternate each hand. Only BB automatically posts ${money(selectedBet)}; SB starts at 0 and pays only when calling or raising. Pot fee: ${pct(1-entryBase.targetRtp)}. Uncalled bets are refunded in full. Demo chips only.`;
+ $('fee-notice').textContent=`Choosing BET does not charge chips. Minimum balance: ${money(minimum)}. Each hand, SMALL BLIND automatically posts ${blindAmount(selectedBet/2)} and BIG BLIND posts ${blindAmount(selectedBet)}. The first blind position is drawn 50/50; positions alternate each hand. Small blind acts first preflop; big blind acts first after the flop. The opponent matches your balance after every hand, including folds. Pot fee: ${pct(1-entryBase.targetRtp)}. Uncalled bets are refunded in full. Demo chips only.`;
 }
 $('bet-minus').onclick=()=>{selectedBet=betValues[Math.max(0,betValues.indexOf(selectedBet)-1)];updateEntry();};
 $('bet-plus').onclick=()=>{selectedBet=betValues[Math.min(betValues.length-1,betValues.indexOf(selectedBet)+1)];updateEntry();};
@@ -156,14 +157,16 @@ $('buyin-form').onsubmit=async e=>{e.preventDefault();if(busy)return;
    $('buyin-dialog').close();busy=true;render();await showTurnDraw();busy=false;await newHand();
   }catch(error){busy=false;phase='';$('blind-dialog').close();$('buyin-error').textContent=translateError(error);show('buyin-dialog');render();}
 };
+const blindAmount=value=>Number(value).toLocaleString('en-US',{maximumFractionDigits:6});
 async function showTurnDraw(){
- const actsFirst=session.firstSmallBlind==='player';
- $('blind-dialog').dataset.draw='drawing';$('blind-name').textContent='DRAWING TURN ORDER';$('blind-result').textContent='';$('draw-player').textContent='?';delete $('draw-player').dataset.blind;show('blind-dialog');
+ const isSmall=session.firstSmallBlind==='player';
+ $('blind-dialog').dataset.draw='drawing';$('blind-name').textContent='DRAWING BLIND POSITION';$('blind-result').textContent='';$('blind-order').textContent='';$('draw-player').textContent='?';delete $('draw-player').dataset.blind;show('blind-dialog');
  await delay(reduceMotion?0:1200);
- $('draw-player').textContent=actsFirst?'1ST':'2ND';$('draw-player').dataset.blind=actsFirst?'small':'big';
- $('blind-dialog').dataset.draw='revealed';$('blind-name').textContent=actsFirst?'FIRST':'SECOND';
- $('blind-result').textContent=actsFirst?'YOU ACT FIRST':'YOU ACT SECOND';
- effects.play('chip');await delay(reduceMotion?150:1800);$('blind-dialog').close();
+ $('draw-player').textContent=isSmall?'SB':'BB';$('draw-player').dataset.blind=isSmall?'small':'big';
+ $('blind-dialog').dataset.draw='revealed';$('blind-name').textContent=isSmall?'SMALL BLIND':'BIG BLIND';
+ $('blind-result').textContent=`YOU AUTO-POST ${blindAmount(isSmall?session.config.smallBlind:session.config.bigBlind)} · ${isSmall?'½':'1'} BET`;
+ $('blind-order').textContent=isSmall?'You act first preflop.\nYou act second after the flop.':'You act second preflop.\nYou act first after the flop.';
+ effects.play('chip');await delay(reduceMotion?1800:3000);$('blind-dialog').close();
 }
 function leaveTable(){
   if(busy||hand?.status==='playing'){toast('Finish this hand first.');return;}
@@ -173,7 +176,7 @@ async function newHand(){
   if(busy)return;
   $('result-dialog').close();
   if(session&&Math.min(...Object.values(session.stacks))<.01){setupBuyin();return;}
-  try{busy=true;phase='DEALING';hand=startHand(session);drawLog=[];lastResponse=null;equityCache='';pendingPlayerAction=null;delete $('game').dataset.chosenAction;paintDistribution([]);setTableCue('contribution','OPENING BET',{seat:hand.bigBlind});await presentHand();await continuePlay();}catch(error){busy=false;phase='';setTableCue();toast(translateError(error));render();setupBuyin();}
+  try{busy=true;phase='DEALING';hand=startHand(session);drawLog=[];lastResponse=null;equityCache='';pendingPlayerAction=null;delete $('game').dataset.chosenAction;paintDistribution([]);setTableCue('contribution','POST BLINDS');await presentHand();await continuePlay();}catch(error){busy=false;phase='';setTableCue();toast(translateError(error));render();setupBuyin();}
 }
 $('next-hand').onclick=newHand;
 const visibleStreet=()=>shownBoard>=5?'river':shownBoard===4?'turn':shownBoard>0?'flop':'preflop';

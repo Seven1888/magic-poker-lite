@@ -18,7 +18,7 @@ function checkedPreview(hand) {
 }
 
 test('free first-position postflop check allows an opponent bet on the same street, then requires a paid call', () => {
-  const hand = createHand('npc'); // Player posts the sole big blind and acts first after the flop.
+  const hand = createHand('npc'); // Player posts the big blind and acts first after the flop.
   applyAction(hand, 'call'); // NPC completes the opening bet.
   assert.equal(hand.actor, 'player');
   const opening = checkedPreview(hand);

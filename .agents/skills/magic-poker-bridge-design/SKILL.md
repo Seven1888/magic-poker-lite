@@ -7,6 +7,14 @@ description: 設計與驗證 Magic Poker Lite 的手機直版簡化德州、公�
 
 先讀 [工作規範](../../../AGENTS.md)。現行規格讀 [詳細流程與數學](../../../docs/04-game-flow-and-math.md)，引擎介面與精確公式讀 [API](../../../API-CONTRACT.md)。查既有遊戲事實時才讀 [三款遊戲研究](../../../docs/01-existing-games.md)；早期討論稿為歷史提案，不是現行規格。
 
+## 最新 v26：小盲半 BET、大盲一 BET（2026-10-02）
+
+依使用者確認，現行 `heads-up-two-blinds-v1` 每手雙方自動繳盲：SB＝0.5 BET、BB＝1 BET，`smallBlind` 固定由 `bigBlind / 2` 推導，不可獨立調整或沿用舊 0。選 BET 不扣款；PLAY 開局才扣取，盲額受各自可用資產限制，未匹配超額照常退回。保留首次單次 50/50 抽盲及逐手輪替，小盲／莊位翻牌前先動，大盲在 FLOP／TURN／RIVER 先動。抽選用 SMALL BLIND／BIG BLIND 並列自動投入金額；不再只寫 FIRST／SECOND。
+
+BET 10、玩家 SB 的開局為 5／10、POT 15；CALL 再補 5，RAISE 至 20 再付 15。SB 開局棄牌損失 5，BB 先退未匹配 5，再由底池 10 扣 4% 後領 9.6；沒有額外棄牌費，JP 條件不變。仍是固定尺度、每街一次加注的簡化德州。遊戲與模擬都從共用引擎執行，舊設定載入／匯入同樣正規化。
+
+本節覆蓋下方 v14 單大盲歷史規則。主按鈕沿用 v25，不顯示花費數字或 CHECK 0，保留籌碼小圖與 NPC 回應機率；盲位抽選的自動投入額仍要清楚顯示。金流／牌庫演出、公開資訊限制、JP 與局間刷新依 AGENTS 最新規格；不得把新規則前的 260,000 手或單大盲 smoke 冒充本次 RTP 驗證，新增結果須以新 ruleSet 分開識別。
+
 ## 最新 v16 入口覆蓋（2026-10-01）
 
 每次載入在 render 後由 setupBuyin 自動開入口；See the odds／Best5／Jackpot 三頁圖解有左右箭頭與圓點，BET ＋／−、六個預設值、balance／minimum 與 PLAY 固定留在同一視窗。改 BET 只更新 UI，不扣款或抽 RNG；PLAY 才建立 session 並抽盲。正常下一手不重彈，關閉後能由桌面 PLAY 重開。圖解機率標 `EXAMPLE ODDS`，JP 隨 BET 計算，設定關閉時顯示 OFF。

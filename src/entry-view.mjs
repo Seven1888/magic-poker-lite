@@ -1,5 +1,5 @@
 /** BET-entry decoration only. No game state, validation, money movement or RNG. */
-const format = value => value.toLocaleString('en-US', {maximumFractionDigits: 2});
+const format = value => value.toLocaleString('en-US', {maximumFractionDigits:6});
 
 /** Illustrated introduction and BET selection share one entry dialog. */
 export function setupEntryFeatures(root = globalThis.document) {

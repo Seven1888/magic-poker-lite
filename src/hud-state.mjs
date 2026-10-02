@@ -2,7 +2,7 @@ import {DEFAULT_CONFIG, legalActions} from './engine.mjs';
 
 const STREET_NAMES = Object.freeze({preflop: '翻牌前', flop: '翻牌', turn: '轉牌', river: '河牌'});
 const round = value => Math.round((value + Number.EPSILON) * 1e6) / 1e6;
-const amountText = value => value.toLocaleString('en-US', {maximumFractionDigits: 2});
+const amountText = value => value.toLocaleString('en-US', {maximumFractionDigits:6});
 
 /** Public, read-only HUD values. Never returns hidden cards, seeds or game objects. */
 export function getHudSnapshot({session = null, hand = null, config = DEFAULT_CONFIG, closedTable = null, busy = false} = {}) {

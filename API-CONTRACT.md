@@ -1,6 +1,6 @@
-# Engine API contract · single big blind + entry + Jackpot + demo opponent refresh · 2026-10-01
+# Engine API contract · heads-up two blinds + entry + Jackpot + demo opponent refresh · 2026-10-02
 
-All modules are dependency-free ESM. Import from `./src/engine.mjs`. All currency values are chip units, rounded internally to six decimals; the UI may display two decimals. Card identifiers are `As`, `Kh`, `Td`, `2c` (`s h d c`; ace is `A`, ten is `T`).
+All modules are dependency-free ESM. Import from `./src/engine.mjs`. All currency values are chip units, rounded internally to six decimals; the UI preserves up to six fractional digits so .03 BB / .015 SB and their payments remain consistent. Card identifiers are `As`, `Kh`, `Td`, `2c` (`s h d c`; ace is `A`, ten is `T`).
 
 ## Config
 
@@ -8,7 +8,7 @@ All modules are dependency-free ESM. Import from `./src/engine.mjs`. All currenc
 
 ```js
 {
-  targetRtp: 0.96, jackpotEnabled: true, smallBlind: 0, bigBlind: 10,
+  targetRtp: 0.96, jackpotEnabled: true, smallBlind: 5, bigBlind: 10,
   minBuyIn: 200, maxBuyIn: 2000, buyIn: 1000,
   betSize: {preflop:10, flop:20, turn:40, river:40},
   maxRaises: 1, animationMs: 850,
@@ -21,7 +21,7 @@ All modules are dependency-free ESM. Import from `./src/engine.mjs`. All currenc
 }
 ```
 
-`normalizeConfig` always sets `smallBlind:0`, ignoring any old saved value. The key remains for configuration compatibility; it is no longer adjustable. Each hand only the BB seat automatically posts `bigBlind` (one full BET, capped by that seat's available stack). The SB seat posts zero and retains its position/first-action meaning. Game and simulations share this engine rule.
+`normalizeConfig` always derives `smallBlind` as half of the normalized `bigBlind`, ignoring any independently saved value, including the previous single-blind value of zero. Small blind is not separately adjustable. Each hand the SB seat automatically posts half a BET and the BB seat posts one BET, each capped by that seat's available stack. At BET 10 the opening payments are 5 and 10. Game and simulations share this engine rule.
 
 Rerolls are initial two-card redraw attempts, accepted on reaching `targetScore` or exhausting the limit; no final board/winner is examined. Manual cards override reroll for that seat. Pair uses a 0..1 heuristic, not equity. `jackpotEnabled` is strictly boolean (strings are rejected), defaults to true, and is shared by game and tool. Target RTP is a *reference symmetric-policy POT target*: settlement net = contested gross × targetRtp. Uncalled refunds are excluded. Player strategy/unequal deal settings change measured base RTP; extra Jackpot changes total RTP. The 4% settlement fee is a prototype modeling choice, not an approved commercial rake model.
 
@@ -31,9 +31,9 @@ Import from `./src/entry-model.mjs`. These functions are pure configuration help
 
 - `betOptions(config)` returns unique BET choices based on `[.1,.2,.5,1,2,5] × config.bigBlind`, with a minimum of `.02` and six-decimal rounding. Defaults: `[1,2,5,10,20,50]`.
 - `minimumAssets(config,bet)` returns `config.minBuyIn/config.bigBlind × bet` (default 20 BB).
-- `tableConfig(config,bet,assets)` validates affordable entry, makes `bigBlind=bet`, keeps `smallBlind=0`, scales all `betSize` values by `bet/config.bigBlind`, and sets `buyIn=assets`. Its `maxBuyIn` becomes at least the actual assets, so it does not silently discard a player's accumulated balance. The result goes through `normalizeConfig`.
+- `tableConfig(config,bet,assets)` validates affordable entry, makes `bigBlind=bet` and `smallBlind=bet/2`, scales all `betSize` values by `bet/config.bigBlind`, and sets `buyIn=assets`. Its `maxBuyIn` becomes at least the actual assets, so it does not silently discard a player's accumulated balance. The result goes through `normalizeConfig`.
 
-Selecting BET and creating the session do not charge chips. `startHand` makes the sole automatic opening payment from the BB seat; subsequent call/bet/raise actions deduct their actual incremental amounts.
+Selecting BET and creating the session do not charge chips. `startHand` automatically posts each seat's blind once; subsequent call/bet/raise actions deduct only their actual incremental amounts. At BET 1 the SB is .5; there is no whole-chip rounding. The blind draw UI identifies SMALL BLIND / BIG BLIND, the player's automatic payment and preflop/postflop action order; it uses the one already-determined draw.
 
 The UI initializes its in-page assets once from `config.buyIn` (default 1000). On leaving a table it retains the actual player stack, including credited Jackpot, and uses that balance at the next entry. Both seats start that new session with the same full available asset amount. The entry UI asks only for BET, never a manual buy-in; it rejects insufficient assets and never silently refills them. In-play chips committed to the pot are not available balance. This is an in-page prototype balance, not a persistent external account; page reload initializes it again. The explicit “重設 DEMO 資產” action, available only outside a playing hand and when not busy, clears the session and resets assets to current `loadConfig().buyIn`; ordinary re-entry does not do this.
 
@@ -53,7 +53,7 @@ session = {
 
 Fixed player/NPC choice consumes no blind RNG draw and sets `blindDraw=null`. RNG is callable and has `.clone()` and `.state()`. No raw blind roll is returned. Seed/RNG/deck/deal audit are engine debug state and must not be exposed in player history.
 
-`startHand(session)` mutates session.handNumber; returns hand. It alternates from `session.firstSmallBlind` (odd hand uses first choice, even hand uses the other seat). Throws if either stack is below .01. Buy-in is matched once at session creation; following hands use the current session balances. The public demo explicitly refreshes the opponent after each settlement using `syncOpponentBankroll`; `startHand` itself never refills either seat. It pays only from `hand.bigBlind`, using `min(config.bigBlind, stack)`; the opening history contains a `bigBlind` payment and no zero-cost `smallBlind` payment. Short stacks use the normal all-in/uncalled-refund rules. For simulations each sample starts an independent equal-stack hand, begins with player SB, and alternates positions; these are not continuous-wallet simulations.
+`startHand(session)` mutates session.handNumber; returns hand. It alternates from `session.firstSmallBlind` (odd hand uses first choice, even hand uses the other seat). Throws if either stack is below .01. Buy-in is matched once at session creation; following hands use the current session balances. The public demo explicitly refreshes the opponent after each settlement using `syncOpponentBankroll`; `startHand` itself never refills either seat. It posts from both `hand.smallBlind` and `hand.bigBlind`, using the smaller of that blind's configured amount and its seat's available stack. Opening history records one `smallBlind` and one `bigBlind` payment. Short stacks use the normal all-in/uncalled-refund rules. For simulations each sample starts an independent equal-stack hand, begins with player SB, and alternates positions; these are not continuous-wallet simulations.
 
 ### Demo opponent bankroll refresh（局間對手資產刷新）
 
@@ -71,13 +71,13 @@ Fixed player/NPC choice consumes no blind RNG draw and sets `blindDraw=null`. RN
 }
 ```
 
-刷新會建立新的 `session.stacks` 物件；已結手牌的 `hand.stacks` 保留本手原始結算資產，不會被刷新或下一手下注覆寫。`hand.result`、`history`、所有退款／派彩／JP／費用欄位及 RNG 均不變。後續 `startHand` 從新的 session 資產建立 `stacksBefore`，照常只扣一次大盲並輪替位置。
+刷新會建立新的 `session.stacks` 物件；已結手牌的 `hand.stacks` 保留本手原始結算資產，不會被刷新或下一手下注覆寫。`hand.result`、`history`、所有退款／派彩／JP／費用欄位及 RNG 均不變。後續 `startHand` 從新的 session 資產建立 `stacksBefore`，雙方各扣一次對應盲注並輪替位置。
 
 `adjustment` 是獨立的 DEMO NPC 資金補入／收回事件，不屬於底池返還、玩家收入、JP 或 RTP。每手原有結算守恆仍以 `result.*.stackAfter` 驗算；採用刷新的連續 session 則應核對：`目前雙方 session.stacks 總和 + session.fees = 初始雙方 buyIn 總和 + session.jackpotAwards + Σ adjustment`。不得把刷新後的 NPC 資產當成本手牌局派彩，或用未納入 adjustment 的舊連續資產公式對帳。
 
 引擎結算、`playAutomatedHand`、`simulate`、預覽及 Probability Lab 不會自動呼叫此 API；工具仍是原本的獨立等資產模擬算法。此功能也不更動 `targetRtp`、發牌、NPC 行動分布或任何隨機抽樣。
 
-Example below: BET 10, player SB, both seats start with 1000. Only NPC has posted 10.
+Example below: BET 10, player SB, both seats start with 1000. Player has posted 5 and NPC has posted 10.
 
 ```js
 hand = {
@@ -85,15 +85,15 @@ hand = {
   street:'preflop'|'flop'|'turn'|'river',
   status:'playing'|'settled', actor:'player'|'npc'|null,
   holes:{player:[...],npc:[...]}, board:[...], deck:[...],
-  stacks:{player:1000,npc:990}, stacksBefore:{player:1000,npc:1000},
-  streetBets:{player:0,npc:10}, contributions:{player:0,npc:10},
-  currentBet:10, raises:0, pot:10,
+  stacks:{player:995,npc:990}, stacksBefore:{player:1000,npc:1000},
+  streetBets:{player:5,npc:10}, contributions:{player:5,npc:10},
+  currentBet:10, raises:0, pot:15,
   history:[{actor,type,amount,to,street}], dealAudit:{player:{...},npc:{...}},
   result:null
 }
 ```
 
-`legalActions(hand, actor=hand.actor)` -> `[{type,label,amount,to,allIn}]`. Actions are fold/check/call/bet/raise. All-in is a status of a capped call/bet/raise (no extra button). `amount` is incremental cost, `to` is total this street. `applyAction(hand, type)` mutates hand and returns it; accepts `allin` as an alias only when a legal capped bet/raise/call is actually all-in. Bet/raise sizes are fixed; one raise per street. The small blind acts first preflop; big blind acts first postflop. Engine advances a completed street immediately and runs out remaining board on matched all-in.
+`legalActions(hand, actor=hand.actor)` -> `[{type,label,amount,to,allIn}]`. Actions are fold/check/call/bet/raise. All-in is a status of a capped call/bet/raise (no extra button). `amount` is incremental cost, `to` is total this street. `applyAction(hand, type)` mutates hand and returns it; accepts `allin` as an alias only when a legal capped bet/raise/call is actually all-in. Bet/raise sizes are fixed; one raise per street. The small blind/button acts first preflop; big blind acts first postflop. Engine advances a completed street immediately and runs out remaining board on matched all-in. The v25 compact action buttons still omit numeric costs, while accessible labels, tooltips and accounting retain precise amounts.
 
 Settlement:
 
@@ -114,9 +114,9 @@ hand.result = {
 
 From that opening state, independent examples below report the hand's settlement balances before the optional demo opponent refresh:
 
-- Player `call`: deduct 10, contributions become 10/10, POT 20, stacks 990/990; NPC retains its preflop check/raise option.
-- Player `raise`, then NPC `fold`: player pays 20, contributions are 20/10; refund player 10, matched wagers 10 each, settled POT 20, fee .8, player `netReturn` 19.2, final stacks 1009.2/990.
-- Player immediately `fold`: contributions are 0/10; refund NPC 10, matched wagers/POT/fee/POT returns are all zero, final stacks 1000/1000. The fold grants no Jackpot.
+- Player `call`: deduct another 5, contributions become 10/10, POT 20, stacks 990/990; NPC retains its preflop check/raise option.
+- Player `raise`, then NPC `fold`: player pays another 15, contributions are 20/10; refund player 10, matched wagers 10 each, settled POT 20, fee .8, player `netReturn` 19.2, final stacks 1009.2/990.
+- Player immediately `fold`: contributions are 5/10; refund NPC 5, matched wagers 5 each, settled POT 10, fee .4, NPC `netReturn` 9.6, final stacks 995/1004.6. Player loses the posted small blind. The fold grants no Jackpot.
 
 ## Jackpot rules and pure quote API
 
@@ -153,7 +153,7 @@ Import `getShowdownView({playerHole,visibleBoard,revealedNpcHole=[]})` from `./s
 
 ```js
 {
- ruleSet:'single-big-blind-v1',
+ ruleSet:'heads-up-two-blinds-v1',
  hands,seed,policy,config,wagers,refunds,grossReturns,netReturns,totalReturns,
  jackpotAwards,tierCounts:{royal,straightFlush,quads},
  jackpotHits,jackpotHitRate,jackpotShowdownHitRate,
@@ -163,9 +163,9 @@ Import `getShowdownView({playerHole,visibleBoard,revealedNpcHole=[]})` from `./s
 }
 ```
 
-`netReturns` stays POT-only; `totalReturns=netReturns+jackpotAwards`. `baseRtp=netReturns/wagers`; `totalRtp=totalReturns/wagers`; **`rtp` aliases totalRtp**. An immediate opening SB fold contributes zero matched wager, zero POT return and zero fee; a reported win/loss need not have a monetary profit/loss. If the whole sample has zero wagers, ratios return 0 and SE/CI return null values; this is no measured return ratio. `standardError/ci95` describe total return; `baseStandardError/baseCi95` describe POT return. Tier counts are mutually exclusive player award counts. `jackpotHitRate=hits/hands`, `jackpotShowdownHitRate=hits/showdowns` (zero when no showdowns). RTP/CI are fractions, all scalar economic totals are player-side except `fees` (system fees). `conservationError` includes external JP funding.
+`netReturns` stays POT-only; `totalReturns=netReturns+jackpotAwards`. `baseRtp=netReturns/wagers`; `totalRtp=totalReturns/wagers`; **`rtp` aliases totalRtp**. With full BET 10 blinds, an immediate opening SB fold contributes matched wager 5, zero player POT return and system fee .4; the BB's uncalled 5 is refunded. If a whole sample has zero wagers, ratios return 0 and SE/CI return null values; this is no measured return ratio. `standardError/ci95` describe total return; `baseStandardError/baseCi95` describe POT return. Tier counts are mutually exclusive player award counts. `jackpotHitRate=hits/hands`, `jackpotShowdownHitRate=hits/showdowns` (zero when no showdowns). RTP/CI are fractions, all scalar economic totals are player-side except `fees` (system fees). `conservationError` includes external JP funding.
 
-The probability tool exports result bundles with `version:3` and `model:'single-big-blind+base-pot+showdown-jackpot'`; each simulation report carries the `ruleSet` above. This identifies current outputs separately from retained dual-blind artifacts.
+The probability tool exports result bundles with `version:4` and `model:'heads-up-two-blinds+base-pot+showdown-jackpot'`; each simulation report carries the `ruleSet` above. This identifies current outputs separately from retained single-blind and earlier dual-blind artifacts.
 
 Independent hands reset equal stacks and alternate positions. Progress callback every completed batch receives `{completed,total}`; worker may run synchronously. Each batch (250 hands or final remainder) contains `{hands,wagers,netReturns,totalReturns,jackpotAwards,tierCounts,baseRtp,totalRtp}`. CI uses independent-hand ratio-estimator variance, not a binomial win-rate approximation. Rare JP with no observed hits is not proven impossible; normal-approximation intervals may underrepresent rare-award uncertainty. Initial-card redraw and strategy-dependent arrival at showdown change JP frequencies; don't substitute natural seven-card frequencies for this game.
 
@@ -198,10 +198,12 @@ For independent-hand pairs `(x_i=matchedWager, y_i=netReturn)` for base or `y_i=
 
 ## Reproducible validation artifacts
 
-Current `npm test` passed **90/90**, including single-big-blind accounting and the progressive-showdown pure data module. `tests/engine-jackpot.test.mjs` contains controlled card fixtures for board-only royal/SF/quads, losing quads, folds, preview isolation, exact-once payout and separate base/total simulation accounting. The previous 58-test count and v5–v13 browser QA are historical **dual-blind** evidence; their chip screenshots and outcomes do not validate the current opening payments. They covered four-street showdown, fold concealment, alternating positions, insufficient entry assets, BET-scaled JP display and 320/375-wide layouts at their recorded versions. None is total-RTP calibration.
+The v26 validation record is maintained in [mobile and deployment QA](docs/06-mobile-and-deployment.md). `tests/engine-jackpot.test.mjs` contains controlled card fixtures for board-only royal/SF/quads, losing quads, folds, preview isolation, exact-once payout and separate base/total simulation accounting. The former 90-test single-blind count, 58-test early dual-blind count and v5–v25 browser evidence retain their historical versions; none is a claim about v26 verification or total-RTP calibration.
 
-[Current rule cases](output/single-big-blind-v1/rule-cases.json) contains seven deterministic opening/call/fold/raise/showdown/short-stack cases with steps and results. [Current accounting smoke](output/single-big-blind-v1/smoke.json) records 5000 balanced hands, seed 20260930, default config with JP enabled: base RTP 94.7631%, total RTP 95.0344%, two JP hits/400 awarded, conservation error 0. This is accounting smoke, not RTP or rare-award calibration.
+[V26 rule cases](output/playwright/blinds-v26/rule-cases.json) contains 12 controlled cases covering both blind positions, opening fold, call/check, raise/fold, short stacks and fractional blinds. [V26 accounting smoke](output/playwright/blinds-v26/math-smoke.json), generated by `node tests/smoke-two-blinds.mjs`, records 2500 hands each for balanced, call, aggressive and tight, seeds 20261002–20261005, with default redraw and JP enabled. All four report zero conservation error. These are accounting/function checks, not RTP or rare-award calibration.
 
-`node tests/validate-math.mjs` now uses the current single-big-blind engine with JP explicitly disabled and writes to `output/single-big-blind-v1/math-validation.json` and `output/single-big-blind-v1/example-hands.json`. It does not overwrite the retained historical artifacts. This large run was not executed for the rule change. Turning off JP alone does not reproduce the old dual-blind model; its matching historical engine/configuration would also be required.
+[Historical single-blind cases](output/single-big-blind-v1/rule-cases.json) and [historical single-blind smoke](output/single-big-blind-v1/smoke.json) retain the v14 model. The latter's 5000 balanced hands, seed 20260930, had base RTP 94.7631%, total RTP 95.0344%, two JP hits/400 awarded and conservation error 0. Those are not v26 results.
 
-The retained `output/math-validation.json` and `output/example-hands.json` are **historical SB 5 / BB 10 dual-blind, POT-only artifacts without Jackpot**. The 260k report contains 100k natural symmetric hands, 100k symmetric redraw hands, and 20k each for check/call, aggressive, and tight strategies. It was not rerun for the single-big-blind rule or as a JP-total report. At its recorded seeds, aggressive measured above 100% base RTP; this historical exploitable-policy finding must remain visible but is not a measurement of the revised model. This prototype is not a strategy-proof 96% commercial model; current total RTP is not asserted to be 96%.
+`node tests/validate-math.mjs` uses the current two-blind engine with JP explicitly disabled and writes to `output/heads-up-two-blinds-v1/math-validation.json` and `output/heads-up-two-blinds-v1/example-hands.json`. It does not overwrite the retained historical artifacts. This large run was not executed for v26. Matching the former blind amounts does not turn a historical report into a new run; reproducing that report requires its matching historical engine/configuration.
+
+The retained `output/math-validation.json` and `output/example-hands.json` are **historical SB 5 / BB 10 dual-blind, POT-only artifacts without Jackpot**. The 260k report contains 100k natural symmetric hands, 100k symmetric redraw hands, and 20k each for check/call, aggressive, and tight strategies. It was not rerun for v26 or as a JP-total report. At its recorded seeds, aggressive measured above 100% base RTP; this historical exploitable-policy finding must remain visible but is not a measurement of the revised model. This prototype is not a strategy-proof 96% commercial model; current total RTP is not asserted to be 96%.

@@ -71,11 +71,11 @@ test('manual hand validation rejects duplicate cards and impossible card names',
   assert.deepEqual(normalizeConfig({deal: {player: {manual: 'as 10H'}}}).deal.player.manual, ['As', 'Th']);
 });
 
-test('unposted first seat acts preflop; a full-BET call retains the big blind option; postflop reverses order', () => {
+test('small blind acts preflop; a half-BET call retains the big blind option; postflop reverses order', () => {
   const hand = startHand(createSession({}, 20));
   assert.equal(hand.actor, 'player');
   assert.deepEqual(types(hand), ['fold', 'call', 'raise']);
-  assert.equal(legalActions(hand).find(a => a.type === 'call').amount, 10);
+  assert.equal(legalActions(hand).find(a => a.type === 'call').amount, 5);
   applyAction(hand, 'call');
   assert.equal(hand.street, 'preflop'); assert.equal(hand.actor, 'npc');
   assert.deepEqual(types(hand), ['check', 'raise']);
@@ -104,14 +104,14 @@ test('uncalled raises and blinds are refunded, excluded from wagers, and settlem
   const session = createSession({}, 17);
   const hand = startHand(session);
   applyAction(hand, 'fold');
-  assert.equal(hand.result.player.matchedWager, 0);
+  assert.equal(hand.result.player.matchedWager, 5);
   assert.equal(hand.result.npc.totalContribution, 10);
-  assert.equal(hand.result.npc.refund, 10);
-  assert.equal(hand.result.npc.gross, 0);
-  assert.equal(hand.result.npc.netReturn, 0);
-  assert.equal(hand.result.npc.profit, 0);
-  assert.equal(hand.result.pot, 0); assert.equal(hand.result.fee, 0);
-  assert.deepEqual(session.stacks, {player: 1000, npc: 1000});
+  assert.equal(hand.result.npc.refund, 5);
+  assert.equal(hand.result.npc.gross, 10);
+  assert.equal(hand.result.npc.netReturn, 9.6);
+  assert.equal(hand.result.npc.profit, 4.6);
+  assert.equal(hand.result.pot, 10); assert.equal(hand.result.fee, .4);
+  assert.deepEqual(session.stacks, {player: 995, npc: 1004.6});
   near(session.stacks.player + session.stacks.npc + session.fees, 2000);
   assert.throws(() => applyAction(hand, 'call'), /不能/);
 });
@@ -126,7 +126,7 @@ test('settled balances carry to the next hand and blinds alternate', () => {
   assert.equal(two.smallBlind, 'npc'); assert.equal(two.actor, 'npc');
   assert.deepEqual(two.stacksBefore, closing);
   assert.equal(two.stacks.player, closing.player - 10);
-  assert.equal(two.stacks.npc, closing.npc);
+  assert.equal(two.stacks.npc, closing.npc - 5);
 });
 
 test('matched all-in runs out once, caps effective wager, and never offers raising against an all-in', () => {
@@ -144,16 +144,13 @@ test('matched all-in runs out once, caps effective wager, and never offers raisi
   near(hand.stacks.player + hand.stacks.npc + hand.result.fee, 120);
 });
 
-test('a short unposted first seat chooses a capped call before all-in runout and surplus refund', () => {
+test('a short small blind is all-in on posting, runs out once and receives the matched pot only', () => {
   const session = createSession({}, 33);
   session.stacks.player = 3;
   const hand = startHand(session);
-  assert.equal(hand.status, 'playing'); assert.equal(hand.board.length, 0);
-  assert.equal(hand.stacks.player, 3); assert.equal(hand.contributions.player, 0);
-  assert.deepEqual(types(hand), ['fold', 'call']);
-  assert.equal(legalActions(hand).find(a => a.type === 'call').amount, 3);
-  applyAction(hand, 'call');
   assert.equal(hand.status, 'settled'); assert.equal(hand.board.length, 5);
+  assert.equal(hand.contributions.player, 3); assert.deepEqual(types(hand), []);
+  assert.deepEqual(hand.history.filter(event => event.amount).map(event => [event.type, event.amount]), [['smallBlind', 3], ['bigBlind', 10]]);
   assert.equal(hand.result.npc.refund, 7);
   assert.equal(hand.result.player.matchedWager, 3);
   near(hand.stacks.player + hand.stacks.npc + hand.result.fee, 1003);

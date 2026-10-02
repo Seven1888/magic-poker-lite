@@ -1,0 +1,13 @@
+/* Blind identity and posting amount stay distinct from action order. */
+#blind-dialog { overflow-y: auto; }
+#blind-dialog #blind-result { min-height: 22px; font-size: 13px; font-weight: 800; }
+#blind-order { white-space: pre-line; font-size: 12px; line-height: 19px; margin: 7px 0 0; color: #cdd7e7; }
+#blind-dialog[data-draw='drawing'] #blind-order { min-height: 38px; }
+#buyin-dialog .entry-bet-label { gap: 8px; flex-wrap: wrap; }
+#entry-blinds { font-variant-numeric: tabular-nums; }
+@media (max-height: 600px) {
+  #blind-dialog { padding: 16px 16px 14px; }
+  #blind-dialog h2 { margin-bottom: 12px; }
+  #blind-dialog .blind-single { height: 122px; }
+  #blind-name { margin-top: 14px; }
+}

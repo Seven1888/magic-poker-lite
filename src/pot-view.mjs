@@ -13,7 +13,7 @@ export function createPotView({root = globalThis.document, reducedMotion = false
   const clock = doc.defaultView?.performance || globalThis.performance;
   const now = () => clock?.now?.() ?? Date.now();
   const numeric = value => Number.isFinite(Number(value)) ? Math.max(0, Number(value)) : 0;
-  const money = value => numeric(value).toLocaleString('en-US', {maximumFractionDigits: 2});
+  const money = value => numeric(value).toLocaleString('en-US', {maximumFractionDigits:6});
   const english = locale === 'en';
   const name = seat => english ? (seat === 'player' ? 'You' : 'Opponent') : (seat === 'player' ? '你' : '對手');
   const labels = english

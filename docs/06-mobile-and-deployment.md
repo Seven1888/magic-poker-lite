@@ -1,5 +1,18 @@
 # 手機相容與公開 Demo
 
+## v26 大小盲更新與驗證（2026-10-02）
+
+使用者確認採小盲 0.5 BET／大盲 1 BET。抽選顯示 YOUR BLIND、SB／BB、SMALL BLIND／BIG BLIND、自動投入額與翻牌前／後順序；首次仍只抽一次 50/50，後續每手交換。BET 10 開局為雙方 5／10、POT 15，小盲 CALL 補 5。入口及機率工具顯示同步；舊 smallBlind:0 匯入時由 BET 重新推導一半。主按鈕維持 v25 不顯示花費數字，籌碼圖與回應機率保留。小數金額按引擎精度最多六位顯示、不補尾零，避免 0.015 被顯示為 0.02。
+
+- 自動測試 134／134 通過；正式建置通過。涵蓋雙盲、兩盲位行動順序、舊設定、首次抽選 RNG、短 SB／BB、退款、守恆、JP、單次投入及 .03／.015 金流顯示。文件六個帳務案例與 NPC 機率亦依現行引擎核對。
+- 引擎四策略各 2,500 手，共 10,000 手，守恆誤差皆 0；另保存 12 個受控金流案例。指令 node tests/smoke-two-blinds.mjs，證據 output/playwright/blinds-v26/math-smoke.json 與 rule-cases.json。這是功能檢查，不是新 RTP 校準；未重跑或覆寫舊 260,000 手報告。
+- Chromium 390×844 自然抽到 BB：通知投入 10，NPC 投入 5、POT 15；NPC CALL 後 POT 20。完成 PREFLOP／FLOP／TURN／RIVER 與攤牌。下一手交換 SB，不重彈抽選，投入 5／10，CALL ARIA 為 5；立即 FOLD 後玩家損失 5、POT 歸零、NPC 資產刷新對齊玩家。
+- WebKit 320×568 自然抽到 SB：通知投入 5、POT 15，CALL 只加 5；NPC RAISE 後再 CALL 10，完成四街攤牌。兩引擎過程牌庫維持 43／52、按鈕花費文字空白、沒有水平溢出，console errors／warnings 皆 0。以桌面手機視窗與觸控模擬驗證，非實體手機。
+- Chromium 320×568 減少動態效果、小额 BET .03：自然 SB 實際 DOM 通知／TOTAL BET／CALL／FOLD 都顯示 .015，POT .045、玩家 999.985；FOLD 後不再扣款，POT 歸零，雙方顯示 999.985，無水平溢出。只改設定，未注入牌面或更改 RNG。
+- Probability Lab 保留 27 欄；BB20→SB10、BB.03→SB.015、舊 SB0 匯入／保存／匯出正確。真實 Worker 四策略各 250 手完成，JSON version4、model heads-up-two-blinds+base-pot+showdown-jackpot、ruleSet heads-up-two-blinds-v1，守恆誤差皆 0。四報告分頁、執行鎖定、Stop 和 320px 五區展開無溢出通過。小樣本不代表 RTP 或 JP 頻率校準。
+- 規則 HTML 在 320px 顯示 v26，無整頁水平溢出。證據與截圖留本機 output/playwright/blinds-v26；此資料夾不發布。
+
+
 更新：2026-10-02。只修改 Magic Poker Lite，原 Boss Duel、Hands Up、Final Table 永久唯讀。
 
 ## v25 主按鈕移除花費數字

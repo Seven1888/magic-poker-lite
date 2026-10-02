@@ -33,7 +33,7 @@ $('npc-fields').innerHTML=['fold','call','raise','check','bet'].map(k=>numberFie
 function fill(config){for(const el of document.querySelectorAll('[data-config]')){const value=get(config,el.dataset.config);if(el.type==='checkbox'){el.checked=Boolean(value);continue;}if(el.type==='number')el.required=true;el.value=Array.isArray(value)?value.join(' '):Number(value)*(Number(el.dataset.scale)||1);}refreshDerived();}
 function readConfig(){
   const raw={};for(const el of document.querySelectorAll('[data-config]')){if(!el.checkValidity()){el.closest('details').open=true;throw new Error(`${el.closest('.field').querySelector('label').textContent}: enter a value within the allowed range.`);}set(raw,el.dataset.config,el.type==='checkbox'?el.checked:el.type==='text'?el.value.trim():Number(el.value)/(Number(el.dataset.scale)||1));}
-  raw.smallBlind=0; // Legacy imports cannot re-enable a second automatic blind.
+  raw.smallBlind=raw.bigBlind/2; // The small blind always follows the selected BET.
   if(raw.minBuyIn<raw.bigBlind)throw new Error('Minimum buy-in cannot be below the big blind.');
   if(raw.maxBuyIn<raw.minBuyIn||raw.buyIn<raw.minBuyIn||raw.buyIn>raw.maxBuyIn)throw new Error('Buy-in must satisfy: minimum ≤ starting ≤ maximum.');
   if(Object.values(raw.betSize).some(v=>v<raw.bigBlind))throw new Error('Each street increment must be at least the big blind.');
@@ -48,6 +48,7 @@ function refreshDerived(){
   const target=Number($('target-rtp').value)||96;$('fee-formula').textContent=`Pot fee ${(100-target).toFixed(1)}% · Base return = gross pot share × ${(target/100).toFixed(3)}. JP is added separately.`;
   const report=reports[selectedIndex]||reports[0];$('metric-target').innerHTML=`${(report?report.config.targetRtp*100:target).toFixed(2)}<em>%</em>`;
   const bigBlind=Number($('big-blind').value),enabled=$('jackpot-enabled').checked;
+  $('small-blind').value=Number.isFinite(bigBlind)&&bigBlind>=.02?Math.round((bigBlind/2+Number.EPSILON)*1e6)/1e6:'';
   $('jackpot-tiers').classList.toggle('off',!enabled);
   $('jackpot-tiers').innerHTML=jackpotTiers.map(t=>`<div class="jackpot-tier"><div><b>${t.label}</b><span>${t.multiplier} × big blind</span></div><div><span class="jackpot-example">${t.cards.map(c=>cardMarkup(c)).join('')}</span><strong>${Number.isFinite(bigBlind)&&bigBlind>0?money(quoteJackpot(t.key,bigBlind).award):'—'}</strong></div></div>`).join('');
   $('jackpot-config-state').textContent=enabled?'ON · No extra wager; bonus funded separately':'OFF · Base-pot returns only';
@@ -110,7 +111,7 @@ function renderResults(){
 }
 $('result-select').onchange=()=>{selectedIndex=Number($('result-select').value);renderResults();};
 document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-tab]').forEach(x=>{x.classList.toggle('active',x===b);x.setAttribute('aria-pressed',String(x===b));});document.querySelectorAll('.tab-panel').forEach(x=>x.hidden=x.id!==b.dataset.tab+'-tab');});
-const bundle=()=>({version:3,model:'single-big-blind+base-pot+showdown-jackpot',run:runSnapshot,reports});
+const bundle=()=>({version:4,model:'heads-up-two-blinds+base-pot+showdown-jackpot',run:runSnapshot,reports});
 $('export-results').onclick=()=>download('magic-poker-lite-results.json',bundle());
 $('copy-results').onclick=async()=>{try{await navigator.clipboard.writeText(JSON.stringify(bundle(),null,2));toast('Full settings and statistics copied.');}catch{toast('Clipboard unavailable. Use JSON export.');}};
 $('export-csv').onclick=()=>{const lines=['ruleSet,smallBlind,bigBlind,policy,hands,seed,jackpotEnabled,baseSettlementCoefficient,baseRtp,totalRtp,baseStandardError,totalStandardError,baseCi95Low,baseCi95High,totalCi95Low,totalCi95High,wagers,jackpotWagers,refunds,grossReturns,netReturns,jackpotAwards,totalReturns,baseProfit,totalProfit,playerFees,systemFees,royalCount,straightFlushCount,quadsCount,wins,losses,ties'];for(const r of reports)lines.push([r.ruleSet,r.config.smallBlind,r.config.bigBlind,r.policy,r.hands,r.seed,r.config.jackpotEnabled,r.config.targetRtp,r.baseRtp,r.totalRtp,r.baseStandardError,r.standardError,...r.baseCi95,...r.ci95,r.wagers,0,r.refunds,r.grossReturns,r.netReturns,r.jackpotAwards,r.totalReturns,r.netReturns-r.wagers,r.totalReturns-r.wagers,r.playerFees,r.fees,r.tierCounts.royal,r.tierCounts.straightFlush,r.tierCounts.quads,r.wins,r.losses,r.ties].join(','));download('magic-poker-lite-results.csv','\uFEFF'+lines.join('\r\n'),'text/csv;charset=utf-8');};

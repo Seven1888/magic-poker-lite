@@ -2,7 +2,7 @@ import {DEFAULT_CONFIG,normalizeConfig} from './engine.mjs';
 export const CONFIG_KEY='magic-poker-lite.config.v1';
 export const LABELS={fold:'棄牌',check:'過牌',call:'跟注',bet:'下注',raise:'加注',smallBlind:'小盲',bigBlind:'大盲'};
 export const STREETS={preflop:'翻牌前',flop:'翻牌',turn:'轉牌',river:'河牌'};
-export const money=n=>Number(n||0).toLocaleString('en-US',{maximumFractionDigits:2});
+export const money=n=>Number(n||0).toLocaleString('en-US',{maximumFractionDigits:6});
 export const pct=n=>`${(100*n).toFixed(1)}%`;
 export const esc=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function loadConfig(){try{return normalizeConfig(JSON.parse(localStorage.getItem(CONFIG_KEY)||'null')||DEFAULT_CONFIG);}catch{return normalizeConfig(DEFAULT_CONFIG);}}
