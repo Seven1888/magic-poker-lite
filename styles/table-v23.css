@@ -1,0 +1,60 @@
+/* Action odds belong to their original betting button; the board owns the table centre. */
+.game .response-panel { display: none !important; }
+.game .decision-emblem { display: none !important; }
+.table-cue { top: 366px; height: 50px; }
+.table-cue strong, .game[data-presentation='contribution'] .table-cue strong { font-size: 22px; line-height: 25px; }
+.table-cue small { font-size: 13px; line-height: 17px; }
+.table-cue .cue-copy { gap: 2px; }
+.showdown-preview { top: 366px; height: 52px; padding: 0 8px; }
+.showdown-caption { gap: 0; }
+.showdown-caption > small { display: none; }
+.showdown-caption > strong { line-height: 42px; }
+.showdown-caption > span { font-size: 9px; line-height: 10px; }
+
+.felt { top: 420px; }
+.shared-board { height: 106px; }
+.board-heading { top: 6px; }
+.shared-board .board {
+  top: 20px; height: 92px; gap: 4px;
+  transform: perspective(1200px) rotateX(38deg);
+}
+.shared-board .board .card { width: 70px; }
+.pot-display { top: 111px; }
+
+/* Two compact informational corners sit inside the existing gem artwork. */
+.action:has(.action-response-badges) {
+  height: 83px; padding: 31px 3px 6px; justify-content: flex-start; gap: 0;
+  background-size: 100% 100%;
+}
+.action:has(.action-response-badges) .action-face { height: 25px; flex: none; }
+.action:has(.action-response-badges) .action-name { line-height: 25px; }
+.action:has(.action-response-badges) .action-cost { height: 20px; line-height: 20px; flex: none; }
+.action-response-badges {
+  position: absolute; top: 4px; left: 9px; right: 9px; height: 27px;
+  display: flex; justify-content: space-between; gap: 4px;
+  pointer-events: none; isolation: isolate;
+}
+.action-response-badge {
+  position: relative; flex: 0 1 46px; min-width: 0; height: 27px;
+  display: grid; grid-template-columns: 1fr; grid-template-rows: 8px 14px;
+  align-items: center; justify-items: center; column-gap: 1px;
+  padding: 1px 3px 2px; border: 1px solid #aac984; border-radius: 5px;
+  background: linear-gradient(#25572e, #143821); color: #f0ffd9;
+  box-shadow: inset 0 1px #cbeab333, 0 1px 2px #110a1aa6;
+  text-shadow: 0 1px 1px #111c16; font-variant-numeric: tabular-nums;
+}
+.action-response-badge[data-response='raise'] {
+  margin-left: auto; border-color: #c7a2e1; background: linear-gradient(#684480, #432455); color: #fff0ff;
+}
+.action-response-badge .ui-icon { width: 10px; height: 8px; filter: none; }
+.response-badge-label { display: flex; align-items: center; justify-content: center; gap: 1px; font-size: 9px; line-height: 9px; font-weight: 800; letter-spacing: 0; white-space: nowrap; }
+.response-badge-percent { grid-column: 1 / -1; font-size: 14px; line-height: 14px; font-weight: 900; letter-spacing: -.4px; white-space: nowrap; }
+.action-response-badges[data-phase='drawing'] .action-response-badge { opacity: .7; }
+.action-response-badges[data-phase='result'] .action-response-badge:not(.is-selected) { opacity: .55; }
+.action-response-badge.is-selected { border-color: #fff0ab; box-shadow: 0 0 0 1px #f4cf77, 0 0 6px #ffdd8666; }
+.action-response-sweep {
+  position: absolute; top: -1px; bottom: -1px; left: 0; width: 18px; z-index: 2;
+  border: 1px solid #fff1b3; border-radius: 5px;
+  background: linear-gradient(90deg, transparent, #fff2ad66, transparent);
+  box-shadow: 0 0 4px #ffdc94aa; pointer-events: none;
+}

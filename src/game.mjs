@@ -16,6 +16,7 @@ import {getShowdownView} from './showdown-view.mjs';
 import {GAME_SPEED,atGameSpeed} from './presentation-timing.mjs';
 import {createBankrollView} from './bankroll-view.mjs';
 import {renderWinRate} from './win-rate-view.mjs';
+import {responseBadgeView,captureResponseSource,responseSourceMatches} from './action-response-view.mjs';
 document.documentElement.style.setProperty('--game-speed',String(GAME_SPEED));
 const $=id=>document.getElementById(id);
 let config=loadConfig(),session=null,hand=null,busy=false,drawLog=[],lastResponse=null,handArchive=[],equityCache='',toastTimer,closedTable=null,phase='';
@@ -38,6 +39,7 @@ fitStage({shell:$('game-shell'),stage:$('game')});
 let shownHand=null,shownBoard=0,shownReveal=0,dealt={player:0,npc:0},settlementReleased=false;
 let presentedCredits={player:0,npc:0};
 let pendingPlayerAction=null;
+let responseSource=null,responseDecision=null;
 let showdownViewCache={key:'',value:null};
 const delay=(ms,{speed}={})=>new Promise(r=>setTimeout(r,atGameSpeed(ms,speed)));
 function toast(message){$('toast').textContent=message;$('toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('show'),atGameSpeed(3500));}
@@ -59,7 +61,8 @@ function presentTransferPhase({flow,seats,amounts}){
  if(flow==='contribution'){
   const event=hand.history.slice().reverse().find(item=>seats.includes(item.actor)&&item.amount>0);
   const action=event?.type==='bigBlind'?'OPENING BET':LABELS[event?.type]||'BET';
-  setTableCue('contribution',`${who} ${action}`,{seat:seats.length===1?seats[0]:'',detail:`${seats.map(seat=>money(amounts[seat])).join(' + ')} → POT`});
+  const label=event?.actor==='npc'&&event.type==='call'?'CHIPS TO POT':`${who} ${action}`;
+  setTableCue('contribution',label,{seat:seats.length===1?seats[0]:'',detail:`${seats.map(seat=>money(amounts[seat])).join(' + ')} → POT`});
  }else if(flow==='refund')setTableCue('refund','UNCALLED CHIPS BACK',{seat:seats.length===1?seats[0]:'',detail});
  else if(flow==='payout'){
   for(const seat of ['player','npc'])presentedCredits[seat]=hand.result[seat].refund;
@@ -229,8 +232,10 @@ function updateVisibleCards(){
   updateShowdownView();
 }
 /** Play only changes already committed by the engine, in visible table order. */
-async function presentHand(){
+async function presentHand({releaseResponse=false}={}){
   render();await potView.whenIdle();
+  // The reply badge belongs to the completed action, not the next visible street.
+  if(releaseResponse){clearResponseSource();renderActions();}
   if(dealt.player<2||dealt.npc<2){
     setTableCue('hole-deal','DEALING');
     const order=[];
@@ -267,7 +272,7 @@ async function presentHand(){
   render();
 }
 function render(){
-  if(hand!==shownHand){shownHand=hand;shownBoard=0;shownReveal=0;dealt={player:0,npc:0};settlementReleased=false;presentedCredits={player:0,npc:0};bankrollView.clearChanges();}
+  if(hand!==shownHand){shownHand=hand;shownBoard=0;shownReveal=0;dealt={player:0,npc:0};settlementReleased=false;presentedCredits={player:0,npc:0};responseSource=null;responseDecision=null;bankrollView.clearChanges();}
   const active=hand?.status==='playing';const handView=getCurrentHandView(hand?.holes.player.slice(0,dealt.player)||[],hand?.board.slice(0,shownBoard)||[]);const best=handView.highlighted;
   const h=hud();$('game').dataset.busy=String(busy);
   $('game').dataset.state=hand?.result&&!settlementReleased?'playing':hand?.status||'idle';$('game').dataset.actor=busy?'':hand?.actor||'';$('game').dataset.street=hand?visibleStreet():'';updateExpression(settlementReleased?hand?.result?.winner||'':'');
@@ -306,7 +311,7 @@ function render(){
   const plaque=handView.royal?10:handView.category+1;
   $('table-rank-button').style.backgroundImage=`url('assets/legacy/type${plaque}-base.png')`;
   $('table-rank-button').setAttribute('aria-label',`Current hand: ${$('table-hand-type').textContent}. View hand rankings.`);
-  renderJackpot();renderActions();if(!busy)renderDefaultResponse();
+  renderJackpot();renderActions();paintDistribution();
 }
 function renderActions(){
   const root=$('action-buttons'),h=hud(),playing=hand?.status==='playing',settled=hand?.status==='settled';
@@ -325,83 +330,72 @@ function renderActions(){
     if(disabled)hint=!hand?'Join the table first':settled?'Hand complete':busy?'Please wait':type==='fold'?'You can check for free':'No further raise this street';
     else hint=type==='fold'?'Fold this hand':a.allIn?'All remaining chips':a.to?`Street total: ${money(a.to)}`:type==='check'?'No chips required':'Add chips to the pot';
     const cost=displayed?.amount?`+${money(displayed.amount)}`:type==='check'&&(!disabled||choice)?'0':'';
-    return `<button class="action ${type} ${type==='fold'?'side-action':type==='call'||type==='check'?'main-action':'side-action'}${choice?' chosen-action':''}" data-action="${type}" ${disabled?'disabled':''} aria-label="${LABELS[type]}${displayed?.amount?' '+money(displayed.amount):''}" title="${esc(hint)}"><span class="action-face">${icon(type)}<span class="action-name">${LABELS[type]}</span></span><b class="action-cost">${cost||'&nbsp;'}</b></button>`;
+    const distribution=choice?responseSource?.distribution||[]:a?previewResponse(hand,type).distribution:[];
+    const badge=responseBadgeView(distribution,choice?responseDecision||{}:{});
+    const accessible=`${LABELS[type]}${displayed?.amount?' '+money(displayed.amount):''}${badge.description?'; '+badge.description:''}`;
+    return `<button class="action ${type} ${type==='fold'?'side-action':type==='call'||type==='check'?'main-action':'side-action'}${choice?' chosen-action':''}" data-action="${type}" ${disabled?'disabled':''} aria-label="${esc(accessible)}" title="${esc(hint)}">${badge.markup}<span class="action-face">${icon(type)}<span class="action-name">${LABELS[type]}</span></span><b class="action-cost">${cost||'&nbsp;'}</b></button>`;
   }).join('');
   root.querySelectorAll('[data-action]').forEach(b=>{b.onclick=()=>playerAct(b.dataset.action);});
   if(busy||!playing||hand.actor!=='player'){const previews=$('preview-actions');previews.hidden=true;previews.replaceChildren();}
 }
-function renderPreviewActions(){
-  const actions=!busy&&hand?.status==='playing'&&hand.actor==='player'?legalActions(hand):[];
-  const options=actions.map(action=>({action,distribution:previewResponse(hand,action.type).distribution.filter(outcome=>outcome.probability>0)})).filter(option=>option.distribution.length>=2);
-  if(!options.length){paintDistribution([]);return;}
-  const root=$('preview-actions'),panel=document.querySelector('.response-panel');
-  panel.hidden=false;panel.dataset.mode='preview';delete panel.dataset.action;root.hidden=false;
-  $('response-title').textContent='YOUR MOVE → OPPONENT';$('response-status').textContent='ODDS';$('response-caption').textContent='';
-  $('probability-track').replaceChildren();$('probability-legend').replaceChildren();
-  root.innerHTML=options.map(({action,distribution})=>{
-    const probabilityLabel=outcome=>outcome.probability<.001?'&lt;0.1%':pct(outcome.probability);
-    const accessible=distribution.map(outcome=>`${LABELS[outcome.type]} ${outcome.probability<.001?'less than 0.1%':pct(outcome.probability)}`).join(', ');
-    return `<div class="preview-option" data-player-action="${action.type}" aria-label="After your ${LABELS[action.type]}: opponent ${accessible}"><div class="preview-option-title"><strong>${LABELS[action.type]}</strong></div><div class="preview-distribution"><div class="preview-outcomes">${distribution.map(outcome=>`<span class="preview-outcome ${outcome.type}" style="--probability:${outcome.probability*100}%"><span>${LABELS[outcome.type]}</span><b>${probabilityLabel(outcome)}</b></span>`).join('')}</div></div></div>`;
-  }).join('');
-}
-function paintDistribution(distribution,{title='OPPONENT ODDS',status='ACTION ODDS',caption='',selected=null,roll=null,mode='preview',resultAction=null}={}){
+function paintDistribution(){
   const panel=document.querySelector('.response-panel'),previews=$('preview-actions');
   previews.hidden=true;previews.replaceChildren();
   delete panel.dataset.action;
-  if(!distribution?.length){
-    panel.hidden=true;panel.dataset.mode='hidden';
-    $('response-title').textContent='';$('response-status').textContent='';$('response-caption').textContent='';
-    $('probability-track').replaceChildren();$('probability-legend').replaceChildren();return;
-  }
-  panel.hidden=false;panel.dataset.mode=mode;
-  $('response-title').textContent=title;$('response-status').textContent=status;$('response-caption').textContent=caption;
-  if(resultAction){panel.dataset.action=resultAction.type;$('response-title').innerHTML=`<span class="decision-result-action">${icon(resultAction.type)}<strong>${LABELS[resultAction.type]}</strong>${resultAction.amount?`<b>+${money(resultAction.amount)}</b>`:''}</span>`;}
-  $('probability-track').innerHTML=distribution.map(x=>`<div class="prob-segment ${x.type}" style="width:${x.probability*100}%" title="${LABELS[x.type]} ${pct(x.probability)}"></div>`).join('');
-  if(roll!==null)$('probability-track').insertAdjacentHTML('beforeend',`<div class="draw-marker" style="left:${roll*100}%"></div>`);
-  $('probability-legend').innerHTML=distribution.map(x=>`<span class="legend-item ${x.type}${selected===x.type?' selected':''}">${icon(x.type)}${LABELS[x.type]} <b>${pct(x.probability)}</b></span>`).join('');
+  panel.hidden=true;panel.dataset.mode='hidden';
+  $('response-title').textContent='';$('response-status').textContent='';$('response-caption').textContent='';
+  $('probability-track').replaceChildren();$('probability-legend').replaceChildren();
+  $('decision-emblem').hidden=true;
 }
-function renderDefaultResponse(){
-  if(busy)return;
-  if(hand?.status==='playing'&&hand.actor==='player'){renderPreviewActions();return;}
-  paintDistribution([]);
+function clearResponseSource(){
+  pendingPlayerAction=null;responseSource=null;responseDecision=null;delete $('game').dataset.chosenAction;
 }
 async function playerAct(type){
   if(busy||hand?.actor!=='player'||hand.status!=='playing')return;
   try{busy=true;phase='YOUR MOVE';lastResponse=null;const chosen=legalActions(hand).find(a=>a.type===type);if(!chosen)throw new Error('This action is not available.');
     const before=hand.board.length;
-    pendingPlayerAction={...chosen};$('game').dataset.chosenAction=type;renderActions();paintDistribution([]);
+    pendingPlayerAction={...chosen};responseSource=captureResponseSource(hand,chosen);responseDecision=null;$('game').dataset.chosenAction=type;renderActions();paintDistribution();
     setTableCue('action',`YOU ${LABELS[type]}${chosen.amount?' '+money(chosen.amount):''}`,{seat:'player',detail:chosen.amount?'CHIPS TO THE POT':type==='check'?'NO CHIPS REQUIRED':'END THIS HAND'});
     await delay(reduceMotion?0:700);
     applyAction(hand,type);if(chosen.amount)effects.play('chip');phase=hand.board.length===5&&before<4?'ALL-IN · RUNNING THE BOARD':hand.board.length>before?`DEAL ${STREETS[hand.street]}`:hand.status==='settled'?'SETTLING':'CHIPS TO POT';
-    paintDistribution([],{title:`YOU ${LABELS[type]}${chosen.amount?' +'+money(chosen.amount):''}`,status:phase});
+    paintDistribution();
     if(chosen.amount)setTableCue('contribution',`YOU ${LABELS[type]}`,{seat:'player',detail:`${money(chosen.amount)} → POT`});
-    await presentHand();pendingPlayerAction=null;delete $('game').dataset.chosenAction;if(hand.status==='playing')await delay(reduceMotion?0:350);await continuePlay();
-  }catch(error){busy=false;phase='';pendingPlayerAction=null;delete $('game').dataset.chosenAction;setTableCue();$('game').dataset.deciding='false';toast(translateError(error));render();}
+    await presentHand();if(!responseSourceMatches(responseSource,hand))clearResponseSource();if(hand.status==='playing')await delay(reduceMotion?0:350);await continuePlay();
+  }catch(error){busy=false;phase='';clearResponseSource();setTableCue();$('game').dataset.deciding='false';toast(translateError(error));render();}
 }
 async function continuePlay(){
   while(hand?.status==='playing'&&hand.actor==='npc'){
-    setTableCue();$('game').dataset.activeSeat='npc';pendingPlayerAction=null;delete $('game').dataset.chosenAction;
+    setTableCue();$('game').dataset.activeSeat='npc';
+    const source=responseSourceMatches(responseSource,hand)?responseSource:null;
+    if(!source)clearResponseSource();
     busy=true;const distribution=getActionDistribution(hand);const selected=sampleDistribution(distribution,hand.rng);const beforeStreet=hand.street;
     const entry={street:beforeStreet,distribution:distribution.map(a=>({...a})),selected:{...selected},roll:selected.roll};
     const hasDraw=distribution.filter(a=>a.probability>0).length>1;
     phase=hasDraw?'OPPONENT DECIDING':'OPPONENT ACTION';$('game').dataset.npcState=hasDraw?'thinking':selected.type;$('game').dataset.deciding=String(hasDraw);
-    renderActions();
+    responseDecision=source?{phase:hasDraw?'drawing':'result',selected:null}:null;
+    renderActions();paintDistribution();
     if(hasDraw){
-      paintDistribution(distribution,{title:'OPPONENT DECIDING…',status:STREETS[hand.street],caption:'',mode:'drawing'});
-      const marker=document.createElement('div');marker.className='draw-marker';$('probability-track').append(marker);
+      const target=source?$('action-buttons').querySelector(`[data-action="${source.action.type}"] .action-response-badges`):null;
+      const marker=target?document.createElement('span'):null;
+      if(marker){marker.className='action-response-sweep';target.append(marker);}else setTableCue('action','OPPONENT DECIDING');
       const motion=decisionMotion(hand.config.animationMs,selected.roll,{reducedMotion:reduceMotion}),sweepMs=Math.min(450,motion.duration);
       // Opponent decisions keep their original reading time; other presentation stays at 1.2x.
-      if(sweepMs>0)await effects.animate(marker,motion.keyframes,{duration:sweepMs,easing:'linear',fill:'forwards'},{speed:1});
+      if(sweepMs>0){
+        if(marker)await effects.animate(marker,[{left:'0%'},{left:'calc(100% - 18px)',offset:.25},{left:'0%',offset:.5},{left:'calc(100% - 18px)',offset:.75},{left:'calc(50% - 9px)'}],{duration:sweepMs,easing:'linear',fill:'forwards'},{speed:1});
+        else await delay(sweepMs,{speed:1});
+      }
+      marker?.remove();
       lastResponse=entry;
-      paintDistribution(distribution,{status:'RESULT',selected:selected.type,roll:selected.roll,mode:'result',resultAction:selected});
+      responseDecision=source?{phase:'result',selected:selected.type}:null;renderActions();
+      if(selected.type==='call')setTableCue();else setTableCue('action',`OPPONENT ${LABELS[selected.type]}`,{seat:'npc'});
       await delay(Math.max(0,motion.duration-sweepMs),{speed:1});
-    }else{lastResponse=null;paintDistribution([]);setTableCue('action',`OPPONENT ${LABELS[selected.type]}`);await delay(reduceMotion?0:550,{speed:1});}
+    }else{lastResponse=null;if(selected.type==='call')setTableCue();else setTableCue('action',`OPPONENT ${LABELS[selected.type]}`,{seat:'npc'});await delay(reduceMotion?0:550,{speed:1});}
     const before=hand.board.length;
     applyAction(hand,selected.type);drawLog.push(entry);if(selected.amount)effects.play('chip');$('game').dataset.npcState=selected.type;
-    $('game').dataset.deciding='false';$('decision-emblem').innerHTML='<span class="decision-orbit"></span><i>♠</i><span class="thinking-dots"><i></i><i></i><i></i></span>';paintDistribution([]);
+    $('game').dataset.deciding='false';paintDistribution();
     phase=hand.board.length===5&&before<4?'ALL-IN · RUNNING THE BOARD':hand.board.length>before?`DEAL ${STREETS[hand.street]}`:hand.status==='settled'?'SETTLING':'CHIPS TO POT';
-    setTableCue(selected.amount?'contribution':'action',`OPPONENT ${LABELS[selected.type]}`,{seat:'npc',detail:selected.amount?`${money(selected.amount)} → POT`:selected.type==='check'?'NO CHIPS REQUIRED':'END THIS HAND'});
-    await presentHand();
+    setTableCue(selected.amount?'contribution':'action',selected.type==='call'?'CHIPS TO POT':`OPPONENT ${LABELS[selected.type]}`,{seat:'npc',detail:selected.amount?`${money(selected.amount)} → POT`:selected.type==='check'?'NO CHIPS REQUIRED':'END THIS HAND'});
+    await presentHand({releaseResponse:true});
     if(hand.status==='playing')await delay(reduceMotion?0:350);
   }
   if(hand?.status==='settled'){
