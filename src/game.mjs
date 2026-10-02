@@ -344,7 +344,7 @@ function renderActions(){
     const foldLoss=type==='fold'&&(a||choice)?h.playerCommitted:null;
     if(foldLoss!==null)hint=`Forfeit ${money(foldLoss)} chips already committed this hand; no additional chips charged`;
     const chip='<img class="action-cost-chip" src="assets/chip-face-v24.svg" alt="" aria-hidden="true">';
-    const cost=foldLoss!==null?`${chip}−${money(foldLoss)}`:displayed?.amount>0?`${chip}${money(displayed.amount)}`:type==='check'&&(!disabled||choice)?'0':'';
+    const cost=foldLoss!==null||displayed?.amount>0?chip:'';
     const distribution=choice?responseSource?.distribution||[]:a?previewResponse(hand,type).distribution:[];
     const badge=responseBadgeView(distribution,choice?responseDecision||{}:{});
     const accessible=`${LABELS[type]}${displayed?.amount?' '+money(displayed.amount):''}${foldLoss!==null?'; forfeit '+money(foldLoss)+' already committed chips':''}${badge.description?'; '+badge.description:''}`;

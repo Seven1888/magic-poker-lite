@@ -9,7 +9,7 @@ export function setupEntryFeatures(root = globalThis.document) {
   panel.setAttribute('aria-label', 'Game features');
   panel.innerHTML = `
     <section class="feature-page feature-game-page" id="entry-feature-0" aria-label="Feature 1 of 3: See the odds">
-      <div class="feature-art feature-game-shot feature-odds-shot"><img src="assets/tutorial-odds-v24.png" alt="Actual game view with opponent fold and raise chances inside your action button" draggable="false"><small class="feature-capture-note">EXAMPLE GAME</small></div>
+      <div class="feature-art feature-game-shot feature-odds-shot"><img src="assets/tutorial-odds-v25.png" alt="Actual game view with opponent fold and raise chances inside your action button" draggable="false"><small class="feature-capture-note">EXAMPLE GAME</small></div>
       <h3>SEE THE ODDS</h3><p>See the boss’s fold and raise chances.<br>Shown on your button before you play.</p>
     </section>
     <section class="feature-page feature-game-page" id="entry-feature-1" aria-label="Feature 2 of 3: Make your best five" hidden>
