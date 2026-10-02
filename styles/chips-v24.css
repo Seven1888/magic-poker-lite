@@ -1,0 +1,19 @@
+/* One matte clay sprite serves bankrolls, the pot and chips in flight. */
+.game .casino-chip,
+.game .chip-stack .casino-chip,
+.game .flying-chip-group .casino-chip:nth-child(n) {
+  --chip-art: url('../assets/chip-casino-v24.svg');
+}
+
+/* Each sprite carries its contact shadow; keep the existing stack geometry. */
+.game .bankroll-pile,
+.game #pot-chips { filter: none; }
+.game[data-active-seat='player'] .table-bankroll-player .bankroll-pile,
+.game[data-active-seat='npc'] .table-bankroll-npc .bankroll-pile {
+  filter: brightness(1.04);
+}
+.game .flying-chip,
+.game .flying-chip[data-flow='refund'],
+.game .flying-chip[data-flow='payout'] {
+  filter: drop-shadow(0 3px 2px #100b164d);
+}

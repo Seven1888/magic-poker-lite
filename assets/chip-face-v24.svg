@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160">
+<!-- Front view of the matching denomination-free clay casino chip. -->
+<defs>
+  <linearGradient id="body" x1="0" y1="0" x2=".8" y2="1">
+    <stop stop-color="#567582"/><stop offset=".5" stop-color="#385a6a"/><stop offset="1" stop-color="#284756"/>
+  </linearGradient>
+  <linearGradient id="edge-blue" x1="0" y1="0" x2="0" y2="1">
+    <stop stop-color="#4a6570"/><stop offset=".32" stop-color="#304c59"/><stop offset=".8" stop-color="#253e49"/><stop offset="1" stop-color="#1b2c35"/>
+  </linearGradient>
+  <linearGradient id="ivory" x1=".15" y1="0" x2=".75" y2="1">
+    <stop stop-color="#e6ddbf"/><stop offset=".55" stop-color="#d8ccaa"/><stop offset="1" stop-color="#b9aa84"/>
+  </linearGradient>
+  <linearGradient id="edge-ivory" x1="0" y1="0" x2="0" y2="1">
+    <stop stop-color="#c7ba97"/><stop offset=".58" stop-color="#a79979"/><stop offset="1" stop-color="#766d54"/>
+  </linearGradient>
+  <radialGradient id="contact">
+    <stop stop-color="#0e0909" stop-opacity=".68"/><stop offset=".58" stop-color="#140b0b" stop-opacity=".35"/><stop offset="1" stop-color="#140b0b" stop-opacity="0"/>
+  </radialGradient>
+  <pattern id="grain" width="11" height="9" patternUnits="userSpaceOnUse">
+    <path d="M1 2h.6M7 1h.45M4 6h.5M9 7h.65" stroke="#fff8e5" stroke-opacity=".2" stroke-width=".7"/>
+    <path d="M4 1h.4M9 4h.5M1 7h.5M6 8h.4" stroke="#172d36" stroke-opacity=".21" stroke-width=".65"/>
+  </pattern>
+  <pattern id="edge-grain" width="4" height="5" patternUnits="userSpaceOnUse">
+    <path d="M1 0v2M3 3v1" stroke="#c3b89a" stroke-opacity=".12" stroke-width=".6"/>
+  </pattern>
+  <clipPath id="face"><circle cx="80" cy="80" r="71.5"/></clipPath>
+  <clipPath id="side"><path d="M8 42A72 31 0 0 0 152 42V56A72 31 0 0 1 8 56Z"/></clipPath>
+</defs>
+
+<circle cx="80" cy="80" r="72" fill="url(#body)" stroke="#1c3541" stroke-width="1.4"/>
+<g clip-path="url(#face)">
+<path d="M150.011 96.808A72 72 0 0 1 141.39 117.62L125.19 107.692A53 53 0 0 0 131.536 92.373Z" fill="url(#ivory)"/><path d="M147.173 105.92A72 72 0 0 1 145.826 109.17L128.455 101.473A53 53 0 0 0 129.447 99.08Z" fill="#a99a74" opacity=".68"/>
+<path d="M117.62 141.39A72 72 0 0 1 96.808 150.011L92.373 131.536A53 53 0 0 0 107.692 125.19Z" fill="url(#ivory)"/><path d="M109.17 145.826A72 72 0 0 1 105.92 147.173L99.08 129.447A53 53 0 0 0 101.473 128.455Z" fill="#a99a74" opacity=".68"/>
+<path d="M63.192 150.011A72 72 0 0 1 42.38 141.39L52.308 125.19A53 53 0 0 0 67.627 131.536Z" fill="url(#ivory)"/><path d="M54.08 147.173A72 72 0 0 1 50.83 145.826L58.527 128.455A53 53 0 0 0 60.92 129.447Z" fill="#a99a74" opacity=".68"/>
+<path d="M18.61 117.62A72 72 0 0 1 9.989 96.808L28.464 92.373A53 53 0 0 0 34.81 107.692Z" fill="url(#ivory)"/><path d="M14.174 109.17A72 72 0 0 1 12.827 105.92L30.553 99.08A53 53 0 0 0 31.545 101.473Z" fill="#a99a74" opacity=".68"/>
+<path d="M9.989 63.192A72 72 0 0 1 18.61 42.38L34.81 52.308A53 53 0 0 0 28.464 67.627Z" fill="url(#ivory)"/><path d="M12.827 54.08A72 72 0 0 1 14.174 50.83L31.545 58.527A53 53 0 0 0 30.553 60.92Z" fill="#a99a74" opacity=".68"/>
+<path d="M42.38 18.61A72 72 0 0 1 63.192 9.989L67.627 28.464A53 53 0 0 0 52.308 34.81Z" fill="url(#ivory)"/><path d="M50.83 14.174A72 72 0 0 1 54.08 12.827L60.92 30.553A53 53 0 0 0 58.527 31.545Z" fill="#a99a74" opacity=".68"/>
+<path d="M96.808 9.989A72 72 0 0 1 117.62 18.61L107.692 34.81A53 53 0 0 0 92.373 28.464Z" fill="url(#ivory)"/><path d="M105.92 12.827A72 72 0 0 1 109.17 14.174L101.473 31.545A53 53 0 0 0 99.08 30.553Z" fill="#a99a74" opacity=".68"/>
+<path d="M141.39 42.38A72 72 0 0 1 150.011 63.192L131.536 67.627A53 53 0 0 0 125.19 52.308Z" fill="url(#ivory)"/><path d="M145.826 50.83A72 72 0 0 1 147.173 54.08L129.447 60.92A53 53 0 0 0 128.455 58.527Z" fill="#a99a74" opacity=".68"/>
+<circle cx="80" cy="80" r="72" fill="url(#grain)"/>
+</g>
+<circle cx="80" cy="80" r="69.3" fill="none" stroke="#d8dfd3" stroke-opacity=".31" stroke-width="1"/>
+<circle cx="80" cy="80" r="53" fill="none" stroke="#193743" stroke-width="2"/>
+<circle cx="80" cy="80" r="51" fill="none" stroke="#79908f" stroke-opacity=".65" stroke-width="1"/>
+<circle cx="80" cy="80" r="48.5" fill="url(#ivory)" stroke="#233e49" stroke-width="1.7"/>
+<circle cx="80" cy="80" r="45.7" fill="none" stroke="#f2e9cf" stroke-opacity=".65" stroke-width="1"/>
+<circle cx="80" cy="80" r="43.4" fill="none" stroke="#9b8e6d" stroke-opacity=".54" stroke-width=".7"/>
+<circle cx="80" cy="80" r="47" fill="url(#grain)"/>
+<!-- Small pressed marks and a recessed, unnumbered centre are mould details, not currency. -->
+<path d="M80 15l2.3 4.8L80 23l-2.3-3.2Z" transform="rotate(0 80 80)" fill="#142d39" opacity=".3"/><path d="M78.4 18.9L80 22l1.6-3.1" transform="rotate(0 80 80)" fill="none" stroke="#91a4a7" stroke-opacity=".35" stroke-width=".7"/>
+<path d="M80 15l2.3 4.8L80 23l-2.3-3.2Z" transform="rotate(45 80 80)" fill="#142d39" opacity=".3"/><path d="M78.4 18.9L80 22l1.6-3.1" transform="rotate(45 80 80)" fill="none" stroke="#91a4a7" stroke-opacity=".35" stroke-width=".7"/>
+<path d="M80 15l2.3 4.8L80 23l-2.3-3.2Z" transform="rotate(90 80 80)" fill="#142d39" opacity=".3"/><path d="M78.4 18.9L80 22l1.6-3.1" transform="rotate(90 80 80)" fill="none" stroke="#91a4a7" stroke-opacity=".35" stroke-width=".7"/>
+<path d="M80 15l2.3 4.8L80 23l-2.3-3.2Z" transform="rotate(135 80 80)" fill="#142d39" opacity=".3"/><path d="M78.4 18.9L80 22l1.6-3.1" transform="rotate(135 80 80)" fill="none" stroke="#91a4a7" stroke-opacity=".35" stroke-width=".7"/>
+<path d="M80 15l2.3 4.8L80 23l-2.3-3.2Z" transform="rotate(180 80 80)" fill="#142d39" opacity=".3"/><path d="M78.4 18.9L80 22l1.6-3.1" transform="rotate(180 80 80)" fill="none" stroke="#91a4a7" stroke-opacity=".35" stroke-width=".7"/>
+<path d="M80 15l2.3 4.8L80 23l-2.3-3.2Z" transform="rotate(225 80 80)" fill="#142d39" opacity=".3"/><path d="M78.4 18.9L80 22l1.6-3.1" transform="rotate(225 80 80)" fill="none" stroke="#91a4a7" stroke-opacity=".35" stroke-width=".7"/>
+<path d="M80 15l2.3 4.8L80 23l-2.3-3.2Z" transform="rotate(270 80 80)" fill="#142d39" opacity=".3"/><path d="M78.4 18.9L80 22l1.6-3.1" transform="rotate(270 80 80)" fill="none" stroke="#91a4a7" stroke-opacity=".35" stroke-width=".7"/>
+<path d="M80 15l2.3 4.8L80 23l-2.3-3.2Z" transform="rotate(315 80 80)" fill="#142d39" opacity=".3"/><path d="M78.4 18.9L80 22l1.6-3.1" transform="rotate(315 80 80)" fill="none" stroke="#91a4a7" stroke-opacity=".35" stroke-width=".7"/>
+<circle cx="80" cy="80" r="28" fill="none" stroke="#a39471" stroke-opacity=".6" stroke-width=".8" stroke-dasharray=".8 3.2"/>
+<path d="M80 68l7 12-7 12-7-12Z" fill="#beaf88" stroke="#9b8c69" stroke-opacity=".6" stroke-width=".8"/>
+<path d="M74 80l6 10 6-10M80 70l5 9" fill="none" stroke="#eee4c7" stroke-opacity=".65" stroke-width="1"/>
+<path d="M24 53A63 63 0 0 1 111 25" fill="none" stroke="#e0e4d9" stroke-opacity=".21" stroke-width="1.1"/>
+<path d="M118 126A60 60 0 0 1 43 126" fill="none" stroke="#172e38" stroke-opacity=".3" stroke-width="1"/>
+
+</svg>

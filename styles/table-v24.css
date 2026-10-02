@@ -1,0 +1,68 @@
+/* Let the existing red felt carry the board instead of a separate green panel. */
+.felt { top: 400px; }
+.shared-board {
+  background: radial-gradient(ellipse at 50% 58%, #430c183b, transparent 73%);
+  border: 0; border-radius: 0; box-shadow: none;
+}
+.board-title, .shared-board .streets, .shared-board .streets span { color: #e6c6a4; }
+.shared-board .card.blank {
+  background: #360b1717; border-color: #e4ba8738; color: #e4ba8745; box-shadow: none;
+}
+.shared-board .board { filter: drop-shadow(0 3px 2px #25080c66); }
+.shared-board .board-heading { display: none; }
+.board-groups {
+  position: absolute; top: 2px; left: 13px; right: 13px; height: 14px;
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px;
+  color: #dfc6a7; font-size: 10px; line-height: 11px; letter-spacing: .8px; font-weight: 700;
+}
+.board-groups > span { position: relative; text-align: center; border-bottom: 1px solid #e6c99b66; }
+.board-groups > span:first-child { grid-column: span 3; }
+.board-groups > span:before, .board-groups > span:after { content: ''; position: absolute; bottom: 0; width: 1px; height: 3px; background: #e6c99b66; }
+.board-groups > span:before { left: 0; }
+.board-groups > span:after { right: 0; }
+.game[data-street='flop'] [data-board-group='flop'],
+.game[data-street='turn'] [data-board-group='turn'],
+.game[data-street='river'] [data-board-group='river'] { color: #fff0c5; border-color: #f7d785; }
+.pot-display { top: 111px; }
+
+/* Keep the short action cue above the raised board, clear of opponent chips. */
+.table-cue { top: 365px; height: 36px; left: 18px; right: 78px; }
+.table-cue strong, .game[data-presentation='contribution'] .table-cue strong { font-size: 20px; line-height: 22px; }
+.table-cue small { font-size: 11px; line-height: 12px; }
+.table-cue .cue-copy { gap: 1px; }
+.showdown-preview { top: 365px; height: 38px; left: 18px; right: 78px; }
+.showdown-caption > strong { font-size: 30px; line-height: 30px; }
+.showdown-caption > span { font-size: 8px; line-height: 8px; }
+
+/* Scale the rank plaque and its type by 0.8 while preserving its centre. */
+.hand-plaque {
+  top: 95.8px; width: 240px; height: 38.4px;
+  padding: 0 13.2px 1.2px; font-size: 16.8px; line-height: 20.4px; letter-spacing: .72px;
+}
+
+/* A squared, layered deal stock sits at the upper-right of the felt. */
+.deck-button { top: 333px; right: 9px; left: auto; width: 58px; height: 65px; opacity: 1; }
+.deck-button:before, .deck-button:after, .deck-button img {
+  left: 9px; width: 40px; height: 51px; transform: none; border-radius: 4px;
+}
+.deck-button:before { top: 5px; box-shadow: 0 1px #ded4bf, 0 2px #6c685f, 0 3px #e7dfcc, 0 4px 4px #20090c99; }
+.deck-button:after { top: 2.5px; box-shadow: 0 1px #e7dfcc; }
+.deck-button img { top: 0; margin: 0; box-shadow: 0 1px 2px #13203b66; }
+.deck-button span {
+  left: 0; right: 0; bottom: 0; height: 18px; padding: 0 3px; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center; gap: 1px; line-height: 16px;
+  background: #1d2630; border-color: #b9a07d; font-variant-numeric: tabular-nums;
+}
+.deck-button b { margin: 0; font-size: 12px; }
+.deck-button .deck-capacity { font-size: 11px; color: #d4c6ad; font-style: normal; }
+
+/* The equity ring follows the upper-right corner of the right hole card. */
+.game #player-win-rate:not([hidden]) { left: calc(50% + 82px); top: -13px; width: 52.2px; height: 52.2px; }
+.game #player-win-rate:before { inset: 1.8px; }
+.game #player-win-rate:after { inset: 6.3px; }
+.game #player-win-rate .win-rate-value { font-size: 18.9px; letter-spacing: -.72px; }
+.game #player-win-rate .win-rate-value small { font-size: 9px; }
+
+/* One front-facing chip marks actual action costs; action names stay plain. */
+.action .action-cost { display: flex; align-items: center; justify-content: center; gap: 3px; }
+.action-cost-chip { display: block; width: 17px; height: 17px; object-fit: contain; filter: drop-shadow(0 1px 1px #170b11aa); }
