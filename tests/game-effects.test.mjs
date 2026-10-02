@@ -80,6 +80,25 @@ test('deal starts at the right deck in stage coordinates without replacing fan t
   assert.equal(card.style.transform, 'rotate(-6deg)');
 });
 
+test('board deal starts at the deck after ancestor perspective and restores temporary styles', async () => {
+  const f = fixture(), effects = createGameEffects({root: f.doc}), card = f.card('board');
+  card.parentElement = {id: 'board'};
+  card.style.translate = ''; card.style.rotate = '';
+  card.getBoundingClientRect = () => {
+    const [x, y] = (card.style.translate || '0px 0px').split(' ').map(parseFloat);
+    const perspective = 1 - y / 1000;
+    return {left: 60 + .5 * x / perspective, top: 200 + .33 * y / perspective, width: 40, height: 40};
+  };
+  const pending = effects.deal([card]);
+  assert.equal(card.style.translate, ''); assert.equal(card.style.rotate, '');
+  const [x, y] = f.animations[0].keyframes[0].translate.split(' ').map(parseFloat);
+  const perspective = 1 - y / 1000;
+  assert.ok(Math.hypot(80 + .5 * x / perspective - 180, 220 + .33 * y / perspective - 100) < .05);
+  assert.equal(f.animations[0].keyframes.at(-1).translate, '0px 0px');
+  f.animations[0].finish(); await pending;
+  assert.equal(card.style.visibility, ''); assert.equal(card.style.transform, 'rotate(-6deg)');
+});
+
 test('reveal swaps each back only at the midpoint and finishes the first card before the second', async () => {
   const f = fixture(), effects = createGameEffects({root: f.doc}), cards = [f.card('first'), f.card('second')], revealed = [];
   const pending = effects.reveal(cards, {onReveal(card, index) {

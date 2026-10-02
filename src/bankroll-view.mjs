@@ -23,16 +23,18 @@ export function createBankrollView({root = globalThis.document} = {}) {
       if (panel) panel.dataset.amount = String(value);
       if (pile && shown[seat] !== value) {
         // The pile is a compact visual source; its adjacent number is the exact balance.
-        const count = value ? Math.min(18, Math.max(3, Math.ceil(3 * Math.log2(1 + value / Math.max(.01, baseBet))))) : 0;
+        const count = value ? Math.min(12, Math.max(3, Math.ceil(2 * Math.log2(1 + value / Math.max(.01, baseBet))))) : 0;
+        const heights = [Math.ceil(count / 2), Math.floor(count / 3)];
+        heights.push(count - heights[0] - heights[1]);
         pile.replaceChildren();
         pile.dataset.amount = String(value);
         for (let column = 0; column < 3; column++) {
           const stack = doc.createElement('span');
           stack.className = `bankroll-chip-stack chip-stack chip-stack-${column + 1}`;
-          for (let level = column; level < count; level += 3) {
+          for (let level = 0; level < heights[column]; level++) {
             const chip = doc.createElement('i');
             chip.className = 'casino-chip';
-            chip.style.setProperty('--chip-index', String(Math.floor(level / 3)));
+            chip.style.setProperty('--chip-index', String(level));
             stack.append(chip);
           }
           pile.append(stack);

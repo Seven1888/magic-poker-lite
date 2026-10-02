@@ -153,6 +153,38 @@ export function createGameEffects({root = globalThis.document, reducedMotion = f
     });
   }
 
+  function boardDealOffset(card, deckRect, fallback) {
+    if (reducedMotion || card.parentElement?.id !== 'board') return fallback;
+    // Viewport deltas are not local translations inside a tilted board. Fit the
+    // actual projected card centre while hidden, including its departure angle.
+    const original = {translate: card.style.translate, rotate: card.style.rotate, visibility: card.style.visibility};
+    const target = {x: deckRect.left + deckRect.width / 2, y: deckRect.top + deckRect.height / 2};
+    const measure = (x, y) => {
+      card.style.translate = `${x}px ${y}px`;
+      const rect = card.getBoundingClientRect();
+      return {x: rect.left + rect.width / 2, y: rect.top + rect.height / 2};
+    };
+    let {x, y} = fallback;
+    try {
+      card.style.visibility = 'hidden'; card.style.rotate = '-12deg';
+      for (let step = 0; step < 4; step++) {
+        const point = measure(x, y), dx = target.x - point.x, dy = target.y - point.y;
+        if (Math.hypot(dx, dy) < .05) return {x, y};
+        const alongX = measure(x + 1, y), alongY = measure(x, y + 1);
+        const xx = alongX.x - point.x, xy = alongY.x - point.x;
+        const yx = alongX.y - point.y, yy = alongY.y - point.y, determinant = xx * yy - xy * yx;
+        if (!Number.isFinite(determinant) || Math.abs(determinant) < 1e-6) return fallback;
+        x += (dx * yy - dy * xy) / determinant;
+        y += (dy * xx - dx * yx) / determinant;
+        if (!Number.isFinite(x) || !Number.isFinite(y) || Math.max(Math.abs(x), Math.abs(y)) > 100000) return fallback;
+      }
+      return {x, y};
+    } finally {
+      card.style.translate = original.translate || ''; card.style.rotate = original.rotate || '';
+      card.style.visibility = original.visibility;
+    }
+  }
+
   /** Caller supplies backs. Pending cards stay hidden; each landing may await a flip. */
   async function deal(targets = [], {onLand} = {}) {
     if (destroyed) return;
@@ -171,8 +203,10 @@ export function createGameEffects({root = globalThis.document, reducedMotion = f
         play('deal');
         if (rect?.width > 0 && rect.height > 0 && deckRect?.width > 0 && deckRect.height > 0
           && Number.isFinite(scaleX) && scaleX > 0 && Number.isFinite(scaleY) && scaleY > 0) {
-          const x = (deckRect.left + deckRect.width / 2 - rect.left - rect.width / 2) / scaleX;
-          const y = (deckRect.top + deckRect.height / 2 - rect.top - rect.height / 2) / scaleY;
+          const {x, y} = boardDealOffset(card, deckRect, {
+            x: (deckRect.left + deckRect.width / 2 - rect.left - rect.width / 2) / scaleX,
+            y: (deckRect.top + deckRect.height / 2 - rect.top - rect.height / 2) / scaleY
+          });
           // Individual transforms preserve the CSS fan angle and table perspective.
           if (!await sequence.wait(animateCard(card, [
             {translate: `${x}px ${y}px`, rotate: '-12deg', opacity: 0, offset: 0},

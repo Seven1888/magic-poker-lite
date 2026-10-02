@@ -1,0 +1,26 @@
+/* FINAL TABLE reference: bright gold faces, blue edge inserts and low, varied piles. */
+.game .casino-chip,
+.game .chip-stack .casino-chip,
+.game .flying-chip-group .casino-chip:nth-child(n) {
+  --chip-art: url('../assets/chip-blue-gold-v22.svg');
+}
+.bankroll-pile .chip-stack-1 { left: 2px; bottom: 1px; }
+.bankroll-pile .chip-stack-2 { left: 26px; bottom: 8px; }
+.bankroll-pile .chip-stack-3 { left: 41px; bottom: -1px; }
+.game .bankroll-pile .casino-chip { width: 34px; height: 21.25px; bottom: calc(var(--chip-index, 0) * 3.5px); }
+
+#pot-chips .chip-stack-1 { left: 1px; bottom: 3px; transform: rotate(-7deg); }
+#pot-chips .chip-stack-2 { left: 22px; bottom: 12px; transform: rotate(5deg); }
+#pot-chips .chip-stack-3 { left: 44px; bottom: 8px; transform: rotate(-4deg); }
+#pot-chips .chip-stack-4 { left: 70px; bottom: 2px; transform: rotate(7deg); }
+#pot-chips .chip-stack-5 { left: 0; bottom: 5px; transform: none; }
+.game #pot-chips .casino-chip { bottom: calc(var(--chip-index, 0) * 2.2px); }
+.game #pot-chips .chip-stack-5 .casino-chip {
+  left: calc(-5px + var(--chip-index, 0) * 1px);
+  bottom: calc(var(--chip-index, 0) * .5px);
+  rotate: -5deg;
+}
+.game #pot-chips .chip-stack-5 .casino-chip:nth-child(even) {
+  left: calc(85px + var(--chip-index, 0) * .6px); rotate: 6deg;
+}
+.game .flying-chip-group .casino-chip { left: calc(var(--chip-index, 0) * 2px); }

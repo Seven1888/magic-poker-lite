@@ -1,0 +1,24 @@
+/* Actual public equity, beside the upper-right corner of the player's hand. */
+.game #player-win-rate:not([hidden]) {
+  position: absolute; display: grid !important; place-items: center;
+  left: calc(50% + 116px); top: 10px; width: 58px; height: 58px;
+  padding: 0; border: 1px solid #a27a3c; border-radius: 50%; z-index: 5;
+  background: #211911; color: #fff0b8; pointer-events: none;
+  box-shadow: 0 2px 6px #1b0c1499, inset 0 0 0 1px #f7d88b33;
+  font-variant-numeric: tabular-nums; text-shadow: 0 2px 2px #180b14;
+}
+.game #player-win-rate:before {
+  content: ''; position: absolute; inset: 2px; border-radius: inherit;
+  background: conic-gradient(#fff0b0 0turn, #d59d43 var(--win-rate-turn, 0turn), #624c2d var(--win-rate-turn, 0turn), #624c2d 1turn);
+}
+.game #player-win-rate:after {
+  content: ''; position: absolute; inset: 7px; border: 1px solid #d4af624d; border-radius: inherit;
+  background: radial-gradient(circle at 38% 28%, #382818, #1c1714 70%);
+  box-shadow: 0 0 3px #160c10a6, inset 0 1px 3px #09060988;
+}
+.game #player-win-rate .win-rate-value {
+  position: relative; z-index: 1; display: flex; align-items: baseline; gap: 1px;
+  font: 800 21px/1 var(--font); letter-spacing: -.8px;
+}
+.game #player-win-rate .win-rate-value small { font-size: 10px; letter-spacing: 0; }
+.game #player-win-rate[hidden] { display: none !important; }

@@ -15,6 +15,7 @@ import {decisionMotion} from './decision-motion.mjs';
 import {getShowdownView} from './showdown-view.mjs';
 import {GAME_SPEED,atGameSpeed} from './presentation-timing.mjs';
 import {createBankrollView} from './bankroll-view.mjs';
+import {renderWinRate} from './win-rate-view.mjs';
 document.documentElement.style.setProperty('--game-speed',String(GAME_SPEED));
 const $=id=>document.getElementById(id);
 let config=loadConfig(),session=null,hand=null,busy=false,drawLog=[],lastResponse=null,handArchive=[],equityCache='',toastTimer,closedTable=null,phase='';
@@ -204,9 +205,8 @@ function updateShowdownView(){
   panel.hidden=['refund','payout','refresh','bonus'].includes($('game').dataset.presentation);
   document.querySelector('.response-panel').hidden=true;
   for(const [id,cards] of [['npc-cards',revealedNpcHole],['board',visibleBoard]])[...$(id).children].forEach((el,index)=>el.classList.toggle('npc-best',!!cards[index]&&view.npcBest5.includes(cards[index])));
-  const rate=`${Math.round(view.equity*100)}%`,winRate=$('player-win-rate');
-  winRate.textContent=rate;winRate.hidden=false;
-  winRate.setAttribute('aria-label',`${rate} equity using ${view.revealedCount} revealed opponent cards; ties count as half a win.`);
+  const rate=`${Math.round(view.equity*100)}%`;
+  renderWinRate($('player-win-rate'),view.equity,{description:`${rate} equity using ${view.revealedCount} revealed opponent cards; ties count as half a win.`,title:view.revealedCount===1?'Equity from the revealed opponent card; the second card is still unknown.':'Both hands revealed: win 100%, tie 50%, loss 0%.'});
   $('equity').textContent=`Equity after ${view.revealedCount} revealed opponent cards: ${pct(view.equity)}`;
   $('equity').title=view.revealedCount===1?'Exact enumeration of all 44 possible remaining opponent cards. Hidden cards are not used. Ties count as half a win.':'Both hands are revealed. Win 100%, tie 50%, loss 0%.';
   return view;
@@ -289,15 +289,16 @@ function render(){
   const winRate=$('player-win-rate');
   const readyForEquity=active&&dealt.player===2&&shownBoard===hand.board.length;
   const revealedEquity=hand?.result?.reason==='showdown'&&shownReveal>0;
-  if(!readyForEquity&&!revealedEquity){winRate.hidden=true;winRate.textContent='';}
+  if(!readyForEquity&&!revealedEquity)renderWinRate(winRate);
   if(hand){
     $('hand-type').textContent=handView.name;
     const key=`${hand.handNumber}:${hand.street}:${hand.board.join('')}`;
     if(!active&&!revealedEquity){$('equity').textContent=hand.result.reason==='showdown'?'Made-hand cards are highlighted. Kickers still break ties.':'This hand ended before showdown.';$('equity').title='';}
-    else if(readyForEquity&&equityCache!==key){equityCache=key;winRate.hidden=true;winRate.textContent='';const captured=hand,capturedStreet=hand.street,capturedBoard=hand.board.join('');setTimeout(()=>{
+    else if(readyForEquity&&equityCache!==key){equityCache=key;renderWinRate(winRate);const captured=hand,capturedStreet=hand.street,capturedBoard=hand.board.join('');setTimeout(()=>{
       if(hand!==captured||hand.status!=='playing'||hand.street!==capturedStreet||hand.board.join('')!==capturedBoard||shownBoard!==hand.board.length||dealt.player!==2)return;
-      const e=equityEstimate(hand,{samples:250,seed:hand.handNumber*131+hand.board.length}),rate=`${Math.round(e.equity*100)}%`;
-      winRate.textContent=rate;winRate.setAttribute('aria-label',`${rate} estimated win rate versus a random unknown hand; ties count as half a win.`);winRate.hidden=false;
+      const visibleHand={holes:{player:hand.holes.player.slice(0,dealt.player)},board:hand.board.slice(0,shownBoard)};
+      const e=equityEstimate(visibleHand,{samples:250,seed:hand.handNumber*131+hand.board.length}),rate=`${Math.round(e.equity*100)}%`;
+      renderWinRate(winRate,e.equity,{description:`${rate} estimated win rate versus a random unknown hand; ties count as half a win.`,title:'Estimated equity versus a random unknown hand. Ties count as half a win; opponent redraws are not included.'});
       $('equity').textContent=`Equity vs. a random hand: ${pct(e.equity)}`;$('equity').title='Ties count as half a win. 250 samples against a uniformly random unknown hand. No hidden opponent cards or redraw adjustment.';
     },0);}
   }else{$('hand-type').textContent=handView.name;$('equity').textContent='Two cards. Your next move.';}

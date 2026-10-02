@@ -1,0 +1,46 @@
+/* A central opponent chip source and a woven board inlay on the 400 × 860 table. */
+.table-bankroll-npc {
+  top: 322px; left: 50%; right: auto; width: 198px; height: 40px; transform: translateX(-50%);
+}
+.table-bankroll-npc > small { top: 14px; left: 0; right: auto; width: 58px; font-size: 8px; letter-spacing: .7px; }
+.table-bankroll-npc .bankroll-pile { left: 62px; bottom: 2px; }
+.table-bankroll-npc > strong { top: 12px; bottom: auto; left: 142px; right: auto; width: 56px; font-size: 13px; }
+.table-bankroll-npc .bankroll-change { top: -17px; left: 62px; right: auto; width: 74px; }
+
+.response-panel, .game[data-deciding='true'] .response-panel { top: 367px; height: 76px; }
+.response-panel[data-mode='preview'] .preview-actions { height: 76px; }
+.game[data-deciding='true'] .response-panel { padding: 5px 12px; }
+.game[data-deciding='true'] .response-heading { height: 14px; line-height: 14px; margin-bottom: 5px; }
+.game[data-deciding='true'] .response-panel .probability-track { height: 18px; }
+.game[data-deciding='true'] .probability-legend { margin-top: 5px; line-height: 13px; }
+.table-cue { top: 371px; height: 64px; }
+.showdown-preview { top: 369px; height: 72px; padding: 3px 8px; }
+.showdown-caption { gap: 2px; }
+
+/* This is a game-specific cloth inlay, with printed lines instead of a raised frame. */
+.felt { top: 447px; }
+.shared-board {
+  left: 4px; right: 4px; height: 80px;
+  background: url('../assets/board-inlay-v22.svg') center / 100% 100% no-repeat;
+  border: 0; border-radius: 0; box-shadow: none;
+}
+.board-heading { top: 3px; left: 22px; right: 22px; height: 11px; }
+.board-title { color: #b8c3ac; }
+.board-title b { font-size: 8px; letter-spacing: 1.3px; }
+.shared-board .streets, .shared-board .streets span { height: 11px; line-height: 11px; color: #bdc8b1; }
+.shared-board .board {
+  top: 16px; left: 11px; right: 11px; height: 88px; gap: 5px;
+  transform: perspective(1200px) rotateX(48deg); transform-origin: 50% 0;
+  filter: drop-shadow(0 3px 2px #07171066);
+}
+.shared-board .card.blank { background: #0a241d18; border-color: #c4cfac36; color: #c3cda04a; box-shadow: none; }
+.shared-board .card.original-card { box-shadow: 0 2px 0 #ddd9c9, 0 3px 2px #07181199; }
+
+.pot-display { top: 84px; height: 56px; }
+.pot-summary, .pot { height: 56px; }
+.pot > span:first-child, .game[data-state='idle'] .pot > span:first-child { top: -3px; line-height: 12px; }
+.pot strong, .game[data-state='idle'] .pot strong { top: 7px; line-height: 48px; }
+.pot-display:after { height: 48px; bottom: 0; }
+#pot-chips { height: 54px; bottom: 0; }
+.pot-inspect { top: -4px; }
+.deck-button { top: 530px; left: auto; right: 9px; }

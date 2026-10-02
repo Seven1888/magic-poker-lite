@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="100" viewBox="0 0 160 100">
+<!-- Original blue-and-gold game chip, adapted from observed FINAL TABLE proportions. -->
+<defs>
+<linearGradient id="gold" x1="0" y1="0" x2=".6" y2="1"><stop stop-color="#fff19b"/><stop offset=".5" stop-color="#f6cc54"/><stop offset="1" stop-color="#d89924"/></linearGradient>
+<linearGradient id="edge" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#e7b638"/><stop offset=".42" stop-color="#c78b22"/><stop offset=".75" stop-color="#f0c454"/><stop offset="1" stop-color="#825b21"/></linearGradient>
+<linearGradient id="blue" x1="0" y1="0" x2=".6" y2="1"><stop stop-color="#72d4ed"/><stop offset=".35" stop-color="#269dcc"/><stop offset="1" stop-color="#146082"/></linearGradient>
+<radialGradient id="shadow"><stop stop-color="#1b1520" stop-opacity=".7"/><stop offset="1" stop-color="#1b1520" stop-opacity="0"/></radialGradient>
+<clipPath id="top"><circle cx="80" cy="80" r="72"/></clipPath>
+</defs>
+<ellipse cx="82" cy="80" rx="77" ry="18" fill="url(#shadow)"/>
+<path d="M8 41A72 33 0 0 1 152 41V53A72 33 0 0 1 8 53Z" fill="url(#edge)" stroke="#765e27" stroke-width="1"/>
+<path d="M8 41L14 53V65L8 53ZM27 62L44 69V82L27 74ZM70 74H90V86H70ZM116 69L133 62V74L116 82ZM146 53L152 41V53L146 65Z" fill="url(#blue)" stroke="#165d77" stroke-width=".6"/>
+<path d="M9 45A71 32 0 0 0 151 45M9 52A71 32 0 0 0 151 52" fill="none" stroke="#fff1aa" stroke-opacity=".34" stroke-width=".7"/>
+<g transform="translate(0 4.33) scale(1 .45833)">
+<circle cx="80" cy="80" r="72" fill="url(#gold)" stroke="#876d2b" stroke-width="1.5"/>
+<g clip-path="url(#top)"><path d="M71 8H89L87 30H73Z" transform="rotate(0 80 80)" fill="url(#blue)" stroke="#116385" stroke-width="1"/><path d="M71 8H89L87 30H73Z" transform="rotate(36 80 80)" fill="url(#blue)" stroke="#116385" stroke-width="1"/><path d="M71 8H89L87 30H73Z" transform="rotate(72 80 80)" fill="url(#blue)" stroke="#116385" stroke-width="1"/><path d="M71 8H89L87 30H73Z" transform="rotate(108 80 80)" fill="url(#blue)" stroke="#116385" stroke-width="1"/><path d="M71 8H89L87 30H73Z" transform="rotate(144 80 80)" fill="url(#blue)" stroke="#116385" stroke-width="1"/><path d="M71 8H89L87 30H73Z" transform="rotate(180 80 80)" fill="url(#blue)" stroke="#116385" stroke-width="1"/><path d="M71 8H89L87 30H73Z" transform="rotate(216 80 80)" fill="url(#blue)" stroke="#116385" stroke-width="1"/><path d="M71 8H89L87 30H73Z" transform="rotate(252 80 80)" fill="url(#blue)" stroke="#116385" stroke-width="1"/><path d="M71 8H89L87 30H73Z" transform="rotate(288 80 80)" fill="url(#blue)" stroke="#116385" stroke-width="1"/><path d="M71 8H89L87 30H73Z" transform="rotate(324 80 80)" fill="url(#blue)" stroke="#116385" stroke-width="1"/></g>
+<circle cx="80" cy="80" r="69" fill="none" stroke="#fff2b0" stroke-opacity=".78" stroke-width="1.2"/>
+<circle cx="80" cy="80" r="51" fill="#c8972d"/>
+<circle cx="80" cy="79" r="48.5" fill="url(#gold)" stroke="#ffe99c" stroke-width="1.2"/>
+<path d="M34 63A49 49 0 0 1 100 34" fill="none" stroke="#fff7bf" stroke-opacity=".65" stroke-width="1.5"/>
+<path d="M112 112A46 46 0 0 1 56 121" fill="none" stroke="#b58529" stroke-opacity=".6" stroke-width="1"/>
+</g>
+<path d="M9 42A71 32 0 0 0 151 42" fill="none" stroke="#fff2a6" stroke-opacity=".75" stroke-width="1"/>
+</svg>

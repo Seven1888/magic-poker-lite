@@ -66,3 +66,30 @@
 #buyin-dialog .entry-start:focus-visible{outline:2px solid #fff3cb;outline-offset:3px}
 #buyin-dialog .entry-details summary{padding:7px 5px 2px;font-size:9px}
 @media(max-width:359px){#buyin-dialog{padding:15px 12px 9px}.feature-page{min-height:235px}.feature-art{height:157px}.feature-page h3{font-size:19px}.feature-hole{left:9px;width:71px}.feature-hole img{width:32px}.feature-plus{left:87px}.feature-shared{left:109px;right:8px;padding-left:5px;padding-right:5px}.feature-hole span{top:55px}.feature-jp-tiers{gap:10px}.feature-jp-tiers span{font-size:6px}.feature-jp-label{font-size:8px}.feature-royal{top:10px}#entry-jp-award{top:79px}.feature-jp-label{top:69px}}
+
+/* The tutorial shows captured gameplay, with a short explanation below each view. */
+.feature-game-page { min-height: 314px; position: relative; }
+.feature-game-shot { height: 220px; background: #20101b; }
+.feature-game-shot > img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.feature-best5-shot > img { object-fit: contain; }
+.feature-capture-note {
+  position: absolute; right: 5px; bottom: 5px; padding: 3px 5px; border-radius: 3px;
+  background: #101725dc; color: #e4dcc8; font-size: 7px; font-weight: 700; letter-spacing: .5px;
+}
+.feature-prize-shot > img { object-fit: cover; object-position: left top; }
+.feature-odds-shot .feature-capture-note { top: 5px; bottom: auto; }
+.feature-prize-shot .feature-capture-note { bottom: 45px; }
+.feature-current-prize {
+  position: absolute; left: 0; right: 0; bottom: 0; min-height: 39px; padding: 5px 10px;
+  display: flex; justify-content: space-between; align-items: center; gap: 8px;
+  background: #112035ee; border-top: 1px solid #bca16f77;
+}
+.feature-current-prize .feature-jp-label { position: static; font-size: 9px; text-align: left; letter-spacing: .4px; }
+.feature-current-prize #entry-jp-award { position: static; font-size: 25px; line-height: 28px; text-shadow: 0 2px #705225; }
+.feature-game-page .feature-jp-tiers { position: static; padding-bottom: 8px; font-size: 7px; }
+.feature-game-page .feature-jp-tiers b { font-size: 9px; }
+@media(max-width:359px) {
+  .feature-game-page { min-height: 294px; }
+  .feature-game-shot { height: 200px; }
+  #buyin-dialog .feature-game-page p { font-size: 10px; }
+}

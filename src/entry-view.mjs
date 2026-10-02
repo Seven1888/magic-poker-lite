@@ -7,19 +7,18 @@ export function setupEntryFeatures(root = globalThis.document) {
   panel.className = 'entry-features';
   panel.removeAttribute('aria-hidden');
   panel.setAttribute('aria-label', 'Game features');
-  const card = (name, label, best = false) => `<img src="assets/cards/${name}.png" alt="${label}" class="${best ? 'feature-best' : ''}" draggable="false">`;
   panel.innerHTML = `
-    <section class="feature-page" id="entry-feature-0" aria-label="Feature 1 of 3: See the odds">
-      <div class="feature-art feature-duel" aria-hidden="true"><div class="feature-boss"></div><span class="feature-seat">YOU <b>VS</b> BOSS</span><div class="feature-boss-cards">${card('back-blue','')}${card('back-blue','')}</div><div class="feature-odds"><span>CHECK<b>70%</b></span><span>BET<b>30%</b></span></div><small class="feature-example">EXAMPLE ODDS</small></div>
-      <h3>SEE THE ODDS</h3><p>Your move. The boss responds.<br>See the chances before you act.</p>
+    <section class="feature-page feature-game-page" id="entry-feature-0" aria-label="Feature 1 of 3: See the odds">
+      <div class="feature-art feature-game-shot feature-odds-shot"><img src="assets/tutorial-odds-v22.png" alt="Actual game view showing the opponent cards and action probability bars" draggable="false"><small class="feature-capture-note">EXAMPLE GAME</small></div>
+      <h3>SEE THE ODDS</h3><p>Read the boss’s response chances.<br>Choose your move with the buttons below.</p>
     </section>
-    <section class="feature-page" id="entry-feature-1" aria-label="Feature 2 of 3: Make your best five" hidden>
-      <div class="feature-art feature-poker"><div class="feature-hole">${card('h1','Ace of hearts',true)}${card('h13','King of hearts',true)}<span>YOUR 2</span></div><span class="feature-plus" aria-hidden="true">+</span><div class="feature-shared"><small>5 SHARED CARDS</small><div>${card('h12','Queen of hearts',true)}${card('h11','Jack of hearts',true)}${card('h10','Ten of hearts',true)}${card('f2','Two of clubs')}${card('d7','Seven of diamonds')}</div></div><div class="feature-streets"><span>PREFLOP</span><i>›</i><span>FLOP</span><i>›</i><span>TURN</span><i>›</i><span>RIVER</span></div></div>
-      <h3>MAKE YOUR BEST 5</h3><p>Bet through four rounds.<br>Your strongest five cards glow gold.</p>
+    <section class="feature-page feature-game-page" id="entry-feature-1" aria-label="Feature 2 of 3: Make your best five" hidden>
+      <div class="feature-art feature-game-shot feature-best5-shot"><img src="assets/tutorial-best5-v22.png" alt="Actual poker table showing shared cards, your hole cards, and gold best-five highlights" draggable="false"><small class="feature-capture-note">EXAMPLE HAND</small></div>
+      <h3>MAKE YOUR BEST 5</h3><p>Combine your two cards with the shared board.<br>Your strongest five cards glow gold.</p>
     </section>
-    <section class="feature-page" id="entry-feature-2" aria-label="Feature 3 of 3: Jackpot bonus" hidden>
-      <div class="feature-art feature-jackpot"><div class="feature-royal">${['s10','s11','s12','s13','s1'].map((name,i)=>card(name,['Ten','Jack','Queen','King','Ace'][i]+' of spades')).join('')}</div><span class="feature-jp-label" id="entry-jp-label">ROYAL FLUSH · 200× BET</span><strong id="entry-jp-award">2,000</strong><div class="feature-jp-tiers"><span>STRAIGHT FLUSH <b>50×</b></span><span>FOUR OF A KIND <b>20×</b></span></div></div>
-      <h3>JACKPOT BONUS</h3><p id="entry-jp-caption">Special hands at showdown.<br>Highest bonus paid on top of the pot return.</p>
+    <section class="feature-page feature-game-page" id="entry-feature-2" aria-label="Feature 3 of 3: Jackpot bonus" hidden>
+      <div class="feature-art feature-game-shot feature-prize-shot"><img src="assets/tutorial-jackpot-v22.png" alt="Actual game view with the Jackpot prize button above the boss" draggable="false"><small class="feature-capture-note">EXAMPLE IMAGE · BET 10</small><div class="feature-current-prize"><span class="feature-jp-label" id="entry-jp-label">ROYAL FLUSH · 200× BET</span><strong id="entry-jp-award">2,000</strong></div></div>
+      <h3>JACKPOT BONUS</h3><p id="entry-jp-caption">Special hands at showdown.<br>Highest bonus paid on top of the pot return.</p><div class="feature-jp-tiers"><span>STRAIGHT FLUSH <b>50×</b></span><span>FOUR OF A KIND <b>20×</b></span></div>
     </section>`;
   panel.insertAdjacentHTML('afterend', `<nav class="entry-feature-nav" aria-label="Feature pages"><button type="button" id="entry-feature-prev" aria-label="Previous feature">‹</button><div>${['See the odds','Make your best five','Jackpot bonus'].map((name,i)=>`<button type="button" data-feature="${i}" aria-label="${name}" aria-controls="entry-feature-${i}"></button>`).join('')}</div><button type="button" id="entry-feature-next" aria-label="Next feature">›</button></nav>`);
   let current = 0;

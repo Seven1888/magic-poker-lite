@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 80" fill="none">
+  <defs>
+    <linearGradient id="felt" x1="200" y1="0" x2="200" y2="80" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#143e32"/><stop offset=".55" stop-color="#1b493a"/><stop offset="1" stop-color="#12392e"/>
+    </linearGradient>
+    <pattern id="weave" width="4" height="4" patternUnits="userSpaceOnUse">
+      <path d="M0 .5H4M.5 0V4" stroke="#c1c9a9" stroke-opacity=".06" stroke-width=".65"/>
+      <path d="M0 2.5H4M2.5 0V4" stroke="#071c16" stroke-opacity=".16" stroke-width=".7"/>
+    </pattern>
+    <clipPath id="inlay"><path d="M16 1H384L399 79H1L16 1Z"/></clipPath>
+  </defs>
+  <g clip-path="url(#inlay)">
+    <path fill="url(#felt)" d="M0 0H400V80H0z"/>
+    <path fill="url(#weave)" d="M0 0H400V80H0z"/>
+    <path d="M19 4H381L394 76H6L19 4Z" stroke="#c0c7a2" stroke-opacity=".28" stroke-width=".8"/>
+    <path d="M16 1H384M1 79H399" stroke="#051a15" stroke-opacity=".5" stroke-width="1.4"/>
+  </g>
+</svg>
