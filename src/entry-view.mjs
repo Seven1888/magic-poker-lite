@@ -1,19 +1,18 @@
 /** BET-entry decoration only. No game state, validation, money movement or RNG. */
-const format = value => value.toLocaleString('en-US', {maximumFractionDigits:6});
-
-/** Illustrated introduction and BET selection share one entry dialog. */
+/** Compact introduction, separate BET card, and an independent FIGHT action. */
 export function setupEntryFeatures(root = globalThis.document) {
+  const doc = root.ownerDocument || root;
   const panel = root.querySelector('#buyin-dialog .entry-tableau');
   panel.className = 'entry-features';
   panel.removeAttribute('aria-hidden');
   panel.setAttribute('aria-label', 'Game features');
   panel.innerHTML = `
     <section class="feature-page feature-game-page" id="entry-feature-0" aria-label="Feature 1 of 3: See the odds">
-      <div class="feature-art feature-game-shot feature-odds-shot"><img src="assets/tutorial-odds-v25.png" alt="Actual game view with opponent fold and raise chances inside your action button" draggable="false"><small class="feature-capture-note">EXAMPLE GAME</small></div>
+      <div class="feature-art feature-game-shot feature-odds-shot"><img src="assets/tutorial-odds-v27.png" alt="Actual game view with opponent fold and raise chances inside your action button" draggable="false"><small class="feature-capture-note">EXAMPLE GAME</small></div>
       <h3>SEE THE ODDS</h3><p>See the boss’s fold and raise chances.<br>Shown on your button before you play.</p>
     </section>
     <section class="feature-page feature-game-page" id="entry-feature-1" aria-label="Feature 2 of 3: Make your best five" hidden>
-      <div class="feature-art feature-game-shot feature-best5-shot"><img src="assets/tutorial-best5-v24.png" alt="Actual poker table showing shared cards, your hole cards, and gold best-five highlights" draggable="false"><small class="feature-capture-note">EXAMPLE HAND</small></div>
+      <div class="feature-art feature-game-shot feature-best5-shot"><img src="assets/tutorial-best5-v27.png" alt="Actual poker table showing shared cards, your hole cards, and gold best-five highlights" draggable="false"><small class="feature-capture-note">EXAMPLE HAND</small></div>
       <h3>MAKE YOUR BEST 5</h3><p>Five cards start face down: reveal 3, then 1, then 1.<br>Your strongest five cards glow gold.</p>
     </section>
     <section class="feature-page feature-game-page" id="entry-feature-2" aria-label="Feature 3 of 3: Jackpot bonus" hidden>
@@ -32,23 +31,41 @@ export function setupEntryFeatures(root = globalThis.document) {
   root.querySelectorAll('[data-feature]').forEach(button => {button.onclick = () => select(Number(button.dataset.feature));});
   panel.addEventListener('keydown', event => {if(event.key==='ArrowLeft'||event.key==='ArrowRight'){event.preventDefault();select(current+(event.key==='ArrowRight'?1:-1));}});
   root.querySelector('.entry-feature-nav').addEventListener('keydown', event => {if(event.key==='ArrowLeft'||event.key==='ArrowRight'){event.preventDefault();select(current+(event.key==='ArrowRight'?1:-1));}});
-  root.querySelector('#entry-title').textContent = 'HOW TO PLAY';
-  root.querySelector('#entry-title').insertAdjacentHTML('beforebegin','<span class="entry-brand">MAGIC POKER · DUEL</span>');
-  root.querySelector('#entry-start span').textContent = 'PLAY';
-  // Focusing the bottom PLAY button scrolls short iPhone/landscape dialogs past
+  const title = root.querySelector('#entry-title');
+  title.textContent = 'HOW TO PLAY';
+  const intro = doc.createElement('section');
+  intro.className = 'entry-intro-card';
+  intro.setAttribute('aria-label', 'Game introduction');
+  title.before(intro);
+  intro.append(title, panel, root.querySelector('.entry-feature-nav'));
+  const betCard = doc.createElement('section');
+  betCard.className = 'entry-bet-card';
+  betCard.setAttribute('aria-label', 'Choose your BET');
+  const betLabel = root.querySelector('.entry-bet-label');
+  betLabel.querySelector('label').textContent = 'BET';
+  betLabel.before(betCard);
+  for (const selector of ['.entry-bet-label', '.entry-bet-picker', '#bet-presets', '.entry-funds', '#buyin-error', '.entry-details']) {
+    betCard.append(root.querySelector(selector));
+  }
+  const presets = root.querySelector('#bet-presets');
+  presets.replaceChildren();
+  presets.hidden = true;
+  const fight = root.querySelector('#entry-start');
+  const fightSection = doc.createElement('div');
+  fightSection.className = 'entry-fight-section';
+  fight.before(fightSection);
+  fightSection.append(fight);
+  root.querySelector('#entry-start span').textContent = 'FIGHT';
+  // Focusing the bottom action scrolls short iPhone/landscape dialogs past
   // the tutorial and close button before the player has seen them.
   root.querySelector('#buyin-dialog .dialog-close').setAttribute('autofocus','');
-  root.querySelector('#entry-start').insertAdjacentHTML('beforebegin','<div class="entry-start-hint">CHOOSE BET · TAP PLAY TO START</div>');
   select(0);
 }
 
-/** The controller supplies the six available big-blind values. */
-export function renderBetPresets(betValues) {
-  const values = [...new Set(betValues)].filter(value => Number.isFinite(value) && value > 0);
-  return values.map(value => `<button type="button" data-bet="${value}" aria-pressed="false" aria-label="Big blind ${format(value)}"><i class="entry-bet-chip" aria-hidden="true"></i><strong>${format(value)}</strong></button>`).join('');
-}
+/** Keep the controller hook; BET levels are reached through +/- only. */
+export function renderBetPresets() { return ''; }
 
-/** Call on setup or a +/-/preset selection; assets and funding are separate. */
+/** Call on setup or a +/- selection; assets and funding are separate. */
 export function updateBetSelection(bet, root = globalThis.document) {
   const valid = Number.isFinite(bet) && bet > 0;
   const input = root.querySelector('#entry-bet');

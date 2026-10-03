@@ -1,0 +1,73 @@
+/* Three compact entry areas: introduction, BET, then FIGHT. Load after mobile.css. */
+#buyin-dialog {
+  width: 354px; max-width: calc(100vw - 28px); padding: 0; border: 0;
+  border-radius: 0; background: transparent; box-shadow: none;
+  scrollbar-width: thin; scroll-padding-block: 6px;
+}
+#buyin-dialog #buyin-form { display: grid; gap: 10px; margin: 0; }
+#buyin-dialog .entry-intro-card, #buyin-dialog .entry-bet-card {
+  min-width: 0; border: 2px solid #c4a16a; border-radius: 17px;
+  background: linear-gradient(145deg, #26364e, #132139 68%, #101a2e);
+  box-shadow: inset 0 0 0 2px #081326, 0 5px 16px #0006;
+}
+#buyin-dialog .entry-intro-card { padding: 8px 10px 0; }
+#buyin-dialog #entry-title {
+  margin: 5px 35px 11px; font-size: 20px; line-height: 25px; letter-spacing: .7px;
+}
+#buyin-dialog .dialog-close {
+  position: absolute; float: none; margin: 0; top: 2px; right: 3px;
+  width: 44px; height: 44px; min-width: 44px; min-height: 44px;
+  border: 0; background: transparent; box-shadow: none; font-size: 27px; line-height: 40px;
+}
+#buyin-dialog .entry-features { border: 1px solid #c1a47744; border-radius: 10px; box-shadow: none; }
+#buyin-dialog .feature-game-page { min-height: 0; }
+#buyin-dialog .feature-game-shot { height: 144px; }
+#buyin-dialog .feature-page h3 { margin: 6px 5px 3px; font-size: 17px; line-height: 20px; }
+#buyin-dialog .feature-page p { margin: 0 6px 8px; font-size: 10px; line-height: 14px; }
+#buyin-dialog .feature-capture-note { font-size: 6px; padding: 2px 4px; letter-spacing: .2px; }
+#buyin-dialog .feature-current-prize { min-height: 30px; padding: 3px 7px; }
+#buyin-dialog .feature-current-prize .feature-jp-label { font-size: 8px; letter-spacing: 0; }
+#buyin-dialog .feature-current-prize #entry-jp-award { font-size: 21px; line-height: 24px; }
+#buyin-dialog .feature-prize-shot .feature-capture-note { bottom: 35px; }
+#buyin-dialog .feature-game-page .feature-jp-tiers { gap: 10px; padding: 0 4px 6px; font-size: 6px; }
+#buyin-dialog .feature-game-page .feature-jp-tiers b { font-size: 8px; }
+#buyin-dialog .entry-feature-nav { height: 40px; min-height: 40px; gap: 8px; }
+#buyin-dialog .entry-feature-nav > button, #buyin-dialog .entry-feature-nav [data-feature] { width: 40px; height: 40px; }
+#buyin-dialog .entry-feature-nav [data-feature]:after { top: 16px; left: 16px; }
+#buyin-dialog .entry-bet-card { padding: 9px 12px 2px; }
+#buyin-dialog .entry-bet-label {
+  margin: 0; padding: 0; border: 0; justify-content: space-between; align-items: center; gap: 8px;
+}
+#buyin-dialog .entry-bet-label label { font-size: 12px; letter-spacing: 1px; }
+#buyin-dialog #entry-blinds { font-size: 10px; }
+#buyin-dialog .entry-bet-picker { margin: 1px 0 5px; gap: 22px; }
+#buyin-dialog .entry-bet-picker button { width: 44px; height: 44px; flex: 0 0 44px; }
+#buyin-dialog #entry-bet { width: 110px; height: 45px; padding: 0 3px; font-size: 32px; line-height: 43px; }
+#buyin-dialog #bet-presets { display: none; }
+#buyin-dialog .entry-funds { margin: 0; padding: 5px 0; gap: 6px; border-radius: 6px; }
+#buyin-dialog .entry-funds > div { gap: 5px; }
+#buyin-dialog .entry-funds small { font-size: 8px; line-height: 11px; }
+#buyin-dialog .entry-funds strong { font-size: 14px; line-height: 17px; }
+#buyin-dialog .entry-wallet, #buyin-dialog .entry-minimum-icon { display: none; }
+#buyin-dialog .entry-details summary { min-height: 30px; padding: 4px 5px 2px; font-size: 9px; }
+#buyin-dialog #fee-notice { padding: 2px 2px 7px; font-size: 10px; line-height: 15px; }
+#buyin-dialog #buyin-error { margin: 5px 0 1px; }
+#buyin-dialog .entry-fight-section { padding: 0 3px 5px; }
+#buyin-dialog .entry-start {
+  position: relative; bottom: auto; min-height: 52px; margin: 0; padding: 9px 35px 11px;
+  border-radius: 14px; font-size: 26px; line-height: 27px;
+}
+#buyin-dialog .entry-start i { top: 8px; }
+@media (max-width: 359px), (max-height: 650px) {
+  #buyin-dialog { width: 324px; }
+  #buyin-dialog #buyin-form { gap: 8px; }
+  #buyin-dialog .entry-intro-card { padding: 7px 8px 0; }
+  #buyin-dialog #entry-title { margin: 5px 31px 10px; font-size: 18px; line-height: 24px; }
+  #buyin-dialog .feature-game-shot { height: 110px; }
+  #buyin-dialog .feature-page h3 { margin-top: 5px; font-size: 16px; line-height: 19px; }
+  #buyin-dialog .feature-page p { margin-bottom: 6px; font-size: 9px; line-height: 12px; }
+  #buyin-dialog .entry-bet-card { padding: 8px 10px 1px; }
+  #buyin-dialog .entry-bet-picker { gap: 17px; }
+  #buyin-dialog #entry-bet { width: 100px; }
+  #buyin-dialog .entry-start { min-height: 50px; font-size: 25px; }
+}

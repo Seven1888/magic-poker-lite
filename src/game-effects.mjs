@@ -8,6 +8,7 @@ export function createGameEffects({root = globalThis.document, reducedMotion = f
   const lookup = id => root.getElementById?.(id) || root.querySelector?.(`#${id}`) || null;
   const voices = new Set();
   const flights = new Map();
+  const discards = new Map();
   const sequences = new Set(), pauses = new Set();
   const schedule = view.setTimeout?.bind(view) || globalThis.setTimeout;
   const unschedule = view.clearTimeout?.bind(view) || globalThis.clearTimeout;
@@ -19,6 +20,12 @@ export function createGameEffects({root = globalThis.document, reducedMotion = f
     click: [[640, 0, .045, 'triangle', .08]],
     deal: [[430, 0, .045, 'triangle', .08], [690, .025, .045, 'triangle', .05]],
     chip: [[1320, 0, .045, 'sine', .08], [1760, .03, .06, 'sine', .045]],
+    chips: [[1480, 0, .045, 'triangle', .085], [2170, .008, .035, 'sine', .04],
+      [1120, .064, .05, 'triangle', .075], [1880, .102, .04, 'sine', .05],
+      [1560, .166, .045, 'triangle', .075], [2410, .195, .035, 'sine', .035],
+      [1280, .25, .055, 'triangle', .065], [1960, .286, .04, 'sine', .04]],
+    'chip-arrival': [[720, 0, .065, 'triangle', .075], [1660, .008, .055, 'sine', .065],
+      [2280, .032, .04, 'sine', .04], [1210, .068, .065, 'triangle', .045]],
     win: [[523.25, 0, .11, 'triangle', .09], [659.25, .075, .11, 'triangle', .08], [783.99, .15, .18, 'triangle', .08]],
     loss: [[392, 0, .12, 'triangle', .07], [293.66, .09, .16, 'triangle', .065]]
   };
@@ -260,6 +267,62 @@ export function createGameEffects({root = globalThis.document, reducedMotion = f
     }
   }
 
+  /**
+   * Slide caller-supplied backs to the table's left discard area, never the deck.
+   * destination is in unscaled stage coordinates. Card faces/markup are untouched.
+   * The caller owns persistent hiding after awaiting this transient presentation.
+   * Repeated/overlapping requests join an existing discard instead of replaying it.
+   */
+  function discardCards(targets = [], {destination, duration = 700} = {}) {
+    if (destroyed) return Promise.resolve();
+    const cards = uniqueCards(targets);
+    const pending = new Set(cards.map(card => discards.get(card)).filter(Boolean));
+    const fresh = cards.filter(card => !discards.has(card));
+    if (fresh.length) {
+      const sequence = beginSequence(), record = {promise: null};
+      fresh.forEach(card => discards.set(card, record));
+      record.promise = (async () => {
+        try {
+          const stage = lookup('game'), stageRect = stage?.getBoundingClientRect?.();
+          const sx = stageRect?.width / stage?.offsetWidth;
+          const sy = stageRect?.height / stage?.offsetHeight;
+          const scaleX = Number.isFinite(sx) && sx > 0 ? sx : 1;
+          const scaleY = Number.isFinite(sy) && sy > 0 ? sy : scaleX;
+          const centers = fresh.map(card => {
+            const rect = card.getBoundingClientRect?.();
+            return {x: ((rect?.left || 0) + (rect?.width || 0) / 2 - (stageRect?.left || 0)) / scaleX,
+              y: ((rect?.top || 0) + (rect?.height || 0) / 2 - (stageRect?.top || 0)) / scaleY};
+          });
+          const center = {x: centers.reduce((n, p) => n + p.x, 0) / fresh.length,
+            y: centers.reduce((n, p) => n + p.y, 0) / fresh.length};
+          const target = {x: Number.isFinite(destination?.x) ? destination.x : stageRect ? 42 : center.x - 140,
+            y: Number.isFinite(destination?.y) ? destination.y : stageRect ? 370 : center.y + 100};
+          const time = Number.isFinite(duration) ? Math.max(0, duration) : 700;
+          await sequence.wait(Promise.all(fresh.map((card, index) => {
+            if (card.dataset) card.dataset.motion = 'discarding';
+            const spread = (index - (fresh.length - 1) / 2) * 6;
+            const gather = {x: center.x + spread - centers[index].x, y: center.y + 14 - centers[index].y};
+            const end = {x: target.x + spread - centers[index].x, y: target.y - centers[index].y};
+            return animateCard(card, [
+              {translate: '0px 0px', rotate: '0deg', scale: '1', opacity: 1, offset: 0},
+              {translate: `${gather.x}px ${gather.y}px`, rotate: `${-12 + index * 3}deg`, scale: '.96', opacity: 1, offset: .3},
+              {translate: `${end.x * .88}px ${end.y * .88}px`, rotate: `${-22 + index * 4}deg`, scale: '.78', opacity: 1, offset: .78},
+              {translate: `${end.x}px ${end.y}px`, rotate: `${-26 + index * 4}deg`, scale: '.7', opacity: 0, offset: 1}
+            ], {duration: time, easing: 'cubic-bezier(.3,.05,.4,1)', fill: 'both'});
+          })));
+        } finally {
+          fresh.forEach(card => {
+            if (card.dataset?.motion === 'discarding') delete card.dataset.motion;
+            if (discards.get(card) === record) discards.delete(card);
+          });
+          sequences.delete(sequence);
+        }
+      })();
+      pending.add(record);
+    }
+    return Promise.all([...pending].map(record => record.promise)).then(() => undefined);
+  }
+
   function destroy() {
     if (destroyed) return;
     destroyed = true;
@@ -277,5 +340,5 @@ export function createGameEffects({root = globalThis.document, reducedMotion = f
     master = null;
   }
 
-  return {unlock, suspendAudio, setMuted, play, deal, reveal, animate: animateCard, destroy};
+  return {unlock, suspendAudio, setMuted, play, deal, reveal, discardCards, animate: animateCard, destroy};
 }

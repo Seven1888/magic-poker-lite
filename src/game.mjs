@@ -18,13 +18,17 @@ import {createBankrollView} from './bankroll-view.mjs';
 import {renderWinRate} from './win-rate-view.mjs';
 import {responseBadgeView,captureResponseSource,responseSourceMatches} from './action-response-view.mjs';
 import {boardCardView,nextBoardReveal,tableDeckCounts} from './board-presentation.mjs';
+import {createResponseFlight} from './response-flight-view.mjs';
 document.documentElement.style.setProperty('--game-speed',String(GAME_SPEED));
 const $=id=>document.getElementById(id);
+// Stable player controls; engine actions and opponent response types stay unchanged.
+const PLAYER_ACTION_LABELS={fold:'FOLD',check:'CALL',call:'CALL',bet:'RAISE',raise:'RAISE'};
 let config=loadConfig(),session=null,hand=null,busy=false,drawLog=[],lastResponse=null,handArchive=[],equityCache='',toastTimer,closedTable=null,phase='';
-let selectedBet=config.bigBlind,entryBase=config,betValues=betOptions(config),demoAssets=config.buyIn;
+let selectedBet=1,entryBase=config,betValues=[...new Set([1,...betOptions(config)])].sort((a,b)=>a-b),demoAssets=config.buyIn;
 const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const potView=createPotView({root:document,reducedMotion:reduceMotion,locale:'en',onPhase:presentTransferPhase});
 const effects=createGameEffects({root:document,reducedMotion:reduceMotion});
+const responseFlight=createResponseFlight({root:document,effects,reducedMotion:reduceMotion});
 const bankrollView=createBankrollView({root:document});
 let soundOn=true;
 try{soundOn=localStorage.getItem('magic-poker-lite:sound')!=='off';}catch{}
@@ -58,12 +62,14 @@ function renderBankrolls({refreshNpc=false}={}){
 }
 function presentTransferPhase({flow,seats,amounts}){
  if(!hand)return;
+ if(flow==='arrival'){effects.play('chip-arrival');return;}
+ if(['contribution','refund','payout'].includes(flow))effects.play('chips');
  const who=seats.length===1?(seats[0]==='player'?'YOU':'OPPONENT'):'BOTH PLAYERS';
  const detail=seats.map(seat=>`${seat==='player'?'YOU':'OPPONENT'} +${money(amounts[seat])}`).join(' · ');
  if(flow==='contribution'){
   const event=hand.history.slice().reverse().find(item=>seats.includes(item.actor)&&item.amount>0);
   const isBlind=event?.type==='bigBlind'||event?.type==='smallBlind';
-  const action=isBlind?(seats.length>1?'POST BLINDS':LABELS[event.type]):LABELS[event?.type]||'BET';
+  const action=isBlind?(seats.length>1?'POST BLINDS':LABELS[event.type]):(event?.actor==='player'?PLAYER_ACTION_LABELS[event.type]:LABELS[event?.type])||'BET';
   const label=event?.actor==='npc'&&event.type==='call'?'CHIPS TO POT':`${who} ${action}`;
   setTableCue('contribution',label,{seat:seats.length===1?seats[0]:'',detail:`${seats.map(seat=>money(amounts[seat])).join(' + ')} → POT`});
  }else if(flow==='refund')setTableCue('refund','UNCALLED CHIPS BACK',{seat:seats.length===1?seats[0]:'',detail});
@@ -94,11 +100,11 @@ function decorateMenu(){
  const map={'help-dialog':'rules','menu-ranks':'cards','menu-history':'history','menu-balance':'wallet','result-details':'chip','leave-button':'leave'};
  document.querySelectorAll('.menu-grid>button').forEach(b=>{const key=b.dataset.open||b.id;b.insertAdjacentHTML('afterbegin',icon(map[key]||'cards'));});
  document.querySelector('.sound-setting>span').insertAdjacentHTML('afterbegin',icon('sound'));
- const reset=document.createElement('button');reset.id='reset-demo';reset.className='text-button wide';reset.textContent='↻ Reset demo chips';reset.onclick=()=>{if(busy||hand?.status==='playing')return;session=null;hand=null;closedTable=null;config=loadConfig();demoAssets=config.buyIn;selectedBet=config.bigBlind;handArchive=[];drawLog=[];lastResponse=null;$('menu-dialog').close();render();setupBuyin();};
+ const reset=document.createElement('button');reset.id='reset-demo';reset.className='text-button wide';reset.textContent='↻ Reset demo chips';reset.onclick=()=>{if(busy||hand?.status==='playing')return;session=null;hand=null;closedTable=null;config=loadConfig();demoAssets=config.buyIn;selectedBet=1;handArchive=[];drawLog=[];lastResponse=null;$('menu-dialog').close();render();setupBuyin();};
  $('menu-dialog').append(reset);
  const rules=document.querySelector('#help-dialog .rules');
- rules.innerHTML=`<li>${icon('chip')}<b>Choose BET · Draw your blind</b><span>SMALL BLIND posts ½ BET; BIG BLIND posts 1 BET. Your first blind is drawn 50/50; positions alternate each hand. Small blind acts first preflop; big blind acts first after the flop.</span></li><li>${icon('cards')}<b>2 hole cards + 5 board cards</b><div class="rule-card-flow"><span>2</span><i>＋</i><span>3</span><i>→</i><span>1</span><i>→</i><span>1</span></div><span>PREFLOP → FLOP → TURN → RIVER</span></li><li>${icon('call')}<b>Your move · Their response</b><span>BET opens betting this round. RAISE increases an existing bet. CALL matches it; CHECK costs 0. One raise per street.</span></li><li>${icon('crown')}<b>Best 5 of 7</b><span>A fold ends the hand. Otherwise, compare at showdown. Special hands earn a Jackpot bonus.</span></li>`;
- const fees=document.createElement('details');fees.className='rules-details';fees.innerHTML='<summary>Hand highlights, turn order & pot fee ⓘ</summary><p>Gold edges mark your complete best five, including kickers. Before five cards are visible, all your visible cards glow. Red edges mark the opponent’s best five using only their revealed hole cards and the board. Shared cards can carry both gold and red edges.</p><p>CHECK costs 0. If the opponent has not acted, they may still CHECK or BET in the same street. Two CHECKs close the street; the next shared cards are then revealed for the new street.</p><p>Both seats post before cards are dealt: SMALL BLIND pays ½ BET and BIG BLIND pays 1 BET. Small blind acts first preflop and can fold, call the remaining ½ BET, or raise. Big blind acts first after the flop. Folding forfeits chips already committed, except any uncalled excess. Choosing a BET level does not charge chips. Both seats follow the same rule. FOLD and RAISE badges on your buttons show opponent response chances, not your win chance. Other responses are omitted; the percentages need not total 100%.</p><p>After every hand, including folds, the opponent’s demo chips reset to match your remaining chips. Your own balance keeps the actual winnings and losses.</p><p id="help-fee"></p>';
+ rules.innerHTML=`<li>${icon('chip')}<b>Choose BET · Draw your blind</b><span>SMALL BLIND posts ½ BET; BIG BLIND posts 1 BET. Your first blind is drawn 50/50; positions alternate each hand. Small blind acts first preflop; big blind acts first after the flop.</span></li><li>${icon('cards')}<b>2 hole cards + 5 board cards</b><div class="rule-card-flow"><span>2</span><i>＋</i><span>3</span><i>→</i><span>1</span><i>→</i><span>1</span></div><span>PREFLOP → FLOP → TURN → RIVER</span></li><li>${icon('call')}<b>Your move · Their response</b><span>CALL matches the current bet, or checks for free when nothing is due. RAISE opens betting or increases an existing bet. The amount is what you add now. One raise per street.</span></li><li>${icon('crown')}<b>Best 5 of 7</b><span>A fold ends the hand. Otherwise, compare at showdown. Special hands earn a Jackpot bonus.</span></li>`;
+ const fees=document.createElement('details');fees.className='rules-details';fees.innerHTML='<summary>Hand highlights, turn order & pot fee ⓘ</summary><p>Gold edges mark your complete best five, including kickers. Before five cards are visible, all your visible cards glow. Red edges mark the opponent’s best five using only their revealed hole cards and the board. Shared cards can carry both gold and red edges.</p><p>The buttons always read FOLD, CALL and RAISE. A free CALL performs a check; RAISE opens betting when no bet exists yet. These are simplified control names. If the opponent has not acted, they may still check or bet in the same street. Two checks close the street; the next shared cards are then revealed for the new street.</p><p>Both seats post before cards are dealt: SMALL BLIND pays ½ BET and BIG BLIND pays 1 BET. Small blind acts first preflop and can fold, call the remaining ½ BET, or raise. Big blind acts first after the flop. Folding forfeits chips already committed, except any uncalled excess. Choosing a BET level does not charge chips. Both seats follow the same rule. FOLD and RAISE badges on your buttons show opponent response chances, not your win chance. Other responses are omitted; the percentages need not total 100%.</p><p>After every hand, including folds, the opponent’s demo chips reset to match your remaining chips. Your own balance keeps the actual winnings and losses.</p><p id="help-fee"></p>';
  rules.after(fees);
  document.querySelector('#help-dialog>p.muted').textContent='Standard 52-card deck, no jokers. Starting-hand boosts only redraw weak hole cards during the deal. Jackpot awards use the actual showdown hand.';
  const ledger=$('settlement'),details=document.createElement('details');details.className='result-accounting';details.innerHTML=`<summary>${icon('wallet')}Chip details <span>⌄</span></summary>`;ledger.replaceWith(details);details.append(ledger);
@@ -130,7 +136,7 @@ $('pot-info-button').onclick=()=>{
 $('leave-button').onclick=()=>{$('menu-dialog').close();leaveTable();};$('result-leave').onclick=()=>{$('result-dialog').close();leaveTable();};
 function setupBuyin(){
   if(session&&hand?.status==='playing')return;
-  entryBase=loadConfig();betValues=betOptions(entryBase);if(!betValues.includes(selectedBet))selectedBet=entryBase.bigBlind;
+  entryBase=loadConfig();betValues=[...new Set([1,...betOptions(entryBase)])].sort((a,b)=>a-b);if(!betValues.includes(selectedBet))selectedBet=1;
   $('bet-presets').innerHTML=renderBetPresets(betValues);
   $('bet-presets').querySelectorAll('[data-bet]').forEach(b=>b.onclick=()=>{selectedBet=Number(b.dataset.bet);updateEntry();});
   updateEntry();show('buyin-dialog');
@@ -286,7 +292,7 @@ async function presentHand({releaseResponse=false}={}){
   render();
 }
 function render(){
-  if(hand!==shownHand){shownHand=hand;shownBoard=0;boardDealt=0;shownReveal=0;dealt={player:0,npc:0};settlementReleased=false;presentedCredits={player:0,npc:0};responseSource=null;responseDecision=null;bankrollView.clearChanges();}
+  if(hand!==shownHand){shownHand=hand;shownBoard=0;boardDealt=0;shownReveal=0;dealt={player:0,npc:0};settlementReleased=false;presentedCredits={player:0,npc:0};responseSource=null;responseDecision=null;responseFlight.clear();delete $('game').dataset.npcFolded;bankrollView.clearChanges();}
   const active=hand?.status==='playing';const handView=getCurrentHandView(hand?.holes.player.slice(0,dealt.player)||[],hand?.board.slice(0,shownBoard)||[]);const best=handView.highlighted;
   const h=hud();$('game').dataset.busy=String(busy);
   $('game').dataset.state=hand?.result&&!settlementReleased?'playing':hand?.status||'idle';$('game').dataset.actor=busy?'':hand?.actor||'';$('game').dataset.street=hand?visibleStreet():'';updateExpression(settlementReleased?hand?.result?.winner||'':'');
@@ -332,7 +338,7 @@ function renderActions(){
   const root=$('action-buttons'),h=hud(),playing=hand?.status==='playing',settled=hand?.status==='settled';
   for(const id of ['menu-button','deck-button','balance-button','pot-info-button','jackpot-button','table-rank-button'])$(id).disabled=busy;
   $('game').dataset.busy=String(busy);$('round-cta').hidden=!!hand&&(!settled||busy);$('result-details').hidden=false;$('result-details').disabled=!settled||busy;
-  if(!hand){$('sit-button').innerHTML=`${icon('play')}<b>PLAY</b>`;$('sit-button').onclick=setupBuyin;}
+  if(!hand){$('sit-button').innerHTML=`${icon('play')}<b>FIGHT</b>`;$('sit-button').onclick=setupBuyin;}
   else if(settled){$('sit-button').innerHTML=`${icon('play')}<b>${Math.min(...Object.values(session.stacks))<.01?'CHOOSE BET':'NEXT HAND'}</b>`;$('sit-button').onclick=newHand;}
   const actions=h.actions,passive=actions.find(a=>a.type==='call'||a.type==='check'),aggressive=actions.find(a=>a.type==='raise'||a.type==='bet');
   const owed=playing?Math.max(0,hand.currentBet-hand.streetBets.player):0;
@@ -347,13 +353,16 @@ function renderActions(){
     const foldLoss=type==='fold'&&(a||choice)?h.playerCommitted:null;
     if(foldLoss!==null)hint=`Forfeit ${money(foldLoss)} chips already committed this hand; no additional chips charged`;
     const chip='<img class="action-cost-chip" src="assets/chip-face-v24.svg" alt="" aria-hidden="true">';
-    const cost=foldLoss!==null||displayed?.amount>0?chip:'';
+    const cost=['call','bet','raise'].includes(type)&&displayed?.amount>0?`${chip}<span>${money(displayed.amount)}</span>`:'';
     const distribution=choice?responseSource?.distribution||[]:a?previewResponse(hand,type).distribution:[];
     const badge=responseBadgeView(distribution,choice?responseDecision||{}:{});
-    const accessible=`${LABELS[type]}${displayed?.amount?' '+money(displayed.amount):''}${foldLoss!==null?'; forfeit '+money(foldLoss)+' already committed chips':''}${badge.description?'; '+badge.description:''}`;
-    return `<button class="action ${type} ${type==='fold'?'side-action':type==='call'||type==='check'?'main-action':'side-action'}${choice?' chosen-action':''}" data-action="${type}" ${disabled?'disabled':''} aria-label="${esc(accessible)}" title="${esc(hint)}">${badge.markup}<span class="action-face"><span class="action-name">${LABELS[type]}</span></span><b class="action-cost">${cost||'&nbsp;'}</b></button>`;
+    const name=PLAYER_ACTION_LABELS[type];
+    const semantics=displayed?(type==='check'?'; check for free':type==='bet'?'; opens betting this round':''):'';
+    const accessible=`${name}${displayed?.amount?' '+money(displayed.amount):''}${semantics}${foldLoss!==null?'; forfeit '+money(foldLoss)+' already committed chips':''}${badge.description?'; '+badge.description:''}`;
+    return `<button class="action ${type} ${type==='fold'?'side-action':type==='call'||type==='check'?'main-action':'side-action'}${choice?' chosen-action':''}" data-action="${type}" ${disabled?'disabled':''} aria-label="${esc(accessible)}" title="${esc(hint)}">${badge.markup}<span class="action-face"><span class="action-name">${name}</span></span><b class="action-cost">${cost||'&nbsp;'}</b></button>`;
   }).join('');
   root.querySelectorAll('[data-action]').forEach(b=>{b.onclick=()=>playerAct(b.dataset.action);});
+  responseFlight.update(responseSource?.distribution||[],responseDecision||{});
   if(busy||!playing||hand.actor!=='player'){const previews=$('preview-actions');previews.hidden=true;previews.replaceChildren();}
 }
 function paintDistribution(){
@@ -366,18 +375,19 @@ function paintDistribution(){
   $('decision-emblem').hidden=true;
 }
 function clearResponseSource(){
-  pendingPlayerAction=null;responseSource=null;responseDecision=null;delete $('game').dataset.chosenAction;
+  pendingPlayerAction=null;responseSource=null;responseDecision=null;responseFlight.clear();delete $('game').dataset.chosenAction;
 }
 async function playerAct(type){
   if(busy||hand?.actor!=='player'||hand.status!=='playing')return;
   try{busy=true;phase='YOUR MOVE';lastResponse=null;const chosen=legalActions(hand).find(a=>a.type===type);if(!chosen)throw new Error('This action is not available.');
     const before=hand.board.length;
     pendingPlayerAction={...chosen};responseSource=captureResponseSource(hand,chosen);responseDecision=null;$('game').dataset.chosenAction=type;renderActions();paintDistribution();
-    setTableCue('action',`YOU ${LABELS[type]}${chosen.amount?' '+money(chosen.amount):''}`,{seat:'player',detail:chosen.amount?'CHIPS TO THE POT':type==='check'?'NO CHIPS REQUIRED':'END THIS HAND'});
-    await delay(reduceMotion?0:700);
-    applyAction(hand,type);if(chosen.amount)effects.play('chip');phase=hand.board.length===5&&before<4?'ALL-IN · RUNNING THE BOARD':hand.board.length>before?`DEAL ${STREETS[hand.street]}`:hand.status==='settled'?'SETTLING':'CHIPS TO POT';
+    setTableCue('action',`YOU ${PLAYER_ACTION_LABELS[type]}${chosen.amount?' '+money(chosen.amount):''}`,{seat:'player',detail:chosen.amount?'CHIPS TO THE POT':type==='check'?'NO CHIPS REQUIRED':'END THIS HAND'});
+    if(responseSource)await responseFlight.launch($('action-buttons').querySelector(`[data-action="${type}"] .action-response-badges`),responseSource.distribution);
+    else await delay(reduceMotion?0:700);
+    applyAction(hand,type);phase=hand.board.length===5&&before<4?'ALL-IN · RUNNING THE BOARD':hand.board.length>before?`DEAL ${STREETS[hand.street]}`:hand.status==='settled'?'SETTLING':'CHIPS TO POT';
     paintDistribution();
-    if(chosen.amount)setTableCue('contribution',`YOU ${LABELS[type]}`,{seat:'player',detail:`${money(chosen.amount)} → POT`});
+    if(chosen.amount)setTableCue('contribution',`YOU ${PLAYER_ACTION_LABELS[type]}`,{seat:'player',detail:`${money(chosen.amount)} → POT`});
     await presentHand();if(!responseSourceMatches(responseSource,hand))clearResponseSource();if(hand.status==='playing')await delay(reduceMotion?0:350);await continuePlay();
   }catch(error){busy=false;phase='';clearResponseSource();setTableCue();$('game').dataset.deciding='false';toast(translateError(error));render();}
 }
@@ -393,13 +403,13 @@ async function continuePlay(){
     responseDecision=source?{phase:hasDraw?'drawing':'result',selected:null}:null;
     renderActions();paintDistribution();
     if(hasDraw){
-      const target=source?$('action-buttons').querySelector(`[data-action="${source.action.type}"] .action-response-badges`):null;
+      const target=source?responseFlight.target()||$('action-buttons').querySelector(`[data-action="${source.action.type}"] .action-response-badges`):null;
       const marker=target?document.createElement('span'):null;
       if(marker){marker.className='action-response-sweep';target.append(marker);}else setTableCue('action','OPPONENT DECIDING');
       const motion=decisionMotion(hand.config.animationMs,selected.roll,{reducedMotion:reduceMotion}),sweepMs=Math.min(450,motion.duration);
       // Opponent decisions keep their original reading time; other presentation stays at 1.2x.
       if(sweepMs>0){
-        if(marker)await effects.animate(marker,[{left:'0%'},{left:'calc(100% - 18px)',offset:.25},{left:'0%',offset:.5},{left:'calc(100% - 18px)',offset:.75},{left:'calc(50% - 9px)'}],{duration:sweepMs,easing:'linear',fill:'forwards'},{speed:1});
+        if(marker){const width=marker.offsetWidth||18;await effects.animate(marker,[{left:'0%'},{left:`calc(100% - ${width}px)`,offset:.25},{left:'0%',offset:.5},{left:`calc(100% - ${width}px)`,offset:.75},{left:`calc(50% - ${width/2}px)`}],{duration:sweepMs,easing:'linear',fill:'forwards'},{speed:1});}
         else await delay(sweepMs,{speed:1});
       }
       marker?.remove();
@@ -409,7 +419,8 @@ async function continuePlay(){
       await delay(Math.max(0,motion.duration-sweepMs),{speed:1});
     }else{lastResponse=null;if(selected.type==='call')setTableCue();else setTableCue('action',`OPPONENT ${LABELS[selected.type]}`,{seat:'npc'});await delay(reduceMotion?0:550,{speed:1});}
     const before=hand.board.length;
-    applyAction(hand,selected.type);drawLog.push(entry);if(selected.amount)effects.play('chip');$('game').dataset.npcState=selected.type;
+    if(selected.type==='fold'){await effects.discardCards([...$('npc-cards').children]);$('game').dataset.npcFolded='true';}
+    applyAction(hand,selected.type);drawLog.push(entry);$('game').dataset.npcState=selected.type;
     $('game').dataset.deciding='false';paintDistribution();
     phase=hand.board.length===5&&before<4?'ALL-IN · RUNNING THE BOARD':hand.board.length>before?`DEAL ${STREETS[hand.street]}`:hand.status==='settled'?'SETTLING':'CHIPS TO POT';
     setTableCue(selected.amount?'contribution':'action',selected.type==='call'?'CHIPS TO POT':`OPPONENT ${LABELS[selected.type]}`,{seat:'npc',detail:selected.amount?`${money(selected.amount)} → POT`:selected.type==='check'?'NO CHIPS REQUIRED':'END THIS HAND'});

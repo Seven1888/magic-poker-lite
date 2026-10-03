@@ -1,0 +1,13 @@
+/* Anchor the actual incoming chip stack, not a stack-plus-label text box. */
+.game .flying-chip[data-flow='contribution'] {
+  display: block; width: 38px; height: 40px; min-height: 0;
+}
+.game .flying-chip[data-flow='contribution'] .flying-chip-group {
+  width: 38px; height: 40px;
+}
+.game .flying-chip[data-flow='contribution'] .casino-chip {
+  left: 0; bottom: calc(2px + var(--chip-index, 0) * 2.2px);
+}
+.game .flying-chip[data-flow='contribution'] .amount {
+  position: absolute; left: calc(100% + 5px); top: 7px;
+}

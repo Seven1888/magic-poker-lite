@@ -1,0 +1,79 @@
+/* The dealing stock rests flat on the felt; only its count faces the reader. */
+.deck-button {
+  top: 333px; right: 9px; left: auto; width: 58px; height: 65px;
+  overflow: visible;
+}
+.deck-button:before, .deck-button:after, .deck-button img {
+  left: 9px; width: 40px; height: 51px; border-radius: 4px;
+  transform: perspective(240px) rotateX(60deg) rotateZ(-24deg);
+  transform-origin: 50% 50%;
+}
+.deck-button:before {
+  top: 4px;
+  box-shadow: 0 1px #e9e2d0, 0 2px #746f63, 0 3px #e9e2d0,
+    0 4px #797466, 0 5px #e2d9c3, 0 9px 7px #21060e9c;
+}
+.deck-button:after { top: 0; box-shadow: 0 1px #f1e9d5, 0 2px #777164; }
+.deck-button img { top: -4px; box-shadow: 0 1px #f1e9d5, 0 2px 2px #10203980; }
+.deck-button > span { bottom: 0; transform: none; }
+
+/* Keep the opponent's amount directly below its centred chip source. */
+#npc-asset-panel {
+  top: 318px; left: 50%; right: auto; width: 110px; height: 47px;
+  transform: translateX(-50%);
+}
+#npc-asset-panel #npc-bankroll-chips {
+  left: 18px; top: 0; bottom: auto;
+  transform: scale(.78); transform-origin: 50% 0;
+}
+#npc-asset-panel > #npc-stack {
+  top: 29px; bottom: auto; left: 0; right: 0; width: 110px;
+  min-height: 18px; height: 18px; padding: 0 4px;
+  font-size: 12px; line-height: 16px;
+}
+#npc-asset-panel .bankroll-change { left: 0; right: 0; top: -18px; width: auto; }
+
+/* Leave air between the cards and expose their ivory paper edges above the felt. */
+.shared-board .board { top: 18px; gap: 11px; height: 94px; }
+.shared-board .board .card { width: 65px; transform: translateY(-3px); }
+.board-groups { left: 11px; right: 11px; gap: 11px; }
+#player-cards { gap: 20px; }
+#npc-cards { gap: 16px; }
+#npc-cards .card:first-child { transform: rotate(-5deg) translateY(2px); }
+#npc-cards .card:last-child { transform: rotate(5deg) translateY(2px); }
+.game #player-win-rate:not([hidden]) { left: calc(50% + 90px); }
+
+#player-cards .card.original-card, #npc-cards .card.original-card,
+#board .card.original-card {
+  box-shadow: 0 1px 0 #fff8e5, 0 2px 0 #9a907f, 0 3px 0 #f3ead7,
+    0 4px 0 #7b7367, 0 5px 0 #ded4bf, 0 11px 10px #19070cc2;
+}
+#board .card.original-card {
+  box-shadow: 0 1px 0 #fff8e5, 0 2px 0 #938b7c, 0 3px 0 #f3ead7,
+    0 4px 0 #756f63, 0 5px 0 #e2d8c2, 0 14px 9px #21070faf;
+}
+
+/* Solid rims identify each best five; soft light supports rather than replaces them. */
+#player-cards .card.best, #board .card.best {
+  outline: 3px solid #f7c84e; outline-offset: 0;
+  box-shadow: 0 0 0 1px #fff5bb, 0 4px 0 #b68728, 0 6px 0 #e7c27a,
+    0 0 10px 2px #ffc83f80, 0 13px 10px #1e090dcc;
+}
+#player-cards .card.best:after, #board .card.best:after {
+  border: 3px solid #fff0a3; box-shadow: inset 0 0 4px #e9ad3980; z-index: 4;
+}
+#npc-cards .card.npc-best, #board .card.npc-best {
+  outline: 3px solid #ef3d56; outline-offset: 0;
+  box-shadow: 0 0 0 1px #ffc8c7, 0 4px 0 #a5293e, 0 6px 0 #d7aa91,
+    0 0 10px 2px #f8315080, 0 13px 10px #1e090dcc;
+}
+#npc-cards .card.npc-best:before, #board .card.npc-best:before {
+  border: 2px solid #ffb6b4; box-shadow: inset 0 0 4px #f4345180;
+}
+#board .card.best.npc-best {
+  outline: 3px solid #f13e56; outline-offset: 2px;
+  box-shadow: 0 0 0 2px #562729, 0 5px 0 #a5293e, 0 7px 0 #dbc19b,
+    0 0 11px 2px #ff495b66, 0 14px 10px #1e090dcc;
+}
+#board .card.best.npc-best:before { border: 0; box-shadow: none; }
+#board .card.best.npc-best:after { border: 3px solid #ffdb65; }

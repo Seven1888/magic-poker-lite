@@ -210,6 +210,56 @@ test('original-speed decisions preserve the watchdog and fallback while other mo
   assert.equal(atGameSpeed(900), 750, 'other presentation retains its faster default');
 });
 
+test('discard gathers two backs and slides them to the table side in stage coordinates without changing faces', async () => {
+  const f = fixture(), effects = createGameEffects({root: f.doc}), cards = [f.card('left'), f.card('right')];
+  cards[1].getBoundingClientRect = () => ({left: 100, top: 200, width: 40, height: 40});
+  const pending = effects.discardCards(cards);
+  assert.equal(f.animations.length, 2);
+  assert.ok(cards.every(card => card.dataset.motion === 'discarding' && card.face === 'back'));
+  const [left, right] = f.animations;
+  assert.equal(left.options.duration, atGameSpeed(700));
+  assert.equal(left.keyframes[1].translate, '37px 14px', 'first move closes the horizontal gap');
+  assert.equal(right.keyframes[1].translate, '-37px 14px');
+  assert.equal(left.keyframes.at(-1).translate, '-101px -30px');
+  assert.equal(right.keyframes.at(-1).translate, '-175px -30px');
+  assert.equal(left.keyframes.at(-1).opacity, 0);
+  assert.ok(f.animations.every(a => a.keyframes.every(frame => !Object.hasOwn(frame, 'transform'))), 'CSS fan transform stays intact');
+  let completed = false; pending.then(() => { completed = true; });
+  left.finish(); await flush(); assert.equal(completed, false, 'both cards must arrive');
+  right.finish(); await pending;
+  assert.ok(cards.every(card => card.face === 'back' && card.dataset.motion === undefined && card.style.transform === 'rotate(-6deg)' && card.style.visibility === ''));
+  assert.equal(f.timers.size, 0);
+});
+
+test('overlapping discard calls share active card flights and support an explicit stage destination', async () => {
+  const f = fixture(), effects = createGameEffects({root: f.doc}), cards = [f.card('left'), f.card('right')];
+  const first = effects.discardCards([cards[0], cards[0]], {destination: {x: 20, y: 450}});
+  const second = effects.discardCards(cards);
+  assert.equal(f.animations.length, 2, 'overlap does not cancel or replay the first card');
+  assert.equal(f.animations[0].keyframes.at(-1).translate, '-120px 50px');
+  assert.equal(f.animations[0].cancelled, false);
+  f.animations.forEach(animation => animation.finish());
+  await Promise.all([first, second]);
+  assert.ok(f.animations.every(animation => animation.cancelled));
+  assert.ok(cards.every(card => card.dataset.motion === undefined));
+});
+
+test('discard watchdog and destroy release all cards; reduced motion and unsupported animations finish immediately', async () => {
+  for (const mode of ['watchdog', 'destroy', 'reduce', 'unsupported']) {
+    const f = fixture(), effects = createGameEffects({root: f.doc, reducedMotion: mode === 'reduce'});
+    const cards = [f.card('left'), f.card('right')];
+    if (mode === 'unsupported') cards.forEach(card => { card.animate = undefined; });
+    const pending = effects.discardCards(cards);
+    if (mode === 'watchdog') await f.tick(atGameSpeed(700) + 80);
+    if (mode === 'destroy') effects.destroy();
+    await pending;
+    assert.equal(f.timers.size, 0);
+    assert.ok(cards.every(card => card.face === 'back' && card.dataset.motion === undefined));
+    if (['reduce', 'unsupported'].includes(mode)) assert.equal(f.animations.length, 0);
+    else assert.ok(f.animations.every(animation => animation.cancelled));
+  }
+});
+
 function audioFixture() {
   const f = fixture(), contexts = [], oscillators = [], gains = [];
   const parameter = () => ({value: 0, changes: [], cancelScheduledValues() {}, setValueAtTime(value, time) {this.changes.push({value, time});}, exponentialRampToValueAtTime(value, time) {this.changes.push({value, time});}});
@@ -275,4 +325,23 @@ test('blocked audio can retry and muting survives app-switch recovery', async ()
   effects.setMuted(false); assert.equal(effects.play('click'), true);
   effects.destroy();
   assert.equal(await effects.unlock(), false); assert.equal(effects.play('click'), false);
+});
+
+test('chip movement and arrival are distinct brief multi-note sounds and respect audio activation, mute and hidden state', async () => {
+  for (const name of ['chips', 'chip-arrival']) {
+    const f = audioFixture(), effects = createGameEffects({root: f.doc});
+    assert.equal(effects.play(name), false); assert.equal(f.contexts.length, 0);
+    await effects.unlock(); f.contexts[0].currentTime = 10;
+    assert.equal(effects.play(name), true);
+    assert.ok(f.oscillators.length >= 3, 'multiple impacts make a chip movement rather than a click');
+    assert.ok(f.oscillators.every(note => note.startTime >= 10 && note.stopTime > note.startTime && note.stopTime < 10.3));
+    const lastStart = Math.max(...f.oscillators.map(note => note.startTime));
+    assert.ok(name === 'chips' ? lastStart > 10.2 : lastStart < 10.1, 'arrival is shorter than movement');
+    const count = f.oscillators.length;
+    effects.setMuted(true); assert.equal(effects.play(name), false);
+    assert.ok(f.oscillators.every(note => note.disconnects === 1));
+    effects.setMuted(false); f.doc.hidden = true; assert.equal(effects.play(name), false);
+    assert.equal(f.oscillators.length, count, 'muted and hidden effects create no new voices');
+    effects.destroy(); assert.equal(effects.play(name), false);
+  }
 });

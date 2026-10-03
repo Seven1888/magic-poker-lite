@@ -383,7 +383,8 @@ test('no WAAPI and reduced motion never block whenIdle while deferred accounting
     view.render(hand); await view.whenIdle();
     assert.equal(text(doc, 'pot-label'), '底池 POT'); assert.equal(view.settledDelay(), 0);
     assert.equal(text(doc, 'pot-value'), '0');
-    assert.deepEqual(phases.slice(-2), ['payout', 'complete']);
+    assert.deepEqual(phases.filter(flow => flow !== 'arrival').slice(-2), ['payout', 'complete']);
+    assert.ok(phases.includes('arrival'), 'motion fallback still emits semantic arrival');
     assert.equal(doc.getElementById('pot-flight-layer').children.length, 0);
   }
 });
@@ -426,12 +427,12 @@ test('phase notifications follow chip accounting once and reentrant or failing o
   assert.deepEqual(phases, [{flow: 'contribution', seats: ['player', 'npc'], amounts: {player: 20, npc: 10}}]);
   let idle = false; const waiting = view.whenIdle().then(() => {idle = true;});
   finishFlights(doc); await Promise.resolve(); assert.equal(idle, false);
-  assert.equal(phases.length, 1, 'arrival pulse still belongs to the inbound phase');
+  assert.equal(phases.filter(event => event.flow !== 'arrival').length, 1, 'arrival pulse still belongs to the inbound phase');
   doc.getElementById('pot-display').animations.at(-1).finish();
   await Promise.resolve(); await Promise.resolve();
   assert.equal(phaseIdle, false, 'whenIdle requested at a phase boundary includes the whole sequence');
   await finishMotion(doc); await waiting; await phaseWait;
-  assert.deepEqual(phases, [
+  assert.deepEqual(phases.filter(event => event.flow !== 'arrival'), [
     {flow: 'contribution', seats: ['player', 'npc'], amounts: {player: 20, npc: 10}},
     {flow: 'refund', seats: ['player'], amounts: {player: 10}},
     {flow: 'payout', seats: ['player'], amounts: {player: 19.2}},
@@ -440,7 +441,13 @@ test('phase notifications follow chip accounting once and reentrant or failing o
   assert.equal(idle, true); assert.equal(phaseIdle, true); assert.equal(text(doc, 'pot-value'), '0');
   assert.equal(doc.getElementById('pot-chips').children.every(stack => stack.children.length === 0), true);
   view.render(hand); view.render(hand, hand.config, {deferSettlement: true}); await view.whenIdle();
-  assert.equal(phases.length, 4); assert.equal(text(doc, 'pot-value'), '0');
+  assert.deepEqual(phases.filter(event => event.flow === 'arrival'), [
+    {flow: 'arrival', seats: ['player'], amounts: {player: 20}},
+    {flow: 'arrival', seats: ['npc'], amounts: {npc: 10}},
+    {flow: 'arrival', seats: ['player'], amounts: {player: 10}},
+    {flow: 'arrival', seats: ['player'], amounts: {player: 19.2}}
+  ]);
+  assert.equal(phases.length, 8); assert.equal(text(doc, 'pot-value'), '0');
   assert.equal(JSON.stringify(hand), snapshot); assert.equal(hand.rng.state(), rng);
   assert.equal(hand.result.player.refund + hand.result.player.netReturn + hand.result.fee, 30);
 });
@@ -464,7 +471,7 @@ test('a new hand cancels every pending settlement phase without releasing old re
     assert.ok(old.every(flight => flight.removed));
     assert.deepEqual(phases.slice(previousNotifications), ['contribution']);
     await finishMotion(doc); await view.whenIdle();
-    assert.deepEqual(phases.slice(previousNotifications), ['contribution'], 'old sequence cannot continue after cancellation');
+    assert.deepEqual(phases.slice(previousNotifications), ['contribution', 'arrival', 'arrival'], 'only the next hand contributes arrival notifications');
     assert.equal(text(doc, 'pot-value'), '15');
     view.render(null); assert.equal(text(doc, 'pot-value'), '0');
   }
@@ -481,7 +488,7 @@ test('five decorative stacks grow with pot-to-bet ratio, within 15 to 50 chips',
   view.render(null); assert.equal(count(), 0);
 });
 
-test('numbers and chip stacks wait for the whole inbound bundle; idle includes one arrival pulse', async () => {
+test('each inbound route joins the visible pot on arrival; idle includes one final arrival pulse', async () => {
   const doc = fakeDocument(), view = createPotView({root: doc});
   const hand = startHand(createSession({}, 20)), pot = doc.getElementById('pot-display');
   const chipCount = () => doc.getElementById('pot-chips').children.reduce((sum, stack) => sum + stack.children.length, 0);
@@ -490,7 +497,8 @@ test('numbers and chip stacks wait for the whole inbound bundle; idle includes o
   assert.equal(pot.dataset.flow, 'contribution'); assert.equal(flights(doc).length, 2);
   let idle = false; const waiting = view.whenIdle().then(() => { idle = true; });
   flights(doc)[0].animations[0].finish(); await Promise.resolve(); view.render(hand);
-  assert.equal(text(doc, 'pot-value'), '0'); assert.equal(chipCount(), 0);
+  assert.equal(text(doc, 'pot-value'), '10'); assert.ok(chipCount() >= 15);
+  assert.equal(pot.dataset.flow, 'contribution'); assert.equal(pot.animations.length, 0);
   flights(doc)[1].animations[0].finish(); await Promise.resolve();
   assert.equal(text(doc, 'pot-value'), '20'); assert.ok(chipCount() >= 15);
   assert.equal(pot.dataset.flow, undefined); assert.equal(pot.animations.length, 1);
@@ -509,4 +517,66 @@ test('compact amount tracks the displayed string and clears when leaving the tab
   await finishMotion(doc); await view.whenIdle();
   assert.equal(text(doc, 'pot-value'), '1,234,567'); assert.equal(toggles.get('compact-amount'), true);
   view.render(null); assert.equal(toggles.get('compact-amount'), false);
+});
+
+test('opaque arriving chips join the actual pot before removal without revealing the other blind early', async () => {
+  for (const firstSeat of ['player', 'npc']) {
+    const doc = fakeDocument(), phases = [];
+    const view = createPotView({root: doc, onPhase: event => phases.push(event)});
+    const hand = startHand(createSession({}, 20)), snapshot = JSON.stringify(hand), rng = hand.rng.state();
+    view.render(hand);
+    const incoming = flights(doc), first = incoming.find(flight => flight.dataset.seat === firstSeat);
+    const second = incoming.find(flight => flight !== first), expected = firstSeat === 'player' ? '5' : '10';
+    for (const flight of incoming) assert.equal(flight.animations[0].keyframes.at(-1).opacity, 1);
+    const originalRemove = first.remove.bind(first);
+    first.remove = () => {
+      assert.equal(text(doc, 'pot-value'), expected, 'the arrived payment is already in the pot when the stand-in is removed');
+      assert.ok(doc.getElementById('pot-chips').children.some(stack => stack.children.length > 0), 'the physical pot has no empty frame');
+      originalRemove();
+    };
+    first.animations[0].finish(); await Promise.resolve();
+    assert.equal(text(doc, 'pot-value'), expected);
+    assert.equal(second.removed, undefined, 'the other blind is still in flight');
+    view.render(hand); view.render({...hand});
+    assert.equal(text(doc, 'pot-value'), expected); assert.equal(flights(doc).length, 2);
+    second.animations[0].finish(); await finishMotion(doc); await view.whenIdle();
+    assert.equal(text(doc, 'pot-value'), '15');
+    assert.deepEqual(phases.filter(event => event.flow === 'arrival').map(event => event.seats[0]), [firstSeat, second.dataset.seat]);
+    assert.equal(JSON.stringify(hand), snapshot); assert.equal(hand.rng.state(), rng);
+  }
+});
+
+test('a missing animation route arrives immediately while the visible route remains pending', async () => {
+  const doc = fakeDocument(), create = doc.createElement, phases = [];
+  doc.createElement = tag => {
+    const element = create(tag), animate = element.animate.bind(element);
+    element.animate = (...args) => {
+      if (element.dataset.seat === 'npc') throw new Error('Animation unavailable');
+      return animate(...args);
+    };
+    return element;
+  };
+  const view = createPotView({root: doc, onPhase: event => phases.push(event)}), hand = startHand(createSession({}, 20));
+  view.render(hand);
+  assert.equal(text(doc, 'pot-value'), '10');
+  assert.deepEqual(phases.map(event => event.flow), ['contribution', 'arrival']);
+  assert.deepEqual(phases[1], {flow: 'arrival', seats: ['npc'], amounts: {npc: 10}});
+  await finishMotion(doc); await view.whenIdle();
+  assert.equal(text(doc, 'pot-value'), '15');
+  assert.equal(phases.filter(event => event.flow === 'arrival').length, 2);
+});
+
+test('arrival watchdog updates each payment and notifies once even if its animation finishes later', async t => {
+  const timers = new Map(); let timerId = 0;
+  t.mock.method(globalThis, 'setTimeout', (callback, delay) => {timers.set(++timerId, {callback, delay});return timerId;});
+  t.mock.method(globalThis, 'clearTimeout', id => timers.delete(id));
+  const doc = fakeDocument(), phases = [], view = createPotView({root: doc, onPhase: event => phases.push(event)});
+  view.render(startHand(createSession({}, 20)));
+  [...timers.values()][0].callback();
+  assert.equal(text(doc, 'pot-value'), '5');
+  assert.equal(phases.filter(event => event.flow === 'arrival').length, 1);
+  finishFlights(doc); await finishMotion(doc); await view.whenIdle();
+  assert.equal(text(doc, 'pot-value'), '15');
+  assert.equal(phases.filter(event => event.flow === 'arrival').length, 2);
+  assert.equal(timers.size, 0);
 });

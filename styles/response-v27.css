@@ -1,0 +1,13 @@
+/* The chosen preview rises from its button before the opponent draw begins. */
+#response-flight-layer { position:absolute; inset:0; z-index:60; pointer-events:none; }
+.response-flyout { position:absolute; left:50%; top:47%; height:88px; transform:translate(-50%,-50%); transform-origin:center; filter:drop-shadow(0 10px 14px #130716cc); }
+.response-flyout .action-response-badges { position:relative; inset:0; width:100%; height:100%; gap:12px; }
+.response-flyout .action-response-badge { flex:1 1 0; height:88px; grid-template-rows:25px 37px; padding:10px 8px; border-width:2px; border-radius:12px; box-shadow:inset 0 2px #fff4,0 4px 0 #171426; }
+.response-flyout .response-badge-label { font-size:18px; line-height:25px; gap:5px; }
+.response-flyout .action-response-badge .ui-icon { width:19px; height:18px; }
+.response-flyout .response-badge-percent { font-size:29px; line-height:37px; letter-spacing:-.5px; }
+.response-flyout .action-response-badge.is-selected { border-color:#fff3a9; box-shadow:inset 0 2px #fff8,0 0 0 3px #eaba50,0 0 24px #ffc74c99; }
+.response-flyout .action-response-sweep { width:32px; border-width:2px; border-radius:12px; background:linear-gradient(90deg,transparent,#fff2ad99,transparent); }
+.game[data-response-flight] .chosen-action .action-response-badges { visibility:hidden; }
+.game[data-npc-folded='true'] #npc-cards { visibility:hidden; }
+@media(prefers-reduced-motion:reduce) { .response-flyout { filter:none; } }

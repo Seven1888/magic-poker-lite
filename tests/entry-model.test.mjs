@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {DEFAULT_CONFIG} from '../src/engine.mjs';
 import {betOptions,minimumAssets,tableConfig} from '../src/entry-model.mjs';
-import {renderBetPresets} from '../src/entry-view.mjs';
+import {renderBetPresets,updateBetSelection} from '../src/entry-view.mjs';
 test('BET scales required assets, both blinds and all streets without charging entry assets',()=>{
  assert.deepEqual(betOptions(DEFAULT_CONFIG),[1,2,5,10,20,50]);
  assert.equal(minimumAssets(DEFAULT_CONFIG,50),1000);
@@ -20,14 +20,14 @@ test('earned balance above old maximum is preserved on re-entry',()=>{
  const c=tableConfig(DEFAULT_CONFIG,10,3600.55);assert.equal(c.buyIn,3600.55);assert.equal(c.maxBuyIn,3600.55);
 });
 
-test('fractional preset text and its accessible label preserve the actual offered BET and derived blind',()=>{
+test('the +/- picker preserves fractional BET and blind values without rendering preset shortcuts',()=>{
  const base={...DEFAULT_CONFIG,bigBlind:.15};
  const options=betOptions(base);
  assert.ok(options.includes(.075));
- const preset=renderBetPresets(options).match(/<button[^>]*data-bet="0\.075"[^>]*>[\s\S]*?<\/button>/)?.[0];
- assert.ok(preset);
- assert.match(preset,/aria-label="Big blind 0\.075"/);
- assert.match(preset,/<strong>0\.075<\/strong>/);
+ assert.equal(renderBetPresets(options),'');
+ const input={value:''};
+ updateBetSelection(.075,{querySelector:()=>input,querySelectorAll:()=>[]});
+ assert.equal(input.value,'0.075');
  const c=tableConfig(base,.075,1000);
  assert.equal(c.bigBlind,.075);assert.equal(c.smallBlind,.0375);assert.equal(c.buyIn,1000);
 });

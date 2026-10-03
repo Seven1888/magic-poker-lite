@@ -97,18 +97,25 @@ export function createPotView({root = globalThis.document, reducedMotion = false
     };
   }
 
-  function trackAnimation(animation, {flow, duration, delay = 0, remove = () => {}}) {
+  function trackAnimation(animation, {flow, duration, delay = 0, transfer = null, remove = () => {}}) {
     const epoch = generation;
     let resolveDone, timer, completed = false;
-    const motion = {animation, flow, end: now() + delay + duration,
+    const motion = {animation, flow, transfer, end: now() + delay + duration,
       done: new Promise(resolve => { resolveDone = resolve; }), complete: null};
     motion.complete = () => {
       if (completed) return;
-      completed = true; clearTimeout(timer); remove(); motions.delete(motion);
+      completed = true; clearTimeout(timer); motions.delete(motion);
       if (epoch === generation) {
-        if (flow === 'contribution' && ![...motions].some(item => item.flow === 'contribution')) commitPot(true);
-        advanceSettlement();
+        // The landed stack must exist before its opaque flying stand-in is removed.
+        // Each route arrives separately, including the two staggered blind payments.
+        if (flow === 'contribution') {
+          if ([...motions].some(item => item.flow === 'contribution')) showArrivedPot(transfer?.amount);
+          else commitPot(true);
+        }
       }
+      remove();
+      if (epoch === generation && transfer) notifyPhase('arrival', [transfer]);
+      if (epoch === generation) advanceSettlement();
       resolveDone();
     };
     motions.add(motion);
@@ -118,6 +125,13 @@ export function createPotView({root = globalThis.document, reducedMotion = false
     if (animation.finished?.then) animation.finished.then(motion.complete, motion.complete);
     else { animation.onfinish = motion.complete; animation.oncancel = motion.complete; }
     return motion;
+  }
+
+  function showArrivedPot(amount = 0) {
+    if (!pendingPot) return;
+    const total = Math.min(pendingPot.total, Math.round((displayedTotal + numeric(amount)) * 1e6) / 1e6);
+    displayedTotal = total;
+    write('pot-value', money(total)); drawChips(total, pendingPot.config);
   }
 
   function commitPot(arrived = false) {
@@ -178,10 +192,11 @@ export function createPotView({root = globalThis.document, reducedMotion = false
       {transform: transform(from, 0.72), opacity: 0, offset: 0},
       {transform: transform(from, 0.9), opacity: 1, offset: 0.1},
       {transform: transform(midpoint, 1.05), opacity: 1, offset: 0.52},
-      {transform: transform(to, 0.82), opacity: 0, offset: 1}
+      {transform: transform(to, inbound ? 1 : 0.82), opacity: inbound ? 1 : 0, offset: 1}
     ], {duration: actualDuration, delay: actualDelay, easing: 'cubic-bezier(.22,.72,.25,1)', fill: 'both'}); }
     catch { el.remove(); return 0; }
-    trackAnimation(animation, {flow, duration: actualDuration, delay: actualDelay, remove: () => el.remove()});
+    trackAnimation(animation, {flow, duration: actualDuration, delay: actualDelay,
+      transfer: {seat, amount}, remove: () => el.remove()});
     return actualDelay + actualDuration;
   }
 
@@ -211,7 +226,9 @@ export function createPotView({root = globalThis.document, reducedMotion = false
           if (nodes['pot-display']) nodes['pot-display'].dataset.flow = flow;
           notifyPhase(flow, entries);
           if (settlementPlan !== plan || plan.generation !== generation) return;
-          entries.forEach(({seat, amount}, index) => fly(seat, amount, flow, {duration: 1100, delay: index * 40}));
+          const immediate = entries.filter(({seat, amount}, index) => !fly(seat, amount, flow, {duration: 1100, delay: index * 40}));
+          if (immediate.length) notifyPhase('arrival', immediate);
+          if (settlementPlan !== plan || plan.generation !== generation) return;
           settlementUntil = Math.max(now(), ...[...motions].map(motion => motion.end));
         }
       }
@@ -256,11 +273,10 @@ export function createPotView({root = globalThis.document, reducedMotion = false
     const additions = seats.map(seat => ({seat, amount: Math.max(0, numeric(hand.contributions?.[seat]) - paid[seat])})).filter(item => item.amount > 0.0000001);
     for (const seat of seats) paid[seat] = numeric(hand.contributions?.[seat]);
     pendingPot = {total, config};
-    additions.forEach(({seat, amount}, index) => {
-      fly(seat, amount, 'contribution', {duration: 1000, delay: index * 80});
-    });
+    const immediate = additions.filter(({seat, amount}, index) => !fly(seat, amount, 'contribution', {duration: 1000, delay: index * 80}));
     if ([...motions].some(motion => motion.flow === 'contribution')) {
       if (nodes['pot-display']) nodes['pot-display'].dataset.flow = 'contribution';
+      if (immediate.length) showArrivedPot(immediate.reduce((sum, item) => sum + item.amount, 0));
     } else commitPot();
 
     if (!result) {
@@ -271,6 +287,7 @@ export function createPotView({root = globalThis.document, reducedMotion = false
         write('pot-event', events.map(event => `${name(event.actor)}${english ? ' · ' : ''}${labels[event.type]} +${money(event.amount)}`).join(' · '));
       }
       if (additions.length) notifyPhase('contribution', additions);
+      if (immediate.length) notifyPhase('arrival', immediate);
       return;
     }
 
@@ -293,6 +310,7 @@ export function createPotView({root = globalThis.document, reducedMotion = false
       recipients: recipients.map(seat => ({seat, amount: numeric(result[seat].netReturn)}))};
     settlementUntil = Math.max(now(), ...[...motions].map(motion => motion.end));
     if (additions.length) notifyPhase('contribution', additions);
+    if (immediate.length) notifyPhase('arrival', immediate);
     advanceSettlement();
   }
 
