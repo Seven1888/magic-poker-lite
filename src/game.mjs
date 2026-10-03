@@ -19,6 +19,7 @@ import {renderWinRate} from './win-rate-view.mjs';
 import {responseBadgeView,captureResponseSource,responseSourceMatches} from './action-response-view.mjs';
 import {boardCardView,nextBoardReveal,tableDeckCounts} from './board-presentation.mjs';
 import {createResponseFlight} from './response-flight-view.mjs';
+import {createActionFlow} from './action-flow-view.mjs';
 document.documentElement.style.setProperty('--game-speed',String(GAME_SPEED));
 const $=id=>document.getElementById(id);
 // Stable player controls; engine actions and opponent response types stay unchanged.
@@ -29,6 +30,7 @@ const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const potView=createPotView({root:document,reducedMotion:reduceMotion,locale:'en',onPhase:presentTransferPhase});
 const effects=createGameEffects({root:document,reducedMotion:reduceMotion});
 const responseFlight=createResponseFlight({root:document,effects,reducedMotion:reduceMotion});
+const actionFlow=createActionFlow({root:document});
 const bankrollView=createBankrollView({root:document});
 let soundOn=true;
 try{soundOn=localStorage.getItem('magic-poker-lite:sound')!=='off';}catch{}
@@ -143,7 +145,7 @@ function setupBuyin(){
 }
 function updateEntry(){
  const available=bankroll(),minimum=minimumAssets(entryBase,selectedBet),index=betValues.indexOf(selectedBet);
- updateBetSelection(selectedBet);$('entry-assets').textContent=money(available);$('entry-minimum').textContent=money(minimum);
+ updateBetSelection(selectedBet);$('entry-minimum').textContent=money(minimum);
  $('entry-blinds').textContent=`SB ${blindAmount(selectedBet/2)} · BB ${blindAmount(selectedBet)}`;
  const jackpotOn=entryBase.jackpotEnabled!==false;
  $('entry-jp-award').textContent=jackpotOn?money(quoteJackpot('royal',selectedBet).award):'OFF';
@@ -188,8 +190,8 @@ $('next-hand').onclick=newHand;
 const visibleStreet=()=>shownBoard>=5?'river':shownBoard===4?'turn':shownBoard>0?'flop':'preflop';
 function setTableCue(mode='',label='',{seat='',detail=''}={}){
   $('game').dataset.presentation=mode;$('game').dataset.activeSeat=seat;const cue=$('table-cue');cue.hidden=!mode;
+  actionFlow.render({mode,label,seat,detail,actor:hand?.actor,playing:hand?.status==='playing'});
   if(!mode||mode==='action')bankrollView.clearChanges();
-  if(['refund','payout','refresh','bonus'].includes(mode))$('showdown-preview').hidden=true;
   cue.innerHTML=mode?`${icon(['payout','contribution','refund','refresh','bonus'].includes(mode)?'chip':'cards')}<span class="cue-copy"><strong>${esc(label)}</strong>${detail?`<small>${esc(detail)}</small>`:''}</span>`:'';
 }
 function replaceCardFace(element,card,options={}){
@@ -215,7 +217,7 @@ function updateShowdownView(){
     panel.setAttribute('aria-label',`Opponent ${view.npcHandName}. Best five from revealed cards. ${view.revealedCount} of 2 hole cards revealed.`);
   }
   const view=showdownViewCache.value;if(!view){panel.hidden=true;return null;}
-  panel.hidden=['refund','payout','refresh','bonus'].includes($('game').dataset.presentation);
+  panel.hidden=false;
   document.querySelector('.response-panel').hidden=true;
   for(const [id,cards] of [['npc-cards',revealedNpcHole],['board',visibleBoard]])[...$(id).children].forEach((el,index)=>el.classList.toggle('npc-best',!!cards[index]&&view.npcBest5.includes(cards[index])));
   const rate=`${Math.round(view.equity*100)}%`;
@@ -233,7 +235,6 @@ function updateVisibleCards(){
   const view=getCurrentHandView(holes,board),best=view.highlighted;
   for(const [id,cards] of [['player-cards',holes],['board',board]])[...$(id).children].forEach((el,i)=>el.classList.toggle('best',!!cards[i]&&best.includes(cards[i])));
   $('hand-type').textContent=view.name;$('table-hand-type').textContent=view.name;
-  $('table-rank-button').style.backgroundImage=`url('assets/legacy/type${view.royal?10:view.category+1}-base.png')`;
   $('table-rank-button').setAttribute('aria-label',`Current hand: ${view.name}. View hand rankings.`);
   const remaining=visibleDeck().deckRemaining;
   $('deck-count').textContent=remaining;
@@ -329,8 +330,6 @@ function render(){
     },0);}
   }else{$('hand-type').textContent=handView.name;$('equity').textContent='Two cards. Your next move.';}
   $('table-hand-type').textContent=handView.name;
-  const plaque=handView.royal?10:handView.category+1;
-  $('table-rank-button').style.backgroundImage=`url('assets/legacy/type${plaque}-base.png')`;
   $('table-rank-button').setAttribute('aria-label',`Current hand: ${$('table-hand-type').textContent}. View hand rankings.`);
   renderJackpot();renderActions();paintDistribution();
 }
@@ -405,7 +404,8 @@ async function continuePlay(){
     if(hasDraw){
       const target=source?responseFlight.target()||$('action-buttons').querySelector(`[data-action="${source.action.type}"] .action-response-badges`):null;
       const marker=target?document.createElement('span'):null;
-      if(marker){marker.className='action-response-sweep';target.append(marker);}else setTableCue('action','OPPONENT DECIDING');
+      if(marker){marker.className='action-response-sweep';target.append(marker);}
+      setTableCue('action','OPPONENT DECIDING',{seat:'npc'});
       const motion=decisionMotion(hand.config.animationMs,selected.roll,{reducedMotion:reduceMotion}),sweepMs=Math.min(450,motion.duration);
       // Opponent decisions keep their original reading time; other presentation stays at 1.2x.
       if(sweepMs>0){
@@ -415,9 +415,9 @@ async function continuePlay(){
       marker?.remove();
       lastResponse=entry;
       responseDecision=source?{phase:'result',selected:selected.type}:null;renderActions();
-      if(selected.type==='call')setTableCue();else setTableCue('action',`OPPONENT ${LABELS[selected.type]}`,{seat:'npc'});
+      setTableCue('action',`OPPONENT ${LABELS[selected.type]}`,{seat:'npc'});
       await delay(Math.max(0,motion.duration-sweepMs),{speed:1});
-    }else{lastResponse=null;if(selected.type==='call')setTableCue();else setTableCue('action',`OPPONENT ${LABELS[selected.type]}`,{seat:'npc'});await delay(reduceMotion?0:550,{speed:1});}
+    }else{lastResponse=null;setTableCue('action',`OPPONENT ${LABELS[selected.type]}`,{seat:'npc'});await delay(reduceMotion?0:550,{speed:1});}
     const before=hand.board.length;
     if(selected.type==='fold'){await effects.discardCards([...$('npc-cards').children]);$('game').dataset.npcFolded='true';}
     applyAction(hand,selected.type);drawLog.push(entry);$('game').dataset.npcState=selected.type;
@@ -477,5 +477,6 @@ function renderHistory(){
 window.addEventListener('storage',e=>{if(e.key===CONFIG_KEY)toast('Settings saved. Rejoin the table to apply them.');});
 window.addEventListener('error',e=>{toast(translateError(e.error||e.message));});
 render();
+setTableCue();
 setupBuyin();
 

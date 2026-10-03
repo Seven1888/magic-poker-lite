@@ -7,6 +7,16 @@ description: 設計與驗證 Magic Poker Lite 的手機直版簡化德州、公�
 
 先讀 [工作規範](../../../AGENTS.md)。現行規格讀 [詳細流程與數學](../../../docs/04-game-flow-and-math.md)，引擎介面與精確公式讀 [API](../../../API-CONTRACT.md)。查既有遊戲事實時才讀 [三款遊戲研究](../../../docs/01-existing-games.md)；早期討論稿為歷史提案，不是現行規格。
 
+## 最新 v28：完整中央抽選與牌桌資訊分層（2026-10-03）
+
+以下覆蓋 v27 的介面規格，規則與數學仍為 v26 `heads-up-two-blinds-v1`。入口 backdrop 必須完全透明且無 blur；入口內只列 MINIMUM，開啟時將原資產 dock 暫移至 viewport 底部，關閉還原，不新增另一份 BALANCE。特色／BET／FIGHT 三段、BET 1 與＋／－維持，短螢幕不得裁切內容或阻擋操作。
+
+分清兩種機率呈現：玩家按鈕固定 FOLD／CALL／RAISE，按鈕 badge 只列 NPC FOLD／RAISE；中央抽選必須顯示完整分布所有正機率的真實動作，包含 CALL／CHECK／BET。中央 CALL 有籌碼圖、名稱、原始機率及正確結果高亮，不能省略跟注區域、重分配百分比或以玩家按鈕名稱替換 NPC 動作。飛行仍以有效按鈕 badge 聯集為起點，抵達後才開始原抽選；同手同街驗證、單次抽樣與原決策時序不變。
+
+行動資訊集中至獨立 DEAL → YOU → BOSS → POT 薄流程列，當前階段顯示短動詞與原值金額；title／`role=status` 保留完整內容，同內容不反覆寫入 live region。停用舊 `table-cue`／`decision-veil`。牌採單一薄邊與柔影，底牌 ±2°，NPC 牌型直接在兩張底牌下方；最佳五張金／紅／共用雙色與暗牌可見時機不變。`casino-v28.css` 統一緞面按鈕、薄金屬邊及清楚主畫面，不能把美術調整帶入引擎、賠率、RNG 或金流。
+
+151／151 測試與 Chrome／WebKit 入口 15 組檢查已回報通過；主牌局 QA 已完成，最新完成狀態見 docs/06。截圖需標明自然牌局或呈現 fixture，不能混稱自然抽選結果。
+
 ## 最新 v27：固定 FOLD／CALL／RAISE 與本次花費（2026-10-03）
 
 依使用者最新指示，玩家按鈕名稱固定左 FOLD／中 CALL／右 RAISE：底層 `check`／`call` 都映射成 CALL，`bet`／`raise` 都映射成 RAISE。這是本作簡化介面名稱，不是標準德州術語定義；引擎 `type` 與 NPC 真實機率種類仍保留 `check`／`call`／`bet`／`raise`。付費 CALL／RAISE 顯示籌碼小圖＋實際新增支付金額，取合法動作 `amount`，不能用 `to` 或重複加上盲注。免費過牌的 CALL 不顯示籌碼／0；FOLD 只顯示名稱，沒有籌碼／金額。保留 NPC 回應機率與最多六位小數格式。本段覆蓋 v25／v26 的按鈕無金額規格，其他雙盲、RNG、帳務、單擊鎖與演出規則維持；更新教學圖時使用本版實際畫面，不將舊圖當作新驗證。

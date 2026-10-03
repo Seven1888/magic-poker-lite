@@ -95,6 +95,8 @@ hand = {
 
 `legalActions(hand, actor=hand.actor)` -> `[{type,label,amount,to,allIn}]`. Actions are fold/check/call/bet/raise. All-in is a status of a capped call/bet/raise (no extra button). `amount` is incremental cost, `to` is total this street. `applyAction(hand, type)` mutates hand and returns it; accepts `allin` as an alias only when a legal capped bet/raise/call is actually all-in. Bet/raise sizes are fixed; one raise per street. The small blind/button acts first preflop; big blind acts first postflop. Engine advances a completed street immediately and runs out remaining board on matched all-in. Since v27 (2026-10-03), player button labels stay FOLD/CALL/RAISE: engine check/call maps to CALL, and bet/raise maps to RAISE. This is a simplified UI mapping, not standard poker terminology; engine action types and NPC distribution types keep their actual meanings. Paid CALL/RAISE actions show a chip icon and the precise incremental `amount`; free CALL (check) and FOLD omit both the icon and amount. NPC response probabilities remain visible, and accessible labels, tooltips and accounting retain precise amounts. This is a presentation change only.
 
+v28（2026-10-03）展示契約：玩家按鈕 badge 只篩選 FOLD／RAISE，中央抽選則保留完整分布所有正機率的實際 `type`，包括 call／check／bet，不能套用玩家按鈕的簡化名稱。CALL 區域顯示籌碼圖、名稱與原始百分比，結果按真實 `selected.type` 高亮；沒有重新正規化或額外抽樣。`createActionFlow({root}).render({mode,label,seat,detail,actor,playing})` 僅將現有演出狀態投影至 DEAL／YOU／BOSS／POT 流程列，保留完整提示與無障礙訊息，相同內容不重複播報；舊 table-cue／decision-veil 不顯示。上述皆不改本節引擎介面、賠率或結算公式。
+
 Settlement:
 
 ```js

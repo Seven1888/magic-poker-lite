@@ -1,4 +1,5 @@
 /** BET-entry decoration only. No game state, validation, money movement or RNG. */
+import {setupEntryLayout} from './entry-layout.mjs';
 /** Compact introduction, separate BET card, and an independent FIGHT action. */
 export function setupEntryFeatures(root = globalThis.document) {
   const doc = root.ownerDocument || root;
@@ -8,11 +9,11 @@ export function setupEntryFeatures(root = globalThis.document) {
   panel.setAttribute('aria-label', 'Game features');
   panel.innerHTML = `
     <section class="feature-page feature-game-page" id="entry-feature-0" aria-label="Feature 1 of 3: See the odds">
-      <div class="feature-art feature-game-shot feature-odds-shot"><img src="assets/tutorial-odds-v27.png" alt="Actual game view with opponent fold and raise chances inside your action button" draggable="false"><small class="feature-capture-note">EXAMPLE GAME</small></div>
+      <div class="feature-art feature-game-shot feature-odds-shot"><img src="assets/tutorial-odds-v28.png" alt="Actual game view with opponent fold and raise chances inside your action button" draggable="false"><small class="feature-capture-note">EXAMPLE GAME</small></div>
       <h3>SEE THE ODDS</h3><p>See the boss’s fold and raise chances.<br>Shown on your button before you play.</p>
     </section>
     <section class="feature-page feature-game-page" id="entry-feature-1" aria-label="Feature 2 of 3: Make your best five" hidden>
-      <div class="feature-art feature-game-shot feature-best5-shot"><img src="assets/tutorial-best5-v27.png" alt="Actual poker table showing shared cards, your hole cards, and gold best-five highlights" draggable="false"><small class="feature-capture-note">EXAMPLE HAND</small></div>
+      <div class="feature-art feature-game-shot feature-best5-shot"><img src="assets/tutorial-best5-v28.png" alt="Actual poker table showing shared cards, your hole cards, and gold best-five highlights" draggable="false"><small class="feature-capture-note">EXAMPLE HAND</small></div>
       <h3>MAKE YOUR BEST 5</h3><p>Five cards start face down: reveal 3, then 1, then 1.<br>Your strongest five cards glow gold.</p>
     </section>
     <section class="feature-page feature-game-page" id="entry-feature-2" aria-label="Feature 3 of 3: Jackpot bonus" hidden>
@@ -59,6 +60,7 @@ export function setupEntryFeatures(root = globalThis.document) {
   // Focusing the bottom action scrolls short iPhone/landscape dialogs past
   // the tutorial and close button before the player has seen them.
   root.querySelector('#buyin-dialog .dialog-close').setAttribute('autofocus','');
+  setupEntryLayout(root);
   select(0);
 }
 

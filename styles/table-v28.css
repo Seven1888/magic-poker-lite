@@ -1,0 +1,51 @@
+/* A close, gentle fan keeps both hole-card faces easy to read. */
+#npc-cards .card:first-child { transform: rotate(-2deg) translateY(2px); }
+#npc-cards .card:last-child { transform: rotate(2deg) translateY(2px); }
+#player-cards .card:first-child { transform: rotate(-2deg); }
+#player-cards .card:last-child { transform: rotate(2deg); }
+
+/* The revealed hand belongs immediately below the opponent's held cards. */
+#showdown-preview {
+  top: 290px; left: 50%; right: auto; width: 300px; height: 22px;
+  transform: translateX(-50%); padding: 0 4px;
+}
+#showdown-preview .showdown-caption {
+  flex-direction: row; justify-content: center; align-items: center; gap: 7px;
+}
+#showdown-preview .showdown-caption > strong {
+  font-size: 22px; line-height: 22px; letter-spacing: -.4px;
+}
+#showdown-preview .showdown-caption > span {
+  font-size: 8px; line-height: 10px; white-space: nowrap; letter-spacing: 0;
+}
+
+/* A single sheet has one fine edge; its soft shadow gives it room above the felt. */
+#player-cards .card.original-card, #npc-cards .card.original-card,
+#board .card.original-card {
+  box-shadow: 0 1px 0 #d5cbbb, 0 9px 12px -3px #200910a3;
+}
+#board .card.original-card {
+  box-shadow: 0 1px 0 #d5cbbb, 0 10px 11px -3px #2009109c;
+}
+
+/* Crisp coloured rims remain legible without a neon halo or stacked paper edges. */
+#player-cards .card.best, #board .card.best {
+  outline: 2px solid #eec259; outline-offset: 0;
+  box-shadow: 0 1px 0 #bf9341, 0 9px 12px -3px #200910a3;
+}
+#player-cards .card.best:after, #board .card.best:after {
+  border: 1px solid #ffe8a0; box-shadow: none;
+}
+#npc-cards .card.npc-best, #board .card.npc-best {
+  outline: 2px solid #e64c61; outline-offset: 0;
+  box-shadow: 0 1px 0 #a13749, 0 9px 12px -3px #200910a3;
+}
+#npc-cards .card.npc-best:before, #board .card.npc-best:before {
+  border: 1px solid #ffb1b3; box-shadow: none;
+}
+#board .card.best.npc-best {
+  outline: 2px solid #e64c61; outline-offset: 1px;
+  box-shadow: 0 1px 0 #a13749, 0 10px 11px -3px #2009109c;
+}
+#board .card.best.npc-best:before { border: 0; box-shadow: none; }
+#board .card.best.npc-best:after { border: 2px solid #f1ca68; box-shadow: none; }

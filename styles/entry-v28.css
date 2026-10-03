@@ -1,0 +1,54 @@
+/* The entry sits on the live table; it does not darken or blur the scene. */
+#buyin-dialog::backdrop { background: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; }
+#buyin-dialog {
+  --entry-top: max(180px, calc(var(--viewport-height, 100svh) * .27));
+  inset-block-start: calc(var(--viewport-offset-top, 0px) + var(--safe-top) + var(--entry-top));
+  inset-block-end: calc(100% - var(--viewport-height, 100svh) - var(--viewport-offset-top, 0px) + var(--safe-bottom) + 56px);
+  width: 306px; max-width: calc(100vw - 40px); margin-block: 0 auto;
+  max-height: calc(var(--viewport-height, 100svh) - var(--safe-top) - var(--safe-bottom) - var(--entry-top) - 56px);
+  animation: none; overflow-y: auto;
+}
+#buyin-dialog #buyin-form { gap: 7px; }
+#buyin-dialog #entry-title { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); margin: 0; }
+#buyin-dialog .entry-intro-card { padding: 0; border-width: 1px; border-radius: 10px; box-shadow: 0 2px 5px #0005; }
+#buyin-dialog .entry-features { border: 0; border-radius: 9px 9px 0 0; background: #182337; }
+#buyin-dialog .feature-game-shot { height: 134px; }
+#buyin-dialog .feature-page h3 { font-size: 16px; line-height: 20px; margin: 4px 4px 2px; }
+#buyin-dialog .feature-page p { font-size: 10px; line-height: 13px; margin: 0 6px 2px; }
+#buyin-dialog .entry-feature-nav { height: 30px; min-height: 30px; gap: 8px; }
+#buyin-dialog .entry-feature-nav > button, #buyin-dialog .entry-feature-nav [data-feature] { width: 34px; height: 30px; }
+#buyin-dialog .entry-feature-nav [data-feature]:after { top: 11px; left: 13px; width: 7px; height: 7px; }
+#buyin-dialog .dialog-close { top: 0; right: 0; z-index: 4; width: 38px; height: 38px; min-width: 38px; min-height: 38px; line-height: 34px; font-size: 24px; color: #fff3d6; background: #101a2be6; border-radius: 0 10px 0 10px; }
+#buyin-dialog .entry-bet-card { padding: 5px 10px 1px; border: 1px solid #c4a16a99; border-radius: 9px; box-shadow: 0 2px 5px #0005; }
+#buyin-dialog .entry-bet-picker { margin: 0; gap: 20px; }
+#buyin-dialog #entry-bet { height: 40px; font-size: 29px; line-height: 38px; }
+#buyin-dialog .entry-bet-picker button { width: 40px; height: 40px; flex-basis: 40px; }
+#buyin-dialog .entry-funds { display: block; padding: 0; background: none; margin: 1px 0 0; }
+#buyin-dialog .entry-funds > div, #buyin-dialog .entry-funds > div > span { display: flex; align-items: center; justify-content: center; gap: 7px; border: 0; padding: 0; }
+#buyin-dialog .entry-funds .entry-minimum-icon { display: none; }
+#buyin-dialog .entry-funds small { font-size: 9px; line-height: 15px; }
+#buyin-dialog .entry-funds strong { font-size: 13px; line-height: 15px; }
+#buyin-dialog .entry-details summary { min-height: 22px; padding: 2px 4px; font-size: 9px; }
+#buyin-dialog .entry-fight-section { padding: 0 1px 3px; }
+#buyin-dialog .entry-start { min-height: 46px; padding: 7px 32px 9px; font-size: 25px; line-height: 26px; border-radius: 10px; }
+#buyin-dialog .entry-start i { top: 5px; }
+#buyin-dialog .feature-game-page .feature-jp-tiers { padding: 0 4px 3px; }
+/* This is the original balance dock, moved outside the scaled stage while entry is open. */
+html[data-entry-open='true'] body > .asset-dock {
+  position: fixed; top: auto; bottom: var(--safe-bottom); left: 50%; right: auto;
+  width: min(400px, calc(100vw - var(--safe-left) - var(--safe-right))); height: 46px;
+  transform: translateX(-50%); z-index: 20; margin: 0; box-sizing: border-box;
+}
+@media (max-height: 650px) {
+  #buyin-dialog { --entry-top: 180px; width: 284px; }
+  #buyin-dialog .feature-game-shot { height: 78px; }
+  #buyin-dialog .feature-page h3 { font-size: 15px; line-height: 18px; margin-top: 3px; }
+  #buyin-dialog .feature-page p { font-size: 9px; line-height: 12px; }
+  #buyin-dialog .entry-feature-nav { height: 26px; min-height: 26px; }
+  #buyin-dialog .entry-feature-nav > button, #buyin-dialog .entry-feature-nav [data-feature] { height: 26px; }
+  #buyin-dialog .entry-feature-nav [data-feature]:after { top: 9px; }
+  #buyin-dialog #buyin-form { gap: 5px; }
+}
+@media (max-height: 470px) {
+  #buyin-dialog { --entry-top: 72px; width: 300px; }
+}
