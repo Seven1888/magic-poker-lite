@@ -19,6 +19,7 @@ export function actionFlowState({mode='',label='',seat='',detail='',actor='',pla
   step='pot';
   const amount=amounts(detail).join('+');
   verb=`${{contribution:'IN',refund:'BACK',payout:'PAID',bonus:'JP'}[mode]}${amount?' '+amount:''}`;
+  if(mode==='contribution'&&/\b(SMALL|BIG) BLIND\b/i.test(label))verb=`${/SMALL BLIND/i.test(label)?'SB':'BB'}${amount?' '+amount:''}`;
   if(!amount)verb=mode==='contribution'&&/BLIND/i.test(label)?'BLINDS':mode==='payout'&&/SPLIT/i.test(label)?'SPLIT':mode==='payout'&&/COMPLETE/i.test(label)?'COMPLETE':verb;
  }else if(mode==='refresh'){
   step='boss';verb='READY';

@@ -9,13 +9,15 @@ const distribution=Object.freeze([
 
 test('central draw includes the missing CALL probability and only highlights the actual CALL result',()=>{
  const before=JSON.stringify(distribution);
- const view=responseDistributionView(distribution,{phase:'result',selected:'call'});
+ const view=responseDistributionView(distribution,{phase:'result',selected:'call',roll:.5});
  assert.equal(view.count,3);
  assert.match(view.markup,/data-response="call" data-probability="0.571"/);
  assert.match(view.markup,/>57.1%<\/b>/);
  assert.match(view.markup,/is-selected" data-response="call"/);
  assert.equal((view.markup.match(/is-selected/g)||[]).length,1);
  assert.match(view.markup,/r="10"/,'CALL has a chip icon');
+ assert.match(view.markup,/style="flex:0 0 57.099999999999994%"/,'segment uses its raw probability rather than equal widths');
+ assert.match(view.markup,/response-result-marker" style="left:50%"/);
  assert.doesNotMatch(responseBadgeView(distribution).markup,/data-response="call"/,'button previews retain FOLD/RAISE only');
  assert.equal(JSON.stringify(distribution),before);
 });
@@ -30,6 +32,11 @@ test('central draw retains raw probabilities, tiny positive outcomes and genuine
  assert.match(view.markup,/&lt;0.1%/);
  assert.match(view.markup,/>40.0%<\/b>/,'the raw .3996 is formatted, never rescaled to the positive sum');
  assert.match(view.markup,/is-selected" data-response="bet"/);
+ assert.match(view.markup,/style="flex:0 0 0.04%"/,'tiny segments keep their true width');
+ assert.match(view.markup,/response-track-legend/,'tiny outcomes get readable captions without enlarging their segments');
+ const caption=view.markup.split('response-track-legend')[1];
+ assert.match(caption,/data-response="check"/);
+ assert.doesNotMatch(caption,/data-response="bet"/,'readable outcomes remain inside the bar without duplicate external labels');
  assert.doesNotMatch(view.markup,/>CALL<|>RAISE</);
  assert.deepEqual(responseDistributionView([]),{count:0,markup:''});
 });
@@ -42,7 +49,7 @@ function fixture(){
   const node={dataset:{},style:{},children:[],innerHTML:'',removed:false,setAttribute(){},
    append(child){this.children.push(child);},remove(){this.removed=true;},
    querySelector(selector){return selector==='.action-response-badges'&&this.innerHTML?this:null;},
-   getBoundingClientRect(){const width=parseFloat(this.style.width);return {left:200-width/2,right:200+width/2,top:320,bottom:408,width,height:88};}};
+   getBoundingClientRect(){const width=parseFloat(this.style.width);return {left:200-width/2,right:200+width/2,top:320,bottom:384,width,height:64};}};
   nodes.push(node);return node;
  }};
  const source={querySelectorAll:()=>[
@@ -57,11 +64,11 @@ test('three central outcomes grow from the two original badge bounds and await f
  const f=fixture(),flight=createResponseFlight(f);
  const pending=flight.launch(f.source,distribution),panel=f.nodes[1];
  assert.equal(f.stage.dataset.responseFlight,'flying');
- assert.equal(panel.style.width,'304px');
+ assert.equal(panel.style.width,'360px');
  assert.equal(panel.dataset.outcomeCount,'3');
  assert.match(panel.innerHTML,/data-response="call"/);
- assert.match(f.animations[0].frames[0].transform,/translate\(-125px,349.5px\)/);
- assert.ok(f.animations[0].frames[0].transform.includes(`scale(${90/304},${27/88})`));
+ assert.match(f.animations[0].frames[0].transform,/translate\(-125px,361.5px\)/);
+ assert.ok(f.animations[0].frames[0].transform.includes(`scale(${90/360},${27/64})`));
  f.animations[0].resolve();assert.equal(await pending,true);
  assert.equal(f.stage.dataset.responseFlight,'ready');
  flight.update(distribution,{phase:'drawing'});

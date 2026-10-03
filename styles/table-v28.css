@@ -49,3 +49,24 @@
 }
 #board .card.best.npc-best:before { border: 0; box-shadow: none; }
 #board .card.best.npc-best:after { border: 2px solid #f1ca68; box-shadow: none; }
+
+/* The gentle fan leaves a small visible gap; keep the equity ring with its corner. */
+#player-cards { gap: 10px; }
+.game #player-win-rate:not([hidden]) { left: calc(50% + 85px); }
+
+/* Both seats use the original illustrated hand-rank plaques. */
+#showdown-preview { top:289px; width:220px; height:28px; padding:0 15px; background-color:transparent; background-position:center; background-size:100% 100%; background-repeat:no-repeat; filter:drop-shadow(0 2px 2px #1b0b15b3); }
+#showdown-preview .showdown-caption > strong { color:#fff0dc; font-size:16px; line-height:22px; letter-spacing:.2px; text-shadow:0 2px 1px #5a281c,1px 0 #5a281c,-1px 0 #5a281c; }
+#showdown-preview .showdown-caption > span { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
+
+/* Best-five ownership is encoded on the actual cards: gold inside, red outside. */
+#player-cards .card.best, #board .card.best { outline:3px solid #ffd35a; outline-offset:0; box-shadow:0 0 7px #ffce5080,0 8px 12px -3px #200910a3; }
+#player-cards .card.best:after, #board .card.best:after { border:2px solid #fff0a3; box-shadow:inset 0 0 3px #eab739aa; }
+#npc-cards .card.npc-best, #board .card.npc-best { outline:3px solid #ff3451; outline-offset:0; box-shadow:0 0 7px #f7274d90,0 8px 12px -3px #200910a3; }
+#npc-cards .card.npc-best:before, #board .card.npc-best:before { border:2px solid #ff91a0; box-shadow:inset 0 0 3px #f12a4b99; }
+#board .card.best.npc-best { outline:3px solid #ff3451; outline-offset:0; box-shadow:0 0 7px #f7274d90,0 8px 12px -3px #200910a3; }
+#board .card.best.npc-best:before { border:0; box-shadow:none; }
+#board .card.best.npc-best:after { border:3px solid #ffda60; box-shadow:inset 0 0 3px #fff0a3aa; }
+.game[data-revealed='2'] #board .card:not(.best):not(.npc-best),
+.game[data-revealed='2'] #player-cards .card:not(.best),
+.game[data-revealed='2'] #npc-cards .card:not(.npc-best) { filter:brightness(.78) saturate(.8); }

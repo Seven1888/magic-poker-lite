@@ -54,6 +54,25 @@ async function finishMotion(doc) {
   }
 }
 const text = (doc, id) => doc.getElementById(id).textContent;
+
+test('small blind reaches the pot before the big blind starts, without another charge or draw',async()=>{
+  const doc=fakeDocument(),events=[],view=createPotView({root:doc,onPhase:event=>events.push(event)});
+  const hand=startHand(createSession({},20)),before=JSON.stringify(hand),rng=hand.rng.state();
+  view.render(hand);
+  const [small,big]=flights(doc);
+  assert.equal(small.dataset.seat,hand.smallBlind);assert.equal(big.dataset.seat,hand.bigBlind);
+  assert.equal(small.animations[0].options.delay,0);
+  assert.ok(big.animations[0].options.delay>=small.animations[0].options.duration+atGameSpeed(240));
+  assert.deepEqual(events.map(event=>event.seats),[[hand.smallBlind]]);
+  small.animations[0].finish();await Promise.resolve();
+  assert.equal(text(doc,'pot-value'),String(hand.config.smallBlind));
+  assert.equal(events.at(-1).flow,'arrival');
+  big.animations[0].finish();await Promise.resolve();await finishMotion(doc);await view.whenIdle();
+  assert.deepEqual(events.map(event=>[event.flow,event.seats[0]]),[['contribution',hand.smallBlind],['arrival',hand.smallBlind],['contribution',hand.bigBlind],['arrival',hand.bigBlind]]);
+  assert.equal(text(doc,'pot-value'),String(hand.config.smallBlind+hand.config.bigBlind));
+  assert.equal(JSON.stringify(hand),before);assert.equal(hand.rng.state(),rng);
+});
+
 function passive(hand) {
   while (hand.status === 'playing') applyAction(hand, legalActions(hand).find(action => action.type === 'check' || action.type === 'call').type);
 }
@@ -154,7 +173,8 @@ test('same-hand rerenders do not replay payments; a raise animates only its addi
   assert.equal(text(doc, 'pot-value'), '15'); await finishMotion(doc); await view.whenIdle();
   assert.equal(text(doc, 'pot-value'), '30'); assert.equal(text(doc, 'pot-event'), '你加注 +15');
   view.render(hand); assert.equal(flights(doc).length, 3);
-  assert.ok(flights(doc).every(flight => flight.animations[0].options.duration === atGameSpeed(1000) && flight.animations[0].options.delay <= atGameSpeed(80)));
+  assert.ok(flights(doc).every(flight => flight.animations[0].options.duration === atGameSpeed(1000)));
+  assert.equal(flights(doc).at(-1).animations[0].options.delay,0,'the later raise starts immediately after the completed blinds');
 });
 
 test('fold settlement separates refund from net award and shows matched contributions', async () => {
@@ -471,7 +491,7 @@ test('a new hand cancels every pending settlement phase without releasing old re
     assert.ok(old.every(flight => flight.removed));
     assert.deepEqual(phases.slice(previousNotifications), ['contribution']);
     await finishMotion(doc); await view.whenIdle();
-    assert.deepEqual(phases.slice(previousNotifications), ['contribution', 'arrival', 'arrival'], 'only the next hand contributes arrival notifications');
+    assert.deepEqual(phases.slice(previousNotifications), ['contribution', 'arrival', 'contribution', 'arrival'], 'only the next hand contributes its two sequential blind notifications');
     assert.equal(text(doc, 'pot-value'), '15');
     view.render(null); assert.equal(text(doc, 'pot-value'), '0');
   }
@@ -559,8 +579,8 @@ test('a missing animation route arrives immediately while the visible route rema
   const view = createPotView({root: doc, onPhase: event => phases.push(event)}), hand = startHand(createSession({}, 20));
   view.render(hand);
   assert.equal(text(doc, 'pot-value'), '10');
-  assert.deepEqual(phases.map(event => event.flow), ['contribution', 'arrival']);
-  assert.deepEqual(phases[1], {flow: 'arrival', seats: ['npc'], amounts: {npc: 10}});
+  assert.deepEqual(phases.map(event => event.flow), ['contribution', 'contribution', 'arrival']);
+  assert.deepEqual(phases[2], {flow: 'arrival', seats: ['npc'], amounts: {npc: 10}});
   await finishMotion(doc); await view.whenIdle();
   assert.equal(text(doc, 'pot-value'), '15');
   assert.equal(phases.filter(event => event.flow === 'arrival').length, 2);

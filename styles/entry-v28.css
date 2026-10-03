@@ -1,10 +1,11 @@
-/* The entry sits on the live table; it does not darken or blur the scene. */
+/* The entry keeps the boss, Jackpot and original balance; table controls wait until entry closes. */
+html[data-entry-open='true'] .game > :not(.scene-art):not(.scene-closeup):not(.scene-light):not(.npc-grip):not(.jackpot-badge) { visibility:hidden !important; pointer-events:none !important; }
 #buyin-dialog::backdrop { background: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; }
 #buyin-dialog {
   --entry-top: max(180px, calc(var(--viewport-height, 100svh) * .27));
   inset-block-start: calc(var(--viewport-offset-top, 0px) + var(--safe-top) + var(--entry-top));
   inset-block-end: calc(100% - var(--viewport-height, 100svh) - var(--viewport-offset-top, 0px) + var(--safe-bottom) + 56px);
-  width: 306px; max-width: calc(100vw - 40px); margin-block: 0 auto;
+  width: 328px; max-width: calc(100vw - 28px); margin-block: 0 auto;
   max-height: calc(var(--viewport-height, 100svh) - var(--safe-top) - var(--safe-bottom) - var(--entry-top) - 56px);
   animation: none; overflow-y: auto;
 }
@@ -12,6 +13,38 @@
 #buyin-dialog #entry-title { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); margin: 0; }
 #buyin-dialog .entry-intro-card { padding: 0; border-width: 1px; border-radius: 10px; box-shadow: 0 2px 5px #0005; }
 #buyin-dialog .entry-features { border: 0; border-radius: 9px 9px 0 0; background: #182337; }
+#buyin-dialog .entry-guide-page { min-height: 0; padding:12px 10px 7px; }
+#buyin-dialog .entry-guide-eyebrow { display:block; margin-right:24px; color:#c9b491; font-size:9px; line-height:14px; font-weight:700; letter-spacing:1px; }
+#buyin-dialog .entry-features .entry-guide-page h3 { margin:4px 0 5px; color:#ffe4ac; font-size:21px; line-height:25px; letter-spacing:.1px; text-shadow:none; }
+#buyin-dialog .entry-features .entry-guide-page p { margin:4px 0; color:#e3e9f2; font-size:12px; line-height:16px; }
+#buyin-dialog .entry-guide-cards { display:flex; align-items:center; justify-content:center; gap:8px; margin:13px 0 10px; }
+#buyin-dialog .entry-guide-group > span { display:block; color:#c7d2e5; font-size:10px; line-height:15px; letter-spacing:.7px; font-weight:700; margin-bottom:6px; }
+#buyin-dialog .entry-guide-group > div { display:flex; gap:4px; }
+#buyin-dialog .entry-guide-group img { width:29px; height:38px; object-fit:fill; border-radius:3px; box-shadow:0 2px 3px #080d1899; }
+#buyin-dialog .entry-guide-group .entry-guide-best { outline:2px solid #dfb85a; outline-offset:1px; }
+#buyin-dialog .entry-guide-plus { align-self:flex-end; margin-bottom:9px; color:#e7c77f; font-size:19px; }
+#buyin-dialog .entry-guide-caption { color:#e6d5ad; font-size:11px; line-height:15px; }
+#buyin-dialog .entry-guide-caption > span { margin-right:4px; color:#9daecc; font-size:8px; font-weight:700; letter-spacing:.5px; }
+#buyin-dialog .entry-guide-actions { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:5px; margin:10px 0; }
+#buyin-dialog .entry-guide-actions > div { padding:7px 2px; border:0; border-bottom:2px solid #789c85; border-radius:0; background:none; }
+#buyin-dialog .entry-guide-actions > div:nth-child(2) { border-color:#d29f76; }
+#buyin-dialog .entry-guide-actions > div:nth-child(3) { border-color:#a895c6; }
+#buyin-dialog .entry-guide-actions b { display:block; color:#fff0d5; font-size:14px; line-height:18px; }
+#buyin-dialog .entry-guide-actions span { display:block; margin-top:2px; color:#e0dce6; font-size:9px; line-height:12px; }
+#buyin-dialog .entry-guide-odds { margin:5px 0 6px; }
+#buyin-dialog .entry-guide-odds > small { display:block; font-size:8px; line-height:13px; letter-spacing:.6px; color:#b4c3da; }
+#buyin-dialog .entry-guide-odds > div { display:flex; gap:0; height:19px; margin-top:3px; overflow:hidden; border-radius:3px; }
+#buyin-dialog .entry-guide-odds span { display:flex; align-items:center; justify-content:center; gap:3px; width:var(--chance); min-width:0; color:#f5f0df; font-size:9px; line-height:19px; background:#294d3e; }
+#buyin-dialog .entry-guide-odds span:nth-child(2) { background:#78394c; }
+#buyin-dialog .entry-guide-odds span:nth-child(3) { background:#503c6c; }
+#buyin-dialog .entry-guide-odds b { color:#fff0c9; font-size:10px; }
+#buyin-dialog .entry-guide-royal { display:flex; justify-content:center; gap:5px; margin:9px 0; }
+#buyin-dialog .entry-guide-royal img { width:28px; height:37px; border-radius:3px; box-shadow:0 2px 3px #080d1899; }
+#buyin-dialog .entry-guide-prize { display:flex; justify-content:center; align-items:center; gap:10px; margin:4px 0; }
+#buyin-dialog .entry-guide-prize .feature-jp-label { position:static; font-size:9px; line-height:15px; letter-spacing:.2px; }
+#buyin-dialog .entry-guide-prize #entry-jp-award { position:static; font-size:26px; line-height:30px; text-shadow:none; }
+#buyin-dialog .entry-guide-page .feature-jp-tiers { position:static; padding:3px 0 0; gap:10px; font-size:8px; line-height:13px; }
+#buyin-dialog .entry-guide-page .feature-jp-tiers b { font-size:10px; }
 #buyin-dialog .feature-game-shot { height: 134px; }
 #buyin-dialog .feature-page h3 { font-size: 16px; line-height: 20px; margin: 4px 4px 2px; }
 #buyin-dialog .feature-page p { font-size: 10px; line-height: 13px; margin: 0 6px 2px; }
@@ -40,14 +73,27 @@ html[data-entry-open='true'] body > .asset-dock {
   transform: translateX(-50%); z-index: 20; margin: 0; box-sizing: border-box;
 }
 @media (max-height: 650px) {
-  #buyin-dialog { --entry-top: 180px; width: 284px; }
+  #buyin-dialog { --entry-top: 170px; width: 306px; }
   #buyin-dialog .feature-game-shot { height: 78px; }
   #buyin-dialog .feature-page h3 { font-size: 15px; line-height: 18px; margin-top: 3px; }
   #buyin-dialog .feature-page p { font-size: 9px; line-height: 12px; }
-  #buyin-dialog .entry-feature-nav { height: 26px; min-height: 26px; }
-  #buyin-dialog .entry-feature-nav > button, #buyin-dialog .entry-feature-nav [data-feature] { height: 26px; }
-  #buyin-dialog .entry-feature-nav [data-feature]:after { top: 9px; }
+  #buyin-dialog .entry-feature-nav { height: 24px; min-height: 24px; }
+  #buyin-dialog .entry-feature-nav > button, #buyin-dialog .entry-feature-nav [data-feature] { height: 24px; }
+  #buyin-dialog .entry-feature-nav [data-feature]:after { top: 8px; }
   #buyin-dialog #buyin-form { gap: 5px; }
+  #buyin-dialog .entry-guide-page { padding:6px 8px 4px; }
+  #buyin-dialog .entry-features .entry-guide-page h3 { font-size:18px; line-height:22px; margin:2px 0; }
+  #buyin-dialog .entry-guide-cards { margin:7px 0; }
+  #buyin-dialog .entry-features .entry-guide-page p { font-size:11px; line-height:15px; margin:2px 0; }
+  #buyin-dialog .entry-guide-royal { margin:3px 0; }
+  #buyin-dialog .entry-guide-royal img { width:23px; height:30px; }
+  #buyin-dialog .entry-guide-prize { margin:2px 0; }
+  #buyin-dialog .entry-guide-prize #entry-jp-award { font-size:22px; line-height:24px; }
+  #buyin-dialog .entry-guide-actions { margin:6px 0; }
+  #buyin-dialog .entry-guide-actions > div { padding:5px 2px; }
+  #buyin-dialog .entry-guide-odds { margin:2px 0; }
+  #buyin-dialog .entry-details summary { min-height:20px; }
+  #buyin-dialog .entry-fight-section { padding-bottom:0; }
 }
 @media (max-height: 470px) {
   #buyin-dialog { --entry-top: 72px; width: 300px; }

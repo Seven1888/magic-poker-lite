@@ -1,21 +1,36 @@
-/* The chosen preview rises from its button before the opponent draw begins. */
+/* One continuous probability strip grows from the chosen button preview. */
 #response-flight-layer { position:absolute; inset:0; z-index:60; pointer-events:none; }
-.response-flyout { position:absolute; left:50%; top:47%; height:88px; transform:translate(-50%,-50%); transform-origin:center; filter:drop-shadow(0 10px 14px #130716cc); }
-.response-flyout .action-response-badges { position:relative; inset:0; width:100%; height:100%; gap:12px; }
-.response-flyout .action-response-badge { flex:1 1 0; height:88px; grid-template-rows:25px 37px; padding:10px 8px; border-width:2px; border-radius:12px; box-shadow:inset 0 2px #fff4,0 4px 0 #171426; }
-.response-flyout .response-badge-label { font-size:18px; line-height:25px; gap:5px; }
-.response-flyout .action-response-badge .ui-icon { width:19px; height:18px; }
-.response-flyout .response-badge-percent { font-size:29px; line-height:37px; letter-spacing:-.5px; }
+.response-flyout { position:absolute; left:50%; top:51%; height:64px; transform:translate(-50%,-50%); transform-origin:center; filter:drop-shadow(0 7px 9px #170b1ab3); }
+.response-flyout .response-probability-track { position:relative; inset:0; display:flex; width:100%; height:64px; gap:0; overflow:hidden; border:1px solid #d1b57d; border-radius:8px; background:#151b27; box-shadow:inset 0 1px #fff3,0 3px 0 #171426; }
+.response-flyout .action-response-badge { min-width:0; height:100%; margin:0; padding:7px 0; border:0; border-radius:0; grid-template-rows:20px 26px; container-type:inline-size; box-shadow:none; }
+.response-flyout .action-response-badge + .action-response-badge { box-shadow:inset 1px 0 #fce4bc50; }
+.response-flyout .response-badge-label { max-width:100%; font-size:clamp(10px,19cqw,16px); line-height:20px; gap:4px; }
+.response-flyout .action-response-badge .ui-icon { width:14px; height:14px; flex:none; }
+.response-flyout .action-response-badge.is-narrow .ui-icon { display:none; }
+.response-flyout .response-badge-percent { max-width:100%; font-size:clamp(14px,30cqw,24px); line-height:26px; letter-spacing:-.3px; }
 .response-flyout .action-response-badge[data-response='call'],
-.response-flyout .action-response-badge[data-response='check'] { border-color:#91cde8; background:linear-gradient(#285c80,#183654); color:#effaff; }
-.response-flyout .action-response-badge[data-response='bet'] { border-color:#c7a2e1; background:linear-gradient(#684480,#432455); color:#fff0ff; }
-.response-flyout[data-outcome-count='3'] .action-response-badges { gap:8px; }
-.response-flyout[data-outcome-count='3'] .action-response-badge { padding:10px 4px; }
-.response-flyout[data-outcome-count='3'] .response-badge-label { font-size:15px; gap:3px; }
-.response-flyout[data-outcome-count='3'] .action-response-badge .ui-icon { width:16px; height:16px; flex:none; }
-.response-flyout[data-outcome-count='3'] .response-badge-percent { font-size:25px; }
-.response-flyout .action-response-badge.is-selected { border-color:#fff3a9; box-shadow:inset 0 2px #fff8,0 0 0 3px #eaba50,0 0 24px #ffc74c99; }
-.response-flyout .action-response-sweep { width:32px; border-width:2px; border-radius:12px; background:linear-gradient(90deg,transparent,#fff2ad99,transparent); }
+.response-flyout .action-response-badge[data-response='check'] { background:linear-gradient(#285c80,#183654); color:#effaff; }
+.response-flyout .action-response-badge[data-response='bet'] { background:linear-gradient(#684480,#432455); color:#fff0ff; }
+.response-flyout .action-response-badge.is-selected { box-shadow:inset 0 2px #ffe5a2,inset 0 -2px #ffe5a2; }
+.response-flyout .action-response-sweep { top:0; bottom:0; width:2px; border:0; border-radius:0; transform:translateX(-50%); background:#fff1be; box-shadow:0 0 8px 2px #ffe7acaa; }
+.response-flyout .action-response-sweep:before,
+.response-flyout .action-response-sweep:after { content:''; position:absolute; left:50%; width:10px; height:7px; transform:translateX(-50%); background:#fff1be; }
+.response-flyout .action-response-sweep:before { top:0; clip-path:polygon(0 0,100% 0,50% 100%); }
+.response-flyout .action-response-sweep:after { bottom:0; clip-path:polygon(50% 0,100% 100%,0 100%); }
+/* Only tiny outcomes need captions; the readable sections keep their own labels. */
+.response-flyout .is-tiny .response-badge-label,
+.response-flyout .is-tiny .response-badge-percent { visibility:hidden; }
+.response-track-legend { display:flex; gap:10px; justify-content:center; align-items:center; min-height:27px; margin-top:4px; }
+.response-track-legend[data-align='start'] { justify-content:flex-start; }
+.response-track-legend[data-align='end'] { justify-content:flex-end; }
+.response-track-legend > span { display:flex; align-items:center; justify-content:center; gap:4px; padding:3px 6px; color:#ded9d0; white-space:nowrap; border-top:2px solid #ae8acb; border-radius:0 0 3px 3px; background:#171b27f5; }
+.response-track-legend > [data-response='fold'] { border-top-color:#74b67c; }
+.response-track-legend > :is([data-response='call'],[data-response='check']) { border-top-color:#6cadce; }
+.response-flyout .response-track-legend .response-badge-label,
+.response-flyout .response-track-legend .response-badge-percent { font-size:12.5px; line-height:17px; letter-spacing:0; }
+.response-track-legend .ui-icon { display:none; }
+.response-track-legend > .is-selected { color:#ffdf92; }
+.response-flyout .action-response-badge.is-selected { color:#ffdf92; }
 .game[data-response-flight] .chosen-action .action-response-badges { visibility:hidden; }
 .game[data-npc-folded='true'] #npc-cards { visibility:hidden; }
 @media(prefers-reduced-motion:reduce) { .response-flyout { filter:none; } }

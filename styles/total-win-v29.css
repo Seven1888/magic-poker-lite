@@ -1,0 +1,56 @@
+/* The payout replaces the pot's readout on the felt, leaving all cards visible. */
+.game .table-total-win {
+  position: absolute; top: 504px; left: 50%; width: 310px; height: 72px;
+  transform: translateX(-50%); z-index: 7; pointer-events: none;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2px; padding: 2px 0 5px; background: none; border: 0;
+  text-align: center; font-variant-numeric: tabular-nums;
+  --total-win-scale: 1;
+  transition: left calc(.36s / var(--game-speed, 1.2)) ease-out,
+    width calc(.36s / var(--game-speed, 1.2)) ease-out;
+}
+.game .table-total-win[hidden] { display: none !important; }
+/* Leave the outgoing physical stack at the left. Centre only after it clears. */
+.game[data-total-win]:has(#pot-chips .casino-chip) .table-total-win {
+  left: calc(50% + 72px); width: 220px; --total-win-scale: .72;
+}
+/* Outgoing chip stacks stay visible until pot-view clears them on arrival. */
+.game[data-total-win] #pot-label, .game[data-total-win] #pot-value,
+.game[data-total-win] #pot-detail, .game[data-total-win] #pot-event,
+.game[data-total-win] #pot-info-button { visibility: hidden; }
+.total-win-label {
+  color: #e8c88e; font-size: 11px; line-height: 14px; font-weight: 800;
+  letter-spacing: 2.4px; text-shadow: 0 1px 2px #2b0819;
+}
+.total-win-amount {
+  display: block; width: 100%; color: #ffebba;
+  font: 800 calc(var(--total-win-font, 46px) * var(--total-win-scale))/48px Georgia, 'Times New Roman', serif;
+  letter-spacing: -.5px; white-space: nowrap;
+  text-shadow: 0 1px #b1813e, 0 3px 4px #290810b3;
+  transition: font-size calc(.36s / var(--game-speed, 1.2)) ease-out;
+}
+.table-total-win:after {
+  content: ''; position: absolute; bottom: 0; left: 20%; right: 20%; height: 1px;
+  background: linear-gradient(90deg, transparent, #caa56a99 35%, #f4dca4aa 50%, #caa56a99 65%, transparent);
+}
+.table-total-win[data-phase='counting'] .total-win-label {
+  animation: total-win-enter calc(.4s / var(--game-speed, 1.2)) ease-out both;
+}
+.table-total-win[data-phase='settled'][data-outcome='win'] .total-win-amount {
+  animation: total-win-land calc(.36s / var(--game-speed, 1.2)) ease-out both;
+}
+.table-total-win[data-outcome='split'] .total-win-label,
+.table-total-win[data-outcome='returned'] .total-win-label { color: #cfcdc4; }
+.table-total-win[data-outcome='split'] .total-win-amount,
+.table-total-win[data-outcome='returned'] .total-win-amount { color: #e3d8bf; font-size: calc(min(var(--total-win-font, 46px), 34px) * var(--total-win-scale)); }
+.table-total-win[data-outcome='loss'] .total-win-label { color: #b7a7a9; letter-spacing: 1.7px; }
+.table-total-win[data-outcome='loss'] .total-win-amount { color: #bdaaa7; font-size: calc(24px * var(--total-win-scale)); text-shadow: 0 1px 2px #240916; }
+.table-total-win[data-outcome='loss']:after { opacity: .4; }
+.total-win-announcement {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip-path: inset(50%); white-space: nowrap;
+}
+.table-total-win[data-motion='reduced'], .table-total-win[data-motion='reduced'] * { animation: none !important; transition: none !important; }
+@keyframes total-win-enter { from {opacity: .3; transform: translateY(3px);} to {opacity: 1; transform: translateY(0);} }
+@keyframes total-win-land { from {transform: scale(1.035); color: #fff9dc;} to {transform: scale(1); color: #ffebba;} }
+@media (prefers-reduced-motion: reduce) { .table-total-win, .table-total-win * { animation: none !important; transition: none !important; } }

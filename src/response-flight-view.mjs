@@ -2,13 +2,22 @@ import {pct,esc} from './shared.mjs';
 import {icon} from './ui-icons.mjs';
 
 /** The central draw shows every real outcome; button previews stay FOLD/RAISE only. */
-export function responseDistributionView(distribution=[],{phase='preview',selected=null}={}){
+export function responseDistributionView(distribution=[],{phase='preview',selected=null,roll=null}={}){
  const outcomes=distribution.filter(outcome=>Number.isFinite(outcome.probability)&&outcome.probability>0);
  const state=['preview','drawing','result'].includes(phase)?phase:'preview';
- return {count:outcomes.length,markup:outcomes.length?`<span class="action-response-badges" data-phase="${state}" aria-hidden="true">${outcomes.map(outcome=>{
+ const marker=state==='result'&&Number.isFinite(roll)&&roll>=0&&roll<1?`<span class="action-response-sweep response-result-marker" style="left:${roll*100}%"></span>`:'';
+ let cursor=0;
+ const labels=outcomes.map(outcome=>{
   const type=esc(outcome.type),label=outcome.probability<.001?'<0.1%':pct(outcome.probability);
-  return `<span class="action-response-badge${state==='result'&&selected===outcome.type?' is-selected':''}" data-response="${type}" data-probability="${outcome.probability}"><span class="response-badge-label">${icon(outcome.type==='call'?'chip':outcome.type)}${type.toUpperCase()}</span><b class="response-badge-percent">${esc(label)}</b></span>`;
- }).join('')}</span>`:''};
+  const midpoint=cursor+outcome.probability/2;cursor+=outcome.probability;
+  return {outcome,type,midpoint,copy:`<span class="response-badge-label">${icon(outcome.type==='call'?'chip':outcome.type)}${type.toUpperCase()}</span><b class="response-badge-percent">${esc(label)}</b>`};
+ });
+ const smallLabels=labels.filter(({outcome})=>outcome.probability<.1);
+ const captionCenter=smallLabels.reduce((sum,item)=>sum+item.midpoint,0)/smallLabels.length;
+ const captionAlign=captionCenter<1/3?'start':captionCenter>2/3?'end':'center';
+ return {count:outcomes.length,markup:outcomes.length?`<span class="action-response-badges response-probability-track" data-phase="${state}" aria-hidden="true">${labels.map(({outcome,type,copy})=>
+  `<span class="action-response-badge${outcome.probability<.2?' is-narrow':''}${outcome.probability<.1?' is-tiny':''}${state==='result'&&selected===outcome.type?' is-selected':''}" data-response="${type}" data-probability="${outcome.probability}" style="flex:0 0 ${outcome.probability*100}%">${copy}</span>`
+ ).join('')}${marker}</span>${smallLabels.length?`<span class="response-track-legend" data-align="${captionAlign}" aria-hidden="true">${smallLabels.map(({type,copy})=>`<span data-response="${type}"${state==='result'&&selected===type?' class="is-selected"':''}>${copy}</span>`).join('')}</span>`:''}`:''};
 }
 
 /** Move an existing public preview, without sampling or reading game state. */
@@ -23,7 +32,7 @@ export function createResponseFlight({root=globalThis.document,effects,reducedMo
   if(!panel)return;
   const view=responseDistributionView(distribution,decision);
   panel.innerHTML=view.markup;
-  panel.style.width=view.count<=1?'146px':view.count===2?'290px':'304px';
+  panel.style.width='360px';
   panel.dataset.outcomeCount=String(view.count);
   if(stage.dataset.responseFlight!=='flying')stage.dataset.responseFlight=decision.phase||'ready';
  }

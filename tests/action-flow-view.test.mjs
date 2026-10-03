@@ -19,6 +19,8 @@ test('flow uses actual presentation stages and action seats, without remapping N
 test('flow keeps exact transfer amounts and full details while using short POT verbs',()=>{
  for(const [mode,label,detail,verb] of [
   ['contribution','BOTH PLAYERS POST BLINDS','0.015 + 0.03 → POT','IN 0.015+0.03'],
+  ['contribution','YOU SMALL BLIND','0.015 → POT','SB 0.015'],
+  ['contribution','OPPONENT BIG BLIND','0.03 → POT','BB 0.03'],
   ['refund','UNCALLED CHIPS BACK','YOU +0.015','BACK 0.015'],
   ['payout','SPLIT POT','YOU +1,234.56789 · OPPONENT +1,234.56789','PAID 1,234.56789+1,234.56789'],
   ['bonus','JACKPOT BONUS','+200 TO YOUR CHIPS','JP 200']]){

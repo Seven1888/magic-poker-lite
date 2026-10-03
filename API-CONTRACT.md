@@ -97,6 +97,8 @@ hand = {
 
 v28（2026-10-03）展示契約：玩家按鈕 badge 只篩選 FOLD／RAISE，中央抽選則保留完整分布所有正機率的實際 `type`，包括 call／check／bet，不能套用玩家按鈕的簡化名稱。CALL 區域顯示籌碼圖、名稱與原始百分比，結果按真實 `selected.type` 高亮；沒有重新正規化或額外抽樣。`createActionFlow({root}).render({mode,label,seat,detail,actor,playing})` 僅將現有演出狀態投影至 DEAL／YOU／BOSS／POT 流程列，保留完整提示與無障礙訊息，相同內容不重複播報；舊 table-cue／decision-veil 不顯示。上述皆不改本節引擎介面、賠率或結算公式。
 
+v29（2026-10-04，本地完整流程驗證通過）展示覆蓋：中央以完整分布呈現連續真比例長條，區寬忠於原始機率。機率至少 10% 的區段將名稱與百分比留在格內；只有低於 10% 的小區段使用對應邊緣 caption，不把大區文字一併移出，真實區寬維持不變。marker 使用真實 `selected.roll`，不以選中區塊中心代替、不重新正規化或重抽。單顆牌桌 coin 只演出既有玩家 SB／BB 結果並飛至座位，盲注依 SB→BB 串行顯示入 POT，不能重做引擎扣款。令 `p = hand.result.player`，牌桌 TOTAL WIN 最終顯示 `p.totalReturn = p.netReturn + p.jackpotAward`，排除 `p.refund`，且不等同 `p.profit`；精確跑分只讀結算結果，不追加派彩。自動結算 modal 改由此桌上呈現取代，完整明細仍可手動查看。POT 示意籌碼置左、精確值置右，依顯示字數縮字並保留最多六位小數，不截斷或改成近似值。TOTAL WIN 在 POT 實體籌碼仍在時避開籌碼，真正派出後才回到中央；不能為排版提前清空可視籌碼或更動派彩。引擎 API、規則、賠率、RNG 與所有帳務公式維持不變。`npm test` 165／165 與本地完整流程驗證已通過。驗證證據與發布狀態另見 [手機與部署紀錄](docs/06-mobile-and-deployment.md)；本地通過不代表已提交或上線。
+
 Settlement:
 
 ```js
