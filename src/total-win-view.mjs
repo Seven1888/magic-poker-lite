@@ -24,7 +24,7 @@ export function createTotalWin({root = globalThis.document, effects, reducedMoti
   const now = () => view.performance?.now?.() ?? Date.now();
   const frame = view.requestAnimationFrame?.bind(view) || (callback => schedule(() => callback(now()), 16));
   const cancelFrame = view.cancelAnimationFrame?.bind(view) || unschedule;
-  let panel, label, amount, announcement, active = null, lastResult = null, lastDone = Promise.resolve(false), destroyed = false;
+  let panel, label, amount, announcement, moneyLayer, coins = [], active = null, lastResult = null, lastDone = Promise.resolve(false), destroyed = false;
 
   function mount() {
     if (panel || !stage) return;
@@ -35,6 +35,38 @@ export function createTotalWin({root = globalThis.document, effects, reducedMoti
     announcement = doc.createElement('span'); announcement.className = 'total-win-announcement';
     announcement.setAttribute('role', 'status'); announcement.setAttribute('aria-live', 'polite'); announcement.setAttribute('aria-atomic', 'true');
     panel.append(label, amount, announcement); stage.append(panel);
+    moneyLayer = doc.createElement('div'); moneyLayer.className = 'win-money-layer'; moneyLayer.hidden = true;
+    moneyLayer.setAttribute('aria-hidden', 'true'); stage.append(moneyLayer);
+  }
+
+  function clearMoney() {
+    for (const coin of coins) coin.remove();
+    coins = [];
+    if (moneyLayer) moneyLayer.hidden = true;
+  }
+
+  // Fixed, staggered fountain paths are decoration, never another random draw.
+  // All coins finish within the count-up and sit behind its readable plaque.
+  function sprayMoney() {
+    clearMoney(); moneyLayer.hidden = false;
+    for (let i = 0; i < 32; i++) {
+      const coin = doc.createElement('i'), face = doc.createElement('span');
+      coin.className = 'win-money-coin'; face.className = 'win-money-face';
+      const side = i % 2 ? 1 : -1, lane = Math.floor(i / 2);
+      const x = 200 + side * (48 + lane % 4 * 13);
+      const end = 200 + side * (40 + lane * 12);
+      const apex = 240 + (lane * 47 % 180);
+      const size = 19 + (lane * 7 % 20);
+      const duration = atGameSpeed(1320 + lane % 4 * 70);
+      const delay = atGameSpeed(Math.floor(lane / 4) * 65);
+      for (const [key, value] of Object.entries({
+        '--coin-x': `${x}px`, '--coin-end': `${end}px`, '--coin-apex': `${apex}px`,
+        '--coin-size': `${size}px`, '--coin-turn': `${side * (240 + lane * 31)}deg`,
+        '--coin-duration': `${duration}ms`, '--coin-delay': `${delay}ms`,
+        '--coin-spin': `${atGameSpeed(330 + lane % 5 * 70)}ms`
+      })) coin.style.setProperty(key, value);
+      coin.append(face); moneyLayer.append(coin); coins.push(coin);
+    }
   }
 
   function sound(name) {
@@ -43,6 +75,7 @@ export function createTotalWin({root = globalThis.document, effects, reducedMoti
   }
 
   function cancel() {
+    clearMoney();
     if (!active) return;
     const previous = active; active = null;
     cancelFrame(previous.frame); unschedule(previous.watchdog); previous.resolve(false);
@@ -57,6 +90,7 @@ export function createTotalWin({root = globalThis.document, effects, reducedMoti
   function finish(record, audible = true) {
     if (active !== record) return;
     active = null; cancelFrame(record.frame); unschedule(record.watchdog);
+    clearMoney();
     amount.textContent = record.model.formatted;
     panel.dataset.phase = 'settled';
     announcement.textContent = `${record.model.label} ${record.model.formatted}`;
@@ -75,7 +109,7 @@ export function createTotalWin({root = globalThis.document, effects, reducedMoti
     panel.dataset.motion = reducedMotion ? 'reduced' : 'normal';
     stage.dataset.totalWin = model.outcome;
     // Size from the final value so grouped digits and six decimals never jump.
-    panel.style.setProperty('--total-win-font', `${Math.min(46, 520 / model.formatted.length)}px`);
+    panel.style.setProperty('--total-win-font', `${Math.min(46, 460 / model.formatted.length)}px`);
     amount.dataset.amount = String(model.amount);
     let resolve;
     lastDone = new Promise(done => { resolve = done; });
@@ -85,6 +119,7 @@ export function createTotalWin({root = globalThis.document, effects, reducedMoti
       finish(record, false); return lastDone;
     }
     panel.dataset.phase = 'counting'; amount.textContent = '0';
+    sprayMoney();
     const duration = atGameSpeed(1800), ticks = [.1, .24, .41, .61, .81];
     const decimals = Math.min(6, (model.amount.toFixed(6).replace(/0+$/, '').split('.')[1] || '').length);
     function update() {
@@ -108,6 +143,6 @@ export function createTotalWin({root = globalThis.document, effects, reducedMoti
 
   const onVisibility = () => { if (doc.hidden && active) finish(active, false); };
   doc.addEventListener?.('visibilitychange', onVisibility);
-  function destroy() { if (destroyed) return; clear(); destroyed = true; panel?.remove(); doc.removeEventListener?.('visibilitychange', onVisibility); }
+  function destroy() { if (destroyed) return; clear(); destroyed = true; panel?.remove(); moneyLayer?.remove(); doc.removeEventListener?.('visibilitychange', onVisibility); }
   return {start, whenIdle: () => active ? lastDone : Promise.resolve(true), clear, destroy};
 }

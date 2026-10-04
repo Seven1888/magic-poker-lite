@@ -4,7 +4,10 @@
 @media print{@page{size:A4;margin:16mm 15mm}body{background:white;font:10pt/1.65 'Microsoft JhengHei','Segoe UI',sans-serif;color:#111}.top,.sidebar,.print{display:none!important}.layout{display:block;padding:0;max-width:none}main{padding:0;border:0;box-shadow:none;border-radius:0}h1{font-size:24pt}h2{font-size:16pt;margin:24pt 0 10pt;break-after:avoid;page-break-after:avoid}h3{font-size:12pt;margin:16pt 0 7pt;break-after:avoid}p,li{orphans:3;widows:3}a{color:#174f42;text-decoration:none}.table-wrap{overflow:visible;max-width:100%;border-radius:0;break-inside:auto}table{font-size:8.4pt;min-width:0!important}thead{display:table-header-group}tr{break-inside:avoid;page-break-inside:avoid}th,td{padding:5pt 6pt;min-width:0;overflow-wrap:anywhere}pre{background:#f2f5f2;color:#183e33;font-size:8.5pt;border-left:3pt solid #698173;break-inside:avoid;padding:10pt}code{border:0;background:#f1f4f1}strong{color:#123e32}.footer{font-size:8pt}}
 </style></head><body><header class="top"><div class="brand">MAGIC POKER / TWO BLINDS<small>小盲半 BET／大盲一 BET · 帳務與攤牌計算</small></div><nav><a href="../index.html">遊戲試玩</a><a href="../probability.html">機率工作台</a><button class="print" onclick="window.print()">列印 / 存成 PDF</button></nav></header><div class="layout"><aside class="sidebar" aria-label="文件目錄"><div class="label">DOCUMENT CONTENTS</div><a href="#section-1">1. 玩家在玩什麼</a><a href="#section-2">2. 入桌與完整四街流程</a><a href="#section-3">3. 牌、比牌與初始牌調整</a><a href="#section-4">4. NPC 回應機率與讀條</a><a href="#section-5">5. 結算與資金守恆</a><a href="#section-6">6. 實際案例：每一步的錢去哪裡</a><a href="#section-7">7. 機率工具參數、資料保存與系統分工</a><a href="#section-8">8. 底池 96%、JP 總回收與實測限制</a><a href="#section-9">9. 驗證、重現與目前的完成邊界</a><a href="#section-10">10. 文件與資料索引</a><p>v26：小盲 0.5 BET／大盲 1 BET<br>12 個受控帳務案例<br>10,000 手僅為帳務試跑<br>260,000 手保留歷史基準</p><p>96% 僅為底池對稱參考。<br>總回收另外包含 JP。<br>積極策略可超過 100%。</p></aside><main><h1>Magic Poker Lite</h1>
 <h2 id="section-0">遊戲流程、操作案例與數學模型</h2>
-<p>版本：v27 動作金額呈現／v26 大小盲規則／手機原型 · 日期：2026-10-03</p>
+<p>版本：v30 起始資產與得獎演出／v26 大小盲規則 · 日期：2026-10-04</p>
+<p><strong>快速查閱：</strong> <a href="../probability.html">機率工具</a> · <a href="#section-4">NPC 機率公式</a> · <a href="#section-5">結算與守恆</a> · <a href="#section-6">逐步帳務案例</a> · <a href="#section-7">工具使用說明</a> · <a href="#section-8">RTP 與驗證範圍</a></p>
+<p><strong>現行 v30：</strong> 預設原型資產為 10,000；TOTAL WIN 增加有厚度的得獎底板與金幣演出，金額仍取 <code>player.totalReturn = netReturn + jackpotAward</code>，排除未跟注退款。這是初始設定與呈現更新，NPC 權重、RNG、結算公式及 JP 規則未改，未重跑 RTP 校準。第 6 節保留明示起始資產 1,000 的受控帳務案例，不代表目前預設值。</p>
+<p><strong>沿用 v29：</strong> 主按鈕內仍只列真實 FOLD／RAISE 機率，點選後中央連續長條呈現所有正機率實際動作（含 CALL／CHECK／BET）；區寬取原始機率，marker 取同一次 <code>selected.roll</code>，不重抽或正規化剩餘選項。單 coin 演出既有盲位、SB→BB 串行入 POT。牌桌精確跑分取代自動結算視窗，明細仍可手動開啟。以下版本更新為沿革，衝突時以本段及第 1–8 節現行說明為準。</p>
 <p><strong>v27 追加演出規格：</strong> 有效主按鈕的 FOLD／RAISE 回應選項從按鈕頂端飛往畫面中央並放大，抵達後才開始原對手抽選演出。保留原機率與單次抽樣，必然、跨街及 NPC 先手不能借用上一個來源，也不補列 CALL／CHECK／BET。牌庫改為躺桌斜視角與疊牌厚度，右上位置、張數及資訊功能維持。這些呈現不改牌局帳務、發牌或 RNG；實作完成與驗證狀態見最新 QA。</p>
 <p><strong>v27 追加金流與入口規格：</strong> 每路投入籌碼直接落進 POT：保持末幀可見，先更新實體堆及該筆金額，再移除飛行替身，不提前加上尚未抵達的盲注。落地通知、飛行及落地音效各一次並服從 mute；取消舊手不播。NPC 棄牌收攏滑出且保持蓋牌。金／紅／共用雙色亮框、牌間距及公共牌懸浮側厚加強，不改判定或揭牌時機。入口縮小為特色介紹／獨立 BET 區／獨立 FIGHT 按鈕，預設 BET 1，只留＋／－而移除六個快捷值按鈕。這些是本版規格；最新整合驗證另記於 docs/06。</p>
 <p><strong>2026-10-03 v27 介面更新：玩家按鈕固定 FOLD／CALL／RAISE，付費動作顯示籌碼小圖與本次實際新增金額。</strong> 中央 CALL 對應過牌 <code>check</code> 或跟注 <code>call</code>，右側 RAISE 對應開注 <code>bet</code> 或加注 <code>raise</code>；這是本作簡化介面名稱，不是標準德州術語定義。免費過牌的 CALL 不顯示籌碼或 0，FOLD 不顯示籌碼或金額；NPC 回應機率繼續顯示。金額取合法動作的 <code>amount</code>，不是加注至總額，也不重複計入盲注；小盲已付 5、大盲 10 時，CALL 顯示 5、RAISE 至 20 顯示 15。本段覆蓋 v25／v26 按鈕舊呈現，底層行動 <code>type</code>、NPC 真實機率種類、雙盲、引擎、RNG、單擊執行與金流不變。</p>
@@ -33,11 +36,12 @@
 <h2 id="section-1">1. 玩家在玩什麼</h2>
 <p>玩家爭奪雙方投入的底池，主要有兩種勝利方式：拿更好的最佳五張贏得攤牌，或透過下注／加注讓 NPC 棄牌。起手牌好壞不是最終結果；公共牌、投入金額與對手回應，都會改變下一次決策。</p>
 <p>介面重點是自己的兩張牌、中央公共牌與 POT、同一位卡通對手，以及底部真實資產和本手 TOTAL BET。玩家按鈕固定 FOLD／CALL／RAISE；付費 CALL／RAISE 顯示籌碼小圖與本次新增支付金額，免費 CALL 與 FOLD 只顯示名稱。按鈕內角標保留對手FOLD／RAISE的原始回應機率。牌型標示、JP 獎表及完整帳務可開啟查看。玩家牌寬 94 px、維持 220:283 比例，v6 將手牌上移、牌型放在下方；場景以 400 × 860 舞台縮放。</p>
-<p>v7 對手反應區在 NPC 手牌下（舞台 top 303），加入可直接點選的獨立 <code>Preview</code> 行動 chips，手機不依賴 hover。公共牌專用框在 top 396，上方 <code>SHARED BOARD</code>／<code>Both players</code> 表達雙方共用，右上只顯示當前街道；POT 在其下 top 519，牌堆在右側 top 521。玩家牌／徽章維持 top 575／702，詳細尺寸見 <a href="05-art-and-pot.md">美術與 POT</a>。</p>
+<p>現行介面不需要點 Preview：有效回應機率直接放在玩家按鈕上，點選後飛至中央，抵達再演出完整真比例長條。獨立 DEAL → YOU → BOSS → POT 流程列標示階段，精確 POT 與結算跑分位於公共牌下方；詳細呈現見 <a href="05-art-and-pot.md">美術與 POT</a>。</p>
 <ul><li>決策：棄牌、過牌、跟注、固定尺度下注或加注，依當前局面執行合法動作。介面以 CALL 包含過牌／跟注，以 RAISE 包含開注／加注；只有付費動作顯示籌碼與金額，免費 CALL 不扣款。</li><li>對抗：雙方輪流行動；NPC 也能先下注或加注。</li><li>機率：色段顯示 NPC 此刻實際抽選動作的分布，抽中後直接執行。</li><li>學習：公共牌、最佳五張、牌型與踢腳牌、底池、跟注成本、棄牌與加注。</li></ul>
 <h2 id="section-2">2. 入桌與完整四街流程</h2>
 <h3>2.1 先選 BET，使用真正可用資產</h3>
-<p>玩家初始原型資產讀取 <code>config.buyIn</code>，預設 1,000。入場只選 <strong>BET＝本桌大盲</strong>，不再輸入買入額；雙方以玩家目前全部可用資產相同帶入。選擇 BET 與帶入本身不扣款；帶入是桌上可用餘額，不會整筆立即下注。</p>
+<p>玩家初始原型資產讀取 <code>config.buyIn</code>，預設 10,000。入場只選 <strong>BET＝本桌大盲</strong>，不再輸入買入額；雙方以玩家目前全部可用資產相同帶入。選擇 BET 與帶入本身不扣款；帶入是桌上可用餘額，不會整筆立即下注。</p>
+<p>v30 的 <code>DEFAULT_CONFIG.buyIn</code> 與 <code>maxBuyIn</code> 同為 10,000，確保預設資產不被原上限截掉。沒有保存設定的新載入使用此值；既有機率工具自訂設定照常保留，更新不覆寫進行中的牌局或當頁餘額。工具 Restore defaults 載入此版預設；遊戲 Reset demo chips 則依目前 <code>loadConfig().buyIn</code> 重設，仍尊重已保存的自訂資產。</p>
 <p>v27 入口預設 BET 1，使用＋／－調整，不再顯示六個快捷 BET 按鈕；特色介紹、BET 與 FIGHT 分成三段。點 FIGHT 才建立 session 並開始既有抽盲流程；下方 BET 倍率與資產門檻公式不變。</p>
 <p>入口由 <a href="../src/entry-model.mjs">entry-model.mjs</a> 依基礎設定同比例調整：</p>
 <pre><code>比例 k = 選定 BET / 原設定 bigBlind
@@ -46,7 +50,7 @@
 每街開注／加注增量 = 原設定該街 betSize × k
 最低資產 = 原設定 minBuyIn / 原設定 bigBlind × BET</code></pre>
 <p>預設大盲 10、最低資產 200，因此門檻為 20 BB；預設 BET 選項是 1／2／5／10／20／50。選 BET 20 時，最低資產為 400、SB 自動投入 10、BB 自動投入 20、四街增量 20／40／80／80；持有 1,000 就由雙方各以 1,000 入桌。選 BET 50 的最低資產是 1,000；若只剩 990，不能進入該檔，必須改選可負擔的 BET。</p>
-<p>每手及離桌後都保留玩家實際餘額，包含已入帳 JP；重新入桌不能無聲補回 1,000。新的 NPC 會匹配該次實際帶入。工具裡的最高帶入屬基礎設定，遊戲入口會至少容納現有資產，不會把累積獲獎截掉。本頁原型資產尚未接後端持久錢包，重整頁面不代表恢復上次帳戶。</p>
+<p>每手及離桌後都保留玩家實際餘額，包含已入帳 JP；重新入桌不能無聲補回初始資產 10,000。新的 NPC 會匹配該次實際帶入。工具裡的最高帶入屬基礎設定，遊戲入口會至少容納現有資產，不會把累積獲獎截掉。本頁原型資產尚未接後端持久錢包，重整頁面不代表恢復上次帳戶。</p>
 <p>選單另有明示的「重設 DEMO 資產」測試按鈕：只能在未打牌／已結算且非演出鎖定時操作，清空當頁牌桌並回到目前設定的初始資產。它與重新載入頁面都會初始化原型狀態；一般離桌／再入桌不做這件事。</p>
 <p>入場成功後先用 session 種子亂數抽一次 50/50，決定哪一方是 BB，再演出結果、發手牌；UI 不另抽一次。之後每手交換位置。<code>startHand</code> 依盲位自動投入 SB 的 <code>config.smallBlind</code> 及 BB 的 <code>config.bigBlind</code>。BET 10、雙方各 1,000、玩家是 SB 時，開局玩家投入 5／NPC 投入 10／POT 15，餘額為 995／990；玩家選 CALL 再補 5，投入變成 10／10、POT 20、餘額 990／990。玩家抽到 BB 時則由玩家自動投入 10，NPC 自動投入 5 並先行動。</p>
 <p>任一方餘額不足自己的盲注額時只投入剩餘籌碼，進入正常短籌碼／All-in 處理；未匹配超額仍按結算規則退款。任一方低於 0.01 時不能開下一手，也不會自動補資。小盲同時是雙人局的莊位：翻牌前先行動；翻牌後由大盲先行動。「先行動」指輪到選擇合法動作，不等於額外強制下注。</p>
@@ -90,8 +94,8 @@
 <p>例如 A♣10♣：0.44 + 8/12 × 0.20 + 0.12 = 0.693333。AA 品質是 1，22 品質是 0.57。這是供重抽與 NPC 行為使用的簡化評分，並非牌局勝率或既有撲克等值表。</p>
 <h2 id="section-4">4. NPC 回應機率與讀條</h2>
 <h3>4.1 玩家看到的是「實際動作分布」</h3>
-<p>v7 用 response panel 裡的獨立 <code>Preview</code> 行動 chips，展示所選行動後 NPC 在<strong>同一街</strong>可能採取的合法動作。點 Preview 不下注、不扣款、不執行牌局，也不消耗 RNG；可依序點選比較。底部主操作按鈕仍然單點執行，沒有改成第一次只選、第二次才投注。正式行動後才依真實狀態鎖定分布、抽一次，再演出並執行結果。</p>
-<p>v7 配色與玩家按鈕一致：綠色 Fold、紅色 Check／Call、紫色 Bet／Raise。現行基礎 <code>animationMs</code> 額外加 500 毫秒，預設 850 + 500 = 1,350 毫秒，比先前縮短 0.5 秒；游標快速左右掃動後停在演出前已抽定的結果。動畫不另呼叫 RNG，也不影響抽中機率；reduced motion 跳過這段動態演出。沒有下一街的預覽：若選擇結束當街或直接結束牌局，不用未公開牌的機率補出虛構回應。</p>
+<p>各候選玩家行動的按鈕直接顯示 NPC 在<strong>同一街</strong>可能採取的 FOLD／RAISE 原始機率；只從至少兩種正機率的真實分布篩出這兩類，不重新正規化，因此角標不一定加總為 100%。無同街回應、必然動作及未來街道不虛構角標。這些唯讀預覽不下注、不扣款、不執行牌局，也不消耗 RNG；主按鈕仍然單點執行。正式行動後才鎖定分布並抽一次。</p>
+<p>選定按鈕的有效角標先飛到中央並放大，抵達後以連續長條顯示完整分布所有正機率實際動作，包含 CALL／CHECK／BET。各區寬度忠於原始機率，機率至少 10% 的名稱與數字留格內，小區才用邊緣 caption；marker 落在真實 <code>selected.roll</code>，不是選中區塊中心。對手決策掃動 450 毫秒、預設結果停留 900 毫秒，保持 1×；動畫不另抽 RNG，也不影響抽中機率，reduced motion 跳過動態演出。跨街及 NPC 先手不借用上次按鈕來源，不以未公開牌補出虛構回應。</p>
 <p>NPC 的模型只讀自己的兩張牌、已揭公共牌、當下投入與有效籌碼。<strong>不使用玩家暗牌，也不使用未翻開的公共牌。</strong> 精確公開 NPC 回應分布是本作的資訊規則，玩家可依此做策略判斷。</p>
 <h3>4.2 預設基礎權重</h3>
 <div class="table-wrap"><table><thead><tr><th>參數</th><th>值</th></tr></thead><tbody><tr><td>棄牌 <code>fold</code></td><td>0.20</td></tr><tr><td>跟注 <code>call</code></td><td>0.60</td></tr><tr><td>加注 <code>raise</code></td><td>0.20</td></tr><tr><td>過牌 <code>check</code></td><td>0.65</td></tr><tr><td>下注 <code>bet</code></td><td>0.35</td></tr><tr><td>牌力影響 <code>strengthInfluence</code></td><td>1.00</td></tr><tr><td>跟注成本影響 <code>priceInfluence</code></td><td>0.60</td></tr></tbody></table></div>
@@ -134,6 +138,7 @@ w_call = 0.6 × exp[1 × (0.693333 − 0.5) × 0.6]
 <p>逐張攤牌另用 <a href="../src/showdown-view.mjs">showdown-view.mjs</a> 的純資料函式：五張公共牌已顯示、NPC 只揭第一張時，僅用可見牌枚舉 44 張可能的第二張，精算均勻未知牌假設下的 <code>(贏局數 + 平局數／2)／44</code>；兩張均揭時只剩 1 個結果，值為 0／0.5／1。NPC 目前牌型與最佳五張依已揭牌計算，包含踢腳牌；不讀真正未揭第二張、不用 RNG，也未校正 NPC 重抽。這與原本 250 次抽樣不同，尚未完成公共牌或 NPC 仍全暗時回傳 null。本輪此處記錄資料契約與模組檢查，不代表逐張演出的瀏覽器 QA 已完成。</p>
 <h2 id="section-5">5. 結算與資金守恆</h2>
 <p>先把雙方尚未被匹配的超額投入退回，再結算真正競爭的底池。未跟注退款不收費、不計為有效投注，也不列入 RTP 派彩分子。</p>
+<p>牌桌 TOTAL WIN 顯示下列 <code>totalReturn</code>，與手動結算明細一致，不是 <code>profit</code>。只有 <code>profit &gt; 0</code> 才使用 TOTAL WIN 標題並在正常動態模式噴金幣；平手、僅返還及負局分別用 SPLIT POT／RETURNED／BOSS WINS。底板、跑分及金幣不執行入帳，真正派彩只由共用引擎處理一次。</p>
 <pre><code>cP / cN = 玩家 / NPC 全手實際已扣投入
 m = min(cP, cN)
 
@@ -166,7 +171,7 @@ stackAfter = stackBefore − c + refund + totalReturn</code></pre>
 <h2 id="section-6">6. 實際案例：每一步的錢去哪裡</h2>
 <p>下列 A 至 H 均以現行 <strong>SB 自動投入 5／BB 自動投入 10</strong> 說明。A 至 E 沿用 <a href="../output/example-hands.json">舊雙盲案例 JSON</a> 的 seed、牌面與指定操作，按 v26 規則列帳並關閉 JP；原 JSON 保留其歷史版本，不冒充 v26 執行輸出。案例固定玩家是 SB，與遊戲入口隨機抽位置不同；NPC 動作是指定操作，不是一次自然抽籤遊玩紀錄。F 至 H 對應 <a href="../tests/engine-jackpot.test.mjs">JP 受控測試</a>：指定底牌與公共牌驗證規則，不代表自然命中頻率。所有案例沿用共用引擎結算公式；表列餘額為局間對手資產刷新前。</p>
 <p>原 <a href="../output/single-big-blind-v1/rule-cases.json">單一大盲帳務案例 JSON</a> 的 <code>ruleSet</code> 為 <code>single-big-blind-v1</code>，保留作 v14 規則歷史；其中 SB 投入 0 的開局與棄牌帳務不能用於 v26。現行模型標記為 <code>heads-up-two-blinds-v1</code>，新增驗證與歷史報表分開保存。</p>
-<p>除 E 的短籌碼設定外，雙方開始資產皆為 1,000、BET 10。開局一律為玩家投入 5／NPC 投入 10、POT 15、餘額 995／990；任何 CALL／RAISE 都從這個真實帳本扣除新增部分。</p>
+<p>除 E 的短籌碼設定外，下列受控案例特別設定雙方開始資產為 1,000、BET 10；這不是 v30 的預設資產 10,000。案例開局一律為玩家投入 5／NPC 投入 10、POT 15、餘額 995／990；任何 CALL／RAISE 都從這個真實帳本扣除新增部分。</p>
 <h3>A. 小盲直接棄牌：seed 101</h3>
 <p>玩家開局投入 5，NPC 大盲投入 10，桌上顯示 15。玩家直接棄牌後，先退 NPC 未被匹配的 5；雙方匹配投入各 5，競爭底池為 10。NPC 分得 10，扣費 0.40 後返還 9.60。玩家損失已付的小盲 5，沒有額外棄牌費。</p>
 <div class="table-wrap"><table><thead><tr><th>欄位</th><th>玩家</th><th>NPC</th></tr></thead><tbody><tr><td>總投入</td><td>5</td><td>10</td></tr><tr><td>未跟注退款</td><td>0</td><td>5</td></tr><tr><td>有效投入</td><td>5</td><td>5</td></tr><tr><td>分得底池 gross</td><td>0</td><td>10</td></tr><tr><td>結算費</td><td>0</td><td>0.40</td></tr><tr><td>實際返還 netReturn</td><td>0</td><td>9.60</td></tr><tr><td>本手淨損益</td><td>−5</td><td>+4.60</td></tr><tr><td>結束餘額</td><td>995</td><td>1,004.60</td></tr></tbody></table></div>

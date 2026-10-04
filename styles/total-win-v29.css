@@ -1,9 +1,12 @@
-/* The payout replaces the pot's readout on the felt, leaving all cards visible. */
+/* v30: a bevelled navy-and-gold award plaque, still on the original felt. */
 .game .table-total-win {
-  position: absolute; top: 504px; left: 50%; width: 310px; height: 72px;
+  position: absolute; top: 501px; left: 50%; width: 310px; height: 80px;
   transform: translateX(-50%); z-index: 7; pointer-events: none;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 2px; padding: 2px 0 5px; background: none; border: 0;
+  gap: 1px; padding: 7px 10px 8px; border: 2px solid #e5bd68; border-radius: 17px 17px 23px 23px;
+  background: radial-gradient(ellipse at 50% 0%, #364c68 0%, #15243d 48%, #080f21 100%);
+  box-shadow: inset 0 1px 0 #fff0b9, inset 0 -4px 0 #030917, 0 3px 0 #886027, 0 5px 0 #2b1820,
+    0 9px 15px #210c1c99, 0 0 20px #f1c26024;
   text-align: center; font-variant-numeric: tabular-nums;
   --total-win-scale: 1;
   transition: left calc(.36s / var(--game-speed, 1.2)) ease-out,
@@ -19,19 +22,24 @@
 .game[data-total-win] #pot-detail, .game[data-total-win] #pot-event,
 .game[data-total-win] #pot-info-button { visibility: hidden; }
 .total-win-label {
-  color: #e8c88e; font-size: 11px; line-height: 14px; font-weight: 800;
-  letter-spacing: 2.4px; text-shadow: 0 1px 2px #2b0819;
+  position: relative; z-index: 1; color: #f8dda3; font-size: 11px; line-height: 14px; font-weight: 800;
+  letter-spacing: 3px; text-shadow: 0 1px 2px #060b16;
 }
 .total-win-amount {
-  display: block; width: 100%; color: #ffebba;
+  position: relative; z-index: 1; display: block; width: 100%; color: #ffebba;
   font: 800 calc(var(--total-win-font, 46px) * var(--total-win-scale))/48px Georgia, 'Times New Roman', serif;
   letter-spacing: -.5px; white-space: nowrap;
-  text-shadow: 0 1px #b1813e, 0 3px 4px #290810b3;
+  text-shadow: 0 1px #a97021, 0 2px #80521d, 0 4px 5px #010715b3, 0 0 14px #ffd47c30;
   transition: font-size calc(.36s / var(--game-speed, 1.2)) ease-out;
 }
+.table-total-win:before {
+  content: ''; position: absolute; inset: 4px; border: 1px solid #d5ad635e;
+  border-radius: 11px 11px 17px 17px; pointer-events: none;
+  background: linear-gradient(118deg, transparent 10%, #ffe4a608 28%, transparent 45%);
+}
 .table-total-win:after {
-  content: ''; position: absolute; bottom: 0; left: 20%; right: 20%; height: 1px;
-  background: linear-gradient(90deg, transparent, #caa56a99 35%, #f4dca4aa 50%, #caa56a99 65%, transparent);
+  content: '◆'; position: absolute; bottom: -7px; left: 50%; transform: translateX(-50%);
+  color: #f5d78d; font-size: 10px; line-height: 10px; text-shadow: 0 1px 1px #5e3515;
 }
 .table-total-win[data-phase='counting'] .total-win-label {
   animation: total-win-enter calc(.4s / var(--game-speed, 1.2)) ease-out both;
@@ -46,11 +54,53 @@
 .table-total-win[data-outcome='loss'] .total-win-label { color: #b7a7a9; letter-spacing: 1.7px; }
 .table-total-win[data-outcome='loss'] .total-win-amount { color: #bdaaa7; font-size: calc(24px * var(--total-win-scale)); text-shadow: 0 1px 2px #240916; }
 .table-total-win[data-outcome='loss']:after { opacity: .4; }
+.table-total-win:not([data-outcome='win']) {
+  border-color: #817567; box-shadow: inset 0 0 0 2px #111c2a, 0 4px 9px #210c1c66;
+  background: linear-gradient(#202838, #101724);
+}
 .total-win-announcement {
   position: absolute; width: 1px; height: 1px; overflow: hidden;
   clip-path: inset(50%); white-space: nowrap;
 }
 .table-total-win[data-motion='reduced'], .table-total-win[data-motion='reduced'] * { animation: none !important; transition: none !important; }
+/* Coin decoration is behind the award, never a substitute for actual pot chips. */
+.game .win-money-layer { position: absolute; inset: 0; z-index: 6; pointer-events: none; overflow: hidden; }
+.game .win-money-layer[hidden] { display: none !important; }
+.win-money-layer:before {
+  content: ''; position: absolute; left: 25px; right: 25px; top: 380px; height: 290px;
+  background: radial-gradient(ellipse, #f9d58430, #f5b34810 42%, transparent 68%);
+  animation: win-money-glow calc(1.65s / var(--game-speed, 1.2)) ease-out both;
+}
+.win-money-coin {
+  position: absolute; left: 0; top: 0; width: var(--coin-size); height: var(--coin-size);
+  opacity: 0; will-change: transform, opacity;
+  animation: win-money-arc var(--coin-duration) var(--coin-delay) linear both;
+}
+.win-money-face {
+  display: block; width: 100%; height: 100%;
+  background: url('../assets/win-gold-coin-v30.svg') center/contain no-repeat;
+  filter: drop-shadow(0 3px 2px #29120470);
+  animation: win-money-spin var(--coin-spin) var(--coin-delay) linear infinite;
+}
+@keyframes win-money-arc {
+  0% { opacity: 0; transform: translate3d(var(--coin-x), 690px, 0) rotate(0deg); }
+  8% { opacity: 1; }
+  25% { transform: translate3d(calc(var(--coin-x) * .6 + var(--coin-end) * .4), calc(var(--coin-apex) + 70px), 0) rotate(calc(var(--coin-turn) * .25)); }
+  45% { transform: translate3d(calc(var(--coin-x) * .4 + var(--coin-end) * .6), var(--coin-apex), 0) rotate(calc(var(--coin-turn) * .45)); }
+  65% { opacity: 1; transform: translate3d(calc(var(--coin-x) * .25 + var(--coin-end) * .75), calc(var(--coin-apex) + 95px), 0) rotate(calc(var(--coin-turn) * .65)); }
+  88% { opacity: .95; }
+  100% { opacity: 0; transform: translate3d(var(--coin-end), 875px, 0) rotate(var(--coin-turn)); }
+}
+@keyframes win-money-spin {
+  0%, 100% { transform: perspective(120px) rotateY(0deg); filter: brightness(1.08) drop-shadow(0 3px 2px #29120470); }
+  25% { transform: perspective(120px) rotateY(78deg); filter: brightness(.8) drop-shadow(0 3px 2px #29120470); }
+  50% { transform: perspective(120px) rotateY(180deg); filter: brightness(1.15) drop-shadow(0 3px 2px #29120470); }
+  75% { transform: perspective(120px) rotateY(258deg); filter: brightness(.9) drop-shadow(0 3px 2px #29120470); }
+}
+@keyframes win-money-glow { 0%, 100% { opacity: 0; } 20% { opacity: 1; } }
 @keyframes total-win-enter { from {opacity: .3; transform: translateY(3px);} to {opacity: 1; transform: translateY(0);} }
 @keyframes total-win-land { from {transform: scale(1.035); color: #fff9dc;} to {transform: scale(1); color: #ffebba;} }
-@media (prefers-reduced-motion: reduce) { .table-total-win, .table-total-win * { animation: none !important; transition: none !important; } }
+@media (prefers-reduced-motion: reduce) {
+  .table-total-win, .table-total-win * { animation: none !important; transition: none !important; }
+  .game .win-money-layer { display: none !important; }
+}

@@ -38,6 +38,7 @@ function fixture(options = {}) {
   }
   return {root, stage, nodes, pending, sounds, events, api, advance,
     get panel() { return nodes.find(node => node.id === 'total-win-display'); },
+    get moneyLayer() { return nodes.find(node => node.className === 'win-money-layer'); },
     get amount() { return nodes.find(node => node.className === 'total-win-amount'); },
     get announcement() { return nodes.find(node => node.className === 'total-win-announcement'); }};
 }
@@ -81,7 +82,7 @@ test('the same result coalesces while counting and after completion without repl
   const first = f.api.start(settled);
   assert.equal(f.api.start(settled), first); f.advance(2000); await first;
   assert.equal(f.api.start(settled), first); f.advance(2000);
-  assert.equal(f.sounds.length, 6); assert.equal(f.stage.children.length, 1);
+  assert.equal(f.sounds.length, 6); assert.equal(f.stage.children.length, 2);
 });
 
 test('clear releases old waits, cancels callbacks and restores the original pot visibility hook', async () => {
@@ -129,4 +130,36 @@ test('destroy is idempotent and cannot recreate a display or leave an unresolved
   assert.equal(await pending, false); assert.equal(f.stage.children.length, 0);
   assert.equal(f.events.size, 0); assert.equal(f.pending.size, 0);
   assert.equal(await f.api.start(result()), false);
+});
+
+test('coin celebration never draws randomness or changes the ledger and is cleared on completion', async () => {
+  const f = fixture(), settled = result(), before = JSON.stringify(settled);
+  const savedRandom = Math.random;
+  Math.random = () => { throw new Error('Presentation must not draw randomness'); };
+  try {
+    const first = f.api.start(settled);
+    assert.equal(f.moneyLayer.hidden, false);
+    assert.ok(f.moneyLayer.children.length > 0);
+    const coins = [...f.moneyLayer.children];
+    f.api.start(settled);
+    assert.deepEqual(f.moneyLayer.children, coins, 'same result must not respawn the celebration');
+    f.advance(1700); await first;
+    assert.equal(f.moneyLayer.hidden, true);
+    assert.equal(f.moneyLayer.children.length, 0);
+    assert.equal(JSON.stringify(settled), before);
+  } finally { Math.random = savedRandom; }
+});
+
+test('coins cannot survive cancellation, a hidden page or a switch to a non-winning result', async () => {
+  const f = fixture();
+  const first = f.api.start(result()); f.advance(150); f.api.clear();
+  assert.equal(await first, false); assert.equal(f.moneyLayer.children.length, 0);
+  const second = f.api.start(result()); f.root.hidden = true; f.events.get('visibilitychange')();
+  assert.equal(await second, true); assert.equal(f.moneyLayer.children.length, 0);
+  f.root.hidden = false; const third = f.api.start(result());
+  await f.api.start(result(9.6, -.4, 'tie'));
+  assert.equal(await third, false); assert.equal(f.moneyLayer.children.length, 0);
+  assert.equal(f.moneyLayer.hidden, true);
+  const reduced = fixture({reducedMotion: true}); await reduced.api.start(result());
+  assert.equal(reduced.moneyLayer.children.length, 0); assert.equal(reduced.moneyLayer.hidden, true);
 });

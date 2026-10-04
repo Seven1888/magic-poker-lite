@@ -49,7 +49,7 @@ test('random opening position consumes exactly one seeded draw, is reproducible,
 
 test('either opening seat follows legal preflop order, keeps the big-blind option, and acts second after the flop', () => {
   for (const [firstSmallBlind, seed] of [['player', 20], ['npc', 20], ['random', 0], ['random', 1]]) {
-    const session = createSession({}, seed, {firstSmallBlind});
+    const session = createSession({buyIn: 1000}, seed, {firstSmallBlind});
     const hand = startHand(session), small = session.firstSmallBlind, big = other(small);
     assert.equal(hand.smallBlind, small); assert.equal(hand.bigBlind, big); assert.equal(hand.actor, small);
     assert.deepEqual(types(hand), ['fold', 'call', 'raise']);
@@ -71,7 +71,7 @@ test('either opening seat follows legal preflop order, keeps the big-blind optio
 
 test('the entry choice stays fixed while successive hands alternate and carry balances', () => {
   for (const firstSmallBlind of ['player', 'npc', 'random']) {
-    const session = createSession({}, 1, {firstSmallBlind}), initial = session.firstSmallBlind;
+    const session = createSession({buyIn: 1000}, 1, {firstSmallBlind}), initial = session.firstSmallBlind;
     const initialDraw = structuredClone(session.blindDraw);
     let previousStacks = {...session.stacks};
     for (let index = 0; index < 6; index++) {

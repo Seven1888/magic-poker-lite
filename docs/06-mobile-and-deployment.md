@@ -1,5 +1,24 @@
 # 手機相容與公開 Demo
 
+## v30 起始資產 10,000 與得獎回饋（2026-10-04）
+
+預設原型資產改為 10,000，TOTAL WIN 增加深藍琺瑯、金色倒角雙框底板。真正 `player.profit > 0` 的正常動態跑分期間，從兩側噴出 32 枚無面額金幣，翻轉後落下；金幣在數字底板後，完成／取消／下一手／頁面隱藏清除，減少動態不播放。來源 POT 實體堆仍由真正抵達流程清空，跑分金額維持 `totalReturn = netReturn + jackpotAward` 且不含退款，不增加 RNG 或派彩。
+
+機率工具維持獨立 [公開網址](https://seven1888.github.io/magic-poker-lite/probability.html)，[機率模型文件](https://seven1888.github.io/magic-poker-lite/docs/04-game-flow-and-math.html) 同步 v30 預設資產、現行回應長條及 TOTAL WIN 契約，保留 NPC 公式、結算案例、工具說明及 RTP 範圍。README 頂端補上兩個直接入口；工具文件連結明確標示 Probability model & formulas。遊戲選單沒有新增工具按鈕。
+
+初始設定 `buyIn` 與 `maxBuyIn` 同為 10,000；沒有保存設定的新頁面使用此值，已保存的自訂設定仍保留。遊戲不覆寫目前牌局或當頁真實餘額；Reset demo chips 仍讀目前設定的 `buyIn`。
+
+- 最終 `npm test` **168／168** 通過，正式建置 **152 檔**。TOTAL WIN 模組 11 項定向測試通過，包含新增的金幣生命週期與 RNG 不變檢查；另新增預設資產檢查，原本以 1,000 為基準的帳務 fixture 明示 `buyIn:1000`，避免預設調整暗改案例基準。
+- Chromium 預設資產流程通過：入口 10,000，BET 1 的玩家 SB 開局餘額 9,999.5／NPC 9,999，POT 依 0→0.5→1.5 顯示。FOLD 後玩家仍為 9,999.5；明示 Reset demo chips 回到預設 10,000／BET 1，沒有在普通棄牌或下一手自行補資。
+- Chromium 390／320／430 三種寬度，共九組純呈現 fixture：19.2／1,920.123456／1,000,000,000.123456 的文字 Range 都完整落在底板內，各組 32 枚金幣可見、收尾清為 0。減少動態的 0.000001 及 split／returned／loss 都不產生金幣；靜音時新增 Web Audio oscillator 為 0。這是呈現及音效排程檢查，不是自然 RNG 或實耳音質驗收。
+- Chromium 既有 1,000 資產 session 自然完整四街攤牌，玩家 Full House 對 NPC Pair，`totalReturn` 7.68／`profit` 3.68。記錄 91 個 counting 幀，噴灑高峰 32 枚金幣可見，所有取樣的金額 Range 均在底板內；58 個仍帶 POT 的取樣幀中，30 枚來源實體 sprite 皆有可見矩形，真正抵達才清 0。跑分中心由 viewport x265 移回 x195，沒有自動 modal，手動明細同為 7.68，NEXT 正常清除跑分與金幣。此自然牌局沒有指定牌面、RNG 或抽選結果；新的 10,000 預設另以上一項重新載入驗證。
+- Probability Lab 在 320×568 的新預設 starting stack／maximum 都為 10,000，頂部 Probability model & formulas 連結完整可讀，開啟模型文件再點 NPC 機率公式可到 `#section-4`，工具及文件均無水平溢出。真實 Worker 以 Balanced、seed 20260929 完成 100 手，資金守恆誤差 0，無執行或載入錯誤；前後 localStorage 皆空，未保存設定回遊戲。此短跑只驗證功能，不是 RTP 或 JP 頻率校準。
+- 文件及工具互連、HTML 的第 4–8 節快速錨點、v30 版本、10,000 預設及模型／Worker 來源路徑另有靜態核對。自然牌局與工具檢查均沒有 console／page 或失敗載入錯誤。
+
+證據留於本機 `output/playwright/win-v30`：`tests-final.txt`、`assets-10000-result.json`、`fixture-matrix-result.txt`、`natural-1-result.json`、`natural-1-counting.png`、`natural-1-settled.png`、`natural-1-ledger.png`、`natural-next-hand-clear.txt`、`lab-10000-result.json`、`lab-100-hands.json`、`lab-10000-320-header.png` 及 `model-formulas-320.png`，不加入公開包。這些手機尺寸是桌面 bundled Chromium headless shell 的 viewport／觸控模擬；本輪環境未安裝 `webkit-2358`，沒有宣稱重新通過 WebKit 或實體手機驗收。
+
+上述為 v30 本地驗證，公開站版本以對應 GitHub Pages 部署紀錄為準；下方 v29 數量與截圖不作為 v30 新增演出的驗收。未執行 RTP 校準，也未改 NPC 機率、JP 或結算公式。
+
 ## v29 清楚入場、單顆盲位硬幣與牌桌跑分（2026-10-04）
 
 本輪針對實際遊玩重新整理入口、牌桌資訊、寶石按鈕及金流演出。入口用獨立圖解介紹自己的兩張牌、五張公牌、動作用途和 JP，只保留角色場景與唯一資產列；BET 預設 1、MINIMUM 與獨立 FIGHT 不變。抽盲是在亮桌上翻一顆玩家 coin，再飛到玩家座位；SB 先、BB 後逐路繳盲。雙方牌型恢復原美術，NPC 牌型在其兩張底牌下方，最佳五張金／紅／共用雙色框更清楚。

@@ -10,7 +10,7 @@ test('legacy small-blind settings derive half of BET without changing entry asse
   for(const bigBlind of [.02,.03,1,10,25]) for(const smallBlind of [undefined,0,5,10,100,-1]) {
     assert.equal(normalizeConfig({smallBlind,bigBlind}).smallBlind,bigBlind/2);
   }
-  const old=createSession({smallBlind:0},42),current=createSession({},42);
+  const old=createSession({buyIn:1000,smallBlind:0},42),current=createSession({buyIn:1000},42);
   assert.deepEqual(old.stacks,{player:1000,npc:1000});
   assert.equal(JSON.stringify(startHand(old)),JSON.stringify(startHand(current)));
   assert.equal(old.rng.state(),current.rng.state());
@@ -18,7 +18,7 @@ test('legacy small-blind settings derive half of BET without changing entry asse
 
 test('either small blind loses its posted half-BET on folding; only the unmatched big-blind half is refunded', () => {
   for(const firstSmallBlind of ['player','npc']) {
-    const session=createSession({},20,{firstSmallBlind}),hand=startHand(session),bb=other(firstSmallBlind);
+    const session=createSession({buyIn:1000},20,{firstSmallBlind}),hand=startHand(session),bb=other(firstSmallBlind);
     assert.equal(hand.pot,15); assert.equal(hand.contributions[firstSmallBlind],5);
     assert.equal(hand.stacks[firstSmallBlind],995); assert.equal(hand.stacks[bb],990);
     assert.deepEqual(hand.history.map(event=>event.type),['smallBlind','bigBlind']);
@@ -33,7 +33,7 @@ test('either small blind loses its posted half-BET on folding; only the unmatche
 });
 
 test('a small-blind raise pays fifteen once to reach twenty; opponent fold refunds ten and awards the matched pot', () => {
-  const session=createSession({},102),hand=startHand(session);
+  const session=createSession({buyIn:1000},102),hand=startHand(session);
   const raise=legalActions(hand).find(action=>action.type==='raise');
   assert.equal(raise.amount,15); assert.equal(raise.to,20);
   applyAction(hand,'raise'); assert.equal(hand.pot,30); assert.equal(hand.stacks.player,980);
@@ -47,7 +47,7 @@ test('a small-blind raise pays fifteen once to reach twenty; opponent fold refun
 
 test('a seven-chip big blind waits for the small blind to fold or call two, never allowing a raise', () => {
   for(const bb of ['player','npc']) for(const action of ['fold','call']) {
-    const session=createSession({jackpotEnabled:false},33,{firstSmallBlind:other(bb)});
+    const session=createSession({buyIn:1000,jackpotEnabled:false},33,{firstSmallBlind:other(bb)});
     session.stacks[bb]=7;
     const hand=startHand(session);
     assert.equal(hand.status,'playing'); assert.equal(hand.board.length,0); assert.equal(hand.actor,other(bb));
@@ -63,7 +63,7 @@ test('a seven-chip big blind waits for the small blind to fold or call two, neve
 
 test('a big blind at or below the posted small blind runs out automatically and refunds only the surplus', () => {
   for(const bb of ['player','npc']) for(const chips of [.01,3,5]) {
-    const session=createSession({jackpotEnabled:false},33,{firstSmallBlind:other(bb)});
+    const session=createSession({buyIn:1000,jackpotEnabled:false},33,{firstSmallBlind:other(bb)});
     session.stacks[bb]=chips;
     const hand=startHand(session);
     assert.equal(hand.status,'settled'); assert.equal(hand.board.length,5);
@@ -77,7 +77,7 @@ test('a big blind at or below the posted small blind runs out automatically and 
 
 test('a short small blind either posts all-in or chooses a capped call, with both positions conserving chips', () => {
   for(const sb of ['player','npc']) for(const chips of [.01,3,5,7]) {
-    const session=createSession({jackpotEnabled:false},33,{firstSmallBlind:sb});
+    const session=createSession({buyIn:1000,jackpotEnabled:false},33,{firstSmallBlind:sb});
     session.stacks[sb]=chips;
     const hand=startHand(session);
     if(chips>5) {
@@ -109,7 +109,7 @@ test('both short stacks post only their available blinds and settle one matched 
 
 test('fractional BET keeps its exact half-blind, call and refund amounts without rounding to cents', () => {
   for(const sb of ['player','npc']) {
-    const session=createSession({bigBlind:.03,smallBlind:0,jackpotEnabled:false},42,{firstSmallBlind:sb});
+    const session=createSession({buyIn:1000,bigBlind:.03,smallBlind:0,jackpotEnabled:false},42,{firstSmallBlind:sb});
     const hand=startHand(session),bb=other(sb);
     assert.equal(hand.config.smallBlind,.015); assert.equal(hand.pot,.045);
     assert.equal(hand.contributions[sb],.015); assert.equal(hand.contributions[bb],.03);

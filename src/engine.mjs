@@ -11,7 +11,7 @@ const number = (n, fallback) => Number.isFinite(Number(n)) ? Number(n) : fallbac
 const epsilon = 1e-7;
 export const DEFAULT_CONFIG = Object.freeze({
   targetRtp: 0.96, jackpotEnabled: true, smallBlind: 5, bigBlind: 10,
-  minBuyIn: 200, maxBuyIn: 2000, buyIn: 1000,
+  minBuyIn: 200, maxBuyIn: 10000, buyIn: 10000,
   betSize: Object.freeze({preflop: 10, flop: 20, turn: 40, river: 40}),
   maxRaises: 1, animationMs: 850,
   npc: Object.freeze({fold: 0.2, call: 0.6, raise: 0.2, check: 0.65, bet: 0.35, strengthInfluence: 1, priceInfluence: 0.6}),

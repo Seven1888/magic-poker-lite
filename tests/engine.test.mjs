@@ -101,7 +101,7 @@ test('one raise per street, no free fold, and fixed sizes are enforced', () => {
 });
 
 test('uncalled raises and blinds are refunded, excluded from wagers, and settlement conserves wallets', () => {
-  const session = createSession({}, 17);
+  const session = createSession({buyIn: 1000}, 17);
   const hand = startHand(session);
   applyAction(hand, 'fold');
   assert.equal(hand.result.player.matchedWager, 5);
@@ -145,7 +145,7 @@ test('matched all-in runs out once, caps effective wager, and never offers raisi
 });
 
 test('a short small blind is all-in on posting, runs out once and receives the matched pot only', () => {
-  const session = createSession({}, 33);
+  const session = createSession({buyIn: 1000}, 33);
   session.stacks.player = 3;
   const hand = startHand(session);
   assert.equal(hand.status, 'settled'); assert.equal(hand.board.length, 5);
@@ -157,7 +157,7 @@ test('a short small blind is all-in on posting, runs out once and receives the m
 });
 
 test('common board tie splits contested gross and applies symmetric fee', () => {
-  const hand = startHand(createSession({jackpotEnabled: false, deal: {player: {manual: ['2c', '3d']}, npc: {manual: ['4c', '5d']}}}, 1));
+  const hand = startHand(createSession({buyIn: 1000, jackpotEnabled: false, deal: {player: {manual: ['2c', '3d']}, npc: {manual: ['4c', '5d']}}}, 1));
   const board = ['As', 'Ks', 'Qs', 'Js', 'Ts'];
   hand.deck = [...board, ...hand.deck.filter(card => !board.includes(card))];
   passive(hand);

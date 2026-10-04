@@ -8,7 +8,7 @@ const ROYAL_BOARD = ['As', 'Ks', 'Qs', 'Js', 'Ts'];
 const QUADS_BOARD = ['Qs', 'Qh', 'Qd', 'Qc', 'As'];
 
 function fixture({board = ROYAL_BOARD, player = ['2c', '3d'], npc = ['4c', '5d'], config = {}} = {}) {
-  const session = createSession({...config, deal: {player: {manual: player}, npc: {manual: npc}}}, 73);
+  const session = createSession({buyIn: 1000, ...config, deal: {player: {manual: player}, npc: {manual: npc}}}, 73);
   const hand = startHand(session);
   assert.equal(new Set([...player, ...npc, ...board]).size, 9);
   hand.deck = [...board, ...hand.deck.filter(card => !board.includes(card))];

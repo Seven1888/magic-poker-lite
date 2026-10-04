@@ -31,7 +31,7 @@ test('deck counter follows real draws 48 to 45 to 44 to 43 and keeps 52 cards ac
 });
 
 test('live commitments reduce available funds without pretending that unsettled bets are losses', () => {
-  const session = createSession({}, 102), hand = startHand(session);
+  const session = createSession({buyIn: 1000}, 102), hand = startHand(session);
   let hud = getHudSnapshot({session, hand});
   assert.equal(hud.playerBalance, 995); assert.equal(hud.npcBalance, 990);
   assert.equal(hud.playerCommitted, 5); assert.equal(hud.npcCommitted, 10);
@@ -48,7 +48,7 @@ test('live commitments reduce available funds without pretending that unsettled 
 });
 
 test('fractional blind HUD and money labels agree with opening commitments, calls and the settled ledger', () => {
-  const session = createSession({bigBlind: .03, jackpotEnabled: false}, 42), hand = startHand(session);
+  const session = createSession({buyIn: 1000, bigBlind: .03, jackpotEnabled: false}, 42), hand = startHand(session);
   const opening = getHudSnapshot({session, hand});
   assert.equal(opening.playerSeat, 'SB'); assert.equal(opening.npcSeat, 'BB');
   assert.equal(opening.smallBlind, .015); assert.equal(opening.bigBlind, .03);
@@ -67,7 +67,7 @@ test('fractional blind HUD and money labels agree with opening commitments, call
 });
 
 test('refund settlement and the following hand retain genuine cumulative table profit', () => {
-  const session = createSession({}, 102), hand = startHand(session);
+  const session = createSession({buyIn: 1000}, 102), hand = startHand(session);
   applyAction(hand, 'raise'); applyAction(hand, 'fold');
   const hud = getHudSnapshot({session, hand});
   assert.equal(hand.result.player.refund, 10);

@@ -1,4 +1,4 @@
-# Engine API contract · heads-up two blinds + entry + Jackpot + demo opponent refresh · 2026-10-02
+# Engine API contract · heads-up two blinds + entry + Jackpot + demo opponent refresh · 2026-10-04
 
 All modules are dependency-free ESM. Import from `./src/engine.mjs`. All currency values are chip units, rounded internally to six decimals; the UI preserves up to six fractional digits so .03 BB / .015 SB and their payments remain consistent. Card identifiers are `As`, `Kh`, `Td`, `2c` (`s h d c`; ace is `A`, ten is `T`).
 
@@ -9,7 +9,7 @@ All modules are dependency-free ESM. Import from `./src/engine.mjs`. All currenc
 ```js
 {
   targetRtp: 0.96, jackpotEnabled: true, smallBlind: 5, bigBlind: 10,
-  minBuyIn: 200, maxBuyIn: 2000, buyIn: 1000,
+  minBuyIn: 200, maxBuyIn: 10000, buyIn: 10000,
   betSize: {preflop:10, flop:20, turn:40, river:40},
   maxRaises: 1, animationMs: 850,
   npc: {fold:0.2, call:0.6, raise:0.2, check:0.65, bet:0.35,
@@ -35,7 +35,9 @@ Import from `./src/entry-model.mjs`. These functions are pure configuration help
 
 Selecting BET and creating the session do not charge chips. `startHand` automatically posts each seat's blind once; subsequent call/bet/raise actions deduct only their actual incremental amounts. At BET 1 the SB is .5; there is no whole-chip rounding. The blind draw UI identifies SMALL BLIND / BIG BLIND, the player's automatic payment and preflop/postflop action order; it uses the one already-determined draw.
 
-The UI initializes its in-page assets once from `config.buyIn` (default 1000). On leaving a table it retains the actual player stack, including credited Jackpot, and uses that balance at the next entry. Both seats start that new session with the same full available asset amount. The entry UI asks only for BET, never a manual buy-in; it rejects insufficient assets and never silently refills them. In-play chips committed to the pot are not available balance. This is an in-page prototype balance, not a persistent external account; page reload initializes it again. The explicit “重設 DEMO 資產” action, available only outside a playing hand and when not busy, clears the session and resets assets to current `loadConfig().buyIn`; ordinary re-entry does not do this.
+The UI initializes its in-page assets once from `config.buyIn` (default 10000). The v30 default `maxBuyIn` is also 10000 so normalization does not cap that starting amount. `loadConfig()` continues to preserve saved custom settings; the update does not overwrite saved buy-ins, an active session or an existing in-page balance. A fresh page without saved settings uses 10000, and Probability Lab's Restore defaults loads that default configuration.
+
+On leaving a table the UI retains the actual player stack, including credited Jackpot, and uses that balance at the next entry. Both seats start that new session with the same full available asset amount. The entry UI asks only for BET, never a manual buy-in; it rejects insufficient assets and never silently refills them. In-play chips committed to the pot are not available balance. This is an in-page prototype balance, not a persistent external account; page reload initializes it again. The explicit “Reset demo chips” action, available only outside a playing hand and when not busy, clears the session and resets assets to current `loadConfig().buyIn`; it therefore respects a saved custom buy-in. Ordinary re-entry does not reset assets.
 
 ## Session / hand
 
@@ -121,6 +123,12 @@ From that opening state, independent examples below report the hand's settlement
 - Player `call`: deduct another 5, contributions become 10/10, POT 20, stacks 990/990; NPC retains its preflop check/raise option.
 - Player `raise`, then NPC `fold`: player pays another 15, contributions are 20/10; refund player 10, matched wagers 10 each, settled POT 20, fee .8, player `netReturn` 19.2, final stacks 1009.2/990.
 - Player immediately `fold`: contributions are 5/10; refund NPC 5, matched wagers 5 each, settled POT 10, fee .4, NPC `netReturn` 9.6, final stacks 995/1004.6. Player loses the posted small blind. The fold grants no Jackpot.
+
+### v30 return presentation
+
+`src/total-win-view.mjs` remains a read-only projection of the settled result: displayed amount is `player.totalReturn = player.netReturn + player.jackpotAward`, excluding `refund`, while a positive `profit` selects the TOTAL WIN outcome. The navy-and-gold plaque retains source-stack avoidance and re-centres only after the real POT source clears. Normal-motion positive-profit counting emits 32 decorative gold coins on deterministic paths behind the amount; finish, cancellation, a new result, page hiding and destruction remove them. Re-rendering the same result does not replay, and reduced motion, splits, non-profit returns and losses emit no coins. Coin animation never samples RNG or credits funds. Existing count and finish audio still respects mute. Current QA and release status are recorded in [mobile and deployment QA](docs/06-mobile-and-deployment.md).
+
+The [probability model document](docs/04-game-flow-and-math.html) and [Probability Lab](probability.html) remain separate public entry points. NPC weights, legal-action normalization, RNG, settlement and JP formulas are unchanged; the new default starting stack is not an RTP recalibration.
 
 ## Jackpot rules and pure quote API
 

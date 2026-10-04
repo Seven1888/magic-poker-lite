@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="rim" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff7ca"/><stop offset=".24" stop-color="#e3ae36"/><stop offset=".48" stop-color="#fff2a4"/><stop offset=".72" stop-color="#99600d"/><stop offset="1" stop-color="#f5cb59"/></linearGradient>
+    <radialGradient id="face" cx=".3" cy=".22" r=".8"><stop stop-color="#fff4b2"/><stop offset=".4" stop-color="#edc258"/><stop offset=".78" stop-color="#c38b24"/><stop offset="1" stop-color="#956017"/></radialGradient>
+    <linearGradient id="stamp" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#956015"/><stop offset="1" stop-color="#c28b27"/></linearGradient>
+  </defs>
+  <circle cx="32" cy="34" r="29" fill="#81521a"/>
+  <circle cx="32" cy="32" r="29" fill="url(#rim)" stroke="#fbe59a" stroke-width="1"/>
+  <circle cx="32" cy="32" r="26" fill="none" stroke="#8c5b18" stroke-width="2" stroke-dasharray="1 2.2"/>
+  <circle cx="32" cy="32" r="23" fill="url(#face)" stroke="#fff0ac" stroke-width="1.4"/>
+  <circle cx="32" cy="32" r="20.5" fill="none" stroke="#a97320" stroke-width=".8"/>
+  <path d="M32 17c-4 7-14 11-14 18 0 6 8 9 12 3-1 5-3 7-5 8h14c-2-1-4-3-5-8 4 6 12 3 12-3 0-7-10-11-14-18Z" fill="#ffe599" transform="translate(0 1)"/>
+  <path d="M32 17c-4 7-14 11-14 18 0 6 8 9 12 3-1 5-3 7-5 8h14c-2-1-4-3-5-8 4 6 12 3 12-3 0-7-10-11-14-18Z" fill="url(#stamp)"/>
+  <path d="M12 19a24 24 0 0 1 33-9" fill="none" stroke="#fffbe0" stroke-width="2" stroke-linecap="round" opacity=".85"/>
+</svg>
