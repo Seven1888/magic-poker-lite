@@ -192,6 +192,19 @@ export function createGameEffects({root = globalThis.document, reducedMotion = f
     }
   }
 
+  function dealOrigin(stage, stageRect) {
+    const anchor = lookup('deal-origin')?.getBoundingClientRect?.();
+    if (anchor?.width > 0 && anchor.height > 0) return anchor;
+    const deck = lookup('deck-button')?.getBoundingClientRect?.();
+    if (deck?.width > 0 && deck.height > 0) return deck;
+    if (!(stage?.offsetWidth > 0 && stage.offsetHeight > 0 && stageRect?.width > 0 && stageRect.height > 0)) return null;
+    // The stock need not be visible. Keep its launch point in table coordinates,
+    // then project it into the current (possibly scaled) viewport for both hands
+    // and the perspective-corrected board path.
+    return {left: stageRect.left + (stage.offsetWidth - 16) * stageRect.width / stage.offsetWidth,
+      top: stageRect.top + 292 * stageRect.height / stage.offsetHeight, width: 0, height: 0};
+  }
+
   /** Caller supplies backs. Pending cards stay hidden; each landing may await a flip. */
   async function deal(targets = [], {onLand} = {}) {
     if (destroyed) return;
@@ -200,15 +213,16 @@ export function createGameEffects({root = globalThis.document, reducedMotion = f
     cards.forEach(card => { card.style.visibility = 'hidden'; });
     try {
       for (let index = 0; index < cards.length && sequence.alive(); index++) {
-        const card = cards[index], deckRect = lookup('deck-button')?.getBoundingClientRect?.();
+        const card = cards[index];
         const stage = lookup('game'), stageRect = stage?.getBoundingClientRect?.();
+        const deckRect = dealOrigin(stage, stageRect);
         const rect = card.getBoundingClientRect?.();
         const scaleX = stageRect?.width / stage?.offsetWidth;
         const scaleY = stage?.offsetHeight > 0 ? stageRect?.height / stage.offsetHeight : scaleX;
         card.style.visibility = 'visible';
         if (card.dataset) card.dataset.motion = 'dealing';
         play('deal');
-        if (rect?.width > 0 && rect.height > 0 && deckRect?.width > 0 && deckRect.height > 0
+        if (rect?.width > 0 && rect.height > 0 && deckRect
           && Number.isFinite(scaleX) && scaleX > 0 && Number.isFinite(scaleY) && scaleY > 0) {
           const {x, y} = boardDealOffset(card, deckRect, {
             x: (deckRect.left + deckRect.width / 2 - rect.left - rect.width / 2) / scaleX,
@@ -232,37 +246,77 @@ export function createGameEffects({root = globalThis.document, reducedMotion = f
     }
   }
 
-  /** Contract the back, swap at zero width, expand the face, then pause before the next card. */
-  async function reveal(targets = [], {onReveal, holdMs = 170} = {}) {
+  /** Turn through the edge; optional staggering overlaps motion, never face commits. */
+  async function reveal(targets = [], {onReveal, holdMs = 170, staggerMs = 0} = {}) {
     if (destroyed) return;
     const cards = uniqueCards(targets), sequence = beginSequence();
-    const scales = cards.map(card => card.style.scale || '');
+    const properties = ['scale', 'rotate', 'translate', 'backfaceVisibility', 'willChange'];
+    const originals = cards.map(card => Object.fromEntries(properties.map(key => [key, card.style[key] || ''])));
+    const commits = cards.map(() => {
+      let release;
+      const ready = new Promise(resolve => { release = resolve; });
+      return {ready, release};
+    });
     const hold = Math.max(0, Number(holdMs) || 0);
+    const stagger = Math.max(0, Number(staggerMs) || 0);
+    const restore = (card, index) => {
+      for (const key of properties) card.style[key] = originals[index][key];
+      if (card.dataset?.motion === 'turning') delete card.dataset.motion;
+    };
+    async function turn(card, index) {
+      if (!sequence.alive()) return;
+      const animated = !reducedMotion && typeof card.animate === 'function';
+      if (card.dataset) card.dataset.motion = 'turning';
+      try {
+        if (animated) {
+          // The underlying zero-width state remains while an async face callback
+          // runs. The animation itself keeps full scale and turns on its Y axis;
+          // individual transforms leave the CSS fan and board perspective intact.
+          card.style.scale = '0 1'; card.style.rotate = 'y 90deg';
+          card.style.translate = '0px -7px'; card.style.backfaceVisibility = 'hidden';
+          card.style.willChange = 'rotate, translate';
+          if (!await sequence.wait(animateCard(card, [
+            {rotate: 'y 0deg', translate: '0px 0px', scale: '1 1', offset: 0},
+            {rotate: 'y 38deg', translate: '0px -5px', scale: '1 1', offset: .58},
+            {rotate: 'y 90deg', translate: '0px -7px', scale: '1 1', offset: 1}
+          ], {duration: 170, easing: 'cubic-bezier(.42,0,.7,.6)', fill: 'both'}))) return;
+        }
+        // A slow earlier callback cannot let a later public card become visible
+        // first. Waiting cards remain edge-on and keep their original backs.
+        if (index && !await sequence.wait(commits[index - 1].ready)) return;
+        if (!sequence.alive()) return;
+        if (onReveal && !await sequence.wait(onReveal(card, index))) return;
+        commits[index].release();
+        if (animated) {
+          card.style.scale = '1 1'; card.style.rotate = 'y -90deg';
+          if (!await sequence.wait(animateCard(card, [
+            {rotate: 'y -90deg', translate: '0px -7px', scale: '1 1', offset: 0},
+            {rotate: 'y -28deg', translate: '0px -4px', scale: '1 1', offset: .52},
+            {rotate: 'y 0deg', translate: '0px 0px', scale: '1 1', offset: 1}
+          ], {duration: 250, easing: 'cubic-bezier(.2,.55,.3,1)', fill: 'both'}))) return;
+        }
+        restore(card, index);
+        await sequence.wait(pause(hold));
+      } finally {
+        commits[index].release();
+        restore(card, index);
+      }
+    }
     try {
-      for (let index = 0; index < cards.length && sequence.alive(); index++) {
-        const card = cards[index];
-        if (card.dataset) card.dataset.motion = 'turning';
-        if (!reducedMotion) {
-          // Keep the card collapsed while an async onReveal callback updates its face.
-          card.style.scale = '0 1';
-          if (!await sequence.wait(animateCard(card, [
-            {scale: '1 1', offset: 0}, {scale: '0 1', offset: 1}
-          ], {duration: 130, easing: 'ease-in', fill: 'both'}))) break;
+      if (stagger && !reducedMotion && cards.length > 1) {
+        const turns = [];
+        let failure;
+        for (let index = 0; index < cards.length && sequence.alive(); index++) {
+          turns.push(turn(cards[index], index).catch(error => { failure ||= error; sequence.cancel(); }));
+          if (index < cards.length - 1 && !await sequence.wait(pause(stagger))) break;
         }
-        if (!sequence.alive()) break;
-        if (onReveal && !await sequence.wait(onReveal(card, index))) break;
-        if (!reducedMotion) {
-          card.style.scale = '1 1';
-          if (!await sequence.wait(animateCard(card, [
-            {scale: '0 1', offset: 0}, {scale: '1.025 1', offset: .84}, {scale: '1 1', offset: 1}
-          ], {duration: 170, easing: 'cubic-bezier(.16,.7,.25,1)', fill: 'both'}))) break;
-        }
-        card.style.scale = scales[index];
-        if (card.dataset) delete card.dataset.motion;
-        if (!await sequence.wait(pause(hold))) break;
+        await Promise.all(turns);
+        if (failure) throw failure;
+      } else {
+        for (let index = 0; index < cards.length && sequence.alive(); index++) await turn(cards[index], index);
       }
     } finally {
-      cards.forEach((card, index) => { card.style.scale = scales[index]; if (card.dataset?.motion === 'turning') delete card.dataset.motion; });
+      cards.forEach((card, index) => { flights.get(card)?.finish(); restore(card, index); });
       sequences.delete(sequence);
     }
   }

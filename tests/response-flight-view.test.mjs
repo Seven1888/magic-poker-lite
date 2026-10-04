@@ -90,3 +90,69 @@ test('clearing an old flight prevents readiness and reduced motion still shows t
  assert.equal(f.stage.dataset.responseFlight,'ready');
  assert.match(reduced.target().innerHTML,/>57.1%<\/b>/);
 });
+
+test('an NPC first action can show its full raw distribution synchronously without a preview or animation',()=>{
+ const f=fixture(),flight=createResponseFlight(f),before=JSON.stringify(distribution);
+ const decision=Object.freeze({phase:'result',selected:'call',roll:.62});
+ assert.equal(flight.show(distribution,decision),true);
+ const panel=f.nodes[1];
+ assert.equal(f.stage.dataset.responseFlight,'result');
+ assert.equal(panel.style.width,'360px');
+ assert.equal(panel.dataset.outcomeCount,'3');
+ assert.equal(flight.target(),panel);
+ assert.match(panel.innerHTML,/data-response="call" data-probability="0.571"/);
+ assert.match(panel.innerHTML,/style="flex:0 0 57.099999999999994%"/);
+ assert.match(panel.innerHTML,/response-result-marker" style="left:62%"/,'direct display retains the sampled roll rather than centring the selected outcome');
+ assert.equal(f.animations.length,0);
+ assert.equal(JSON.stringify(distribution),before);
+ assert.deepEqual(decision,{phase:'result',selected:'call',roll:.62});
+});
+
+test('a direct new-street decision replaces an in-flight preview without its old completion taking over',async()=>{
+ const f=fixture(),flight=createResponseFlight(f);
+ const pending=flight.launch(f.source,distribution),oldLayer=f.nodes[0];
+ const next=Object.freeze([{type:'check',probability:.7},{type:'bet',probability:.3}].map(Object.freeze));
+ assert.equal(flight.show(next,{phase:'drawing'}),true);
+ const panel=flight.target();
+ assert.equal(oldLayer.removed,true);
+ assert.equal(f.stage.dataset.responseFlight,'drawing');
+ assert.match(panel.innerHTML,/>CHECK<\/span>/);
+ assert.doesNotMatch(panel.innerHTML,/data-response="call"/);
+ f.animations[0].resolve();
+ assert.equal(await pending,false);
+ assert.equal(f.stage.dataset.responseFlight,'drawing');
+ assert.equal(flight.target(),panel);
+ assert.equal(f.animations.length,1,'show does not add a second flight');
+});
+
+test('empty direct displays and updates remove prior decisions instead of leaving a misleading active panel',async()=>{
+ const f=fixture(),flight=createResponseFlight(f);
+ assert.equal(flight.show(distribution),true);
+ assert.equal(f.stage.dataset.responseFlight,'ready');
+ const oldLayer=f.nodes[0];
+ assert.equal(flight.show([{type:'fold',probability:0},{type:'raise',probability:NaN}]),false);
+ assert.equal(oldLayer.removed,true);
+ assert.equal(flight.target(),null);
+ assert.equal(f.stage.dataset.responseFlight,undefined);
+ assert.equal(flight.show(distribution),true);
+ flight.update([]);
+ assert.equal(flight.target(),null);
+ assert.equal(f.stage.dataset.responseFlight,undefined);
+ assert.equal(await flight.launch(f.source,[]),false);
+ assert.equal(flight.target(),null);
+ assert.equal(f.stage.dataset.responseFlight,undefined);
+ assert.equal(f.animations.length,0);
+ const absent=createResponseFlight({root:{getElementById:()=>null}});
+ assert.equal(absent.show(distribution),false);
+});
+
+test('a forced NPC outcome is a single static 100 percent result with no invented sweep',()=>{
+ const f=fixture(),flight=createResponseFlight(f);
+ assert.equal(flight.show([{type:'check',probability:1}],{phase:'result',selected:'check'}),true);
+ assert.equal(f.stage.dataset.responseFlight,'result');
+ assert.equal(flight.target().dataset.outcomeCount,'1');
+ assert.match(flight.target().innerHTML,/is-selected" data-response="check" data-probability="1" style="flex:0 0 100%"/);
+ assert.match(flight.target().innerHTML,/>100.0%<\/b>/);
+ assert.doesNotMatch(flight.target().innerHTML,/action-response-sweep/);
+ assert.equal(f.animations.length,0);
+});

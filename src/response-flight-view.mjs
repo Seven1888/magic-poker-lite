@@ -20,7 +20,7 @@ export function responseDistributionView(distribution=[],{phase='preview',select
  ).join('')}${marker}</span>${smallLabels.length?`<span class="response-track-legend" data-align="${captionAlign}" aria-hidden="true">${smallLabels.map(({type,copy})=>`<span data-response="${type}"${state==='result'&&selected===type?' class="is-selected"':''}>${copy}</span>`).join('')}</span>`:''}`:''};
 }
 
-/** Move an existing public preview, without sampling or reading game state. */
+/** Show a public distribution, optionally flying from its preview, without sampling or reading game state. */
 export function createResponseFlight({root=globalThis.document,effects,reducedMotion=false}={}) {
  const stage=root.getElementById('game');
  let layer=null,panel=null,epoch=0;
@@ -28,13 +28,25 @@ export function createResponseFlight({root=globalThis.document,effects,reducedMo
   epoch++;layer?.remove();layer=null;panel=null;
   if(stage)delete stage.dataset.responseFlight;
  }
- function update(distribution,decision={}){
+ function update(distribution=[],decision={}){
   if(!panel)return;
   const view=responseDistributionView(distribution,decision);
+  if(!view.count){clear();return;}
   panel.innerHTML=view.markup;
   panel.style.width='360px';
   panel.dataset.outcomeCount=String(view.count);
   if(stage.dataset.responseFlight!=='flying')stage.dataset.responseFlight=decision.phase||'ready';
+ }
+ function mount(distribution,decision={}){
+  if(!stage||!responseDistributionView(distribution,decision).count)return false;
+  layer=root.createElement('div');layer.id='response-flight-layer';layer.setAttribute('aria-hidden','true');
+  panel=root.createElement('div');panel.className='response-flyout';
+  layer.append(panel);stage.append(layer);update(distribution,decision);
+  return true;
+ }
+ function show(distribution=[],decision={}){
+  clear();
+  return mount(distribution,decision);
  }
  async function launch(source,distribution){
   clear();
@@ -46,9 +58,8 @@ export function createResponseFlight({root=globalThis.document,effects,reducedMo
   const stageRect=stage.getBoundingClientRect(),scale=stageRect.width/stage.offsetWidth;
   if(!(scale>0)||from.right<=from.left||from.bottom<=from.top)return false;
   const current=epoch;
-  layer=root.createElement('div');layer.id='response-flight-layer';layer.setAttribute('aria-hidden','true');
-  panel=root.createElement('div');panel.className='response-flyout';
-  layer.append(panel);stage.append(layer);stage.dataset.responseFlight='flying';update(distribution);
+  if(!mount(distribution))return false;
+  stage.dataset.responseFlight='flying';
   const to=panel.getBoundingClientRect();
   const dx=(from.left+from.right-to.left-to.right)/2/scale,dy=(from.top+from.bottom-to.top-to.bottom)/2/scale;
   const sx=(from.right-from.left)/to.width,sy=(from.bottom-from.top)/to.height;
@@ -59,5 +70,5 @@ export function createResponseFlight({root=globalThis.document,effects,reducedMo
   if(current!==epoch)return false;
   stage.dataset.responseFlight='ready';return true;
  }
- return {launch,update,clear,target:()=>panel?.querySelector('.action-response-badges')||null};
+ return {launch,show,update,clear,target:()=>panel?.querySelector('.action-response-badges')||null};
 }

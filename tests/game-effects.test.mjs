@@ -99,17 +99,17 @@ test('board deal starts at the deck after ancestor perspective and restores temp
   assert.equal(card.style.visibility, ''); assert.equal(card.style.transform, 'rotate(-6deg)');
 });
 
-test('reveal swaps each back only at the midpoint and finishes the first card before the second', async () => {
+test('reveal swaps each back only at the edge and finishes the first card before the second', async () => {
   const f = fixture(), effects = createGameEffects({root: f.doc}), cards = [f.card('first'), f.card('second')], revealed = [];
   const pending = effects.reveal(cards, {onReveal(card, index) {
     assert.equal(card.style.scale, '0 1');
     revealed.push(index); card.face = 'front';
   }});
   assert.equal(f.animations.length, 1); assert.equal(f.animations[0].face, 'back');
-  assert.equal(f.animations[0].options.duration, atGameSpeed(130)); assert.deepEqual(revealed, []);
+  assert.equal(f.animations[0].options.duration, atGameSpeed(170)); assert.deepEqual(revealed, []);
   f.animations[0].finish(); await flush();
   assert.deepEqual(revealed, [0]); assert.equal(cards[1].face, 'back');
-  assert.equal(f.animations[1].face, 'front'); assert.equal(f.animations[1].options.duration, atGameSpeed(170));
+  assert.equal(f.animations[1].face, 'front'); assert.equal(f.animations[1].options.duration, atGameSpeed(250));
   f.animations[1].finish(); await flush();
   await f.tick(atGameSpeed(170) - 1); assert.equal(f.animations.length, 2);
   await f.tick(1); assert.equal(f.animations.length, 3); assert.equal(f.animations[2].face, 'back');
@@ -119,11 +119,85 @@ test('reveal swaps each back only at the midpoint and finishes the first card be
   assert.ok(cards.every(card => card.style.scale === '' && card.dataset.motion === undefined));
 });
 
+test('a hidden stock uses the scaled table launch point instead of cancelling the deal', async () => {
+  const f = fixture(), effects = createGameEffects({root: f.doc}), card = f.card('player');
+  f.nodes.set('deck-button', {getBoundingClientRect: () => ({left: 0, top: 0, width: 0, height: 0})});
+  const pending = effects.deal([card]);
+  assert.equal(f.animations.length, 1, 'removing the visible deck does not remove the deal');
+  assert.equal(f.animations[0].keyframes[0].translate, '244px -108px');
+  assert.equal(card.face, 'back');
+  f.animations[0].finish(); await pending;
+  assert.equal(card.style.transform, 'rotate(-6deg)');
+});
+
+test('staggered board turns overlap but wait for ordered async face commits at the invisible edge', async () => {
+  const f = fixture(), effects = createGameEffects({root: f.doc}), cards = ['flop1', 'flop2', 'flop3'].map(f.card);
+  const revealed = [], started = [];
+  let releaseFirst;
+  const pending = effects.reveal(cards, {holdMs: 0, staggerMs: 105, onReveal: async (card, index) => {
+    assert.equal(card.style.scale, '0 1');
+    assert.equal(card.style.rotate, 'y 90deg');
+    assert.equal(card.style.backfaceVisibility, 'hidden');
+    started.push(index);
+    if (index === 0) await new Promise(resolve => { releaseFirst = resolve; });
+    card.face = 'front'; revealed.push(index);
+  }});
+  assert.equal(f.animations.length, 1);
+  await f.tick(atGameSpeed(105));
+  assert.equal(f.animations.length, 2, 'second card moves before the first has finished');
+  await f.tick(atGameSpeed(105));
+  assert.equal(f.animations.length, 3);
+  assert.deepEqual(revealed, []);
+  f.animations[2].finish(); f.animations[1].finish(); await flush();
+  assert.deepEqual(started, [], 'out-of-order animation completion never reveals later cards');
+  f.animations[0].finish(); await flush();
+  assert.deepEqual(started, [0]);
+  assert.ok(cards.every(card => card.face === 'back'));
+  releaseFirst(); await flush();
+  assert.deepEqual(revealed, [0, 1, 2]);
+  assert.equal(f.animations.length, 6);
+  assert.ok(f.animations.every(animation => animation.keyframes.every(frame => !Object.hasOwn(frame, 'transform'))));
+  f.animations.slice(3).forEach(animation => animation.finish());
+  await pending;
+  assert.equal(f.timers.size, 0);
+  assert.ok(cards.every(card => card.style.scale === '' && card.style.rotate === '' && card.style.translate === '' && card.style.backfaceVisibility === '' && card.style.willChange === '' && card.style.transform === 'rotate(-6deg)' && card.dataset.motion === undefined));
+});
+
+test('destroying overlapping turns stops later reveals and restores temporary 3D styles', async () => {
+  const f = fixture(), effects = createGameEffects({root: f.doc}), cards = ['flop1', 'flop2', 'flop3'].map(f.card), started = [];
+  const pending = effects.reveal(cards, {staggerMs: 105, onReveal: (card, index) => {
+    started.push(index); return new Promise(() => {});
+  }});
+  await f.tick(atGameSpeed(105));
+  f.animations[0].finish(); await flush();
+  assert.deepEqual(started, [0]);
+  effects.destroy(); await pending;
+  assert.deepEqual(started, [0]);
+  assert.equal(f.animations.length, 2);
+  assert.ok(f.animations.every(animation => animation.cancelled));
+  assert.equal(f.timers.size, 0);
+  assert.ok(cards.every(card => card.face === 'back' && card.style.scale === '' && card.style.rotate === '' && card.style.translate === '' && card.style.backfaceVisibility === '' && card.dataset.motion === undefined));
+});
+
+test('staggered reveal watchdogs finish and reduced motion keeps the same ordered callbacks without timers', async () => {
+  for (const reducedMotion of [false, true]) {
+    const f = fixture(), effects = createGameEffects({root: f.doc, reducedMotion}), cards = ['flop1', 'flop2', 'flop3'].map(f.card), revealed = [];
+    const pending = effects.reveal(cards, {holdMs: 0, staggerMs: 105, onReveal(card, index) { card.face = 'front'; revealed.push(index); }});
+    if (!reducedMotion) for (let step = 0; step < 6; step++) await f.tick(1000);
+    await pending;
+    assert.deepEqual(revealed, [0, 1, 2]);
+    assert.equal(f.timers.size, 0);
+    assert.ok(cards.every(card => card.face === 'front' && card.dataset.motion === undefined));
+    if (reducedMotion) assert.equal(f.animations.length, 0);
+    else assert.ok(f.animations.every(animation => animation.cancelled));
+  }
+});
+
 test('a landing callback can await a short reveal before the next card leaves the deck', async () => {
   const f = fixture(), effects = createGameEffects({root: f.doc}), cards = [f.card('first'), f.card('second')];
   const pending = effects.deal(cards, {onLand: card => effects.reveal([card], {holdMs: 35, onReveal: target => { target.face = 'front'; }})});
   f.animations[0].finish(); await flush();
-  assert.equal(f.animations[1].options.duration, atGameSpeed(130)); assert.equal(f.animations[1].cancelled, false);
+  assert.equal(f.animations[1].options.duration, atGameSpeed(170)); assert.equal(f.animations[1].cancelled, false);
   f.animations[1].finish(); await flush(); f.animations[2].finish(); await flush();
   await f.tick(atGameSpeed(35)); assert.equal(f.animations.length, 3);
   await f.tick(atGameSpeed(50)); assert.equal(f.animations[3].card, cards[1]);

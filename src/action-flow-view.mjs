@@ -1,49 +1,73 @@
 import {esc} from './shared.mjs';
 
-const STEPS=[['deal','DEAL'],['you','YOU'],['boss','BOSS'],['pot','POT']];
 const clean=value=>String(value??'').replace(/\s+/g,' ').trim();
 const actorStep=actor=>actor==='npc'?'boss':'you';
-const amounts=detail=>(detail.match(/[+-]?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?/g)||[]).map(value=>value.replace(/^\+/,''));
+const actorFromLabel=label=>/^(OPPONENT|BOSS)\b/i.test(label)?'boss':/^YOU\b/i.test(label)?'you':'';
+const actionVerb=label=>label.replace(/^(YOU|OPPONENT|BOSS)\s+/i,'');
+const concreteAction=verb=>/^(FOLD|CHECK|CALL|BET|RAISE)\b/i.test(verb);
+const ICONS={
+ deal:'<rect x="3" y="5" width="12" height="16" rx="2"/><path d="M9 3h10a2 2 0 0 1 2 2v12M7 11h4m-2-2v4"/>',
+ you:'<circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/>',
+ boss:'<path d="m3 7 4 3 5-6 5 6 4-3-2 11H5L3 7Zm3 14h12"/>',
+ complete:'<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>'
+};
+const view=(step,name,verb,detail='')=>({step,name,verb,message:name+(verb?': '+verb:'')+(detail?' · '+detail:'')});
 
-/** Describe existing presentation state without consulting or changing a hand. */
-export function actionFlowState({mode='',label='',seat='',detail='',actor='',playing=false}={}){
+/** Describe the current actor only; chip transfers do not become another turn. */
+export function actionFlowState({mode='',label='',seat='',detail='',actor='',playing=false,settled=false}={},previous=null){
  label=clean(label);detail=clean(detail);
- let step='deal',verb='READY';
  if(['hole-deal','board-deal','showdown'].includes(mode)){
-  verb=mode==='hole-deal'?'HOLE CARDS':mode==='showdown'?'SHOWDOWN':/\b(FLOP|TURN|RIVER)\b/i.exec(label)?.[1].toUpperCase()||'BOARD';
- }else if(mode==='action'){
-  step=seat?actorStep(seat):/^(OPPONENT|BOSS)\b/i.test(label)?'boss':/^YOU\b/i.test(label)?'you':actorStep(actor);
-  verb=label.replace(/^(YOU|OPPONENT|BOSS)\s+/i,'')||(step==='boss'?'THINKING':'CHOOSE');
-  if(/^(DECIDING|THINKING)$/i.test(verb))verb='THINKING';
- }else if(['contribution','refund','payout','bonus'].includes(mode)){
-  step='pot';
-  const amount=amounts(detail).join('+');
-  verb=`${{contribution:'IN',refund:'BACK',payout:'PAID',bonus:'JP'}[mode]}${amount?' '+amount:''}`;
-  if(mode==='contribution'&&/\b(SMALL|BIG) BLIND\b/i.test(label))verb=`${/SMALL BLIND/i.test(label)?'SB':'BB'}${amount?' '+amount:''}`;
-  if(!amount)verb=mode==='contribution'&&/BLIND/i.test(label)?'BLINDS':mode==='payout'&&/SPLIT/i.test(label)?'SPLIT':mode==='payout'&&/COMPLETE/i.test(label)?'COMPLETE':verb;
- }else if(mode==='refresh'){
-  step='boss';verb='READY';
- }else if(playing){
-  step=actorStep(actor);verb=step==='boss'?'THINKING':'CHOOSE';
+  const verb=mode==='hole-deal'?'HOLE CARDS':mode==='showdown'?'SHOWDOWN':/\b(FLOP|TURN|RIVER)\b/i.exec(label)?.[1].toUpperCase()||'SETTING THE BOARD';
+  return view('deal','DEALING',verb,detail);
  }
- const name=STEPS.find(([key])=>key===step)[1];
- return {step,verb,message:`${name}: ${label||verb}${detail?' · '+detail:''}`};
+ if(mode==='contribution'&&/\bBLINDS?\b/i.test(label))return view('deal','DEALING','POSTING BLINDS');
+ if(mode==='action'||mode==='contribution'){
+  const step=seat?actorStep(seat):actorFromLabel(label)||actorStep(actor);
+  let verb=actionVerb(label);
+  if(mode==='contribution'){
+   // Keep the already displayed choice through its flight, including its exact
+   // amount. The engine may already have advanced actor or settled the hand.
+   if(previous?.step===step&&concreteAction(previous.verb)&&(!concreteAction(verb)||previous.verb.split(' ')[0]===verb.split(' ')[0]))return previous;
+   if(!concreteAction(verb))verb='ACTING';
+   else if(!/\d/.test(verb)){
+    const amount=detail.match(/(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?/)?.[0];
+    if(amount)verb+=' '+amount;
+   }
+   return view(step,step==='boss'?'BOSS TURN':'YOUR TURN',verb);
+  }
+  if(/^(DECIDING|THINKING)$/i.test(verb))verb='DECIDING';
+  if(!verb)verb=step==='boss'?'DECIDING':'CHOOSE YOUR MOVE';
+  return view(step,step==='boss'?'BOSS TURN':'YOUR TURN',verb,detail);
+ }
+ if(['refund','payout','bonus','refresh'].includes(mode)||settled){
+  if(mode==='payout'){
+   const result=/^YOU WIN\b/i.test(label)?'YOU WIN':/^(OPPONENT|BOSS) WINS\b/i.test(label)?'BOSS WINS':/\bSPLIT\b/i.test(label)?'SPLIT HAND':'READY FOR NEXT HAND';
+   return view('complete','HAND COMPLETE',result);
+  }
+  if(previous?.step==='complete')return previous;
+  return view('complete','HAND COMPLETE',mode==='refund'?'SETTLING HAND':'READY FOR NEXT HAND');
+ }
+ if(playing){
+  const step=actorStep(actor);
+  return view(step,step==='boss'?'BOSS TURN':'YOUR TURN',step==='boss'?'DECIDING':'CHOOSE YOUR MOVE');
+ }
+ return view('deal','READY TO PLAY','CHOOSE YOUR BET');
 }
 
-/** Persistent, read-only progress strip; unchanged renders do not re-announce. */
+/** Persistent, read-only turn panel; unchanged renders do not re-announce. */
 export function createActionFlow({root=globalThis.document}={}){
  const element=root.getElementById('action-flow');
- let previous='';
+ let previous=null,previousKey='';
  function render(input={}){
   if(!element)return;
-  const view=actionFlowState(input),key=JSON.stringify(view);
-  if(key===previous)return;
-  previous=key;
+  const current=actionFlowState(input,previous),key=JSON.stringify(current);
+  if(key===previousKey)return;
+  previous=current;previousKey=key;
   element.classList.add('action-flow-strip');
   element.setAttribute('role','status');element.setAttribute('aria-live','polite');element.setAttribute('aria-atomic','true');
-  element.setAttribute('aria-label',view.message);element.setAttribute('title',view.message);
-  element.dataset.step=view.step;
-  element.innerHTML=`<span class="action-flow-rail" aria-hidden="true">${STEPS.map(([step,name],index)=>`${index?'<span class="action-flow-arrow">→</span>':''}<span class="action-flow-step${view.step===step?' action-flow-current':''}"><span class="action-flow-name">${name}</span>${view.step===step?`<strong class="action-flow-verb">${esc(view.verb)}</strong>`:''}</span>`).join('')}</span><span class="action-flow-announcement">${esc(view.message)}</span>`;
+  element.setAttribute('aria-label',current.message);element.setAttribute('title',current.message);
+  element.dataset.step=current.step;
+  element.innerHTML='<span class="action-flow-current" aria-hidden="true"><span class="action-flow-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'+ICONS[current.step]+'</svg></span><span class="action-flow-copy"><span class="action-flow-name">'+esc(current.name)+'</span><strong class="action-flow-verb">'+esc(current.verb)+'</strong></span></span><span class="action-flow-announcement">'+esc(current.message)+'</span>';
  }
  return {render};
 }
