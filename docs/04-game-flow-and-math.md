@@ -2,11 +2,13 @@
 
 ## 遊戲流程、操作案例與數學模型
 
-版本：v30 起始資產與得獎演出／v26 大小盲規則 · 日期：2026-10-04
+版本：v31 機率工具繁體中文／v26 大小盲規則 · 日期：2026-10-04
 
 **快速查閱：** [機率工具](../probability.html) · [NPC 機率公式](04-game-flow-and-math.html#section-4) · [結算與守恆](04-game-flow-and-math.html#section-5) · [逐步帳務案例](04-game-flow-and-math.html#section-6) · [工具使用說明](04-game-flow-and-math.html#section-7) · [RTP 與驗證範圍](04-game-flow-and-math.html#section-8)
 
-**現行 v30：** 預設原型資產為 10,000；TOTAL WIN 增加有厚度的得獎底板與金幣演出，金額仍取 `player.totalReturn = netReturn + jackpotAward`，排除未跟注退款。這是初始設定與呈現更新，NPC 權重、RNG、結算公式及 JP 規則未改，未重跑 RTP 校準。第 6 節保留明示起始資產 1,000 的受控帳務案例，不代表目前預設值。
+**現行 v31 語言規範：** 機率工作台使用繁體中文，包含參數、說明、操作、動態狀態、錯誤與報表；遊戲介面仍為英文。工具策略顯示為平衡、始終跟注、積極、保守，內部仍使用 `balanced`／`call`／`aggressive`／`tight`。頁面語言為 `zh-Hant`，保留 BET、JP、RTP、JSON／CSV 與牌碼識別，匯出欄位及資料契約不改。此段覆蓋下方歷史工具英文規格；中文化不改機率模型或任何數學結果。
+
+**沿用 v30：** 預設原型資產為 10,000；TOTAL WIN 增加有厚度的得獎底板與金幣演出，金額仍取 `player.totalReturn = netReturn + jackpotAward`，排除未跟注退款。這是初始設定與呈現更新，NPC 權重、RNG、結算公式及 JP 規則未改，未重跑 RTP 校準。第 6 節保留明示起始資產 1,000 的受控帳務案例，不代表目前預設值。
 
 **沿用 v29：** 主按鈕內仍只列真實 FOLD／RAISE 機率，點選後中央連續長條呈現所有正機率實際動作（含 CALL／CHECK／BET）；區寬取原始機率，marker 取同一次 `selected.roll`，不重抽或正規化剩餘選項。單 coin 演出既有盲位、SB→BB 串行入 POT。牌桌精確跑分取代自動結算視窗，明細仍可手動開啟。以下版本更新為沿革，衝突時以本段及第 1–8 節現行說明為準。
 
