@@ -10,7 +10,7 @@ test('turn panel identifies the current actor and retains actual NPC action name
   [{mode:'board-deal',label:'RIVER'},'deal','DEALING','RIVER'],
   [{mode:'board-deal',label:'SETTING THE BOARD'},'deal','DEALING','SETTING THE BOARD'],
   [{mode:'showdown'},'deal','DEALING','SHOWDOWN'],
-  [{mode:'action',seat:'player',label:'YOU CALL 0.5'},'you','YOUR TURN','CALL 0.5'],
+  [{mode:'action',seat:'player',label:'YOU CALL 0.5'},'you','YOUR TURN','CALL'],
   [{mode:'action',label:'OPPONENT CHECK'},'boss','BOSS TURN','CHECK'],
   [{mode:'action',label:'OPPONENT BET'},'boss','BOSS TURN','BET'],
   [{mode:'action',seat:'npc',label:'OPPONENT DECIDING'},'boss','BOSS TURN','DECIDING'],
@@ -29,7 +29,7 @@ test('chip contributions retain the acting seat even after the engine advances o
  const boss=actionFlowState({mode:'action',seat:'npc',label:'OPPONENT CALL'});
  assert.equal(actionFlowState({mode:'contribution',seat:'npc',label:'CHIPS TO POT',detail:'1,234.56789 → POT',actor:'player'},boss),boss);
  const fresh=actionFlowState({mode:'contribution',seat:'npc',label:'OPPONENT CALL',detail:'1,234.56789 → POT',actor:'player'},chosen);
- assert.equal(fresh.step,'boss');assert.equal(fresh.verb,'CALL 1,234.56789');
+ assert.equal(fresh.step,'boss');assert.equal(fresh.verb,'CALL');
  assert.doesNotMatch(fresh.message,/POT/);
  for(const label of ['POST BLINDS','BOTH PLAYERS POST BLINDS','YOU SMALL BLIND','OPPONENT BIG BLIND']){
   const blind=actionFlowState({mode:'contribution',label,seat:'npc'},boss);
@@ -58,8 +58,8 @@ test('unchanged choices and chip flights do not rewrite the live region or show 
  panel.render(input);panel.render({...input});
  panel.render({mode:'contribution',label:'YOU RAISE',detail:'0.015 → POT',seat:'player'});
  assert.equal(writes,1);
- assert.equal(attrs.role,'status');assert.equal(attrs['aria-live'],'polite');assert.equal(attrs['aria-label'],'YOUR TURN: RAISE 0.015 · CHIPS TO THE POT');
- assert.equal(attrs.title,attrs['aria-label']);assert.match(markup,/RAISE 0.015/);
+ assert.equal(attrs.role,'status');assert.equal(attrs['aria-live'],'polite');assert.equal(attrs['aria-label'],'YOUR TURN: RAISE · CHIPS TO THE POT');
+ assert.equal(attrs.title,attrs['aria-label']);assert.match(markup,/RAISE/);assert.doesNotMatch(markup,/0\.015/);
  assert.doesNotMatch(markup,/action-flow-arrow|action-flow-rail|BOSS TURN|DEALING/);
  assert.equal((markup.match(/action-flow-current/g)||[]).length,1);
  panel.render({mode:'action',label:'YOU <CALL>',seat:'player'});assert.equal(writes,2);assert.match(markup,/&lt;CALL&gt;/);

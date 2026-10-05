@@ -1,4 +1,4 @@
-import {esc} from './shared.mjs?v=35';
+import {esc} from './shared.mjs?v=45';
 import {JACKPOT_MULTIPLIERS} from './jackpot.mjs?v=35';
 import {LAB_STREETS as STREETS, LAB_POLICIES as POLICIES, LAB_JACKPOTS as JACKPOTS} from './probability-text.mjs?v=35';
 

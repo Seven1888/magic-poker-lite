@@ -1,4 +1,4 @@
-import {normalizeConfig} from './engine.mjs?v=35';
+import {normalizeConfig} from './engine.mjs?v=45';
 const round=n=>Math.round((n+Number.EPSILON)*1e6)/1e6;
 // Match Hands Up's fixed BET levels; probability-tool settings do not move the UI ladder.
 const BET_LEVELS=Object.freeze([1,2,5,10,20,50,100,200,500,800,1000,1200,1500,1800,2000]);

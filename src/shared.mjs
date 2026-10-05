@@ -1,4 +1,4 @@
-import {DEFAULT_CONFIG,normalizeConfig} from './engine.mjs?v=35';
+import {DEFAULT_CONFIG,normalizeConfig} from './engine.mjs?v=45';
 export const CONFIG_KEY='magic-poker-lite.config.v1';
 export const LABELS={fold:'棄牌',check:'過牌',call:'跟注',bet:'下注',raise:'加注',smallBlind:'小盲',bigBlind:'大盲'};
 export const STREETS={preflop:'翻牌前',flop:'翻牌',turn:'轉牌',river:'河牌'};

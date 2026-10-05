@@ -1,9 +1,12 @@
-import {esc} from './shared.mjs?v=35';
+import {esc} from './shared.mjs?v=45';
 
 const clean=value=>String(value??'').replace(/\s+/g,' ').trim();
 const actorStep=actor=>actor==='npc'?'boss':'you';
 const actorFromLabel=label=>/^(OPPONENT|BOSS)\b/i.test(label)?'boss':/^YOU\b/i.test(label)?'you':'';
-const actionVerb=label=>label.replace(/^(YOU|OPPONENT|BOSS)\s+/i,'');
+const actionVerb=label=>{
+ const verb=label.replace(/^(YOU|OPPONENT|BOSS)\s+/i,'');
+ return /^(FOLD|CHECK|CALL|BET|RAISE)\b/i.exec(verb)?.[1]||verb;
+};
 const concreteAction=verb=>/^(FOLD|CHECK|CALL|BET|RAISE)\b/i.test(verb);
 const ICONS={
  deal:'<rect x="3" y="5" width="12" height="16" rx="2"/><path d="M9 3h10a2 2 0 0 1 2 2v12M7 11h4m-2-2v4"/>',
@@ -25,14 +28,10 @@ export function actionFlowState({mode='',label='',seat='',detail='',actor='',pla
   const step=seat?actorStep(seat):actorFromLabel(label)||actorStep(actor);
   let verb=actionVerb(label);
   if(mode==='contribution'){
-   // Keep the already displayed choice through its flight, including its exact
-   // amount. The engine may already have advanced actor or settled the hand.
+   // Keep the action word through its chip flight. Exact amounts remain in the
+   // controls and ledger; the engine may already have advanced or settled.
    if(previous?.step===step&&concreteAction(previous.verb)&&(!concreteAction(verb)||previous.verb.split(' ')[0]===verb.split(' ')[0]))return previous;
    if(!concreteAction(verb))verb='ACTING';
-   else if(!/\d/.test(verb)){
-    const amount=detail.match(/(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?/)?.[0];
-    if(amount)verb+=' '+amount;
-   }
    return view(step,step==='boss'?'BOSS TURN':'YOUR TURN',verb);
   }
   if(/^(DECIDING|THINKING)$/i.test(verb))verb='DECIDING';

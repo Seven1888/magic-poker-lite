@@ -33,10 +33,13 @@ test('central draw maps CHECK/BET names to CALL/RAISE while preserving raw types
  assert.match(view.markup,/>40.0%<\/b>/,'the raw .3996 is formatted, never rescaled to the positive sum');
  assert.match(view.markup,/is-selected" data-response="bet"/);
  assert.match(view.markup,/style="flex:0 0 0.04%"/,'tiny segments keep their true width');
- assert.match(view.markup,/response-track-legend/,'tiny outcomes get readable captions without enlarging their segments');
- const caption=view.markup.split('response-track-legend')[1];
- assert.match(caption,/data-response="check"/);
- assert.doesNotMatch(caption,/data-response="bet"/,'readable outcomes remain inside the bar without duplicate external labels');
+ assert.match(view.markup,/is-tiny" data-response="check"/,'tiny sections hide their own text while preserving their colour');
+ assert.doesNotMatch(view.markup,/response-track-legend/,'tiny outcomes do not create external captions');
+ const narrow=responseDistributionView([{type:'fold',probability:.03},{type:'call',probability:.92},{type:'raise',probability:.05}]);
+ assert.match(narrow.markup,/is-tiny" data-response="fold" data-probability="0.03" style="flex:0 0 3%"/);
+ assert.match(narrow.markup,/is-tiny" data-response="raise" data-probability="0.05" style="flex:0 0 5%"/);
+ assert.match(narrow.markup,/action-response-badge" data-response="call" data-probability="0.92" style="flex:0 0 92%"/);
+ assert.doesNotMatch(narrow.markup,/response-track-legend/);
  assert.doesNotMatch(view.markup,/>CHECK<|>BET</);
  assert.deepEqual(responseDistributionView([]),{count:0,markup:''});
 });

@@ -1,4 +1,4 @@
-import {cardMarkup,money} from './shared.mjs?v=35';
+import {cardMarkup,money} from './shared.mjs?v=45';
 const TIER_NAMES={royal:'Royal Flush',straightFlush:'Straight Flush',quads:'Four of a Kind'};
 /** Presentation only. Engine settlement has already credited the award exactly once. */
 export function renderJackpotWin(root,result){

@@ -1,4 +1,4 @@
-import {normalizeConfig, createSession, playAutomatedHand, syncOpponentBankroll} from './engine.mjs?v=35';
+import {normalizeConfig, createSession, playAutomatedHand, syncOpponentBankroll} from './engine.mjs?v=45';
 import {BOSS_PROFILE_IDS} from './boss-profiles.mjs?v=35';
 
 const SEATS = ['player', 'npc'];
@@ -152,7 +152,8 @@ export function simulateStudy(config = {}, {
     methodMeta: {mode, ciUnit: clustered ? 'player' : 'hand', ciSamples: 0,
       bossSelection: normalized.boss.mode === 'rotate' ? '每位玩家首手四型各 1/4，之後排除上一型、其餘各 1/3；重設資產也不重設對手序列。' : normalized.boss.mode === 'fixed' ? '研究固定指定 BOSS，刻意允許連續相同。' : '採用舊版對手權重模型。',
       seedDerivation: '每位玩家由主種子及零起算索引固定派生獨立亂數流；增加玩家數不改變既有玩家。',
-      initialBlind: independent ? '每位玩家首手固定小盲，之後逐手輪替。' : '每位玩家入桌先抽一次盲位，之後逐手輪替。',
+      blindMode: independent ? 'alternating' : 'random-each-hand',
+      initialBlind: independent ? '每位玩家首手固定小盲，之後逐手輪替。' : '每位玩家入桌首手及每次下一手均以 50/50 重新抽盲位，允許連續同盲位。',
       bankroll: independent ? '每手雙方重設相同帶入；end 僅為最後一手結束餘額，不能當作連續資產。' : '同桌連續保留玩家餘額；每手結束包含最後一手，對手資產匹配玩家，調整另列且不計派彩。',
       insufficientThreshold: 0.01, minimumEntryOnly: true,
       stopRule: mode === 'cashout' ? '達到目標、可用資產低於 0.01 或安全手數上限；截尾另列，不能算達標或失敗。' : independent ? '每位玩家完成指定獨立手數。' : '完成指定手數或同桌可用資產低於 0.01；低於最低帶入仍可繼續短籌碼牌局。',

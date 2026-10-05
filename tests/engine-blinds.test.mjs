@@ -71,8 +71,8 @@ test('either opening seat follows legal preflop order, keeps the big-blind optio
   }
 });
 
-test('the entry choice stays fixed while successive hands alternate and carry balances', () => {
-  for (const firstSmallBlind of ['player', 'npc', 'random']) {
+test('explicit research positions keep alternating hands and carry balances without blind RNG', () => {
+  for (const firstSmallBlind of ['player', 'npc']) {
     const session = createSession({buyIn: 1000}, 1, {firstSmallBlind}), initial = session.firstSmallBlind;
     const initialDraw = structuredClone(session.blindDraw);
     let previousStacks = {...session.stacks};
@@ -88,6 +88,64 @@ test('the entry choice stays fixed while successive hands alternate and carry ba
       previousStacks = {...session.stacks};
     }
   }
+});
+
+test('every random next hand consumes one fresh blind draw before BOSS selection and dealing', () => {
+  let repeats = 0, changed = 0, playerStarts = 0, draws = 0;
+  for (let seed = 0; seed < 80; seed++) {
+    const session = createSession({buyIn: 1000}, seed, {firstSmallBlind: 'random'});
+    const reference = createSession({buyIn: 1000}, seed, {firstSmallBlind: 'random'});
+    const initial = session.firstSmallBlind;
+    let previousSeat = null, previousStacks = {...session.stacks};
+    for (let index = 0; index < 6; index++) {
+      const expected = index === 0 ? initial : reference.rng() < 0.5 ? 'player' : 'npc';
+      // Having consumed precisely the one expected draw, use the deterministic
+      // path to verify that all later BOSS/deal draws match with no extra draw.
+      reference.blindMode = 'alternate';
+      reference.firstSmallBlind = index % 2 === 0 ? expected : other(expected);
+      const hand = startHand(session), control = startHand(reference);
+      assert.equal(hand.smallBlind, expected);
+      assert.equal(hand.actor, expected);
+      assert.deepEqual(hand.stacksBefore, previousStacks);
+      assert.equal(hand.contributions[expected], 5);
+      assert.equal(hand.contributions[other(expected)], 10);
+      assert.deepEqual(hand.bossSelection, control.bossSelection);
+      assert.deepEqual(hand.holes, control.holes);
+      assert.deepEqual(hand.deck, control.deck);
+      assert.equal(session.rng.state(), reference.rng.state());
+      assert.equal(session.firstSmallBlind, initial, 'the first hand metadata remains stable');
+      assert.deepEqual(session.blindDraw, {smallBlind: expected, probability: 0.5});
+      assert.equal(Object.hasOwn(session.blindDraw, 'roll'), false);
+      if (index > 0) {
+        draws++; playerStarts += expected === 'player';
+        if (expected === previousSeat) repeats++; else changed++;
+      }
+      applyAction(hand, 'call'); applyAction(control, 'call');
+      applyAction(hand, 'check'); applyAction(control, 'check');
+      assert.equal(hand.actor, other(expected), 'the freshly drawn BB acts first postflop');
+      applyAction(hand, 'bet'); applyAction(control, 'bet');
+      applyAction(hand, 'fold'); applyAction(control, 'fold');
+      assert.deepEqual(session.stacks, reference.stacks);
+      assert.ok(Math.abs(session.stacks.player + session.stacks.npc + session.fees - 2000) < 1e-6);
+      previousSeat = expected; previousStacks = {...session.stacks};
+    }
+  }
+  assert.ok(repeats > 100 && changed > 100, `next hands allow repeat/switch: ${repeats}/${changed}`);
+  assert.ok(playerStarts > draws * 0.4 && playerStarts < draws * 0.6, `seeded split ${playerStarts}/${draws}`);
+});
+
+test('failed or duplicate starts cannot consume another blind draw or change the current result', () => {
+  const session = createSession({}, 72, {firstSmallBlind: 'random'});
+  const first = startHand(session);
+  const snapshot = () => ({state: session.rng.state(), session: JSON.stringify(session), hand: JSON.stringify(session.activeHand)});
+  const playing = snapshot();
+  assert.throws(() => startHand(session), /尚未結束/);
+  assert.deepEqual(snapshot(), playing);
+  applyAction(first, 'fold');
+  session.stacks.player = 0;
+  const insufficient = snapshot();
+  assert.throws(() => startHand(session), /籌碼不足/);
+  assert.deepEqual(snapshot(), insufficient);
 });
 
 test('previews retain the chosen opening blind and leave its metadata and RNG untouched', () => {

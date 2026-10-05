@@ -1,4 +1,4 @@
-import {money} from './shared.mjs?v=35';
+import {money} from './shared.mjs?v=45';
 
 /** Visible chip sources only. Exact balances come from the controller, never a wallet copy. */
 export function createBankrollView({root = globalThis.document} = {}) {
@@ -17,8 +17,9 @@ export function createBankrollView({root = globalThis.document} = {}) {
       if (tableAmount) tableAmount.textContent = money(value);
       const delta = shown[seat] === null ? 0 : Math.round((value - shown[seat]) * 1e6) / 1e6;
       if (change && (delta || refreshNpc && seat === 'npc')) {
-        change.textContent = refreshNpc && seat === 'npc' ? 'REFRESHED' : `${delta > 0 ? '+' : '−'}${money(Math.abs(delta))}`;
-        change.dataset.direction = delta < 0 ? 'out' : 'in';
+        change.textContent = refreshNpc && seat === 'npc' ? 'REFRESHED' : delta > 0 ? `+${money(delta)}` : '';
+        if (change.textContent) change.dataset.direction = 'in';
+        else delete change.dataset.direction;
       }
       if (panel) panel.dataset.amount = String(value);
       if (pile && shown[seat] !== value) {

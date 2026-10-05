@@ -1,28 +1,28 @@
-import {createSession,startHand,legalActions,applyAction,getActionDistribution,sampleDistribution,previewResponse,holeScore,syncOpponentBankroll} from './engine.mjs?v=35';
-import {loadConfig,CONFIG_KEY,money,pct,esc,cardMarkup,cardText} from './shared.mjs?v=35';
+import {createSession,startHand,legalActions,applyAction,getActionDistribution,sampleDistribution,previewResponse,holeScore,syncOpponentBankroll} from './engine.mjs?v=45';
+import {loadConfig,CONFIG_KEY,money,pct,esc,cardMarkup,cardText} from './shared.mjs?v=45';
 import {GAME_LABELS as LABELS,GAME_STREETS as STREETS,handName,translateError} from './game-text.mjs?v=35';
 import {createPotView} from './pot-view.mjs?v=35';
 import {fitStage} from './stage-fit.mjs?v=35';
-import {getHudSnapshot} from './hud-state.mjs?v=35';
+import {getHudSnapshot} from './hud-state.mjs?v=45';
 import {createGameEffects} from './game-effects.mjs?v=44';
 import {renderBetPresets,updateBetSelection,setupEntryFeatures} from './entry-view.mjs?v=35';
-import {betOptions,minimumAssets,tableConfig} from './entry-model.mjs?v=37';
+import {betOptions,minimumAssets,tableConfig} from './entry-model.mjs?v=45';
 import {nextHandBetConfig} from './next-hand-bet.mjs?v=37';
-import {createEntryEncounter,previewNextEncounter} from './entry-encounter.mjs?v=40';
+import {createEntryEncounter,previewNextEncounter} from './entry-encounter.mjs?v=45';
 import {icon} from './ui-icons.mjs?v=35';
 import {JACKPOT_MULTIPLIERS,quoteJackpot} from './jackpot.mjs?v=35';
-import {renderJackpotWin} from './jackpot-view.mjs?v=35';
+import {renderJackpotWin} from './jackpot-view.mjs?v=45';
 import {getCurrentHandView} from './hand-view.mjs?v=35';
 import {decisionMotion} from './decision-motion.mjs?v=35';
 import {getShowdownView} from './showdown-view.mjs?v=35';
 import {GAME_SPEED,atGameSpeed} from './presentation-timing.mjs?v=35';
-import {createBankrollView} from './bankroll-view.mjs?v=35';
+import {createBankrollView} from './bankroll-view.mjs?v=45';
 import {renderWinRate,equityPercent} from './win-rate-view.mjs?v=44';
 import {createHoldemEquityController} from './holdem-equity-controller.mjs?v=43';
-import {responseBadgeView,responseActionLabel,captureResponseSource,responseSourceMatches} from './action-response-view.mjs?v=38';
+import {responseBadgeView,responseActionLabel,captureResponseSource,responseSourceMatches} from './action-response-view.mjs?v=45';
 import {boardCardView,nextBoardReveal,tableDeckCounts} from './board-presentation.mjs?v=35';
-import {createResponseFlight} from './response-flight-view.mjs?v=38';
-import {createActionFlow} from './action-flow-view.mjs?v=35';
+import {createResponseFlight} from './response-flight-view.mjs?v=45';
+import {createActionFlow} from './action-flow-view.mjs?v=45';
 import {createBlindDraw} from './blind-draw-view.mjs?v=40';
 import {createTotalWin} from './total-win-view.mjs?v=44';
 import {createBossActionView} from './boss-action-view.mjs?v=35';
@@ -31,7 +31,7 @@ import {createBossRangeView} from './boss-range-view.mjs?v=44';
 import {createBossRangeController} from './boss-range-controller.mjs?v=43';
 import {bossRangeContext} from './boss-range-public.mjs?v=43';
 import {createEquityMomentum} from './equity-momentum.mjs?v=44';
-import {renderCardRow} from './card-row-view.mjs?v=44';
+import {renderCardRow} from './card-row-view.mjs?v=45';
 document.documentElement.style.setProperty('--game-speed',String(GAME_SPEED));
 const $=id=>document.getElementById(id);
 // Stable player controls; engine actions and opponent response types stay unchanged.
@@ -86,9 +86,9 @@ const visibleDeck=()=>tableDeckCounts(hand?{...dealt,board:boardDealt}:{});
 const amount=value=>value===null||value===undefined?'—':money(value);
 const signed=value=>value===null?'—':`${value>0?'+':''}${money(value)}`;
 const bankroll=()=>session?.stacks.player??closedTable?.playerBalance??demoAssets;
-function renderBankrolls({refreshNpc=false}={}){
+function renderBankrolls({refreshNpc=false,beforeBlinds=false}={}){
  const pending=hand?.result&&!settlementReleased;
- const values=pending?Object.fromEntries(['player','npc'].map(seat=>[seat,hand.stacksBefore[seat]-hand.contributions[seat]+presentedCredits[seat]]))
+ const values=beforeBlinds&&hand?hand.stacksBefore:pending?Object.fromEntries(['player','npc'].map(seat=>[seat,hand.stacksBefore[seat]-hand.contributions[seat]+presentedCredits[seat]]))
   :{player:bankroll(),npc:session?.stacks.npc??bankroll()};
  bankrollView.render(values,{baseBet:hand?.config.bigBlind??selectedBet,refreshNpc});
 }
@@ -105,7 +105,7 @@ function presentTransferPhase(event){
   const isBlind=event?.type==='bigBlind'||event?.type==='smallBlind';
   const action=isBlind?(seats.length>1?'POST BLINDS':LABELS[event.type]):event?.type?responseActionLabel(event.type):'RAISE';
   const label=`${who} ${action}`;
-  setTableCue('contribution',label,{seat:seats.length===1?seats[0]:'',detail:`${seats.map(seat=>money(amounts[seat])).join(' + ')} → POT`});
+  setTableCue('contribution',label,{seat:seats.length===1?seats[0]:'',detail:'CHIPS TO THE POT'});
  }else if(flow==='refund')setTableCue('refund','UNCALLED CHIPS BACK',{seat:seats.length===1?seats[0]:'',detail});
  else if(flow==='payout'){
   totalWin.start(hand.result);
@@ -138,7 +138,7 @@ function decorateMenu(){
  const reset=document.createElement('button');reset.id='reset-demo';reset.className='text-button wide';reset.textContent='↻ Reset demo chips';reset.onclick=()=>{if(busy||hand?.status==='playing')return;session=null;hand=null;closedTable=null;config=loadConfig();demoAssets=config.buyIn;selectedBet=1;handArchive=[];drawLog=[];lastResponse=null;entryEncounter=null;prepareEntry();$('menu-dialog').close();render();setupBuyin();};
  $('menu-dialog').append(reset);
  const rules=document.querySelector('#help-dialog .rules');
- rules.innerHTML=`<li>${icon('chip')}<b>Choose BET · Draw your blind</b><span>SMALL BLIND posts ½ BET; BIG BLIND posts 1 BET. Your first blind is drawn 50/50; positions alternate each hand. Small blind acts first preflop; big blind acts first after the flop.</span></li><li>${icon('cards')}<b>2 hole cards + 5 board cards</b><div class="rule-card-flow"><span>2</span><i>＋</i><span>3</span><i>→</i><span>1</span><i>→</i><span>1</span></div><span>PREFLOP → FLOP → TURN → RIVER</span></li><li>${icon('call')}<b>Your move · Their response</b><span>CALL matches the current bet, or checks for free when nothing is due. RAISE opens betting or increases an existing bet. The amount is what you add now. One raise per street.</span></li><li>${icon('crown')}<b>Best 5 of 7</b><span>A fold ends the hand. Otherwise, compare at showdown. Special hands earn a Jackpot bonus.</span></li>`;
+ rules.innerHTML=`<li>${icon('chip')}<b>Choose BET · Draw your blind</b><span>SMALL BLIND posts ½ BET; BIG BLIND posts 1 BET. Your blind position is redrawn 50/50 before every hand. Small blind acts first preflop; big blind acts first after the flop.</span></li><li>${icon('cards')}<b>2 hole cards + 5 board cards</b><div class="rule-card-flow"><span>2</span><i>＋</i><span>3</span><i>→</i><span>1</span><i>→</i><span>1</span></div><span>PREFLOP → FLOP → TURN → RIVER</span></li><li>${icon('call')}<b>Your move · Their response</b><span>CALL matches the current bet, or checks for free when nothing is due. RAISE opens betting or increases an existing bet. The amount is what you add now. One raise per street.</span></li><li>${icon('crown')}<b>Best 5 of 7</b><span>A fold ends the hand. Otherwise, compare at showdown. Special hands earn a Jackpot bonus.</span></li>`;
  const fees=document.createElement('details');fees.className='rules-details';fees.innerHTML='<summary>Hand highlights, turn order & pot fee ⓘ</summary><p>Gold edges mark your complete best five, including kickers. Before five cards are visible, all your visible cards glow. Blue edges mark the opponent’s best five using only their revealed hole cards and the board. Shared cards can carry both gold and blue edges.</p><p>Your controls and BOSS responses always read FOLD, CALL and RAISE. A free CALL performs a check; RAISE opens betting when no bet exists yet. These are simplified display names for both seats. If the opponent has not acted, they may still check or bet in the same street. Two checks close the street; the next shared cards are then revealed for the new street.</p><p>Both seats post before cards are dealt: SMALL BLIND pays ½ BET and BIG BLIND pays 1 BET. Small blind acts first preflop and can fold, call the remaining ½ BET, or raise. Big blind acts first after the flop. Folding forfeits chips already committed, except any uncalled excess. Choosing a BET level does not charge chips. Both seats follow the same rule. The floating BOSS badges above your buttons show opponent responses, not your win chance. A certain same-street response is shown as 100%, including CALL. Mixed responses show FOLD and RAISE only, so their percentages need not total 100%. Actions that end the hand or move to the next street have no same-street response badge.</p><p>After every hand, including folds, the opponent’s demo chips reset to match your remaining chips. Your own balance keeps the actual winnings and losses. After settlement, use BET to set the next hand’s amount, then NEXT HAND to deal. Changing BET costs no chips; closing the picker cancels unsaved changes.</p><p id="help-fee"></p>';
  rules.after(fees);
  document.querySelector('#help-dialog>p.muted').textContent='Standard 52-card deck, no jokers. Starting-hand boosts only redraw weak hole cards during the deal. Jackpot awards use the actual showdown hand.';
@@ -195,7 +195,7 @@ function updateEntry(){
  document.querySelector('.feature-jp-tiers').hidden=!jackpotOn;
  $('bet-minus').disabled=index<=0;$('bet-plus').disabled=index===betValues.length-1;
  $('entry-start').disabled=available<minimum||busy;$('buyin-error').textContent=available<minimum?'Not enough chips. Choose a lower BET.':'';
- $('fee-notice').textContent=`Choosing BET does not charge chips. Minimum balance: ${money(minimum)}. Each hand, SMALL BLIND automatically posts ${blindAmount(selectedBet/2)} and BIG BLIND posts ${blindAmount(selectedBet)}. The first blind position is drawn 50/50; positions alternate each hand. Small blind acts first preflop; big blind acts first after the flop. The opponent matches your balance after every hand, including folds. Pot fee: ${pct(1-entryBase.targetRtp)}. Uncalled bets are refunded in full. Demo chips only.`;
+ $('fee-notice').textContent=`Choosing BET does not charge chips. Minimum balance: ${money(minimum)}. Each hand, SMALL BLIND automatically posts ${blindAmount(selectedBet/2)} and BIG BLIND posts ${blindAmount(selectedBet)}. Your blind position is redrawn 50/50 before every hand. Small blind acts first preflop; big blind acts first after the flop. The opponent matches your balance after every hand, including folds. Pot fee: ${pct(1-entryBase.targetRtp)}. Uncalled bets are refunded in full. Demo chips only.`;
 }
 $('bet-minus').onclick=()=>{selectedBet=betValues[Math.max(0,betValues.indexOf(selectedBet)-1)];updateEntry();};
 $('bet-plus').onclick=()=>{selectedBet=betValues[Math.min(betValues.length-1,betValues.indexOf(selectedBet)+1)];updateEntry();};
@@ -203,12 +203,12 @@ $('buyin-form').onsubmit=async e=>{e.preventDefault();if(busy)return;
   try{
    config=tableConfig(entryBase,selectedBet,bankroll());const seed=entryEncounter.seed;
    session=createSession(config,seed,{firstSmallBlind:'random'});hand=null;handArchive=[];closedTable=null;lastResponse=null;drawLog=[];
-   $('buyin-dialog').close();busy=true;render();await showTurnDraw();busy=false;await newHand();
+   $('buyin-dialog').close();await newHand();
   }catch(error){busy=false;phase='';blindDraw.clear();$('buyin-error').textContent=translateError(error);show('buyin-dialog');render();}
 };
 const blindAmount=value=>Number(value).toLocaleString('en-US',{maximumFractionDigits:6});
 async function showTurnDraw(){
- const isSmall=session.firstSmallBlind==='player';
+ const isSmall=hand.smallBlind==='player';
  await blindDraw.play({isSmall,smallBlind:session.config.smallBlind,bigBlind:session.config.bigBlind});
 }
 function leaveTable(){
@@ -262,7 +262,15 @@ async function newHand(){
   if(busy||!session||hand?.status==='playing'||$('next-bet-dialog').open)return;
   $('result-dialog').close();
   if(session&&Math.min(...Object.values(session.stacks))<.01){setupBuyin();return;}
-  try{busy=true;phase='DEALING';hand=startHand(session);entryEncounter=null;nextEncounter=null;nextBetEncounter=null;drawLog=[];lastResponse=null;pendingPlayerAction=null;delete $('game').dataset.chosenAction;paintDistribution([]);setTableCue('contribution','POST BLINDS');await presentHand();await continuePlay();}catch(error){busy=false;phase='';bossAction.clear();setTableCue();toast(translateError(error));render();setupBuyin();}
+  try{
+   busy=true;phase='DRAWING YOUR BLIND';hand=startHand(session);
+   entryEncounter=null;nextEncounter=null;nextBetEncounter=null;drawLog=[];lastResponse=null;pendingPlayerAction=null;
+   delete $('game').dataset.chosenAction;paintDistribution([]);
+   // Show this hand's committed blind before presenting its payments or cards.
+   render({beforeBlinds:true});setTableCue('hole-deal','DRAWING YOUR BLIND');
+   await showTurnDraw();phase='DEALING';setTableCue('contribution','POST BLINDS');
+   await presentHand();await continuePlay();
+  }catch(error){busy=false;phase='';blindDraw.clear();bossAction.clear();setTableCue();toast(translateError(error));render();setupBuyin();}
 }
 $('next-hand').onclick=newHand;
 const visibleStreet=()=>shownBoard>=5?'river':shownBoard===4?'turn':shownBoard>0?'flop':'preflop';
@@ -428,21 +436,21 @@ async function presentHand({releaseResponse=false}={}){
   if(hand.status==='playing')setTableCue();
   render();
 }
-function render(){
+function render({beforeBlinds=false}={}){
   if(hand!==shownHand){equityMomentum.reset();setMusicPhase('table');bossRange.reset();playerEquity.reset();shownHand=hand;shownBoard=0;boardDealt=0;shownReveal=0;dealt={player:0,npc:0};settlementReleased=false;presentedCredits={player:0,npc:0};responseSource=null;responseDecision=null;activeNpcDistribution=null;responseFlight.clear();totalWin.clear();bossAction.clear();delete $('game').dataset.npcFolded;bankrollView.clearChanges();}
   const active=hand?.status==='playing';const handView=getCurrentHandView(hand?.holes.player.slice(0,dealt.player)||[],hand?.board.slice(0,shownBoard)||[]);const best=handView.highlighted;
   if(hand)blindDraw.renderSeat({isSmall:hand.smallBlind==='player'});else if(!session)blindDraw.clear();
   const h=hud();$('game').dataset.busy=String(busy);
   $('game').dataset.state=hand?.result&&!settlementReleased?'playing':hand?.status||'idle';$('game').dataset.actor=busy?'':hand?.actor||'';$('game').dataset.street=hand?visibleStreet():'';updateExpression(settlementReleased?hand?.result?.winner||'':'');
-  renderBankrolls();
+  renderBankrolls({beforeBlinds});
  $('balance-label').textContent='BALANCE';
-  $('total-bet').textContent=money(h.playerCommitted);
+  $('total-bet').textContent=money(beforeBlinds?0:h.playerCommitted);
   for(const seat of ['player','npc'])$(seat+'-blind').hidden=true;
   renderCardRow($('npc-cards'),Array.from({length:2},(_,i)=>({card:i<shownReveal?hand?.holes.npc[i]:null,back:i>=shownReveal,visible:!hand||i<dealt.npc})));
   renderCardRow($('player-cards'),Array.from({length:2},(_,i)=>({card:i<dealt.player?hand?.holes.player[i]:null,back:!hand||i>=dealt.player,best:i<dealt.player&&best.includes(hand.holes.player[i]),visible:!hand||i<dealt.player})));
   const boardViews=Array.from({length:5},(_,i)=>boardCardView(i,{cards:hand?.board??null,dealt:boardDealt,revealed:shownBoard}));
   renderCardRow($('board'),boardViews.map(view=>({...view,best:!!view.card&&best.includes(view.card)})));
-  potView.render(hand,hand?.config||session?.config||config,{deferSettlement:!settlementReleased});
+  potView.render(beforeBlinds?null:hand,hand?.config||session?.config||config,{deferSettlement:!settlementReleased});
   if(!hand){$('game').dataset.npcState='';$('pot-label').textContent='POT';$('pot-value').textContent='0';$('pot-event').textContent='';}
   $('pot-value').classList.toggle('compact-amount',$('pot-value').textContent.length>6);
   $('leave-button').disabled=!session||active||busy;
@@ -509,10 +517,10 @@ async function playerAct(type){
   try{busy=true;bossRange.close();phase='YOUR MOVE';lastResponse=null;const chosen=legalActions(hand).find(a=>a.type===type);if(!chosen)throw new Error('This action is not available.');
     const before=hand.board.length;
     pendingPlayerAction={...chosen};responseSource=captureResponseSource(hand,chosen);responseDecision=null;$('game').dataset.chosenAction=type;renderActions();paintDistribution();
-    setTableCue('action',`YOU ${PLAYER_ACTION_LABELS[type]}${chosen.amount?' '+money(chosen.amount):''}`,{seat:'player',detail:chosen.amount?'CHIPS TO THE POT':type==='check'?'NO CHIPS REQUIRED':'END THIS HAND'});
+    setTableCue('action',`YOU ${PLAYER_ACTION_LABELS[type]}`,{seat:'player',detail:chosen.amount?'CHIPS TO THE POT':type==='check'?'NO CHIPS REQUIRED':'END THIS HAND'});
     applyAction(hand,type);phase=hand.board.length===5&&before<4?'ALL-IN · RUNNING THE BOARD':hand.board.length>before?`DEAL ${STREETS[hand.street]}`:hand.status==='settled'?'SETTLING':'CHIPS TO POT';
     paintDistribution();
-    if(chosen.amount)setTableCue('contribution',`YOU ${PLAYER_ACTION_LABELS[type]}`,{seat:'player',detail:`${money(chosen.amount)} → POT`});
+    if(chosen.amount)setTableCue('contribution',`YOU ${PLAYER_ACTION_LABELS[type]}`,{seat:'player',detail:'CHIPS TO THE POT'});
     // Commit once, then finish the player's chip arrival before presenting the
     // opponent's decision. Re-rendered chosen-slot badges retain this preview.
     await presentHand();
@@ -541,7 +549,7 @@ async function continuePlay(){
       const target=responseFlight.target();
       const marker=target?document.createElement('span'):null;
       if(marker){marker.className='action-response-sweep';target.append(marker);}
-      setTableCue('action','OPPONENT DECIDING',{seat:'npc'});
+      setTableCue('action','OPPONENT DECIDING',{seat:'npc',detail:distribution.filter(a=>a.probability>0).map(a=>`${responseActionLabel(a.type)} ${pct(a.probability)}`).join(' · ')});
       const motion=decisionMotion(hand.config.animationMs,selected.roll,{reducedMotion:reduceMotion}),sweepMs=Math.min(450,motion.duration);
       // Opponent decisions keep their original reading time; other presentation stays at 1.2x.
       if(sweepMs>0){
@@ -551,9 +559,9 @@ async function continuePlay(){
       marker?.remove();
       lastResponse=entry;
       responseDecision={phase:'result',selected:selected.type,roll:selected.roll};renderActions();
-      setTableCue('action',`OPPONENT ${responseActionLabel(selected.type)}${selected.amount?' '+money(selected.amount):''}`,{seat:'npc'});
+      setTableCue('action',`OPPONENT ${responseActionLabel(selected.type)}`,{seat:'npc'});
       await delay(Math.max(0,motion.duration-sweepMs),{speed:1});
-    }else{lastResponse=null;setTableCue('action',`OPPONENT ${responseActionLabel(selected.type)}${selected.amount?' '+money(selected.amount):''}`,{seat:'npc'});await delay(reduceMotion?0:550,{speed:1});}
+    }else{lastResponse=null;setTableCue('action',`OPPONENT ${responseActionLabel(selected.type)}`,{seat:'npc'});await delay(reduceMotion?0:550,{speed:1});}
     const before=hand.board.length,historyStart=hand.history.length;
     applyAction(hand,selected.type);drawLog.push(entry);$('game').dataset.npcState=selected.type;
     // Use only the committed history event. Paid action text starts from the
@@ -563,7 +571,7 @@ async function continuePlay(){
     $('game').dataset.deciding='false';paintDistribution();
     if(selected.type==='fold'){await effects.discardCards([...$('npc-cards').children]);$('game').dataset.npcFolded='true';}
     phase=hand.board.length===5&&before<4?'ALL-IN · RUNNING THE BOARD':hand.board.length>before?`DEAL ${STREETS[hand.street]}`:hand.status==='settled'?'SETTLING':'CHIPS TO POT';
-    setTableCue(selected.amount?'contribution':'action',`OPPONENT ${responseActionLabel(selected.type)}`,{seat:'npc',detail:selected.amount?`${money(selected.amount)} → POT`:selected.type==='check'?'NO CHIPS REQUIRED':'END THIS HAND'});
+    setTableCue(selected.amount?'contribution':'action',`OPPONENT ${responseActionLabel(selected.type)}`,{seat:'npc',detail:selected.amount?'CHIPS TO THE POT':selected.type==='check'?'NO CHIPS REQUIRED':'END THIS HAND'});
     await presentHand({releaseResponse:true});
     await actionPresentation;
     if(hand.status==='playing')await delay(reduceMotion?0:350);

@@ -1,4 +1,14 @@
-# Engine API contract · v44 audio / v43 reference probabilities / v35 game math · 2026-10-05
+# Engine API contract · v45 每手抽盲與呈現 / v43 標準德州參考機率 · 2026-10-05
+
+## v45 每手抽盲與精簡呈現
+
+遊戲以 firstSmallBlind:'random' 建立 session，blindMode 為 random：首手使用 createSession 已抽出的盲位；後續每次成功 startHand 先抽一次 50/50，再選 BOSS 及發牌。FIGHT 與 NEXT HAND 均播放同一實際結果的 SB／BB 抽盲，不為演出重抽。預設及明示 player／npc 維持 alternate 模式供受控研究；continuous／cashout 改為逐手隨機，independent／完整樹保持受控交替。詳見 Session / hand。
+
+正收益 TOTAL／WIN 及數字為直接浮在桌面的金色立體美術字，無底板、底框或裝飾線；數字仍只讀 player.totalReturn，不能改用 profit、包含退款或因演出重複入帳。雙方扣籌碼不顯示負數浮字；行動橫條及角色浮字只列動作，不附下注金額，玩家按鈕實付、抽盲 STARTING BET 及帳務明細保留。
+
+中央機率抽選顯示時收起背後 BOSS TURN／行動資訊，避免透出或重疊。低於 10% 的小區段隱藏放不下的名稱／百分比，不改放到外部標籤；仍保留正確顏色與真實區寬，所有正機率動作、selected.roll 與一次決策不改。至少 10% 的區段保留可讀文字。
+
+本版改變正式盲位 RNG 排程，v35 數學資料只作歷史，不是 v45 RTP 校準。v43 等權參考算法不變，但其歷史報告內的引擎來源雜湊已不能代表本版；不能再宣稱全部來源吻合。固定 BOSS 表、發牌／重抽規則、下注額、JP 及帳務公式保持。驗證／發布以 docs/06 v45 與完成訊息為準；以下版本條目以本節最新要求優先。
 
 ## v44 音訊與公開勝率演出
 
@@ -46,17 +56,17 @@ FLOP、TURN、RIVER 做完整枚舉，分母分別為 **1,070,190／45,540／990
 
 勝率環顯示至一位小數、整數省略小數點；小正值為 `<0.1%`，未達 1 不顯示成 100%（最多顯示 99.9%）。翻牌前 title／aria 標示 estimated。攤牌逐張公開的原規格保持：先揭一張 BOSS 牌時枚舉剩餘 44 張，兩張都揭開後顯示實際勝／平／敗份額，不讓秘密底牌提前進入估算。
 
-v43 新驗證已保存於 `output/math-v43-holdem-validation.json`；`output/math-v42-range-validation.json` 是已停用重抽加權模型的歷史證據，`output/math-v41-range-validation.json` 是更早的行動條件模型。兩者都不能代替 v43。引擎、固定 BOSS 表、發牌／重抽、正式 RNG、輪替、金流與 JP 不改；`output/math-v35-validation.json` 仍為遊戲模型證據，非 v43 新 RTP 校準。完整驗證與發布狀態見 [docs/06](docs/06-mobile-and-deployment.md)。
+v43 新驗證已保存於 `output/math-v43-holdem-validation.json`；`output/math-v42-range-validation.json` 是已停用重抽加權模型的歷史證據，`output/math-v41-range-validation.json` 是更早的行動條件模型。兩者都不能代替 v43。v43 當時未改引擎、固定 BOSS 表、發牌／重抽、正式 RNG、輪替、金流與 JP；v45 已變更逐手抽盲 RNG 排程，v35 資料與 v43 報告中的引擎來源雜湊均保留為歷史，不是 v45 校準。完整驗證與發布狀態見 [docs/06](docs/06-mobile-and-deployment.md)。
 
 ## v40 抽盲文字契約
 
 抽盲改回明確的小盲／大盲英文：標題 `BLIND POSITION`、抽選中 `DRAWING YOUR BLIND`，中央與座位 coin 均為 `SB`／`BB`，結果標題為 `YOU · SMALL BLIND` 或 `YOU · BIG BLIND`。aria／title 依實際盲位使用 `You: SMALL BLIND. Boss: BIG BLIND.` 或 `You: BIG BLIND. Boss: SMALL BLIND.`。`STARTING BET` 繼續顯示 YOU／BOSS 真實初始投入，不以資產替代。
 
-只更新上述呈現文字，覆蓋歷史 1ST／2ND 與 OPENING ORDER；盲位 RNG、先後規則、每手輪替、扣款及 v39 入場 BOSS 契約保持。數學沿用 v35，驗證與發布狀態依 [docs/06](docs/06-mobile-and-deployment.md) 對應版本紀錄。
+此為 v40 文字契約，覆蓋歷史 1ST／2ND 與 OPENING ORDER。其「首次抽盲後逐手輪替」已由 v45 每手重抽取代；小盲翻牌前／大盲翻牌後先動、扣盲與 v39 入場 BOSS 身份契約保留。v35 為歷史數學資料，驗證與發布狀態依 [docs/06](docs/06-mobile-and-deployment.md) 對應版本紀錄。
 
 ### v40 局間 BET 的下一手 BOSS 預覽
 
-局間 BET 的＋／−將草稿改成不同於開窗時的值，即以 `session.rng.clone()`、`session.lastBossProfileId` 及目前 BOSS 設定推導下一手的公開身份並顯示 neutral。正式 RNG、`lastBossProfileId`、`handNumber`、資產及已結算手牌均不修改；不呼叫 `startHand`、不發牌或扣盲。多次改 BET 使用相同正式 RNG 狀態，因此不重選下一型；fixed 模式仍為原固定型。
+局間 BET 的＋／−將草稿改成不同於開窗時的值，即以 `session.rng.clone()`、`session.lastBossProfileId` 及目前 BOSS 設定推導下一手的公開身份並顯示 neutral。v45 的 random 後手須先在 clone 上略過一次盲位抽樣，才能與正式 startHand 的抽盲→選型順序一致；alternate 不增加此抽樣。正式 RNG、`lastBossProfileId`、`handNumber`、資產及已結算手牌均不修改；不呼叫 `startHand`、不發牌或扣盲。多次改 BET 使用相同正式 RNG 狀態，因此不重選下一型；fixed 模式仍為原固定型。
 
 取消或草稿改回原 BET，還原開窗前畫面與 BOSS 牌的可見狀態；CONFIRM BET 保存下一手設定並保留下一手 neutral，NEXT HAND 由原 `startHand` 正式選到相同型別。下一手預覽期間一律隱藏上一手 BOSS 手牌與牌型，fixed／legacy 即使角色相同也不把舊牌當作下一手牌；不把預覽身份寫入已結算 `hand.bossProfile`。首手入口仍用 v39 保留的 seed，入口 BET 比例不影響首型。
 
@@ -66,7 +76,7 @@ v43 新驗證已保存於 `output/math-v43-holdem-validation.json`；`output/mat
 
 `createEntryEncounter(config,seed)` 從 `./src/entry-encounter.mjs` 匯入，回傳凍結的 `{seed,bossProfile}`。它在隔離的 `createSession(config,seed,{firstSmallBlind:'random'})` 上，先沿用一次抽盲，再以 `selectBossProfile(preview.rng,null,preview.config.boss)` 取得公開 `bossProfile`；不呼叫 `startHand`、不發牌、不扣款，不回傳暗牌、牌庫、盲位亂數或秘密牌力。這個隔離 RNG 不會成為正式 session 的 RNG，也不改變正式牌序。
 
-FIGHT 以已保存的 `entryBase`、選定 BET 與實際資產建立桌面設定，再用同一 seed 執行原本的 `createSession(...,{firstSmallBlind:'random'})` 與 `startHand`。因此正式引擎依原順序選到入口所示身份；不覆寫 `hand.bossProfile`、不重抽直到符合角色。正式 session 的抽盲、選型、發牌與行動 RNG 流程保持原樣。BOSS 固定表、引擎、結算與 JP 未改，數學證據仍是 v35；驗證及發布以 [docs/06](docs/06-mobile-and-deployment.md) 對應版本紀錄為準。
+FIGHT 以已保存的 `entryBase`、選定 BET 與實際資產建立桌面設定，再用同一 seed 執行原本的 `createSession(...,{firstSmallBlind:'random'})` 與 `startHand`。因此正式引擎依原順序選到入口所示身份；不覆寫 `hand.bossProfile`、不重抽直到符合角色。首手的抽盲→選型→發牌順序保持；v45 後手會在選型前新增一次盲位抽樣，BOSS 固定表、結算與 JP 公式維持。v35 僅為歷史數學證據；驗證及發布以 [docs/06](docs/06-mobile-and-deployment.md) 對應版本紀錄為準。
 
 ## v38 單一回應預覽契約
 
@@ -139,15 +149,15 @@ On leaving a table the UI retains the actual player stack, including credited Ja
 - BET 與目前值相同時直接回傳原 `config`，保留既有短籌碼續手規則。
 - 變更時依 `bet/config.bigBlind` 縮放 `smallBlind`、四街 `betSize`、`minBuyIn` 與 `maxBuyIn`；雙方 `session.stacks` 都須達新 `minBuyIn`，預設等於 20 倍新 BET。超出可表示範圍或資產不足時擲出錯誤。
 - 回傳新設定，不直接修改 session。`buyIn` 保留原桌損益基準，不以新資產或新門檻覆蓋，也不經會鉗制此基準的 `normalizeConfig`。
-- 控制器在 CONFIRM BET 時才指派 `session.config`；不呼叫 `createSession`、`startHand`、正式 RNG、扣款或入帳。v40 草稿身份預覽只讀 RNG clone，確認後保留下一手 neutral。資產、歷史、局號、盲位與 BOSS 輪替延續；已結算 `hand.config` 和 JP 結果不變。下一次 `startHand` 才使用新注額與新 JP 基準，並正式選到預覽的同一型。
+- 控制器在 CONFIRM BET 時才指派 `session.config`；不呼叫 `createSession`、`startHand`、正式 RNG、扣款或入帳。v40 草稿身份預覽只讀 RNG clone，確認後保留下一手 neutral。資產、歷史、局號、盲位模式與 BOSS 排除上一型的序列延續；已結算 `hand.config` 和 JP 結果不變。下一次 `startHand` 才使用新注額與新 JP 基準，並正式選到預覽的同一型。
 
 ## Session / hand
 
-`createSession(config={}, seed=123, options={})` accepts only `options.firstSmallBlind: 'random'|'player'|'npc'`. Default `'player'` preserves deterministic simulation/test positioning. The game explicitly passes `'random'`: exactly one seeded RNG call chooses player SB (NPC BB) for u<.5, otherwise NPC SB (player BB), so each seat has a 50/50 chance to be BB. The UI animates that chosen result before calling `startHand`, without another random draw or payment. Invalid options/unknown option keys are rejected.
+`createSession(config={}, seed=123, options={})` 僅接受 `options.firstSmallBlind: 'random'|'player'|'npc'`，缺省為 player。random 設 `session.blindMode='random'` 並在建立 session 時用一次 seeded RNG 決定首手：u<0.5 為玩家 SB／BOSS BB，否則相反。後續每手仍各自 50/50，可連續相同位置。顯式 player／npc 或缺省 player 設 alternate，保留首手指定、逐手交替的受控研究語意。不接受未知 options key 或無效值。
 
 ```js
 session = {
-  config, seed, rng, firstSmallBlind:'player'|'npc',
+  config, seed, rng, firstSmallBlind:'player'|'npc', blindMode:'random'|'alternate',
   blindDraw:{smallBlind:'player'|'npc',probability:0.5}|null,
   stacks:{player:config.buyIn,npc:config.buyIn}, handNumber:0, fees:0,
   jackpotAwards:0, jackpotTierCounts:{royal:0,straightFlush:0,quads:0},
@@ -155,9 +165,11 @@ session = {
 }
 ```
 
-Fixed player/NPC choice consumes no blind RNG draw and sets `blindDraw=null`. RNG is callable and has `.clone()` and `.state()`. No raw blind roll is returned. Seed/RNG/deck/deal audit are engine debug state and must not be exposed in player history.
+固定 player／npc 選擇不消耗抽盲 RNG，blindDraw 為 null。random 的 blindDraw 保存最近抽出的 smallBlind 與 probability:0.5；不回傳原始 roll。RNG 可呼叫，並有 clone()／state()。seed、RNG、牌庫及 dealAudit 是引擎除錯資料，不得暴露於玩家歷史。
 
-`startHand(session)` mutates session.handNumber; returns hand. It alternates from `session.firstSmallBlind` (odd hand uses first choice, even hand uses the other seat). Throws if either stack is below .01. Buy-in is matched once at session creation; following hands use the current session balances. The public demo explicitly refreshes the opponent after each settlement using `syncOpponentBankroll`; `startHand` itself never refills either seat. It posts from both `hand.smallBlind` and `hand.bigBlind`, using the smaller of that blind's configured amount and its seat's available stack. Opening history records one `smallBlind` and one `bigBlind` payment. Short stacks use the normal all-in/uncalled-refund rules. For simulations each sample starts an independent equal-stack hand, begins with player SB, and alternates positions; these are not continuous-wallet simulations.
+`startHand(session)` 更新 handNumber 並回傳 hand。random 首手使用 createSession 的既有抽盲，不再抽第二次；後手先驗證可開手，再新增一次盲位 RNG，接著按原規則選 BOSS 及發牌。alternate 依 firstSmallBlind 交替：奇數手使用首位、偶數手用另一方。任一資產低於 .01 或 activeHand.status 為 playing 時拒絕開手；這兩種拒絕不修改任何狀態，也不消耗 RNG。遊戲演出讀取當手實際盲位，不再次抽樣或付款。
+
+資產只在 createSession 匹配一次，後手使用目前餘額；遊戲控制器在結算後明確呼叫 syncOpponentBankroll，startHand 本身不補資。每手按 hand.smallBlind／bigBlind 各扣一次盲注，扣額為設定值與該方可用資產之較小者；history 各記一筆 smallBlind／bigBlind，短籌碼沿用全下／未跟注退款。獨立研究每手重設等資產並交替；continuous／cashout 保留玩家資產且每手隨機盲位。
 
 ### Demo opponent bankroll refresh（局間對手資產刷新）
 
@@ -175,7 +187,7 @@ Fixed player/NPC choice consumes no blind RNG draw and sets `blindDraw=null`. RN
 }
 ```
 
-刷新會建立新的 `session.stacks` 物件；已結手牌的 `hand.stacks` 保留本手原始結算資產，不會被刷新或下一手下注覆寫。`hand.result`、`history`、所有退款／派彩／JP／費用欄位及 RNG 均不變。後續 `startHand` 從新的 session 資產建立 `stacksBefore`，雙方各扣一次對應盲注並輪替位置。
+刷新會建立新的 `session.stacks` 物件；已結手牌的 `hand.stacks` 保留本手原始結算資產，不會被刷新或下一手下注覆寫。`hand.result`、`history`、所有退款／派彩／JP／費用欄位及 RNG 均不變。後續 `startHand` 從新的 session 資產建立 `stacksBefore`，雙方各扣一次對應盲注，位置依 session.blindMode 隨機重抽或受控交替。
 
 `adjustment` 是獨立的 DEMO NPC 資金補入／收回事件，不屬於底池返還、玩家收入、JP 或 RTP。每手原有結算守恆仍以 `result.*.stackAfter` 驗算；採用刷新的連續 session 則應核對：`目前雙方 session.stacks 總和 + session.fees = 初始雙方 buyIn 總和 + session.jackpotAwards + Σ adjustment`。不得把刷新後的 NPC 資產當成本手牌局派彩，或用未納入 adjustment 的舊連續資產公式對帳。
 
@@ -197,11 +209,11 @@ hand = {
 }
 ```
 
-`legalActions(hand, actor=hand.actor)` -> `[{type,label,amount,to,allIn}]`. Actions are fold/check/call/bet/raise. All-in is a status of a capped call/bet/raise (no extra button). `amount` is incremental cost, `to` is total this street. `applyAction(hand, type)` mutates hand and returns it; accepts `allin` as an alias only when a legal capped bet/raise/call is actually all-in. Bet/raise sizes are fixed; one raise per street. The small blind/button acts first preflop; big blind acts first postflop. Engine advances a completed street immediately and runs out remaining board on matched all-in. Since v27 (2026-10-03), player button labels stay FOLD/CALL/RAISE: engine check/call maps to CALL, and bet/raise maps to RAISE. This is a simplified UI mapping, not standard poker terminology; engine action types and NPC distribution types keep their actual meanings. Paid CALL/RAISE actions show a chip icon and the precise incremental `amount`; free CALL (check) and FOLD omit both the icon and amount. NPC response probabilities remain visible, and accessible labels, tooltips and accounting retain precise amounts. This is a presentation change only.
+`legalActions(hand, actor=hand.actor)` -> `[{type,label,amount,to,allIn}]`. Actions are fold/check/call/bet/raise. All-in is a status of a capped call/bet/raise (no extra button). `amount` is incremental cost, `to` is total this street. `applyAction(hand, type)` mutates hand and returns it; accepts `allin` as an alias only when a legal capped bet/raise/call is actually all-in. Bet/raise sizes are fixed; one raise per street. The small blind/button acts first preflop; big blind acts first postflop. Engine advances a completed street immediately and runs out remaining board on matched all-in. Since v27 (2026-10-03), player button labels stay FOLD/CALL/RAISE: engine check/call maps to CALL, and bet/raise maps to RAISE. This is a simplified UI mapping, not standard poker terminology; engine action types and NPC distribution types keep their actual meanings. Paid CALL/RAISE buttons show a chip icon and the precise incremental `amount`; free CALL (check) and FOLD omit both the icon and amount. NPC response probabilities remain visible, and accessible labels, tooltips and accounting retain precise amounts. This is a presentation change only.
 
 v28（2026-10-03）展示契約：玩家按鈕 badge 只篩選 FOLD／RAISE，中央抽選則保留完整分布所有正機率的實際 `type`，包括 call／check／bet，不能套用玩家按鈕的簡化名稱。CALL 區域顯示籌碼圖、名稱與原始百分比，結果按真實 `selected.type` 高亮；沒有重新正規化或額外抽樣。`createActionFlow({root}).render({mode,label,seat,detail,actor,playing})` 僅將現有演出狀態投影至 DEAL／YOU／BOSS／POT 流程列，保留完整提示與無障礙訊息，相同內容不重複播報；舊 table-cue／decision-veil 不顯示。上述皆不改本節引擎介面、賠率或結算公式。
 
-v29（2026-10-04，本地完整流程驗證通過）展示覆蓋：中央以完整分布呈現連續真比例長條，區寬忠於原始機率。機率至少 10% 的區段將名稱與百分比留在格內；只有低於 10% 的小區段使用對應邊緣 caption，不把大區文字一併移出，真實區寬維持不變。marker 使用真實 `selected.roll`，不以選中區塊中心代替、不重新正規化或重抽。單顆牌桌 coin 只演出既有玩家 SB／BB 結果並飛至座位，盲注依 SB→BB 串行顯示入 POT，不能重做引擎扣款。令 `p = hand.result.player`，牌桌 TOTAL WIN 最終顯示 `p.totalReturn = p.netReturn + p.jackpotAward`，排除 `p.refund`，且不等同 `p.profit`；精確跑分只讀結算結果，不追加派彩。自動結算 modal 改由此桌上呈現取代，完整明細仍可手動查看。POT 示意籌碼置左、精確值置右，依顯示字數縮字並保留最多六位小數，不截斷或改成近似值。TOTAL WIN 在 POT 實體籌碼仍在時避開籌碼，真正派出後才回到中央；不能為排版提前清空可視籌碼或更動派彩。引擎 API、規則、賠率、RNG 與所有帳務公式維持不變。`npm test` 165／165 與本地完整流程驗證已通過。驗證證據與發布狀態另見 [手機與部署紀錄](docs/06-mobile-and-deployment.md)；本地通過不代表已提交或上線。
+歷史 v29（2026-10-04，本地完整流程驗證通過；小機率 caption 已由 v45 隱藏文字規格取代）展示覆蓋：中央以完整分布呈現連續真比例長條，區寬忠於原始機率。機率至少 10% 的區段將名稱與百分比留在格內；只有低於 10% 的小區段使用對應邊緣 caption，不把大區文字一併移出，真實區寬維持不變。marker 使用真實 `selected.roll`，不以選中區塊中心代替、不重新正規化或重抽。單顆牌桌 coin 只演出既有玩家 SB／BB 結果並飛至座位，盲注依 SB→BB 串行顯示入 POT，不能重做引擎扣款。令 `p = hand.result.player`，牌桌 TOTAL WIN 最終顯示 `p.totalReturn = p.netReturn + p.jackpotAward`，排除 `p.refund`，且不等同 `p.profit`；精確跑分只讀結算結果，不追加派彩。自動結算 modal 改由此桌上呈現取代，完整明細仍可手動查看。POT 示意籌碼置左、精確值置右，依顯示字數縮字並保留最多六位小數，不截斷或改成近似值。TOTAL WIN 在 POT 實體籌碼仍在時避開籌碼，真正派出後才回到中央；不能為排版提前清空可視籌碼或更動派彩。引擎 API、規則、賠率、RNG 與所有帳務公式維持不變。`npm test` 165／165 與本地完整流程驗證已通過。驗證證據與發布狀態另見 [手機與部署紀錄](docs/06-mobile-and-deployment.md)；本地通過不代表已提交或上線。
 
 Settlement:
 
@@ -226,9 +238,9 @@ From that opening state, independent examples below report the hand's settlement
 - Player `raise`, then NPC `fold`: player pays another 15, contributions are 20/10; refund player 10, matched wagers 10 each, settled POT 20, fee .8, player `netReturn` 19.2, final stacks 1009.2/990.
 - Player immediately `fold`: contributions are 5/10; refund NPC 5, matched wagers 5 each, settled POT 10, fee .4, NPC `netReturn` 9.6, final stacks 995/1004.6. Player loses the posted small blind. The fold grants no Jackpot.
 
-### v30 return presentation
+### v45 贏分呈現（覆蓋 v30 底板）
 
-`src/total-win-view.mjs` remains a read-only projection of the settled result: displayed amount is `player.totalReturn = player.netReturn + player.jackpotAward`, excluding `refund`, while a positive `profit` selects the TOTAL WIN outcome. The navy-and-gold plaque retains source-stack avoidance and re-centres only after the real POT source clears. Normal-motion positive-profit counting emits 32 decorative gold coins on deterministic paths behind the amount; finish, cancellation, a new result, page hiding and destruction remove them. Re-rendering the same result does not replay, and reduced motion, splits, non-profit returns and losses emit no coins. Coin animation never samples RNG or credits funds. Existing count and finish audio still respects mute. Current QA and release status are recorded in [mobile and deployment QA](docs/06-mobile-and-deployment.md).
+`src/total-win-view.mjs` remains a read-only projection of the settled result: displayed amount is `player.totalReturn = player.netReturn + player.jackpotAward`, excluding `refund`, while a positive `profit` selects the TOTAL WIN outcome. Positive-profit TOTAL/WIN and the amount use bright gold dimensional lettering directly on the table, without a plaque, background, border or decorative lines. The display retains source-stack avoidance and re-centres only after the real POT source clears. Normal-motion positive-profit counting emits 32 decorative gold coins on deterministic paths behind the amount; finish, cancellation, a new result, page hiding and destruction remove them. Re-rendering the same result does not replay, and reduced motion, splits, non-profit returns and losses emit no coins. Coin animation never samples RNG or credits funds. Existing count and finish audio still respects mute. Current QA and release status are recorded in [mobile and deployment QA](docs/06-mobile-and-deployment.md).
 
 The [probability model document](docs/04-game-flow-and-math.html) and [Probability Lab](probability.html) remain separate public entry points. NPC weights, legal-action normalization, RNG, settlement and JP formulas are unchanged; the new default starting stack is not an RTP recalibration.
 
@@ -290,7 +302,7 @@ Starting-hand score (`H` = high rank, `L` = low rank, A = 14):
 - Pair: `0.57 + (H - 2) / 12 × 0.43`.
 - Non-pair: `(H - 2)/12 × 0.44 + (L - 2)/12 × 0.20 + suitedBonus + gapBonus`, clamped to `[0.02, 0.94]`.
 - Same-suit bonus `0.12`; gap 1/2/3 bonus `0.12/0.07/0.03`, otherwise zero.
-- Default unpaired mode redraws only unpaired candidates; legacy-score mode alone uses the score threshold. Each continuation independently tests rerollChance until maxRerolls; final candidates are accepted even if weaker. Rejected candidates remain in the pool; only accepted holes are removed. Manual cards are reserved before either seat is sampled. The small blind is dealt first, rotating each hand. No future board or winner is inspected.
+- Default unpaired mode redraws only unpaired candidates; legacy-score mode alone uses the score threshold. Each continuation independently tests rerollChance until maxRerolls; final candidates are accepted even if weaker. Rejected candidates remain in the pool; only accepted holes are removed. Manual cards are reserved before either seat is sampled. The small blind is dealt first; v45 gameplay and continuous/cashout studies redraw positions each hand, while controlled independent/tree studies alternate. No future board or winner is inspected.
 
 NPC private-card strength `s` is the opening score before flop. Postflop it uses best-five category base `[.18,.40,.57,.67,.76,.82,.89,.96,.995]` for high-card through straight-flush, plus `(highest comparison rank - 8) × .008`, clamped to `[.03,.999]`. This is an action-policy heuristic, not equity.
 
@@ -372,13 +384,15 @@ simulateStudy(config={}, {
 })
 ```
 
-players/entries/sliceSize/maxHandsPerPlayer must be positive safe integers; policies as above; seed a string or finite number. modes: independent resets equal stacks each hand with player SB then alternating; continuous preserves player balance and randomly draws the first blind once; cashout preserves balance until target (default buyIn×2), insufficient stack (<.01) or safety limit. Entry minimum is not an in-session stop threshold. Initial target attainment permits zero hands. Cashout hitting the limit is censored, not success or failure.
+players/entries/sliceSize/maxHandsPerPlayer must be positive safe integers; policies as above; seed a string or finite number. modes: independent resets equal stacks each hand with player SB then alternating; continuous preserves player balance and draws 50/50 blind positions for every hand; cashout uses the same per-hand random blinds and preserves balance until target (default buyIn×2), insufficient stack (<.01) or safety limit. Entry minimum is not an in-session stop threshold. Initial target attainment permits zero hands. Cashout hitting the limit is censored, not success or failure.
 
 Each player gets a stable derived seed. Increasing player count does not alter earlier players. Ordinary policy simulations may consume different RNG counts; equal starting seed is not a matched card-deal guarantee. Continuous/cashout call syncOpponentBankroll after every settled hand, including the final one; NPC adjustment is excluded from payout and RTP.
 
 Output includes `studyVersion:1,ruleSet,mode,players,entries,seed,policy,config,sliceSize,targetAsset,maxHandsPerPlayer`, economic totals and counts, `playerResults,playerSummary,byBlind,actionStats,dealAudit,streetReach,returnDistribution,batches,conservationError,methodMeta,method,npcRefreshCount,npcRefreshAdjustment,npcRefreshAdded,npcRefreshRemoved`, and base/total RTP with uncertainty. `rtp` aliases totalRtp. `standardError/ci95` apply to total RTP; baseStandardError/baseCi95 to base RTP.
 
 playerResults rows have playerIndex/seed/start/end/endMeaning/status/reachedTarget/insufficient/censored plus per-player counters and money. In independent mode endMeaning is last-independent-hand; never treat end as accumulated wealth. playerSummary counts completed/target/insufficient/censored players. Action rows use count for events and hands for unique hand/street/actor/action combinations; handWins/handLosses/handTies/handNetWins always refer to **the player**, even when actor=npc. Return buckets use totalReturn/matchedWager, excluding refunds.
+
+methodMeta.blindMode 為 independent 的 alternating，或 continuous／cashout 的 random-each-hand；methodMeta.initialBlind 以繁中說明同一模式。session.firstSmallBlind 保留首手實際位置，不隨後手更新；random 的 blindDraw 則記錄最近成功開手的盲位。
 
 Fixed/legacy independent RTP CI uses one hand per observation. Rotating BOSS independent mode retains per-player sequences and clusters by player. Continuous/cashout CI clusters X/Y totals by player; fewer than two players yields null CI regardless of hand count. methodMeta.ciUnit and ciSamples identify the actual unit. Zero denominator yields ratio 0 as a sentinel and null uncertainty; UI should show unavailable, not measured 0% return. CIs are normal approximations, not rare-JP certification.
 
@@ -395,6 +409,8 @@ Fixed/legacy independent RTP CI uses one hand per observation. Rotating BOSS ind
 run emits progress (including policyIndex/policyCount), partial `{report}`, then result `{reports}`. tree emits treeResult `{tree}`. treeStudy emits treeProgress and treeStudyResult `{report}`. All failures emit `{type:'error',message}`. The UI stops by terminating its worker; incomplete work is not a complete report. Game presentation remains single apply/sample and independent from these offline workers.
 
 ## Reproducible validation artifacts
+
+v45 改動後手盲位與 RNG 排程，以下 v35 及更早資料均為歷史，不能作為本版校準或聲稱來源雜湊全部符合。v43 純標準德州參考算法未改，但其報告亦含歷史引擎雜湊。當輪功能、抽盲排程、介面及部署證據以 docs/06 v45 與完成訊息為準；本輪未做大型 RTP 重跑。
 
 v34 checks are recorded in docs/06 and `output/math-v34-validation.json` (seed 2026100527, source hashes, 1000 integrated trees and four policies ×5000 independent hands). They validate structure/accounting and small-sample math, not fixed RTP or high player win-rate calibration. The v35 four-BOSS validation is separately recorded in output/math-v35-validation.json and docs/06; the v34 numbers do not validate it.
 

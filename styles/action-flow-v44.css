@@ -12,3 +12,17 @@
 .game .action-flow-icon { background:#14213663; }
 .game .action-flow-name { color:#ead3aa; text-shadow:0 1px 2px #0b1328; }
 .game .action-flow-verb { color:#fff1d2; text-shadow:0 1px 2px #0b1328; }
+
+/* The central draw replaces the visible turn ribbon, including its old heading.
+   Its separate live announcement remains available to assistive technology. */
+.game[data-response-flight] .action-flow-strip,
+.game[data-response-flight] .action-flow-strip[data-step] {
+  background:none; border:0; box-shadow:none;
+}
+.game[data-response-flight] .action-flow-current { visibility:hidden; }
+.game[data-response-flight] .action-flow-strip::before,
+.game[data-response-flight] .action-flow-strip::after { content:none; display:none; }
+
+/* Narrow outcomes retain their true coloured segment without squeezed copy. */
+.game .response-flyout .is-tiny .response-badge-label,
+.game .response-flyout .is-tiny .response-badge-percent { visibility:hidden; }

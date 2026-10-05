@@ -40,7 +40,8 @@ for (const boss of modes) {
         const next = startHand(session), expected = startHand(baseline);
         assert.deepEqual(next.bossProfile, preview.bossProfile);
         assert.deepEqual(snapshot(session), snapshot(baseline));
-        assert.equal(next.smallBlind, previous.bigBlind);
+        assert.equal(next.smallBlind, expected.smallBlind);
+        assert.deepEqual(session.blindDraw, baseline.blindDraw);
         if (boss.mode === 'rotate') {
           assert.notEqual(next.bossProfile.id, previous.bossProfile.id);
           assert.equal(next.bossSelection.probability, 1 / 3);
@@ -86,6 +87,22 @@ test('BET drafts and confirmed changes retain the same next identity and baselin
       assert.equal(next.config.bigBlind, bet);
       assert.equal(previous.config, originalConfig);
       assert.equal(JSON.stringify(previous.result), priorResult);
+    }
+  }
+});
+
+test('explicit research blinds preview the unshifted BOSS stream and retain alternation', () => {
+  for (const firstSmallBlind of ['player', 'npc']) for (const seed of seeds) {
+    const session = createSession({}, seed, {firstSmallBlind});
+    for (let turn = 0; turn < 4; turn++) {
+      const previous = startHand(session);
+      applyAction(previous, 'fold');
+      const before = snapshot(session), preview = previewNextEncounter(session);
+      assert.deepEqual(snapshot(session), before);
+      const next = startHand(session);
+      assert.deepEqual(next.bossProfile, preview.bossProfile);
+      assert.equal(next.smallBlind, previous.bigBlind);
+      applyAction(next, 'fold');
     }
   }
 });

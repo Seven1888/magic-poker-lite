@@ -1,5 +1,5 @@
-import {previewResponse} from './engine.mjs?v=35';
-import {pct,esc} from './shared.mjs?v=35';
+import {previewResponse} from './engine.mjs?v=45';
+import {pct,esc} from './shared.mjs?v=45';
 import {icon} from './ui-icons.mjs?v=35';
 
 /** Table-facing vocabulary only; the underlying action type stays unchanged. */

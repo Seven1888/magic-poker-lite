@@ -1,17 +1,14 @@
-/* Compact gold lettering: TOTAL above WIN, together beside the counted award. */
+/* Floating gold lettering: TOTAL above WIN, together beside the counted award. */
 .game .table-total-win[data-outcome='win'] {
   flex-direction:row; align-items:center; justify-content:center; gap:8px;
-  padding:6px 12px; border-width:1px; border-color:#dcb46b99;
-  border-radius:12px 12px 17px 17px;
-  background:linear-gradient(110deg,#1f2435ed,#101b2ded 52%,#242335ed);
-  box-shadow:inset 0 1px #fff0c533,inset 0 -2px #060b16,0 3px 0 #7a552b,0 5px 7px #190d2066;
+  padding:6px 12px; border:0; border-radius:0;
+  background:none; box-shadow:none;
   transition:transform calc(.36s / var(--game-speed,1.2)) ease-out;
 }
-.game .table-total-win[data-outcome='win']::before {
-  inset:3px; border-color:#d4b57730; border-radius:8px 8px 12px 12px;
-  background:linear-gradient(115deg,#ffecc909,transparent 45%);
+.game .table-total-win[data-outcome='win']::before,
+.game .table-total-win[data-outcome='win']::after {
+  content:none; display:none;
 }
-.game .table-total-win[data-outcome='win']::after { bottom:-5px; font-size:8px; }
 .game .table-total-win[data-outcome='win'] .total-win-label {
   display:flex; flex:none; flex-direction:column; align-items:center; justify-content:center;
   width:62px; gap:0; line-height:1; font-family:Georgia,'Times New Roman',serif;
@@ -20,12 +17,11 @@
 }
 .game .total-win-label-word,
 .game .table-total-win[data-outcome='win'] .total-win-amount {
-  color:#ffe8a7;
-  background:linear-gradient(180deg,#fff8d7 0%,#ffefb1 21%,#d99330 48%,#fff0b1 54%,#f4c264 72%,#bf7f26 100%);
-  background-clip:text; -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-  -webkit-text-stroke:.35px #895119;
+  /* An opaque gold face keeps dark depth shadows behind the glyphs. */
+  color:#ffd75e; background:none; -webkit-text-fill-color:currentColor;
+  -webkit-text-stroke:.45px #9d5c0d;
   paint-order:stroke fill;
-  text-shadow:0 2px 0 #6b3d1799,0 3px 3px #070d1999;
+  text-shadow:0 -1px 0 #fff2a8,0 1px 0 #b87513,0 2px 0 #784006,0 3px 3px #070d19cc;
 }
 .game .table-total-win .total-win-label-word { display:block; font-size:17px; line-height:18px; }
 .game .table-total-win .total-win-label-word:last-child { font-size:23px; line-height:24px; letter-spacing:-.7px; }

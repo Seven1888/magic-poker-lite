@@ -1,4 +1,4 @@
-import {createSession,startHand,cloneHand,legalActions,applyAction,getActionDistribution} from './engine.mjs?v=35';
+import {createSession,startHand,cloneHand,legalActions,applyAction,getActionDistribution} from './engine.mjs?v=45';
 
 const POLICIES = ['balanced','call','aggressive','tight'];
 const MEASURES = [

@@ -35,6 +35,7 @@ test('independent studies preserve the shared engine ledger, blind alternation, 
   for (const [key, expected] of Object.entries(totals)) near(report[key], expected);
   assert.equal(report.hands, 57); assert.equal(report.byBlind.small.hands, 30); assert.equal(report.byBlind.big.hands, 27);
   assert.equal(report.methodMeta.ciUnit, 'hand'); assert.equal(report.methodMeta.ciSamples, 57);
+  assert.equal(report.methodMeta.blindMode, 'alternating');
   near(report.standardError, referenceError(rows, 'totalReturns'));
   near(report.baseStandardError, referenceError(rows, 'netReturns'));
   near(report.totalRtp, report.totalReturns / report.wagers);
@@ -54,6 +55,7 @@ test('player seeds are reproducible, independent, and stable when the requested 
 
 test('continuous mode preserves balances below entry minimum and separates every NPC refresh from payouts', () => {
   const report = simulateStudy({...passive, targetRtp: .5}, {players: 3, entries: 100, seed: 20261005, policy: 'call', mode: 'continuous'});
+  assert.equal(report.methodMeta.blindMode, 'random-each-hand');
   assert.equal(report.playerSummary.insufficient, 3);
   assert.ok(report.hands > 3 && report.hands < 300);
   assert.equal(report.npcRefreshCount, report.hands);
@@ -94,8 +96,16 @@ test('cashout distinguishes attained targets, insufficient funds, and safety-lim
   const busted = simulateStudy({...passive, targetRtp: .5}, {...common, targetAsset: 1000, maxHandsPerPlayer: 100});
   assert.equal(busted.playerSummary.insufficient, 3); assert.equal(busted.playerSummary.censored, 0);
   const targets = simulateStudy({...passive, targetRtp: 1}, {...common, targetAsset: 11, maxHandsPerPlayer: 80});
-  assert.equal(targets.playerSummary.target, 3);
-  assert.ok(targets.playerResults.every(player => player.end >= 11 && player.reachedTarget && !player.censored));
+  const reached = targets.playerResults.filter(player => player.reachedTarget);
+  assert.ok(reached.length > 0);
+  assert.equal(targets.playerSummary.target, reached.length);
+  assert.equal(targets.methodMeta.blindMode, 'random-each-hand');
+  for (const player of targets.playerResults) {
+    assert.equal(player.reachedTarget, player.end >= 11);
+    assert.equal(player.insufficient, player.end < .01);
+    assert.equal(player.censored, !player.reachedTarget && !player.insufficient);
+    if (player.censored) assert.equal(player.hands, 80);
+  }
   assert.equal(targets.npcRefreshCount, targets.hands); // Includes the final successful hand.
   const already = simulateStudy(passive, {...common, targetAsset: 10});
   assert.equal(already.hands, 0); assert.equal(already.playerSummary.target, 3);

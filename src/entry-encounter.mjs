@@ -1,4 +1,4 @@
-import {createSession} from './engine.mjs?v=35';
+import {createSession} from './engine.mjs?v=45';
 import {selectBossProfile} from './boss-profiles.mjs?v=35';
 
 /** Reserve the entry seed and public identity without dealing or charging chips.
@@ -18,6 +18,10 @@ export function previewNextEncounter(session) {
    || hand.status !== 'settled' || !hand.result) {
   throw new Error('The next BOSS can be previewed only after this hand has settled.');
  }
- const {profile} = selectBossProfile(session.rng.clone(), session.lastBossProfileId, session.config.boss);
+ const previewRng = session.rng.clone();
+ // The next real startHand draws its blind before selecting the next BOSS.
+ // Consume only this isolated copy, so opening/cancelling BET never reserves it.
+ if (session.blindMode === 'random') previewRng();
+ const {profile} = selectBossProfile(previewRng, session.lastBossProfileId, session.config.boss);
  return Object.freeze({bossProfile:profile});
 }

@@ -1,9 +1,9 @@
-import {renderBossProbabilityTables,renderBossStudy} from './boss-probability-view.mjs?v=35';
-import {DEFAULT_CONFIG,normalizeConfig,holeScore} from './engine.mjs?v=35';
+import {renderBossProbabilityTables,renderBossStudy} from './boss-probability-view.mjs?v=45';
+import {DEFAULT_CONFIG,normalizeConfig,holeScore} from './engine.mjs?v=45';
 import {JACKPOT_MULTIPLIERS,quoteJackpot} from './jackpot.mjs?v=35';
-import {CONFIG_KEY,loadConfig,money,pct,esc,cardMarkup,download} from './shared.mjs?v=35';
+import {CONFIG_KEY,loadConfig,money,pct,esc,cardMarkup,download} from './shared.mjs?v=45';
 import {LAB_LABELS as LABELS,LAB_STREETS as STREETS,LAB_POLICIES as policyNames,LAB_JACKPOTS as jackpotNames,translateLabError as translateError} from './probability-text.mjs?v=35';
-import {renderStudyDetails,renderActionTree} from './probability-report-view.mjs?v=35';
+import {renderStudyDetails,renderActionTree} from './probability-report-view.mjs?v=45';
 const $=id=>document.getElementById(id);
 let worker=null,reports=[],selectedIndex=0,startedAt=0,toastTimer,runSnapshot=null,runState='等待模擬',settingsDirty=false;
 let actionTree=null,treeStudy=null,activeTask='simulation';
@@ -85,7 +85,7 @@ $('run').onclick=()=>{
   try{
     const config=readConfig(),settings=simSettings();activeTask='simulation';reports=[];selectedIndex=0;settingsDirty=false;runState='模擬執行中';
     runSnapshot={config,simulation:settings,startedAt:new Date().toISOString()};startedAt=performance.now();$('error').textContent='';updateProgress(0);$('progress-text').textContent='正在啟動模擬程序…';$('run-label').textContent=`種子 ${settings.seed}・每種策略 ${money(settings.hands)} 手`;
-    launching=true;setRunning(true);renderResults();worker=new Worker(new URL('./simulation-worker.mjs?v=35',import.meta.url),{type:'module'});
+    launching=true;setRunning(true);renderResults();worker=new Worker(new URL('./simulation-worker.mjs?v=45',import.meta.url),{type:'module'});
     worker.onmessage=event=>{const m=event.data;if(m.type==='progress'){updateProgress((m.policyIndex+Math.min(1,m.completed/m.total))/m.policyCount*100);$('progress-text').textContent=`${policyNames[m.policy]}・已完成 ${money(m.completed)} 手（上限 ${money(m.total)}）`;}else if(m.type==='partial'){reports.push(m.report);renderResults();}else if(m.type==='result'){reports=m.reports;finish(false);}else if(m.type==='error'){finish(true,m.message);}};
     worker.onerror=e=>finish(true,e.message||'模擬程序啟動失敗。');worker.postMessage({type:'run',config,...settings});
   }catch(e){if(launching)finish(true,e);else showError(e);}
@@ -123,7 +123,7 @@ document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{document.query
 const bundle=()=>({version:6,model:'mp-four-boss-v1+full-action-tree+player-study',run:runSnapshot,reports,treeStudy});
 $('export-results').onclick=()=>download('magic-poker-lite-results.json',bundle());
 $('copy-results').onclick=async()=>{try{await navigator.clipboard.writeText(JSON.stringify(bundle(),null,2));toast('已複製完整設定與統計資料。');}catch{toast('無法使用剪貼簿，請改用 JSON 匯出。');}};
-$('export-csv').onclick=()=>{const lines=['ruleSet,bossMode,bossProfile,callerHands,maniacHands,sniperHands,trapperHands,mode,players,ciUnit,netWinningHands,showdownWins,smallBlind,bigBlind,policy,hands,seed,jackpotEnabled,baseSettlementCoefficient,baseRtp,totalRtp,baseStandardError,totalStandardError,baseCi95Low,baseCi95High,totalCi95Low,totalCi95High,wagers,jackpotWagers,refunds,grossReturns,netReturns,jackpotAwards,totalReturns,baseProfit,totalProfit,playerFees,systemFees,royalCount,straightFlushCount,quadsCount,wins,losses,ties'];for(const r of reports)lines.push([r.ruleSet,r.config.boss.mode,r.config.boss.profileId,r.byBoss?.caller?.hands??0,r.byBoss?.maniac?.hands??0,r.byBoss?.sniper?.hands??0,r.byBoss?.trapper?.hands??0,r.mode,r.players,r.methodMeta.ciUnit,r.netWinningHands,r.showdownWins,r.config.smallBlind,r.config.bigBlind,r.policy,r.hands,r.seed,r.config.jackpotEnabled,r.config.targetRtp,r.baseRtp,r.totalRtp,r.baseStandardError,r.standardError,...r.baseCi95,...r.ci95,r.wagers,0,r.refunds,r.grossReturns,r.netReturns,r.jackpotAwards,r.totalReturns,r.netReturns-r.wagers,r.totalReturns-r.wagers,r.playerFees,r.fees,r.tierCounts.royal,r.tierCounts.straightFlush,r.tierCounts.quads,r.wins,r.losses,r.ties].join(','));download('magic-poker-lite-results.csv','\uFEFF'+lines.join('\r\n'),'text/csv;charset=utf-8');};
+$('export-csv').onclick=()=>{const lines=['ruleSet,bossMode,bossProfile,callerHands,maniacHands,sniperHands,trapperHands,mode,players,ciUnit,blindMode,netWinningHands,showdownWins,smallBlind,bigBlind,policy,hands,seed,jackpotEnabled,baseSettlementCoefficient,baseRtp,totalRtp,baseStandardError,totalStandardError,baseCi95Low,baseCi95High,totalCi95Low,totalCi95High,wagers,jackpotWagers,refunds,grossReturns,netReturns,jackpotAwards,totalReturns,baseProfit,totalProfit,playerFees,systemFees,royalCount,straightFlushCount,quadsCount,wins,losses,ties'];for(const r of reports)lines.push([r.ruleSet,r.config.boss.mode,r.config.boss.profileId,r.byBoss?.caller?.hands??0,r.byBoss?.maniac?.hands??0,r.byBoss?.sniper?.hands??0,r.byBoss?.trapper?.hands??0,r.mode,r.players,r.methodMeta.ciUnit,r.methodMeta.blindMode??'historical',r.netWinningHands,r.showdownWins,r.config.smallBlind,r.config.bigBlind,r.policy,r.hands,r.seed,r.config.jackpotEnabled,r.config.targetRtp,r.baseRtp,r.totalRtp,r.baseStandardError,r.standardError,...r.baseCi95,...r.ci95,r.wagers,0,r.refunds,r.grossReturns,r.netReturns,r.jackpotAwards,r.totalReturns,r.netReturns-r.wagers,r.totalReturns-r.wagers,r.playerFees,r.fees,r.tierCounts.royal,r.tierCounts.straightFlush,r.tierCounts.quads,r.wins,r.losses,r.ties].join(','));download('magic-poker-lite-results.csv','\uFEFF'+lines.join('\r\n'),'text/csv;charset=utf-8');};
 async function loadReference(){try{const response=await fetch('output/math-validation.json');if(!response.ok)throw new Error('目前無法取得歷史驗證檔');const data=await response.json();const names={'natural-balanced':'自然發牌・平衡','boosted-balanced':'雙方對稱重抽・平衡'};$('reference-table').innerHTML=data.runs.map(r=>`<tr><td>${names[r.id]||`${r.id.includes('natural')?'自然發牌':'重抽'}・${policyNames[r.policy]}`}</td><td>${money(r.hands)}</td><td>${pct(r.rtp)}</td><td>${ci(r)}</td></tr>`).join('');}catch(e){$('reference-table').innerHTML=`<tr><td colspan="4">${esc(translateError(e))}</td></tr>`;}}
 renderBossProbabilityTables();fill(loadConfig());renderResults();
 try{if(localStorage.getItem(CONFIG_KEY))$('settings-state').textContent='已載入儲存的設定';}
@@ -147,7 +147,7 @@ function runTreeTask(task){
   if(task==='treeStudy'&&!$('tree-deals').checkValidity())throw new Error('牌序樣本數須為 2 至 10,000。');
   const options=task==='tree'?{seed,policy:$('tree-policy').value,firstSmallBlind:$('tree-first').value}:{seed,policy:$('tree-study-policy').value,deals:Number($('tree-deals').value)};
   activeTask=task;setRunning(true);$('error').textContent='';status.textContent=task==='tree'?'正在建立每一條合法分支…':'正在逐副牌建立完整樹…';
-  worker=new Worker(new URL('./simulation-worker.mjs?v=35',import.meta.url),{type:'module'});
+  worker=new Worker(new URL('./simulation-worker.mjs?v=45',import.meta.url),{type:'module'});
   const finishTree=()=>{worker?.terminate();worker=null;setRunning(false);};
   worker.onmessage=({data:m})=>{
    if(m.type==='treeProgress'){status.textContent=`已完成 ${money(m.completed)} / ${money(m.total)} 副完整樹`;return;}

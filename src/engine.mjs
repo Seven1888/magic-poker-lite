@@ -75,10 +75,12 @@ export function createSession(config = {}, seed = 123, options = {}) {
   }
   const normalized = normalizeConfig(config);
   const rng = createRng(seed);
-  // Draw once on entry, before dealing. Fixed positions preserve the old RNG stream.
+  // Reserve the opening draw on entry. Later random hands draw only in startHand;
+  // explicit research positions retain alternating blinds and their RNG stream.
   const firstSmallBlind = choice === 'random' ? (rng() < 0.5 ? 'player' : 'npc') : choice;
   const blindDraw = choice === 'random' ? {smallBlind: firstSmallBlind, probability: 0.5} : null;
-  return {config: normalized, seed, rng, firstSmallBlind, blindDraw, lastBossProfileId: null,
+  const blindMode = choice === 'random' ? 'random' : 'alternate';
+  return {config: normalized, seed, rng, firstSmallBlind, blindMode, blindDraw, lastBossProfileId: null,
     stacks: {player: normalized.buyIn, npc: normalized.buyIn}, handNumber: 0, fees: 0,
     jackpotAwards: 0, jackpotTierCounts: {royal: 0, straightFlush: 0, quads: 0},
     opponentBankrollRefreshes: []};
@@ -161,7 +163,11 @@ export function startHand(session) {
   if (session.activeHand?.status === 'playing') throw new Error('目前牌局尚未結束。');
   session.handNumber++;
   const firstSmallBlind = session.firstSmallBlind ?? 'player';
-  const smallBlind = session.handNumber % 2 === 1 ? firstSmallBlind : other(firstSmallBlind);
+  const randomBlind = session.blindMode === 'random';
+  const smallBlind = randomBlind
+    ? session.handNumber === 1 ? firstSmallBlind : session.rng() < 0.5 ? 'player' : 'npc'
+    : session.handNumber % 2 === 1 ? firstSmallBlind : other(firstSmallBlind);
+  if (randomBlind) session.blindDraw = {smallBlind, probability: 0.5};
   const bigBlind = other(smallBlind);
   const boss = selectBossProfile(session.rng, session.lastBossProfileId, session.config.boss);
   session.lastBossProfileId = boss.profile?.id ?? null;

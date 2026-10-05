@@ -116,7 +116,7 @@ test('retaining the original BET allows existing short-stack play without adding
   assert.equal(next.status, 'settled');
 });
 
-test('accepted stakes affect only the next hand, retaining RNG, boss rotation and blind order', () => {
+test('accepted stakes affect only the next hand, retaining RNG, boss rotation and the fresh blind draw', () => {
   const changed = settledSession(), reference = settledSession();
   const priorHand = changed.activeHand, priorConfig = priorHand.config;
   syncOpponentBankroll(changed);
@@ -133,8 +133,8 @@ test('accepted stakes affect only the next hand, retaining RNG, boss rotation an
   assert.equal(JSON.stringify({config: priorHand.config, result: priorHand.result, history: priorHand.history,
     stacks: priorHand.stacks, holes: priorHand.holes, board: priorHand.board}), prior);
   assert.equal(next.handNumber, 2);
-  assert.equal(next.smallBlind, priorHand.bigBlind);
   assert.equal(next.smallBlind, control.smallBlind);
+  assert.deepEqual(changed.blindDraw, reference.blindDraw);
   assert.equal(next.bossProfile.id, control.bossProfile.id);
   assert.notEqual(next.bossProfile.id, priorHand.bossProfile.id);
   assert.deepEqual(next.bossSelection, control.bossSelection);
