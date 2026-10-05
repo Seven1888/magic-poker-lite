@@ -1,4 +1,16 @@
-# Engine API contract · v43 standard Hold'em reference probabilities / v35 game math · 2026-10-05
+# Engine API contract · v44 audio / v43 reference probabilities / v35 game math · 2026-10-05
+
+## v44 音訊與公開勝率演出
+
+`createGameEffects` 保留發牌／翻牌等呈現 API，新增 `setMusicPhase('table'|'showdown'|'win'|'loss'|'tie'|'off')`、`setMusicEnabled(boolean)`、`setEffectsEnabled(boolean)` 與唯讀 `getAudioState()`。音訊只能由 `unlock()` 的使用者手勢啟動；`suspendAudio()`／靜音／destroy 停止排程與聲部，背景回來由手勢恢復。配樂與音效獨立開關，舊 `magic-poker-lite:sound` 延用為音效偏好，新增 `magic-poker-lite:music`；未設定 music 時尊重舊靜音值。
+
+`createEquityMomentum({root,effects,reducedMotion})` 只收 `update({key,equity,final})` 的已公開勝率；同 key 防重播，`clear()` 清演出但保留上一個比較基準，`reset()` 換手歸零。第一個數字不冒充超車，50% 是中立；跨到領先／落後提示，其他至少 10 個百分點變化提示。BOSS 第二張完整公開後 `final:true` 終止本手提示。
+
+曲目快取為 `assets/audio/table-v44.wav`／`showdown-v44.wav`，含原始和聲與空間效果，播放才套通道／主音量；`getAudioState()` 的 `musicBackend`／`cachedLoops` 可檢查是否採單音源循環。首次手勢前可下載但不建立 AudioContext，失敗則使用原譜合成；素材來源與 SHA256 見 `assets/audio/README.md`。
+
+`renderCardRow(element,models)` 只收已知牌的 `{card,back,best,visible}`，暗牌 `back:true` 甚至不讀 card getter；保留卡牌元素、未改變的圖片、動畫樣式及已亮牌結果。勝率環同值及 BOSS 牌型同分布的更新不重建內容，busy／隱藏／新數值仍正常更新。
+
+全下時引擎可已 settled，但呈現仍在逐街揭牌；在已知公牌 0／3／4／5 張及 BOSS 尚未揭牌時，勝率仍使用 v43 相同純計算 API。音訊和演出不接收正式 RNG、牌庫或 BOSS 暗牌；勝負配樂僅在完整揭牌或公開棄牌結果後切换。不改數學、下注、帳務或 RTP 模型。
 
 ## v43 標準德州參考機率
 

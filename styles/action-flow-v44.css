@@ -1,0 +1,14 @@
+/* Let the table show through every central message without blurring the scene. */
+.game .action-flow-strip,
+.game .action-flow-strip[data-step] {
+  background:linear-gradient(90deg,#0d172b7a,#14243da3 50%,#0d172b7a);
+  border:0; box-shadow:none; border-radius:0;
+  backdrop-filter:none; -webkit-backdrop-filter:none;
+}
+.game .action-flow-current,
+.game .action-flow-strip[data-step] .action-flow-current {
+  background:none; box-shadow:none;
+}
+.game .action-flow-icon { background:#14213663; }
+.game .action-flow-name { color:#ead3aa; text-shadow:0 1px 2px #0b1328; }
+.game .action-flow-verb { color:#fff1d2; text-shadow:0 1px 2px #0b1328; }

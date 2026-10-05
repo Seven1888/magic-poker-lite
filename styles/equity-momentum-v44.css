@@ -1,0 +1,53 @@
+/* A brief equity cue in the gap below the pot, above the player's cards. */
+.game .equity-momentum {
+  --momentum-ink:#ffe7a1;
+  --momentum-glow:#75e3cb;
+  position:absolute; top:594px; left:50%; width:286px; height:22px;
+  transform:translateX(-50%); z-index:19; pointer-events:none;
+  display:flex; align-items:center; justify-content:center; gap:7px;
+  padding:0 9px; border:0; border-radius:0;
+  color:var(--momentum-ink);
+  background:linear-gradient(90deg,transparent,#102829ed 20%,#152323f2 80%,transparent);
+  text-shadow:0 1px 2px #071014; white-space:nowrap;
+  font-variant-numeric:tabular-nums;
+}
+.game .equity-momentum[hidden] { display:none !important; }
+.game .equity-momentum::before {
+  content:''; position:absolute; bottom:0; left:12px; right:12px; height:1px;
+  background:linear-gradient(90deg,transparent,var(--momentum-glow),var(--momentum-ink),transparent);
+  opacity:.8;
+}
+.game .equity-momentum[data-direction='down'] {
+  --momentum-ink:#ffcbc1; --momentum-glow:#e57c74;
+  background:linear-gradient(90deg,transparent,#36191ded 20%,#2f1820f2 80%,transparent);
+}
+.game .equity-momentum-icon { font-size:18px; line-height:20px; color:var(--momentum-glow); }
+.game .equity-momentum-title { font-size:10.5px; line-height:14px; font-weight:850; letter-spacing:.35px; }
+.game .equity-momentum-detail { color:#e1e6df; font-size:8px; line-height:12px; letter-spacing:0; }
+.game .equity-momentum[data-kind='swing'] { opacity:.86; }
+.game .equity-momentum[data-kind='swing'] .equity-momentum-title { font-weight:700; }
+.game .equity-momentum:not([hidden])[data-reduced-motion='false'] {
+  animation:equity-momentum-arrive 1050ms cubic-bezier(.16,.84,.3,1) both;
+}
+.game #player-win-rate[data-momentum='up'] { --momentum-ring:#78e9ca; }
+.game #player-win-rate[data-momentum='down'] { --momentum-ring:#e68a7e; }
+.game #player-win-rate[data-momentum] { border-color:var(--momentum-ring); }
+.game #player-win-rate[data-momentum][data-momentum-reduced='false'] {
+  animation:equity-momentum-ring 1000ms ease-out both;
+}
+.game #player-win-rate[data-momentum-kind='swing'] { --momentum-pulse:6px; }
+.game #player-win-rate[data-momentum-kind='lead'] { --momentum-pulse:11px; }
+@keyframes equity-momentum-arrive {
+  0% { opacity:0; translate:0 4px; }
+  15%,76% { opacity:1; translate:0 0; }
+  100% { opacity:0; translate:0 -2px; }
+}
+@keyframes equity-momentum-ring {
+  0% { box-shadow:0 0 0 0 var(--momentum-ring),0 0 5px var(--momentum-ring); }
+  45% { box-shadow:0 0 0 var(--momentum-pulse) transparent,0 0 16px var(--momentum-ring); }
+  100% { box-shadow:0 0 0 var(--momentum-pulse) transparent,0 2px 6px #1b0c1499; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .game .equity-momentum:not([hidden])[data-reduced-motion],
+  .game #player-win-rate[data-momentum][data-momentum-reduced] { animation:none; }
+}

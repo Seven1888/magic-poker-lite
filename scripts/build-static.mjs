@@ -10,6 +10,7 @@ if (path.dirname(destination) !== path.resolve(root) || path.basename(destinatio
 }
 await rm(destination, {recursive: true, force: true});
 const files = new Set(['index.html', 'probability.html', 'docs/04-game-flow-and-math.html',
+  'assets/audio/table-v44.wav', 'assets/audio/showdown-v44.wav',
   'docs/04-game-flow-and-math.md', 'docs/05-art-and-pot.md', 'API-CONTRACT.md', 'output/math-validation.json', 'output/math-v35-validation.json', 'output/math-v41-range-validation.json', 'output/math-v42-range-validation.json', 'output/math-v43-holdem-validation.json']);
 for (const directory of ['src', 'styles']) {
   for (const entry of await readdir(path.join(root, directory))) {

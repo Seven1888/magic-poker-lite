@@ -104,12 +104,18 @@ export function createTotalWin({root = globalThis.document, effects, reducedMoti
     const model = totalWinModel(result);
     if (!model) { clear(); return Promise.resolve(false); }
     cancel(); mount(); lastResult = result;
-    label.textContent = model.label; announcement.textContent = '';
+    label.textContent = '';
+    if (model.outcome === 'win') {
+      for (const word of ['TOTAL', 'WIN']) {
+        const line = doc.createElement('span'); line.className = 'total-win-label-word'; line.textContent = word; label.append(line);
+      }
+    } else label.textContent = model.label;
+    announcement.textContent = '';
     panel.hidden = false; panel.dataset.outcome = model.outcome;
     panel.dataset.motion = reducedMotion ? 'reduced' : 'normal';
     stage.dataset.totalWin = model.outcome;
     // Size from the final value so grouped digits and six decimals never jump.
-    panel.style.setProperty('--total-win-font', `${Math.min(46, 460 / model.formatted.length)}px`);
+    panel.style.setProperty('--total-win-font', `${Math.min(48, (model.outcome === 'win' ? 280 : 460) / model.formatted.length)}px`);
     amount.dataset.amount = String(model.amount);
     let resolve;
     lastDone = new Promise(done => { resolve = done; });

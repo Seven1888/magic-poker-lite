@@ -442,9 +442,23 @@ test('audio beats and envelopes run at 1.2x while pitches and the audio clock ar
   near(f.oscillators[0].startTime, 10);
   near(f.oscillators[1].startTime, 10.0625);
   near(f.oscillators[2].startTime, 10.125);
-  near(f.gains[3].gain.changes[1].time, 10.125 + .008 / 1.2);
-  near(f.gains[3].gain.changes[2].time, 10.275);
+  const finalEnvelope = f.gains.at(-1).gain;
+  near(finalEnvelope.changes[1].time, 10.125 + .008 / 1.2);
+  near(finalEnvelope.changes[2].time, 10.275);
   near(f.oscillators[2].stopTime, 10.2875);
+  effects.destroy();
+});
+
+test('a reveal plays one paper flick at the face swap, with no replay during cleanup', async () => {
+  const f = audioFixture(), effects = createGameEffects({root: f.doc});
+  await effects.unlock();
+  const card = f.card('boss'), pending = effects.reveal([card], {holdMs: 0, onReveal(target) { target.face = 'front'; }});
+  assert.equal(f.oscillators.length, 0, 'closing a hidden card must not cue its face');
+  f.animations[0].finish(); await flush();
+  assert.equal(card.face, 'front');
+  assert.equal(f.oscillators.length, 2, 'fallback paper friction and felt tap sound once');
+  f.animations[1].finish(); await pending;
+  assert.equal(f.oscillators.length, 2, 'cleanup does not replay the reveal');
   effects.destroy();
 });
 

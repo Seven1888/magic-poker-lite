@@ -4,7 +4,7 @@ import {GAME_LABELS as LABELS,GAME_STREETS as STREETS,handName,translateError} f
 import {createPotView} from './pot-view.mjs?v=35';
 import {fitStage} from './stage-fit.mjs?v=35';
 import {getHudSnapshot} from './hud-state.mjs?v=35';
-import {createGameEffects} from './game-effects.mjs?v=36';
+import {createGameEffects} from './game-effects.mjs?v=44';
 import {renderBetPresets,updateBetSelection,setupEntryFeatures} from './entry-view.mjs?v=35';
 import {betOptions,minimumAssets,tableConfig} from './entry-model.mjs?v=37';
 import {nextHandBetConfig} from './next-hand-bet.mjs?v=37';
@@ -17,19 +17,21 @@ import {decisionMotion} from './decision-motion.mjs?v=35';
 import {getShowdownView} from './showdown-view.mjs?v=35';
 import {GAME_SPEED,atGameSpeed} from './presentation-timing.mjs?v=35';
 import {createBankrollView} from './bankroll-view.mjs?v=35';
-import {renderWinRate,equityPercent} from './win-rate-view.mjs?v=43';
+import {renderWinRate,equityPercent} from './win-rate-view.mjs?v=44';
 import {createHoldemEquityController} from './holdem-equity-controller.mjs?v=43';
 import {responseBadgeView,responseActionLabel,captureResponseSource,responseSourceMatches} from './action-response-view.mjs?v=38';
 import {boardCardView,nextBoardReveal,tableDeckCounts} from './board-presentation.mjs?v=35';
 import {createResponseFlight} from './response-flight-view.mjs?v=38';
 import {createActionFlow} from './action-flow-view.mjs?v=35';
 import {createBlindDraw} from './blind-draw-view.mjs?v=40';
-import {createTotalWin} from './total-win-view.mjs?v=35';
+import {createTotalWin} from './total-win-view.mjs?v=44';
 import {createBossActionView} from './boss-action-view.mjs?v=35';
 import {renderBossIdentity,preloadBossScenes,waitForBossScene} from './boss-scene-view.mjs?v=36';
-import {createBossRangeView} from './boss-range-view.mjs?v=43';
+import {createBossRangeView} from './boss-range-view.mjs?v=44';
 import {createBossRangeController} from './boss-range-controller.mjs?v=43';
 import {bossRangeContext} from './boss-range-public.mjs?v=43';
+import {createEquityMomentum} from './equity-momentum.mjs?v=44';
+import {renderCardRow} from './card-row-view.mjs?v=44';
 document.documentElement.style.setProperty('--game-speed',String(GAME_SPEED));
 const $=id=>document.getElementById(id);
 // Stable player controls; engine actions and opponent response types stay unchanged.
@@ -41,6 +43,7 @@ let entryEncounter=null,nextEncounter=null,nextBetEncounter=null;
 const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const potView=createPotView({root:document,reducedMotion:reduceMotion,locale:'en',onPhase:presentTransferPhase});
 const effects=createGameEffects({root:document,reducedMotion:reduceMotion});
+const equityMomentum=createEquityMomentum({root:$('game'),effects,reducedMotion:reduceMotion});
 const responseFlight=createResponseFlight({root:document,effects,reducedMotion:reduceMotion});
 const actionFlow=createActionFlow({root:document});
 const blindDraw=createBlindDraw({root:document,effects,reducedMotion:reduceMotion});
@@ -50,15 +53,24 @@ const bossRange=createBossRangeController({view:createBossRangeView({root:docume
 const playerEquity=createHoldemEquityController({render:renderPlayerEquity});
 preloadBossScenes(document);
 const bankrollView=createBankrollView({root:document});
-let soundOn=true;
-try{soundOn=localStorage.getItem('magic-poker-lite:sound')!=='off';}catch{}
-effects.setMuted(!soundOn);$('sound-toggle').checked=soundOn;
+let soundOn=true,musicOn=true;
+try{soundOn=localStorage.getItem('magic-poker-lite:sound')!=='off';musicOn=(localStorage.getItem('magic-poker-lite:music')??(soundOn?'on':'off'))!=='off';}catch{}
+function updateAudioSettings({save=false}={}){
+ effects.setEffectsEnabled(soundOn);effects.setMusicEnabled(musicOn);
+ $('sound-toggle').checked=soundOn;$('music-toggle').checked=musicOn;
+ const audible=soundOn||musicOn,button=$('audio-button');
+ button.dataset.muted=String(!audible);button.setAttribute('aria-label',audible?'Mute all audio':'Enable music and sound');button.title=audible?'Mute all audio':'Enable music and sound';
+ button.setAttribute('aria-pressed',String(audible));
+ if(save)try{localStorage.setItem('magic-poker-lite:sound',soundOn?'on':'off');localStorage.setItem('magic-poker-lite:music',musicOn?'on':'off');}catch{}
+}
+function setMusicPhase(phase){effects.setMusicPhase(phase);$('game').dataset.musicPhase=phase;}
+updateAudioSettings();setMusicPhase('table');
 // Touch release/click are user activations on mobile Safari. Retry after every
 // gesture because an app switch or phone call can suspend an unlocked context.
-document.addEventListener('pointerup',()=>{if(soundOn)effects.unlock();},{passive:true});
-document.addEventListener('keydown',e=>{if(soundOn&&!e.repeat)effects.unlock();});
-document.addEventListener('click',e=>{if(soundOn&&e.target.closest('button:not(:disabled)'))effects.unlock().then(ready=>{if(ready)effects.play('click');});});
-document.addEventListener('visibilitychange',()=>{if(document.hidden)effects.suspendAudio();});
+document.addEventListener('pointerup',()=>{if(soundOn||musicOn)effects.unlock();},{passive:true});
+document.addEventListener('keydown',e=>{if((soundOn||musicOn)&&!e.repeat)effects.unlock();});
+document.addEventListener('click',e=>{if((soundOn||musicOn)&&e.target.closest('button:not(:disabled)'))effects.unlock().then(ready=>{if(ready&&soundOn)effects.play('click');});});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){effects.suspendAudio();equityMomentum.clear();}});
 window.addEventListener('pagehide',()=>effects.suspendAudio());
 fitStage({shell:$('game-shell'),stage:$('game')});
 let shownHand=null,shownBoard=0,boardDealt=0,shownReveal=0,dealt={player:0,npc:0},settlementReleased=false;
@@ -139,7 +151,9 @@ document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',
 const openHelp=()=>{const c=hand?.config||session?.config||config;$('help-fee').textContent=`A ${pct(1-c.targetRtp)} fee is taken from the matched pot before payout, including ties. Uncalled chips are returned in full, with no fee.`;show('help-dialog');};
 const openHistory=()=>{renderHistory();show('history-dialog');};
 $('menu-button').onclick=()=>show('menu-dialog');
-$('sound-toggle').onchange=e=>{soundOn=e.target.checked;effects.setMuted(!soundOn);if(soundOn)effects.unlock().then(ready=>{if(ready)effects.play('click');});try{localStorage.setItem('magic-poker-lite:sound',soundOn?'on':'off');}catch{}};
+$('sound-toggle').onchange=e=>{soundOn=e.target.checked;updateAudioSettings({save:true});if(soundOn)effects.unlock().then(ready=>{if(ready)effects.play('click');});};
+$('music-toggle').onchange=e=>{musicOn=e.target.checked;updateAudioSettings({save:true});if(musicOn)effects.unlock();};
+$('audio-button').onclick=()=>{const enable=!(soundOn||musicOn);soundOn=enable;musicOn=enable;updateAudioSettings({save:true});if(enable)effects.unlock().then(ready=>{if(ready)effects.play('click');});};
 document.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>{$('menu-dialog').close();if(b.dataset.open==='help-dialog')openHelp();else show(b.dataset.open);});
 $('menu-history').onclick=()=>{$('menu-dialog').close();openHistory();};
 $('menu-balance').onclick=()=>{$('menu-dialog').close();$('balance-button').click();};
@@ -263,18 +277,25 @@ function updateBossRange(){
 function renderPlayerEquity({visible,calculating,result,error}){
  if(shownReveal>0&&hand?.result?.reason==='showdown')return;
  const ring=$('player-win-rate');
- if(!visible||!hand||hand.status!=='playing'||dealt.player!==2||shownBoard!==hand.board.length){renderWinRate(ring);$('equity').textContent='';$('equity').title='';return;}
- if(!result){renderWinRate(ring);$('equity').textContent=calculating?'Calculating Hold’em equity…':error?'Equity unavailable.':'';$('equity').title='';return;}
+ if(!visible||!playerEquityReady()){renderWinRate(ring);equityMomentum.clear();$('equity').textContent='';$('equity').title='';return;}
+ if(!result){renderWinRate(ring);equityMomentum.clear();$('equity').textContent=calculating?'Calculating Hold’em equity…':error?'Equity unavailable.':'';$('equity').title='';return;}
  const rate=equityPercent(result.equity),method=result.exact?'Exact enumeration':`${result.outcomes.toLocaleString('en-US')} simulated deals`;
  const description=`${rate} ${result.exact?'':'estimated '}equity against one random hand. Ties count as half a win.`;
  renderWinRate(ring,result.equity,{description,title:`${method}. All unknown cards are equally likely. Ties count as half a win.`});
  ring.dataset.method=result.method;ring.dataset.outcomes=String(result.outcomes);
  $('equity').textContent=`${result.exact?'':'Estimated '}Hold’em equity: ${rate}`;
  $('equity').title=`${method}. Win ${equityPercent(result.winRate)}, tie ${equityPercent(result.tieRate)}, loss ${equityPercent(result.lossRate)}. Equity = wins + half of ties.`;
+ equityMomentum.update({key:`board-${shownBoard}`,equity:result.equity});
+}
+function playerEquityReady(){
+ return !!hand&&dealt.player===2&&shownReveal===0&&!settlementReleased
+  &&(hand.status==='playing'||hand.result?.reason==='showdown')
+  &&[0,3,4,5].includes(shownBoard)
+  &&(hand.status==='settled'||shownBoard===hand.board.length);
 }
 function updatePlayerEquity(){
  if(shownReveal>0&&hand?.result?.reason==='showdown')return;
- const ready=hand?.status==='playing'&&dealt.player===2&&shownBoard===hand.board.length;
+ const ready=playerEquityReady();
  playerEquity.update({visible:!!ready,playerHole:ready?hand.holes.player.slice(0,dealt.player):[],board:ready?hand.board.slice(0,shownBoard):[]});
 }
 function setTableCue(mode='',label='',{seat='',detail=''}={}){
@@ -319,6 +340,7 @@ function updateShowdownView(){
   $('player-win-rate').dataset.method='revealed-enumeration';$('player-win-rate').dataset.outcomes=String(view.outcomes);
   $('equity').textContent=`Equity after ${view.revealedCount} revealed opponent cards: ${rate}`;
   $('equity').title=view.revealedCount===1?'Exact enumeration of all 44 possible remaining opponent cards. Hidden cards are not used. Ties count as half a win.':'Both hands are revealed. Win 100%, tie 50%, loss 0%.';
+  equityMomentum.update({key:`boss-${view.revealedCount}`,equity:view.equity,final:view.revealedCount===2});
   return view;
 }
 function updateExpression(winner=''){
@@ -384,6 +406,7 @@ async function presentHand({releaseResponse=false}={}){
   }
   // A committed all-in runout still flips FLOP, TURN and RIVER separately.
   while(shownBoard<hand.board.length){
+    equityMomentum.clear();renderWinRate($('player-win-rate'));$('equity').textContent='';$('equity').title='';
     const {start,end,street}=nextBoardReveal(shownBoard,hand.board.length);
     setTableCue('board-deal',street.toUpperCase(),{detail:street==='flop'?'REVEAL 3 SHARED CARDS':'REVEAL 1 SHARED CARD'});
     const cards=[...$('board').children].slice(start,end);
@@ -393,6 +416,7 @@ async function presentHand({releaseResponse=false}={}){
     render();await delay(reduceMotion?0:700);
   }
   if(hand.result?.reason==='showdown'&&shownReveal<2){
+    equityMomentum.clear();setMusicPhase('showdown');
     setTableCue('showdown','SHOWDOWN');
     await delay(reduceMotion?0:450);
     const start=shownReveal;
@@ -405,7 +429,7 @@ async function presentHand({releaseResponse=false}={}){
   render();
 }
 function render(){
-  if(hand!==shownHand){bossRange.reset();playerEquity.reset();shownHand=hand;shownBoard=0;boardDealt=0;shownReveal=0;dealt={player:0,npc:0};settlementReleased=false;presentedCredits={player:0,npc:0};responseSource=null;responseDecision=null;activeNpcDistribution=null;responseFlight.clear();totalWin.clear();bossAction.clear();delete $('game').dataset.npcFolded;bankrollView.clearChanges();}
+  if(hand!==shownHand){equityMomentum.reset();setMusicPhase('table');bossRange.reset();playerEquity.reset();shownHand=hand;shownBoard=0;boardDealt=0;shownReveal=0;dealt={player:0,npc:0};settlementReleased=false;presentedCredits={player:0,npc:0};responseSource=null;responseDecision=null;activeNpcDistribution=null;responseFlight.clear();totalWin.clear();bossAction.clear();delete $('game').dataset.npcFolded;bankrollView.clearChanges();}
   const active=hand?.status==='playing';const handView=getCurrentHandView(hand?.holes.player.slice(0,dealt.player)||[],hand?.board.slice(0,shownBoard)||[]);const best=handView.highlighted;
   if(hand)blindDraw.renderSeat({isSmall:hand.smallBlind==='player'});else if(!session)blindDraw.clear();
   const h=hud();$('game').dataset.busy=String(busy);
@@ -414,12 +438,10 @@ function render(){
  $('balance-label').textContent='BALANCE';
   $('total-bet').textContent=money(h.playerCommitted);
   for(const seat of ['player','npc'])$(seat+'-blind').hidden=true;
-  $('npc-cards').innerHTML=(hand?.holes.npc||[null,null]).map((c,i)=>cardMarkup(c,{back:i>=shownReveal})).join('');
-  $('player-cards').innerHTML=(hand?.holes.player||[null,null]).map((c,i)=>cardMarkup(c,{back:!hand||i>=dealt.player,best:i<dealt.player&&best.includes(c)})).join('');
-  for(const seat of ['player','npc'])[...$(seat+'-cards').children].forEach((el,i)=>{el.style.visibility=hand&&i>=dealt[seat]?'hidden':'';});
+  renderCardRow($('npc-cards'),Array.from({length:2},(_,i)=>({card:i<shownReveal?hand?.holes.npc[i]:null,back:i>=shownReveal,visible:!hand||i<dealt.npc})));
+  renderCardRow($('player-cards'),Array.from({length:2},(_,i)=>({card:i<dealt.player?hand?.holes.player[i]:null,back:!hand||i>=dealt.player,best:i<dealt.player&&best.includes(hand.holes.player[i]),visible:!hand||i<dealt.player})));
   const boardViews=Array.from({length:5},(_,i)=>boardCardView(i,{cards:hand?.board??null,dealt:boardDealt,revealed:shownBoard}));
-  $('board').innerHTML=boardViews.map(view=>cardMarkup(view.card,{back:view.back,best:!!view.card&&best.includes(view.card)})).join('');
-  [...$('board').children].forEach((el,i)=>{el.style.visibility=boardViews[i].visible?'':'hidden';});
+  renderCardRow($('board'),boardViews.map(view=>({...view,best:!!view.card&&best.includes(view.card)})));
   potView.render(hand,hand?.config||session?.config||config,{deferSettlement:!settlementReleased});
   if(!hand){$('game').dataset.npcState='';$('pot-label').textContent='POT';$('pot-value').textContent='0';$('pot-event').textContent='';}
   $('pot-value').classList.toggle('compact-amount',$('pot-value').textContent.length>6);
@@ -427,7 +449,7 @@ function render(){
   $('reset-demo').disabled=active||busy;
   updateVisibleCards();
   if(!hand){$('equity').textContent='Two cards. Your next move.';$('equity').title='';}
-  else if(!active&&shownReveal===0){$('equity').textContent=hand.result.reason==='showdown'?'Made-hand cards are highlighted. Kickers still break ties.':'This hand ended before showdown.';$('equity').title='';}
+  else if(!active&&shownReveal===0&&!playerEquityReady()){$('equity').textContent=hand.result.reason==='showdown'?'Made-hand cards are highlighted. Kickers still break ties.':'This hand ended before showdown.';$('equity').title='';}
   renderJackpot();renderActions();paintDistribution();
 }
 function renderActions(){
@@ -550,6 +572,7 @@ async function continuePlay(){
     phase='SETTLING PAYOUT';renderActions();const completed=hand;
     if(!handArchive.some(x=>x.number===hand.handNumber))handArchive.push({number:hand.handNumber,time:new Date().toLocaleTimeString('en-US',{hour12:false}),history:structuredClone(hand.history),draws:structuredClone(drawLog),result:structuredClone(hand.result)});
     setTableCue('payout',hand.result.winner==='player'?'YOU WIN':hand.result.winner==='tie'?'SPLIT POT':'OPPONENT WINS');
+    equityMomentum.clear();setMusicPhase(hand.result.winner==='player'?'win':hand.result.winner==='tie'?'tie':'loss');
     updateExpression(hand.result.winner);
     potView.render(hand,hand.config,{deferSettlement:false});await potView.whenIdle();
     settlementReleased=true;render();
@@ -562,7 +585,7 @@ async function continuePlay(){
     setTableCue('refresh','OPPONENT READY',{seat:'npc',detail:`CHIPS MATCH YOURS · ${money(refresh.after)}`});
     renderBankrolls({refreshNpc:true});
     if($('npc-asset-panel'))await effects.animate($('npc-asset-panel'),[{filter:'brightness(1)'},{filter:'brightness(1.5)',offset:.4},{filter:'brightness(1)'}],{duration:850,easing:'ease-out'});
-    busy=false;phase='';setTableCue();render();
+    busy=false;phase='';setMusicPhase('table');setTableCue();render();
     if(hand.result.player.profit<0)effects.play('loss');
   }else{busy=false;phase='';render();}
 }

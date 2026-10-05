@@ -7,12 +7,13 @@ function fixture() {
   const doc = {
     createElement(tag) {
       const attributes = new Map(), listeners = new Map();
-      const node = {tag, attributes, listeners, children: [], dataset: {}, ownText: '', hidden: false, open: false,
+      const node = {tag, attributes, listeners, children: [], dataset: {}, ownText: '', hidden: false, open: false, replacements:0,
         set textContent(value) { this.ownText = value; this.children = []; },
         get textContent() { return this.ownText + this.children.map(child => child.textContent).join(''); },
         append(...children) { this.children.push(...children); },
-        replaceChildren(...children) { this.ownText = ''; this.children = children; },
+        replaceChildren(...children) { this.replacements++; this.ownText = ''; this.children = children; },
         setAttribute(name, value) { attributes.set(name, value); },
+        getAttribute(name) { return attributes.get(name) ?? null; },
         removeAttribute(name) { attributes.delete(name); },
         addEventListener(name, handler) { listeners.set(name, handler); },
         emit(name, event = {}) { listeners.get(name)?.(event); },
@@ -102,4 +103,45 @@ test('close control, Escape and outside click dismiss the details without changi
   f.dialog.emit('click', {target: f.dialog, clientX: 1, clientY: 1}); assert.equal(f.dialog.open, false);
   assert.equal(f.button.attributes.get('aria-expanded'), 'false');
   assert.equal(f.summary.textContent, before);
+});
+
+test('equivalent distributions retain row nodes while busy still closes and disables the modal', () => {
+  const f = fixture(), input = distribution([.4,.6]);
+  f.view.render({visible:true,distribution:input});
+  const summary = [...f.summary.children], details = [...f.list.children];
+  const writes = [f.summary.replacements,f.list.replacements];
+  f.button.emit('click');
+  for (let i=0;i<20;i++) f.view.render({visible:true,busy:true,distribution:[...distribution([.4,.6])].reverse()});
+  assert.equal(f.dialog.open,false);
+  assert.equal(f.button.disabled,true);
+  assert.deepEqual(f.summary.children,summary);
+  assert.deepEqual(f.list.children,details);
+  assert.deepEqual([f.summary.replacements,f.list.replacements],writes);
+  f.view.render({visible:true,distribution:input});
+  f.button.emit('click');
+  assert.equal(f.dialog.open,true);
+  assert.equal(f.summary.children[0],summary[0]);
+  input[0].probability=.3; input[1].probability=.7;
+  f.view.render({visible:true,distribution:input});
+  assert.notEqual(f.summary.children[0],summary[0]);
+  assert.deepEqual(f.summary.children.map(node=>node.textContent),['PAIR70%','HIGH CARD30%']);
+});
+
+test('repeated pending and hidden states are idempotent; returning data still rebuilds after clear', () => {
+  const f = fixture(), input = distribution([.4,.6]);
+  f.view.render({visible:true,distribution:input});
+  f.view.render({visible:true,calculating:true});
+  const pending = f.summary.children[0], writes = [f.summary.replacements,f.list.replacements];
+  for(let i=0;i<10;i++) f.view.render({visible:true,calculating:true});
+  assert.equal(f.summary.children[0],pending);
+  assert.deepEqual([f.summary.replacements,f.list.replacements],writes);
+  f.view.clear();
+  const clearWrites = [f.summary.replacements,f.list.replacements];
+  for(let i=0;i<10;i++) f.view.render({visible:false,distribution:input});
+  assert.deepEqual([f.summary.replacements,f.list.replacements],clearWrites);
+  assert.equal(f.summary.children.length,0);
+  assert.equal(f.list.children.length,0);
+  f.view.render({visible:true,distribution:input});
+  assert.deepEqual(f.summary.children.map(node=>node.textContent),['PAIR60%','HIGH CARD40%']);
+  assert.equal(f.list.children.length,9);
 });

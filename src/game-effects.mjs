@@ -1,4 +1,5 @@
 import {atGameSpeed} from './presentation-timing.mjs?v=35';
+import {createGameAudio} from './game-audio.mjs?v=44';
 
 /** Presentation only: no game state, card markup, or random-number access. */
 export function createGameEffects({root = globalThis.document, reducedMotion = false} = {}) {
@@ -6,113 +7,14 @@ export function createGameEffects({root = globalThis.document, reducedMotion = f
   const doc = root.ownerDocument || root;
   const view = doc.defaultView || globalThis;
   const lookup = id => root.getElementById?.(id) || root.querySelector?.(`#${id}`) || null;
-  const voices = new Set();
+  const audio = createGameAudio({doc, view});
   const flights = new Map();
   const discards = new Map();
   const sequences = new Set(), pauses = new Set();
   const schedule = view.setTimeout?.bind(view) || globalThis.setTimeout;
   const unschedule = view.clearTimeout?.bind(view) || globalThis.clearTimeout;
-  let context = null, master = null, muted = false, unlocked = false, destroyed = false;
-
-  // [frequency, start offset, duration, waveform, envelope peak]. The master
-  // keeps these deliberately quiet; every sound is deterministic and short.
-  const sounds = {
-    click: [[640, 0, .045, 'triangle', .08]],
-    deal: [[430, 0, .045, 'triangle', .08], [690, .025, .045, 'triangle', .05]],
-    chip: [[1320, 0, .045, 'sine', .08], [1760, .03, .06, 'sine', .045]],
-    chips: [[1480, 0, .045, 'triangle', .085], [2170, .008, .035, 'sine', .04],
-      [1120, .064, .05, 'triangle', .075], [1880, .102, .04, 'sine', .05],
-      [1560, .166, .045, 'triangle', .075], [2410, .195, .035, 'sine', .035],
-      [1280, .25, .055, 'triangle', .065], [1960, .286, .04, 'sine', .04]],
-    'chip-arrival': [[720, 0, .065, 'triangle', .075], [1660, .008, .055, 'sine', .065],
-      [2280, .032, .04, 'sine', .04], [1210, .068, .065, 'triangle', .045]],
-    win: [[523.25, 0, .11, 'triangle', .09], [659.25, .075, .11, 'triangle', .08], [783.99, .15, .18, 'triangle', .08]],
-    loss: [[392, 0, .12, 'triangle', .07], [293.66, .09, .16, 'triangle', .065]]
-  };
-
-  function stopVoices() {
-    for (const voice of voices) {
-      voice.oscillator.onended = null;
-      try { voice.oscillator.stop(); } catch { /* It may have already ended. */ }
-      voice.oscillator.disconnect();
-      voice.gain.disconnect();
-    }
-    voices.clear();
-  }
-
-  /** Call from a user gesture. Returns false when audio is unavailable/blocked. */
-  async function unlock() {
-    if (destroyed || doc.hidden) return false;
-    try {
-      if (!context || context.state === 'closed') {
-        const AudioContextClass = view.AudioContext || view.webkitAudioContext;
-        if (!AudioContextClass) return false;
-        context = new AudioContextClass();
-        master = context.createGain();
-        master.gain.value = muted ? 0 : .12;
-        master.connect(context.destination);
-      }
-      if (context.state === 'suspended' || context.state === 'interrupted') await context.resume();
-      unlocked = !destroyed && !doc.hidden && context.state === 'running';
-      return unlocked;
-    } catch {
-      unlocked = false;
-      return false;
-    }
-  }
-
-  /** Mobile app switches can interrupt Web Audio without unloading the page. */
-  function suspendAudio() {
-    unlocked = false;
-    stopVoices();
-    if (context && context.state !== 'closed') {
-      try { Promise.resolve(context.suspend()).catch(() => {}); } catch { /* Unavailable while the page is suspended. */ }
-    }
-  }
-
-  function setMuted(value) {
-    muted = Boolean(value);
-    if (destroyed) return;
-    if (muted) stopVoices();
-    if (master && context?.state !== 'closed') {
-      master.gain.cancelScheduledValues(context.currentTime);
-      master.gain.setValueAtTime(muted ? 0 : .12, context.currentTime);
-    }
-  }
-
-  /** Does not create or resume AudioContext; unlock() owns gesture activation. */
-  function play(name) {
-    const notes = Object.hasOwn(sounds, name) ? sounds[name] : null;
-    if (!notes || destroyed || doc.hidden || muted || !unlocked || context?.state !== 'running') return false;
-    const start = context.currentTime;
-    try {
-      for (const [frequency, offset, duration, type, peak] of notes) {
-        const oscillator = context.createOscillator();
-        const gain = context.createGain();
-        const voice = {oscillator, gain};
-        const at = start + atGameSpeed(offset), noteDuration = atGameSpeed(duration);
-        oscillator.type = type;
-        oscillator.frequency.setValueAtTime(frequency, at);
-        gain.gain.setValueAtTime(.0001, at);
-        gain.gain.exponentialRampToValueAtTime(peak, at + atGameSpeed(.008));
-        gain.gain.exponentialRampToValueAtTime(.0001, at + noteDuration);
-        oscillator.connect(gain);
-        gain.connect(master);
-        voices.add(voice);
-        oscillator.onended = () => {
-          oscillator.disconnect();
-          gain.disconnect();
-          voices.delete(voice);
-        };
-        oscillator.start(at);
-        oscillator.stop(at + noteDuration + atGameSpeed(.015));
-      }
-      return true;
-    } catch {
-      stopVoices();
-      return false;
-    }
-  }
+  let destroyed = false;
+  const {unlock, suspendAudio, setMuted, setMusicEnabled, setEffectsEnabled, setMusicPhase, getAudioState, play} = audio;
 
   const uniqueCards = targets => [...new Set(Array.from(targets || []))].filter(card => card?.style);
 
@@ -292,6 +194,7 @@ export function createGameEffects({root = globalThis.document, reducedMotion = f
         if (!sequence.alive()) return;
         if (onReveal && !await sequence.wait(onReveal(card, index))) return;
         commits[index].release();
+        play('reveal');
         if (animated) {
           card.style.scale = '1 1'; card.style.rotate = 'y -90deg';
           if (!await sequence.wait(animateCard(card, [
@@ -392,19 +295,14 @@ export function createGameEffects({root = globalThis.document, reducedMotion = f
   function destroy() {
     if (destroyed) return;
     destroyed = true;
-    unlocked = false;
+
     for (const sequence of sequences) sequence.cancel();
     for (const flight of flights.values()) flight.finish();
     flights.clear();
     for (const wait of pauses) wait.finish();
     pauses.clear();
-    stopVoices();
-    master?.disconnect();
-    if (context && context.state !== 'closed') {
-      try { Promise.resolve(context.close()).catch(() => {}); } catch { /* Already closing. */ }
-    }
-    master = null;
+    audio.destroy();
   }
 
-  return {unlock, suspendAudio, setMuted, play, deal, reveal, discardCards, animate: animateCard, destroy};
+  return {unlock, suspendAudio, setMuted, setMusicEnabled, setEffectsEnabled, setMusicPhase, getAudioState, play, deal, reveal, discardCards, animate: animateCard, destroy};
 }

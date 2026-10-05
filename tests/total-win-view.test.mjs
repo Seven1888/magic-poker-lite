@@ -17,7 +17,7 @@ function fixture(options = {}) {
       setAttribute(key, value) { this.attributes[key] = value; },
       append(...children) { this.children.push(...children); children.forEach(child => { child.parentNode = this; }); },
       remove() { if (this.parentNode) this.parentNode.children = this.parentNode.children.filter(child => child !== this); this.removed = true; },
-      get textContent() { return text; }, set textContent(value) { text = value; this.writes.push(value); }};
+      get textContent() { return text; }, set textContent(value) { text = value; this.children = []; this.writes.push(value); }};
     nodes.push(node); return node;
   };
   const stage = element('main');
@@ -58,6 +58,20 @@ test('positive profit, split, returned funds and losses have truthful separate l
   assert.equal(totalWinModel(result(10, 0)).label, 'RETURNED');
   assert.equal(totalWinModel(result(0, -10, 'npc')).label, 'BOSS WINS');
   assert.equal(totalWinModel(result(0, -10, '')).label, 'HAND COMPLETE');
+});
+
+test('a winning label stacks TOTAL and WIN beside an exact amount; neutral labels stay truthful', async () => {
+  const f = fixture({reducedMotion:true});
+  await f.api.start(result(1000000.123456));
+  const label = f.nodes.find(node => node.className === 'total-win-label');
+  assert.deepEqual(label.children.map(node => node.textContent), ['TOTAL','WIN']);
+  assert.equal(f.amount.textContent, '1,000,000.123456');
+  assert.equal(f.announcement.textContent, 'TOTAL WIN 1,000,000.123456');
+  assert.equal(f.panel.style.values['--total-win-font'], '17.5px');
+  await f.api.start(result(9.6,-.4,'tie'));
+  assert.equal(label.textContent,'SPLIT POT');
+  assert.equal(label.children.length,0);
+  assert.equal(f.amount.textContent,'9.6');
 });
 
 test('count reaches the precise terminal amount once, retains it and emits at most five ticks plus one tail', async () => {

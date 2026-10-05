@@ -60,16 +60,24 @@ export function createBossRangeView({root = globalThis.document} = {}) {
   const method = make('p', 'boss-range-method', 'Uses your hand and the revealed board. Every possible pair of unseen cards is equally likely, as in standard Texas Hold’em. Betting actions and action percentages do not affect these estimates. It never reads hidden BOSS cards or unrevealed board cards.');
   const note = make('p', 'boss-range-note', 'The table shows up to three most likely categories, ordered from strongest to weakest. Each percentage keeps its share of all possible hands, so the three shown may total less than 100%. The complete distribution totals 100% before rounding.');
   dialog.append(closeButton, eyebrow, title, description, list, method, note); doc.body.append(dialog);
-  let current = null;
+  let current = null, paintedKey = null;
+  const attribute = (node, name, value) => {
+    if (node.getAttribute(name) !== value) node.setAttribute(name, value);
+  };
 
   function close() {
     if (dialog.open) dialog.close();
-    button.setAttribute('aria-expanded', 'false');
+    attribute(button, 'aria-expanded', 'false');
   }
   function clear() {
-    close(); current = null; button.hidden = true; button.disabled = true;
-    button.removeAttribute('aria-label'); button.removeAttribute('aria-busy');
-    delete button.dataset.state; summary.replaceChildren(); list.replaceChildren();
+    close(); current = null;
+    if (!button.hidden) button.hidden = true;
+    if (!button.disabled) button.disabled = true;
+    if (button.getAttribute('aria-label') !== null) button.removeAttribute('aria-label');
+    if (button.getAttribute('aria-busy') !== null) button.removeAttribute('aria-busy');
+    delete button.dataset.state;
+    if (paintedKey !== null) { summary.replaceChildren(); list.replaceChildren(); }
+    paintedKey = null;
   }
   function row(label, probability, className = 'boss-range-row') {
     const result = make('span', className);
@@ -79,11 +87,16 @@ export function createBossRangeView({root = globalThis.document} = {}) {
   function render({visible = false, busy = false, calculating = false, distribution = null, unavailable = false} = {}) {
     if (!visible) { clear(); return; }
     const parsed = !calculating && !unavailable ? readDistribution(distribution) : null;
-    button.hidden = false; button.disabled = busy || !parsed;
-    button.setAttribute('aria-busy', String(Boolean(calculating)));
+    if (button.hidden) button.hidden = false;
+    const disabled = busy || !parsed;
+    if (button.disabled !== disabled) button.disabled = disabled;
+    attribute(button, 'aria-busy', String(Boolean(calculating)));
     if (busy || !parsed) close();
     current = parsed;
     if (!current) {
+      const nextKey = calculating ? 'calculating' : 'unavailable';
+      if (paintedKey === nextKey) return;
+      paintedKey = nextKey;
       list.replaceChildren();
       const message = calculating ? 'CALCULATING…' : 'UNAVAILABLE';
       summary.replaceChildren(make('span', 'boss-range-status', message));
@@ -91,6 +104,11 @@ export function createBossRangeView({root = globalThis.document} = {}) {
       button.setAttribute('aria-label', `BOSS current hand distribution: ${message.toLowerCase()}`);
       return;
     }
+    // Canonical public values catch in-place updates as well as equivalent new
+    // arrays, while keeping all twelve summary/detail rows stable across actions.
+    const nextKey = [...current].sort((a,b) => a.category - b.category).map(entry => entry.probability).join(',');
+    if (paintedKey === nextKey) return;
+    paintedKey = nextKey;
     button.dataset.state = 'ready';
     const ranked = [...current].filter(entry => entry.probability > 0)
       .sort((a, b) => b.probability - a.probability || b.category - a.category);

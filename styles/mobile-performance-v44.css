@@ -1,0 +1,5 @@
+/* The portrait table fills narrow screens; omit its off-table blurred backdrop.
+   Keep the actual table artwork, card motion and all lighting unchanged. */
+@media (max-width:600px) {
+  body::before { display:none; }
+}

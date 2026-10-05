@@ -1,0 +1,8 @@
+.game .topbar { gap: 12px; }
+.game .topbar .audio-button { display: grid; place-items: center; pointer-events: auto; width: 34px; height: 34px; padding: 6px; color: #ffe2a0; }
+.audio-button svg { width: 20px; height: 20px; }
+.audio-button .audio-slash { display: none; }
+.audio-button[data-muted='true'] { color: #adb5ca !important; }
+.audio-button[data-muted='true'] .audio-slash { display: block; stroke: #f1b8b8; stroke-width: 2.4; }
+#menu-dialog .sound-setting small { margin-left: 0; }
+#menu-dialog .sound-setting .ui-icon { display: none; }
