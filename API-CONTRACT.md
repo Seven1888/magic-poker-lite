@@ -1,4 +1,12 @@
-# Engine API contract · v38 deterministic BOSS preview / v35 four-BOSS math · 2026-10-05
+# Engine API contract · v39 entry BOSS identity / v35 four-BOSS math · 2026-10-05
+
+## v39 入場 BOSS 身份契約
+
+玩家入場時顯示的角色就是首手 BOSS。控制器為同一入口保存 `entryBase` 與 `entryEncounter.seed`，調整 BET、關閉後重開入口、FIGHT 及抽盲演出均保留該身份；選 BET 不重選。離桌或 Reset demo chips 才清除並準備新入口；同桌 NEXT HAND 仍由原本 `startHand` 依上一型延續輪替。
+
+`createEntryEncounter(config,seed)` 從 `./src/entry-encounter.mjs` 匯入，回傳凍結的 `{seed,bossProfile}`。它在隔離的 `createSession(config,seed,{firstSmallBlind:'random'})` 上，先沿用一次抽盲，再以 `selectBossProfile(preview.rng,null,preview.config.boss)` 取得公開 `bossProfile`；不呼叫 `startHand`、不發牌、不扣款，不回傳暗牌、牌庫、盲位亂數或秘密牌力。這個隔離 RNG 不會成為正式 session 的 RNG，也不改變正式牌序。
+
+FIGHT 以已保存的 `entryBase`、選定 BET 與實際資產建立桌面設定，再用同一 seed 執行原本的 `createSession(...,{firstSmallBlind:'random'})` 與 `startHand`。因此正式引擎依原順序選到入口所示身份；不覆寫 `hand.bossProfile`、不重抽直到符合角色。正式 session 的抽盲、選型、發牌與行動 RNG 流程保持原樣。BOSS 固定表、引擎、結算與 JP 未改，數學證據仍是 v35；驗證及發布以 [docs/06](docs/06-mobile-and-deployment.md) 對應版本紀錄為準。
 
 ## v38 單一回應預覽契約
 
@@ -51,6 +59,8 @@ New rerolls use `unpaired`: a pair stops immediately; otherwise another independ
 ## Entry and available assets
 
 Import from `./src/entry-model.mjs`. These functions are pure configuration helpers, not a wallet service.
+
+首手公開身份由上方 v39 的 `createEntryEncounter` 預先準備。控制器在整個入口期間保留基礎設定，避免 BET 或重開入口時改變這次遭遇；只有 FIGHT 才建立正式 session。隔離身份準備與選 BET 均不扣款或發牌。
 
 - `betOptions(config)` returns a fresh array of the 15 fixed Hands Up BET levels: `[1,2,5,10,20,50,100,200,500,800,1000,1200,1500,1800,2000]`. `config` does not change this ladder. Entry defaults to 1; both entry and between-hand UI move to the adjacent level rather than adding a fixed step. Source: the read-only `Hands Up/simulation-engine.js` `FIXED_STAKES` table.
 - `minimumAssets(config,bet)` returns `config.minBuyIn/config.bigBlind × bet` (default 20 BB).
@@ -342,7 +352,7 @@ The retained `output/math-validation.json` and `output/example-hands.json` are *
 
 Import BOSS_PROFILES, BOSS_PROFILE_BY_ID, BOSS_PROFILE_IDS, BOSS_BANDS, BOSS_BANDS_BY_STREET and BOSS_PROFILE_VERSION from src/boss-profiles.mjs. Version four-boss-v1. Profile records are immutable {id,name,nickname,description,tables}; tables[street][band] contains percentages {fold,call,raise} summing to 100. The full published values are in docs/04 section 4. Free actions discard FOLD and map CALL to check, RAISE to bet/raise; unavailable actions are removed before normalization. The one-raise-per-street rule still applies.
 
-config.boss.mode is rotate (default), fixed or legacy. profileId is caller (default), maniac, sniper or trapper. Missing boss uses the new rotating model; reproduce old RNG/golden fixtures with explicit legacy mode. startHand makes the only profile draw: first eligible four each 1/4, following eligible three each 1/3. Fixed/legacy consume no encounter RNG. session.lastBossProfileId stores continuity, hand.bossProfile the immutable record, hand.bossSelection={mode,probability,previousId,eligibleIds}. clone and action-tree traversal retain the chosen profile. No private strength band is exposed in the live game UI.
+config.boss.mode is rotate (default), fixed or legacy. profileId is caller (default), maniac, sniper or trapper. Missing boss uses the new rotating model; reproduce old RNG/golden fixtures with explicit legacy mode. Within the gameplay session, startHand makes the only profile draw: first eligible four each 1/4, following eligible three each 1/3. The v39 entry helper mirrors the first blind/profile draws in an isolated session with the reserved seed, exposing only the public identity without advancing gameplay RNG or dealing cards. Fixed/legacy consume no encounter RNG. session.lastBossProfileId stores continuity, hand.bossProfile the immutable record, hand.bossSelection={mode,probability,previousId,eligibleIds}. clone and action-tree traversal retain the chosen profile. No private strength band is exposed in the live game UI.
 
 New profiles use their own tables; config.npc weights continue to control balanced/aggressive/tight player policies and legacy BOSS only. Never alter player strategy from the private BOSS cards.
 

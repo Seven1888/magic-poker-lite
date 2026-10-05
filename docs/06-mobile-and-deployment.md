@@ -1,5 +1,17 @@
 # 手機相容與公開 Demo
 
+## v39 入場即顯示首局 BOSS（2026-10-05，本機驗證通過）
+
+入口先保存 seed 與 entryBase，以隔離 session 的既有抽盲→選型順序取得公開角色；不呼叫 startHand、不發牌、不扣款。調 BET、教學換頁、關閉重開入口、FIGHT 與抽盲期間保持同一位 neutral BOSS；正式 FIGHT 使用同 seed，實際選型／發牌／扣盲仍走原引擎。成功開手才清入口狀態。離桌／Reset demo 建立新入口，NEXT HAND 維持原輪替。
+
+- 全套自動測試 **267／267** 通過，新增入口測試 **9／9**；涵蓋多 seed、rotate／四型 fixed／legacy、15 級 BET、入口身份與首局相同、前兩手完整狀態／盲位／牌面／RNG 與無入口基準一致、設定不變及預覽隔離。正式建置 **184 檔**通過。
+- 桌面 Chromium 四型自然種子 caller 22／maniac 188／sniper 246／trapper 30，沒有手動指定牌面。四型 × 320／390／430／844 寬度共 **16 組**入口無水平溢出。角色屬性完整記錄確認入場→BET→關閉重開→連點 FIGHT→發牌都為同一位；每次入口只取一次 seed。
+- 正常速度（sniper）與減少動態（其餘三型）通過。入口餘額 10,000、POT／TOTAL BET 0、牌庫 52；BET 100 開局與原引擎同 seed 對照均為雙方 9,900、POT 200、玩家 TOTAL BET 100，連點不重扣。結算後調 BET、NEXT HAND trapper→sniper、離桌保留資產再入 maniac、Reset 後 sniper neutral 均通過。
+- 320 寬圖片延遲載入：入口與 FIGHT 等待期間保持 sniper、遮罩可見、舊近景隱藏，載入後同型恢復。刻意阻擋 maniac 圖片時使用無型名替身且可正常開局，不切回 caller、不鎖死。這組網路失敗是主動注入的驗證條件。
+- 正常流程 **0 頁面錯誤、0 HTTP 錯誤**；故障注入組亦無頁面錯誤。遊戲、工具、數學文件、API 及新模組 HTTP 200，文件保留 14 表與 section-4。截圖已檢視確認入場／發牌為相同角色。
+
+證據：`output/playwright/{tests-v39,build-v39,entry-v39-local,entry-v39-edges-local}.txt`、`v39-local-*.png`。以上為桌面 Chromium viewport，非實體手機或新機率統計；數學沿用 v35，沒有新增 RTP 校準。這份提交前紀錄不代表已推送或公開上線；精確提交 SHA、Pages run 與正式站結果由部署後證據及完成訊息補足。
+
 ## v38 單一 BOSS 回應預覽（2026-10-05，本機驗證通過）
 
 本輪修正按鈕上方機率預覽：同手同街僅一個正機率 BOSS 回應時，也顯示 CALL 100%／RAISE 100%／FOLD 100%。混合分布維持只列原始 FOLD／RAISE，不重新正規化；直接換街、結束牌局或沒有同街回應時不虛構預覽。引擎決策、RNG、中央演出及帳務保持。

@@ -67,5 +67,7 @@
  mask-image:linear-gradient(#000 0,#000 320px,transparent 358px);
 }
 .game .boss-scene-transition[hidden] { display:none; }
-.game:not([data-state='idle']):is([data-boss-scene-state='loading'],[data-boss-scene-state='unavailable']) .scene-closeup { visibility:hidden; }
+.game:is([data-boss-scene-state='loading'],[data-boss-scene-state='unavailable']) .scene-closeup { visibility:hidden; }
+/* Do not flash the static caller artwork before the entry identity is ready. */
+.game:not([data-boss-profile]) :is(.scene-art,.scene-closeup) { visibility:hidden; }
 html[data-entry-open='true'] .game > .boss-scene-transition { visibility:visible !important; }

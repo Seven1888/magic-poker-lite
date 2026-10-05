@@ -8,6 +8,7 @@ import {createGameEffects} from './game-effects.mjs?v=36';
 import {renderBetPresets,updateBetSelection,setupEntryFeatures} from './entry-view.mjs?v=35';
 import {betOptions,minimumAssets,tableConfig} from './entry-model.mjs?v=37';
 import {nextHandBetConfig} from './next-hand-bet.mjs?v=37';
+import {createEntryEncounter} from './entry-encounter.mjs?v=39';
 import {icon} from './ui-icons.mjs?v=35';
 import {JACKPOT_MULTIPLIERS,quoteJackpot} from './jackpot.mjs?v=35';
 import {renderJackpotWin} from './jackpot-view.mjs?v=35';
@@ -32,6 +33,7 @@ const PLAYER_ACTION_LABELS={fold:'FOLD',check:'CALL',call:'CALL',bet:'RAISE',rai
 let config=loadConfig(),session=null,hand=null,busy=false,drawLog=[],lastResponse=null,handArchive=[],equityCache='',toastTimer,closedTable=null,phase='';
 let selectedBet=1,entryBase=config,betValues=[...new Set([1,...betOptions(config)])].sort((a,b)=>a-b),demoAssets=config.buyIn;
 let nextBetDraft=1,nextBetValues=[];
+let entryEncounter=null;
 const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const potView=createPotView({root:document,reducedMotion:reduceMotion,locale:'en',onPhase:presentTransferPhase});
 const effects=createGameEffects({root:document,reducedMotion:reduceMotion});
@@ -115,7 +117,7 @@ function decorateMenu(){
  const map={'help-dialog':'rules','menu-ranks':'cards','menu-history':'history','menu-balance':'wallet','result-details':'chip','leave-button':'leave'};
  document.querySelectorAll('.menu-grid>button').forEach(b=>{const key=b.dataset.open||b.id;b.insertAdjacentHTML('afterbegin',icon(map[key]||'cards'));});
  document.querySelector('.sound-setting>span').insertAdjacentHTML('afterbegin',icon('sound'));
- const reset=document.createElement('button');reset.id='reset-demo';reset.className='text-button wide';reset.textContent='↻ Reset demo chips';reset.onclick=()=>{if(busy||hand?.status==='playing')return;session=null;hand=null;closedTable=null;config=loadConfig();demoAssets=config.buyIn;selectedBet=1;handArchive=[];drawLog=[];lastResponse=null;$('menu-dialog').close();render();setupBuyin();};
+ const reset=document.createElement('button');reset.id='reset-demo';reset.className='text-button wide';reset.textContent='↻ Reset demo chips';reset.onclick=()=>{if(busy||hand?.status==='playing')return;session=null;hand=null;closedTable=null;config=loadConfig();demoAssets=config.buyIn;selectedBet=1;handArchive=[];drawLog=[];lastResponse=null;entryEncounter=null;prepareEntry();$('menu-dialog').close();render();setupBuyin();};
  $('menu-dialog').append(reset);
  const rules=document.querySelector('#help-dialog .rules');
  rules.innerHTML=`<li>${icon('chip')}<b>Choose BET · Draw your blind</b><span>SMALL BLIND posts ½ BET; BIG BLIND posts 1 BET. Your first blind is drawn 50/50; positions alternate each hand. Small blind acts first preflop; big blind acts first after the flop.</span></li><li>${icon('cards')}<b>2 hole cards + 5 board cards</b><div class="rule-card-flow"><span>2</span><i>＋</i><span>3</span><i>→</i><span>1</span><i>→</i><span>1</span></div><span>PREFLOP → FLOP → TURN → RIVER</span></li><li>${icon('call')}<b>Your move · Their response</b><span>CALL matches the current bet, or checks for free when nothing is due. RAISE opens betting or increases an existing bet. The amount is what you add now. One raise per street.</span></li><li>${icon('crown')}<b>Best 5 of 7</b><span>A fold ends the hand. Otherwise, compare at showdown. Special hands earn a Jackpot bonus.</span></li>`;
@@ -149,12 +151,17 @@ $('pot-info-button').onclick=()=>{
  show('pot-dialog');
 };
 $('leave-button').onclick=()=>{$('menu-dialog').close();leaveTable();};$('result-leave').onclick=()=>{$('result-dialog').close();leaveTable();};
+function prepareEntry(){
+  if(entryEncounter)return;
+  entryBase=loadConfig();
+  entryEncounter=createEntryEncounter(entryBase,crypto.getRandomValues(new Uint32Array(1))[0]);
+}
 function setupBuyin(){
   if(session&&hand?.status==='playing')return;
-  entryBase=loadConfig();betValues=[...new Set([1,...betOptions(entryBase)])].sort((a,b)=>a-b);if(!betValues.includes(selectedBet))selectedBet=1;
+  prepareEntry();betValues=[...new Set([1,...betOptions(entryBase)])].sort((a,b)=>a-b);if(!betValues.includes(selectedBet))selectedBet=1;
   $('bet-presets').innerHTML=renderBetPresets(betValues);
   $('bet-presets').querySelectorAll('[data-bet]').forEach(b=>b.onclick=()=>{selectedBet=Number(b.dataset.bet);updateEntry();});
-  updateEntry();show('buyin-dialog');
+  updateEntry();show('buyin-dialog');updateExpression();
 }
 function updateEntry(){
  const available=bankroll(),minimum=minimumAssets(entryBase,selectedBet),index=betValues.indexOf(selectedBet);
@@ -173,7 +180,7 @@ $('bet-minus').onclick=()=>{selectedBet=betValues[Math.max(0,betValues.indexOf(s
 $('bet-plus').onclick=()=>{selectedBet=betValues[Math.min(betValues.length-1,betValues.indexOf(selectedBet)+1)];updateEntry();};
 $('buyin-form').onsubmit=async e=>{e.preventDefault();if(busy)return;
   try{
-   config=tableConfig(entryBase,selectedBet,bankroll());const seed=crypto.getRandomValues(new Uint32Array(1))[0];
+   config=tableConfig(entryBase,selectedBet,bankroll());const seed=entryEncounter.seed;
    session=createSession(config,seed,{firstSmallBlind:'random'});hand=null;handArchive=[];closedTable=null;lastResponse=null;drawLog=[];
    $('buyin-dialog').close();busy=true;render();await showTurnDraw();busy=false;await newHand();
   }catch(error){busy=false;phase='';blindDraw.clear();$('buyin-error').textContent=translateError(error);show('buyin-dialog');render();}
@@ -185,7 +192,7 @@ async function showTurnDraw(){
 }
 function leaveTable(){
   if(busy||hand?.status==='playing'){toast('Finish this hand first.');return;}
-  if(!session)return;const balance=session.stacks.player;closedTable={playerBalance:balance,npcBalance:session.stacks.npc,buyIn:session.config.buyIn,settledTableProfit:balance-session.config.buyIn,jackpotAwards:session.jackpotAwards};session=null;hand=null;lastResponse=null;drawLog=[];equityCache='';render();toast(`Left the table. Balance kept: ${money(balance)}.`);
+  if(!session)return;const balance=session.stacks.player;closedTable={playerBalance:balance,npcBalance:session.stacks.npc,buyIn:session.config.buyIn,settledTableProfit:balance-session.config.buyIn,jackpotAwards:session.jackpotAwards};session=null;hand=null;lastResponse=null;drawLog=[];equityCache='';entryEncounter=null;prepareEntry();render();toast(`Left the table. Balance kept: ${money(balance)}.`);
 }
 function openNextBet(){
  if(busy||!session||hand?.status!=='settled')return;
@@ -229,7 +236,7 @@ async function newHand(){
   if(busy||!session||hand?.status==='playing'||$('next-bet-dialog').open)return;
   $('result-dialog').close();
   if(session&&Math.min(...Object.values(session.stacks))<.01){setupBuyin();return;}
-  try{busy=true;phase='DEALING';hand=startHand(session);drawLog=[];lastResponse=null;equityCache='';pendingPlayerAction=null;delete $('game').dataset.chosenAction;paintDistribution([]);setTableCue('contribution','POST BLINDS');await presentHand();await continuePlay();}catch(error){busy=false;phase='';bossAction.clear();setTableCue();toast(translateError(error));render();setupBuyin();}
+  try{busy=true;phase='DEALING';hand=startHand(session);entryEncounter=null;drawLog=[];lastResponse=null;equityCache='';pendingPlayerAction=null;delete $('game').dataset.chosenAction;paintDistribution([]);setTableCue('contribution','POST BLINDS');await presentHand();await continuePlay();}catch(error){busy=false;phase='';bossAction.clear();setTableCue();toast(translateError(error));render();setupBuyin();}
 }
 $('next-hand').onclick=newHand;
 const visibleStreet=()=>shownBoard>=5?'river':shownBoard===4?'turn':shownBoard>0?'flop':'preflop';
@@ -275,8 +282,8 @@ function updateShowdownView(){
   return view;
 }
 function updateExpression(winner=''){
-  $('game').dataset.winner=winner;
-  renderBossIdentity(hand,document);
+  $('game').dataset.winner=entryEncounter?'':winner;
+  renderBossIdentity(entryEncounter||hand,document);
 }
 function updateVisibleCards(){
   const holes=hand?.holes.player.slice(0,dealt.player)||[],board=hand?.board.slice(0,shownBoard)||[];
@@ -553,6 +560,7 @@ function renderHistory(){
 }
 window.addEventListener('storage',e=>{if(e.key===CONFIG_KEY)toast('Settings saved. Rejoin the table to apply them.');});
 window.addEventListener('error',e=>{toast(translateError(e.error||e.message));});
+prepareEntry();
 render();
 setTableCue();
 setupBuyin();

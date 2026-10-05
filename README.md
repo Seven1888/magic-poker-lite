@@ -2,11 +2,13 @@
 
 手機直版、第一人稱的 1v1 簡化德州原型：兩張底牌、五張公共牌、四街下注、真實對手行動機率。遊戲介面英文，機率工作台與文件繁體中文；預設資產 **10,000**。
 
-- [遊戲 Demo](https://seven1888.github.io/magic-poker-lite/?v=38)
-- [機率工作台：完整行動樹與玩家統計](https://seven1888.github.io/magic-poker-lite/probability.html?v=38)
-- [模型文件：公式、分母與帳務案例](https://seven1888.github.io/magic-poker-lite/docs/04-game-flow-and-math.html?v=38)
+- [遊戲 Demo](https://seven1888.github.io/magic-poker-lite/?v=39)
+- [機率工作台：完整行動樹與玩家統計](https://seven1888.github.io/magic-poker-lite/probability.html?v=39)
+- [模型文件：公式、分母與帳務案例](https://seven1888.github.io/magic-poker-lite/docs/04-game-flow-and-math.html?v=39)
 
-目前整理 v38：同街 BOSS 只有一種回應時，按鈕上方也顯示 CALL 100%／RAISE 100%／FOLD 100%，避免誤以為決策提示消失。混合分布仍只列原始 FOLD／RAISE；直接換街或結束牌局不虛構回應。決策、RNG、帳務及 v37 局間 BET 保持。本輪驗證與發布狀態以 [docs/06](docs/06-mobile-and-deployment.md) 為準，交接見 [v38 交接](docs/10-v38-handoff.md)，前版保留於 [v37 交接](docs/09-v37-handoff.md)。
+目前整理 v39：玩家入場時就呈現首手的當前 BOSS，調整 BET、關閉後重開入口、按 FIGHT 及抽盲期間維持同一角色。入口先保存本桌 seed 與設定，以隔離 session 讀取同一抽盲→選型流程的公開身份，不發牌、不扣款；FIGHT 仍以同 seed 走原引擎開局。NEXT HAND 保留排除上一型的輪替，離桌或 Reset demo chips 才準備新的入口。本輪驗證與發布狀態以 [docs/06](docs/06-mobile-and-deployment.md) 對應版本紀錄為準，版本網址本身不代表已發布。
+
+v38 已補上同街 BOSS 只有一種回應時的 CALL 100%／RAISE 100%／FOLD 100% 提示。混合分布仍只列原始 FOLD／RAISE；直接換街或結束牌局不虛構回應。決策、RNG、帳務及 v37 局間 BET 保持。歷史交接保留於 [v38 交接](docs/10-v38-handoff.md) 與 [v37 交接](docs/09-v37-handoff.md)。
 
 ## 目前機率工具
 
@@ -25,6 +27,8 @@
 
 入口預選 BET 1；入口與局間＋／−依序選 **1、2、5、10、20、50、100、200、500、800、1,000、1,200、1,500、1,800、2,000**。每手結算演出完成後可開 BET 小窗，CONFIRM BET 只保存下一手設定，關閉取消草稿；NEXT HAND 才扣盲與發牌。改 BET 須雙方資產達新門檻（預設 20 BB），原 BET 不變仍可短籌碼續手。兩盲及四街注額同比縮放，不重建 session 或重設原桌損益基準，已結算 JP 保持原值。
 
+入場角色就是即將對戰的 BOSS。選 BET 或重開同一入口不重選；FIGHT 只沿用已保存 seed 建立正式 session，抽盲演出後才由 `startHand` 扣盲發牌。入口身份準備不讀底牌、未來公牌或牌力，也不推進正式 session 的 RNG。
+
 開局只說先後及雙方初始投入。對手機率獨立浮在按鈕上方，每組只保留一個 BOSS，標題與數值異色；玩家籌碼先抵達 POT，再飛標籤、演 BOSS 決策。對手底牌與行動底板都在公共牌上方，玩家手牌上方直接是 POT。玩家最佳五張用實色金框，BOSS 已揭最佳五張用藍框，共用牌金內藍外，完整揭牌後調暗未入選牌。TOTAL WIN 在 POT 區跑分與噴金幣，金額取底池返還＋JP，排除退款；動畫不重抽或重複入帳。
 
 ## JP 與數學範圍
@@ -38,6 +42,8 @@ JP 牌型／倍數：皇家同花順 **200×BET**、同花順 **50×BET**、四�
 v37 增加局間 BET 設定及呈現調整，沿用 v35 共用引擎、固定 BOSS 表、輪替、起手重抽及結算規則。以上數學檔仍是 **v35 證據**，並非 v37 新跑的 RTP 或機率校準；局間設定、介面回歸與部署紀錄另列。
 
 v38 只修正單一 BOSS 回應預覽的顯示；以上數學檔同樣不是 v38 新跑的 RTP 或機率校準。
+
+v39 讓入口角色與首手一致；引擎、牌庫、四型固定表與帳務未改，數學仍沿用 **v35 證據**，不是 v39 新 RTP 或機率校準。
 
 ## 本機啟動與驗證
 
