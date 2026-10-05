@@ -21,4 +21,5 @@
   font: 800 21px/1 var(--font); letter-spacing: -.8px;
 }
 .game #player-win-rate .win-rate-value small { font-size: 10px; letter-spacing: 0; }
+.game #player-win-rate .win-rate-value.is-fractional { font-size:16px; letter-spacing:-.7px; }
 .game #player-win-rate[hidden] { display: none !important; }

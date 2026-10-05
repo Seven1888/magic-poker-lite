@@ -10,14 +10,14 @@ function output() {
     properties, attributes};
 }
 
-test('the ring preserves real equity while its label rounds to a whole percentage, including win/tie/loss', () => {
+test('the ring preserves equity with one decimal and never rounds a possible loss to certain victory', () => {
   const element = output();
-  for (const equity of [0, .5, .624, 40 / 44, 1]) {
+  for (const [equity,label] of [[0,'0'],[.5,'50'],[.624,'62.4'],[40/44,'90.9'],[.9998,'99.9'],[.0002,'&lt;0.1'],[1,'100']]) {
     renderWinRate(element, equity, {description: 'Public cards only', title: 'Estimated equity'});
     assert.equal(element.hidden, false);
     assert.equal(element.properties.get('--win-rate-turn'), `${equity}turn`);
     assert.equal(element.dataset.equity, String(equity));
-    assert.ok(element.innerHTML.includes(`>${Math.round(equity * 100)}<small>%</small>`));
+    assert.ok(element.innerHTML.includes(`>${label}<small>%</small>`));
     assert.equal(element.attributes.get('aria-label'), 'Public cards only');
   }
 });

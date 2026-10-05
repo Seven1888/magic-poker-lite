@@ -1,37 +1,40 @@
-# Engine API contract · v42 possible BOSS hands / v35 four-BOSS game math · 2026-10-05
+# Engine API contract · v43 standard Hold'em reference probabilities / v35 game math · 2026-10-05
 
-## v42 依已知牌估算 BOSS 可能牌型
+## v43 標準德州參考機率
 
-本版回答「根據已知牌面，BOSS 目前可能有哪些牌型」，幫助玩家理解 FLOP／TURN／RIVER。v41 的角色、動作與可見行動機率反推模型已停用；不再用那些訊號篩除候選或增加動作 likelihood。保留 v41 平面行動橫幅與既有遊戲行為。
+玩家參考勝率與 BOSS 目前牌型都只讀已知玩家底牌與已揭公牌，將所有剩餘牌視為等機率。兩者忽略起手重抽、發牌先後、BOSS 身份、行動及行動機率，也不讀秘密指定 BOSS 牌。實際遊戲的重抽及行為規則維持原樣；顯示的是標準均勻未知牌的參考，不是按遊戲重抽或下注傾向修正的後驗。
 
-`src/boss-hand-range.mjs` 匯出 `BOSS_HAND_CATEGORIES` 及 `createBossHandRange({playerHole,smallBlind,config:{deal}})`。`smallBlind` 為公開的 `player`／`npc`，用來判斷發牌先後；`playerHole` 必須是玩家已看見的兩張牌。`config.deal` 只接受 allowlist 投影的雙方重抽模式／機率／上限／舊分數門檻與 `manualProvided` 布林，不傳 BOSS 指定牌值。BOSS 身份、BOSS 模式、行動權重與下注資料不在輸入契約內。
+### BOSS 目前可能牌型
+
+`src/boss-hand-range.mjs` 匯出 `BOSS_HAND_CATEGORIES` 及 `createBossHandRange({playerHole})`；玩家兩張底牌必須已公開給玩家。每次更新只傳已揭公共牌：
 
 ```js
-const tracker = createBossHandRange({playerHole, smallBlind, config: {deal}});
+const tracker = createBossHandRange({playerHole});
 const result = tracker.update({board});
-// result = {
-//   status: 'ready' | 'waiting-for-flop' | 'unavailable',
-//   distribution: [{category, key, label, probability}],
-//   candidateCount, exact,
-//   unavailable? // 'manual-boss-prior'; worker 運算失敗另為 'calculation-unavailable'
-// }
+// ready 時回傳完整九類 distribution，以及 candidateCount、exact:true。
 ```
 
-`board` 僅含已真正揭開的公共牌；不足 FLOP 時為 `waiting-for-flop`。`ready` 回傳完整九類（category 0–8，高牌至同花順，皇家同花順合併同花順），按機率降冪排序，每類為「目前最佳牌型」，不補未來公牌。分母是所有不與已知玩家牌／公牌重複的候選底牌之起手權重總和。最多枚舉 `C(50,2)=1,225` 組；`exact:true` 指對本作公開起手規則做有限枚舉／解析重抽，不是抽樣或知道 BOSS 真實底牌。浮點尾差由最大機率類別收攏，不改變前兩名的顯示分母。
+FLOP／TURN／RIVER 的候選數分別為 `C(47,2)=1,081`、`C(46,2)=1,035`、`C(45,2)=990`，每組未知 BOSS 底牌等權。使用「該底牌＋目前公牌」的最佳牌型，每組只歸入九個互斥類別之一，皇家併同花順；不補未來公牌。各類機率為該類候選數除以全部候選數，`exact:true` 指完整枚舉。未滿三張公牌時為 `waiting-for-flop`；不因秘密手動牌設定回報 unavailable。無效／重複已知牌由純模組拋錯，worker 轉為 `unavailable:'calculation-unavailable'`。
 
-有限重抽先驗沿用真實起手規則：玩家先發時，從移除玩家牌的 50 張池計算 BOSS 採用率；BOSS 先發時，另乘各候選被移除後玩家已知底牌的採用率。指定玩家牌事先保留；指定 BOSS 牌只傳 `manualProvided` 並回傳 `unavailable`。牌型分類與精確加權公式見 [數學文件第 4.7 節](docs/04-game-flow-and-math.md)。
+`bossRangeContext({playerHole})` 只回傳 `{playerHole:[...playerHole]}`。Worker 接收 `{epoch,request,context,board}`，回覆 `{epoch,request,result}`；context 不含 config、smallBlind、manualProvided、身份、行動或下注證據，也不收 hand/session、BOSS 暗牌、未揭公牌、牌庫、seed、roll、dealAudit。控制器以 epoch/request 隔離舊手或舊街結果，不消耗正式 RNG；同街下注不重算。
 
-每次 `update` 只傳已揭公牌，不傳 `evidence`。相同玩家牌、公牌、盲位與重抽設定得到相同分布，不受 BOSS 性格、FOLD／CALL／RAISE、已顯示機率文字、合法動作、POT 或待補金額影響。因此原本可能因固定行動表被縮成 HIGH CARD 100% 的牌面，改為呈現完整的牌型可能性；100% 只可能來自牌面與起手規則本身的必然性。
+`createBossRangeView({root})` 保留 `#boss-hand-range`、`#boss-range-dialog` 及 `render({visible,busy,calculating,distribution,unavailable})`／`clear()`／`close()`。主畫面 POSSIBLE HANDS 最多三列、不顯示 OTHER：先取正機率最高三類（同機率優先較強牌型），再由強至弱排列，HIGH CARD 最低；各列保留原比例，不重新湊成 100%，不足三類只列實際項目。POSSIBLE BOSS HANDS 詳情列完整九類並由強至弱排列。小正值顯示 `<0.1%`，非必然不顯示 100%；完整九類合計 1。
 
-這是依已知牌與起手規則條件化的牌型模型，不是納入真實下注策略後的後驗範圍；預設重抽會改變起手權重，所以也不是一律等權的未知兩張牌。
+FLOP 三張完整揭開後才顯示，TURN／RIVER 揭開後重算並先清舊數字；busy 關閉並禁開詳情，攤牌／棄牌／換手隱藏。無效資料或運算錯誤顯示 UNAVAILABLE，不偽造九類 0%。
 
-指定 BOSS 底牌回傳 `unavailable`，沒有虛構的全零九類分布。無效或重複的已知牌由純計算模組拋出錯誤，再由 worker 轉為 `unavailable:'calculation-unavailable'`。`output/math-v41-range-validation.json` 僅是已停用的 v41 行動證據模型歷史報告，本版驗證另存 `output/math-v42-range-validation.json`。
+### 玩家參考勝率／equity
 
-`src/boss-range-public.mjs` 的 `bossRangeContext` 建立 allowlist；context 僅有 `playerHole`、`smallBlind`、`config.deal`。worker 不接收 hand／session、NPC 底牌、未揭公牌、牌庫、seed、原始 roll、dealAudit、身份或任何行動證據。`src/boss-range-worker.mjs` 接收 `{epoch,request,context,board}`，回覆 `{epoch,request,result}`；運算失敗回覆 `unavailable:'calculation-unavailable'`。`src/boss-range-controller.mjs` 以 epoch 隔離不同手牌、request 隔離同手不同公牌，過期結果不可覆蓋新畫面；不呼叫正式牌局 RNG。同街下注與動作標籤更新不啟動新的牌型分析。
+`src/holdem-equity.mjs` 匯出 `calculateHoldemEquity({playerHole,board},{preflopSamples=100000}={})`。`board` 只接受 0／3／4／5 張已揭牌；回傳 `wins`、`ties`、`losses`、`outcomes`、`winRate`、`tieRate`、`lossRate`、`equity`、`exact` 與 `method`。次數欄為整數、率為 0–1；`method` 為 `exact-enumeration` 或 `deterministic-monte-carlo`，預設 100,000 次只影響翻牌前估算。
 
-`src/boss-range-view.mjs` 的 `createBossRangeView({root})` 動態建立 `#boss-hand-range` 及舞台外的 `#boss-range-dialog`，提供 `render({visible,busy,calculating,distribution,unavailable})`、`clear()`、`close()`。主畫面標示 POSSIBLE HANDS，詳情標題 POSSIBLE BOSS HANDS；說明以已知玩家牌、已揭公牌與起手重抽規則估算，忽略下注行動及行動機率。左側保留最高兩個正機率牌型＋OTHER，其餘機率直接相加、不重新正規化；完整視窗列九類。顯示百分比四捨五入，極小正值為 `<0.1%`，實際未達 1 不顯示為 100%；完整原始分布合計 1。FLOP 三張完整揭開後才顯示，TURN／RIVER 揭開後重新計算並先清舊數字；攤牌、棄牌、換手隱藏，busy 關閉並禁開詳情。資料缺漏／錯誤顯示 UNAVAILABLE，不視為所有牌型 0%。
+未知 BOSS 兩張牌與尚未公開的公共牌，均由排除已知玩家牌及已揭公牌的剩餘牌中無放回取得，彼此不重複。補滿五張公牌後，比較雙方各自可用七張的最佳五張；勝率為 `(wins + ties / 2) / total`，平手計半份，不把所有平手當勝局。
 
-v42 只修改牌型可能性的分析與呈現；引擎、固定 BOSS 表、輪替、正式 RNG、金流及 JP 保持。算法／介面驗證與發布狀態依 [docs/06](docs/06-mobile-and-deployment.md)；沿用的 `output/math-v35-validation.json` 仍是 v35 遊戲模型證據，不是 v42 新 RTP 校準。
+FLOP、TURN、RIVER 做完整枚舉，分母分別為 **1,070,190／45,540／990** 個等權組合。PREFLOP 採固定 **100,000** 次可重現、與正式遊戲 RNG 隔離的抽樣估算，不能宣稱翻牌前也是精確枚舉。BOSS 牌型看「目前已成什麼牌」，玩家 equity 看「補完公牌後能分得多少勝負份額」，兩者共用等權未知牌假設，但事件與分母不同。
+
+`holdem-equity-worker.mjs` 只接收 `{request,playerHole,board}`，回覆 `{request,result}` 或 `{request,error:'calculation-unavailable'}`，不收牌局設定或任何暗牌。`createHoldemEquityController({render,workerFactory})` 提供 `update({visible,playerHole,board})`／`reset()`；新已知牌終止舊 Worker 並清舊結果，相同已知牌沿用結果，request 排除過期回覆，不動正式 RNG。
+
+勝率環顯示至一位小數、整數省略小數點；小正值為 `<0.1%`，未達 1 不顯示成 100%（最多顯示 99.9%）。翻牌前 title／aria 標示 estimated。攤牌逐張公開的原規格保持：先揭一張 BOSS 牌時枚舉剩餘 44 張，兩張都揭開後顯示實際勝／平／敗份額，不讓秘密底牌提前進入估算。
+
+v43 新驗證已保存於 `output/math-v43-holdem-validation.json`；`output/math-v42-range-validation.json` 是已停用重抽加權模型的歷史證據，`output/math-v41-range-validation.json` 是更早的行動條件模型。兩者都不能代替 v43。引擎、固定 BOSS 表、發牌／重抽、正式 RNG、輪替、金流與 JP 不改；`output/math-v35-validation.json` 仍為遊戲模型證據，非 v43 新 RTP 校準。完整驗證與發布狀態見 [docs/06](docs/06-mobile-and-deployment.md)。
 
 ## v40 抽盲文字契約
 
@@ -242,9 +245,9 @@ The official Hands Up amounts were checked at BET 500 (100000/25000/10000) and B
 
 `holeScore(cards)` -> 0..1 heuristic. `evaluateBest(cards)` requires 5..7 cards; returns `{category:0..8,name,rank:[...],best5:[...],royal:boolean}`. `compareHands(cardsA,cardsB)` -> -1/0/1. `makeDeck()`, `createRng(seed)`, `shuffle(cards,rng)` also exported.
 
-`equityEstimate(hand,{samples=300,seed=1,actor='player'})` -> `{win,tie,loss,equity,samples,assumption}` in fractions. Uniform unknown opponent cards; future board sampled from cards not visible to actor; explicitly ignores both actual opponent hole cards and undealt deck order. Separate RNG never consumes game RNG.
+`equityEstimate(hand,{samples=300,seed=1,actor='player'})` -> `{win,tie,loss,equity,samples,assumption}` in fractions. This existing engine helper remains available for legacy/offline callers; the v43 game UI uses `calculateHoldemEquity` documented above. The helper samples uniform unknown opponent cards and future board cards not visible to the actor, ignores actual opponent hole cards and undealt deck order, and never consumes game RNG.
 
-Import `getShowdownView({playerHole,visibleBoard,revealedNpcHole=[]})` from `./src/showdown-view.mjs` for progressive showdown disclosure. With fewer than five visible board cards or no revealed NPC cards it returns null; otherwise it returns `{revealedCount,npcEvaluation,npcHandName,npcBest5,equity,wins,ties,losses,outcomes}`. Exactly five board cards and one/two revealed NPC cards are required for a result. `npcEvaluation`/`npcBest5` use only revealed NPC cards plus the board and include all best-five kickers. One revealed card enumerates all 44 uniformly possible second cards, with `equity=(wins+ties/2)/44`; two revealed cards give `outcomes:1` and equity 0/.5/1. This is a pure public-card calculation with no hand/deck/RNG input, no hidden-card access and no redraw correction. It is distinct from the UI's 250-sample unrevealed-opponent estimate. Module verification does not claim the progressive reveal browser flow has passed QA.
+Import `getShowdownView({playerHole,visibleBoard,revealedNpcHole=[]})` from `./src/showdown-view.mjs` for progressive showdown disclosure. With fewer than five visible board cards or no revealed NPC cards it returns null; otherwise it returns `{revealedCount,npcEvaluation,npcHandName,npcBest5,equity,wins,ties,losses,outcomes}`. Exactly five board cards and one/two revealed NPC cards are required for a result. `npcEvaluation`/`npcBest5` use only revealed NPC cards plus the board and include all best-five kickers. One revealed card enumerates all 44 uniformly possible second cards, with `equity=(wins+ties/2)/44`; two revealed cards give `outcomes:1` and equity 0/.5/1. This is a pure public-card calculation with no hand/deck/RNG input, no hidden-card access and no redraw correction. The v43 unknown-opponent estimate is separately documented above; the former 250-sample UI calculation is no longer used. Browser validation is recorded by version in docs/06.
 
 `playAutomatedHand(session, policy='balanced')` -> settled hand; NPC uses the locked profile table (or balanced in legacy mode), player uses selected policy.
 

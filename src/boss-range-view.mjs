@@ -57,8 +57,8 @@ export function createBossRangeView({root = globalThis.document} = {}) {
   const description = make('p', 'boss-range-description', 'What could the BOSS have right now? These are the chances of each current best hand category, based on the cards you can see. Updates on the FLOP, TURN and RIVER. This is not your win chance or a forecast of future cards.');
   description.id = 'boss-range-description';
   const list = make('dl', 'boss-range-list');
-  const method = make('p', 'boss-range-method', 'Uses your hand, the revealed board and the starting-hand redraw rules. Betting actions and action percentages do not affect these estimates. It never reads hidden BOSS cards or unrevealed board cards.');
-  const note = make('p', 'boss-range-note', 'Each possible hand belongs to one category. OTHER combines the categories outside the top two. Percentages are rounded; the complete distribution totals 100% before rounding.');
+  const method = make('p', 'boss-range-method', 'Uses your hand and the revealed board. Every possible pair of unseen cards is equally likely, as in standard Texas Hold’em. Betting actions and action percentages do not affect these estimates. It never reads hidden BOSS cards or unrevealed board cards.');
+  const note = make('p', 'boss-range-note', 'The table shows up to three most likely categories, ordered from strongest to weakest. Each percentage keeps its share of all possible hands, so the three shown may total less than 100%. The complete distribution totals 100% before rounding.');
   dialog.append(closeButton, eyebrow, title, description, list, method, note); doc.body.append(dialog);
   let current = null;
 
@@ -94,11 +94,10 @@ export function createBossRangeView({root = globalThis.document} = {}) {
     button.dataset.state = 'ready';
     const ranked = [...current].filter(entry => entry.probability > 0)
       .sort((a, b) => b.probability - a.probability || b.category - a.category);
-    const top = ranked.slice(0, 2), other = ranked.slice(2).reduce((sum, entry) => sum + entry.probability, 0);
+    const top = ranked.slice(0, 3).sort((a, b) => b.category - a.category);
     const summaryRows = top.map(entry => row(CATEGORIES[entry.category][0], entry.probability));
-    if (other > 0) summaryRows.push(row('OTHER', other, 'boss-range-row boss-range-other'));
     summary.replaceChildren(...summaryRows);
-    button.setAttribute('aria-label', `BOSS current hand distribution. ${top.map(entry => `${CATEGORIES[entry.category][1]} ${percent(entry.probability)}`).join(', ')}${other > 0 ? `, other ${percent(other)}` : ''}. View all nine categories.`);
+    button.setAttribute('aria-label', `BOSS current hand distribution. ${top.map(entry => `${CATEGORIES[entry.category][1]} ${percent(entry.probability)}`).join(', ')}. View all nine categories.`);
     list.replaceChildren(...[...current].sort((a, b) => b.category - a.category).map(entry => {
       const detail = make('div', 'boss-range-detail-row');
       if (entry.probability === 0) detail.className += ' is-zero';

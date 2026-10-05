@@ -1,4 +1,4 @@
-import {createSession,startHand,legalActions,applyAction,getActionDistribution,sampleDistribution,previewResponse,equityEstimate,holeScore,syncOpponentBankroll} from './engine.mjs?v=35';
+import {createSession,startHand,legalActions,applyAction,getActionDistribution,sampleDistribution,previewResponse,holeScore,syncOpponentBankroll} from './engine.mjs?v=35';
 import {loadConfig,CONFIG_KEY,money,pct,esc,cardMarkup,cardText} from './shared.mjs?v=35';
 import {GAME_LABELS as LABELS,GAME_STREETS as STREETS,handName,translateError} from './game-text.mjs?v=35';
 import {createPotView} from './pot-view.mjs?v=35';
@@ -17,7 +17,8 @@ import {decisionMotion} from './decision-motion.mjs?v=35';
 import {getShowdownView} from './showdown-view.mjs?v=35';
 import {GAME_SPEED,atGameSpeed} from './presentation-timing.mjs?v=35';
 import {createBankrollView} from './bankroll-view.mjs?v=35';
-import {renderWinRate} from './win-rate-view.mjs?v=35';
+import {renderWinRate,equityPercent} from './win-rate-view.mjs?v=43';
+import {createHoldemEquityController} from './holdem-equity-controller.mjs?v=43';
 import {responseBadgeView,responseActionLabel,captureResponseSource,responseSourceMatches} from './action-response-view.mjs?v=38';
 import {boardCardView,nextBoardReveal,tableDeckCounts} from './board-presentation.mjs?v=35';
 import {createResponseFlight} from './response-flight-view.mjs?v=38';
@@ -26,14 +27,14 @@ import {createBlindDraw} from './blind-draw-view.mjs?v=40';
 import {createTotalWin} from './total-win-view.mjs?v=35';
 import {createBossActionView} from './boss-action-view.mjs?v=35';
 import {renderBossIdentity,preloadBossScenes,waitForBossScene} from './boss-scene-view.mjs?v=36';
-import {createBossRangeView} from './boss-range-view.mjs?v=42';
-import {createBossRangeController} from './boss-range-controller.mjs?v=42';
-import {bossRangeContext} from './boss-range-public.mjs?v=42';
+import {createBossRangeView} from './boss-range-view.mjs?v=43';
+import {createBossRangeController} from './boss-range-controller.mjs?v=43';
+import {bossRangeContext} from './boss-range-public.mjs?v=43';
 document.documentElement.style.setProperty('--game-speed',String(GAME_SPEED));
 const $=id=>document.getElementById(id);
 // Stable player controls; engine actions and opponent response types stay unchanged.
 const PLAYER_ACTION_LABELS={fold:'FOLD',check:'CALL',call:'CALL',bet:'RAISE',raise:'RAISE'};
-let config=loadConfig(),session=null,hand=null,busy=false,drawLog=[],lastResponse=null,handArchive=[],equityCache='',toastTimer,closedTable=null,phase='';
+let config=loadConfig(),session=null,hand=null,busy=false,drawLog=[],lastResponse=null,handArchive=[],toastTimer,closedTable=null,phase='';
 let selectedBet=1,entryBase=config,betValues=[...new Set([1,...betOptions(config)])].sort((a,b)=>a-b),demoAssets=config.buyIn;
 let nextBetDraft=1,nextBetValues=[];
 let entryEncounter=null,nextEncounter=null,nextBetEncounter=null;
@@ -46,6 +47,7 @@ const blindDraw=createBlindDraw({root:document,effects,reducedMotion:reduceMotio
 const totalWin=createTotalWin({root:document,effects,reducedMotion:reduceMotion});
 const bossAction=createBossActionView({root:document,reducedMotion:reduceMotion});
 const bossRange=createBossRangeController({view:createBossRangeView({root:document})});
+const playerEquity=createHoldemEquityController({render:renderPlayerEquity});
 preloadBossScenes(document);
 const bankrollView=createBankrollView({root:document});
 let soundOn=true;
@@ -197,7 +199,7 @@ async function showTurnDraw(){
 }
 function leaveTable(){
   if(busy||hand?.status==='playing'){toast('Finish this hand first.');return;}
-  if(!session)return;const balance=session.stacks.player;closedTable={playerBalance:balance,npcBalance:session.stacks.npc,buyIn:session.config.buyIn,settledTableProfit:balance-session.config.buyIn,jackpotAwards:session.jackpotAwards};session=null;hand=null;lastResponse=null;drawLog=[];equityCache='';entryEncounter=null;prepareEntry();render();toast(`Left the table. Balance kept: ${money(balance)}.`);
+  if(!session)return;const balance=session.stacks.player;closedTable={playerBalance:balance,npcBalance:session.stacks.npc,buyIn:session.config.buyIn,settledTableProfit:balance-session.config.buyIn,jackpotAwards:session.jackpotAwards};session=null;hand=null;lastResponse=null;drawLog=[];entryEncounter=null;prepareEntry();render();toast(`Left the table. Balance kept: ${money(balance)}.`);
 }
 function openNextBet(){
  if(busy||!session||hand?.status!=='settled')return;
@@ -246,7 +248,7 @@ async function newHand(){
   if(busy||!session||hand?.status==='playing'||$('next-bet-dialog').open)return;
   $('result-dialog').close();
   if(session&&Math.min(...Object.values(session.stacks))<.01){setupBuyin();return;}
-  try{busy=true;phase='DEALING';hand=startHand(session);entryEncounter=null;nextEncounter=null;nextBetEncounter=null;drawLog=[];lastResponse=null;equityCache='';pendingPlayerAction=null;delete $('game').dataset.chosenAction;paintDistribution([]);setTableCue('contribution','POST BLINDS');await presentHand();await continuePlay();}catch(error){busy=false;phase='';bossAction.clear();setTableCue();toast(translateError(error));render();setupBuyin();}
+  try{busy=true;phase='DEALING';hand=startHand(session);entryEncounter=null;nextEncounter=null;nextBetEncounter=null;drawLog=[];lastResponse=null;pendingPlayerAction=null;delete $('game').dataset.chosenAction;paintDistribution([]);setTableCue('contribution','POST BLINDS');await presentHand();await continuePlay();}catch(error){busy=false;phase='';bossAction.clear();setTableCue();toast(translateError(error));render();setupBuyin();}
 }
 $('next-hand').onclick=newHand;
 const visibleStreet=()=>shownBoard>=5?'river':shownBoard===4?'turn':shownBoard>0?'flop':'preflop';
@@ -255,9 +257,25 @@ function updateBossRange(){
  const board=known?hand.board.slice(0,shownBoard):[];
  const ready=known&&hand.status==='playing'&&shownReveal===0&&shownBoard===hand.board.length;
  bossRange.update({visible:ready&&board.length>=3,busy,
-  context:known?bossRangeContext({playerHole:hand.holes.player.slice(0,dealt.player),smallBlind:hand.smallBlind,
-   config:hand.config}):null,
+  context:known?bossRangeContext({playerHole:hand.holes.player.slice(0,dealt.player)}):null,
   board});
+}
+function renderPlayerEquity({visible,calculating,result,error}){
+ if(shownReveal>0&&hand?.result?.reason==='showdown')return;
+ const ring=$('player-win-rate');
+ if(!visible||!hand||hand.status!=='playing'||dealt.player!==2||shownBoard!==hand.board.length){renderWinRate(ring);$('equity').textContent='';$('equity').title='';return;}
+ if(!result){renderWinRate(ring);$('equity').textContent=calculating?'Calculating Hold’em equity…':error?'Equity unavailable.':'';$('equity').title='';return;}
+ const rate=equityPercent(result.equity),method=result.exact?'Exact enumeration':`${result.outcomes.toLocaleString('en-US')} simulated deals`;
+ const description=`${rate} ${result.exact?'':'estimated '}equity against one random hand. Ties count as half a win.`;
+ renderWinRate(ring,result.equity,{description,title:`${method}. All unknown cards are equally likely. Ties count as half a win.`});
+ ring.dataset.method=result.method;ring.dataset.outcomes=String(result.outcomes);
+ $('equity').textContent=`${result.exact?'':'Estimated '}Hold’em equity: ${rate}`;
+ $('equity').title=`${method}. Win ${equityPercent(result.winRate)}, tie ${equityPercent(result.tieRate)}, loss ${equityPercent(result.lossRate)}. Equity = wins + half of ties.`;
+}
+function updatePlayerEquity(){
+ if(shownReveal>0&&hand?.result?.reason==='showdown')return;
+ const ready=hand?.status==='playing'&&dealt.player===2&&shownBoard===hand.board.length;
+ playerEquity.update({visible:!!ready,playerHole:ready?hand.holes.player.slice(0,dealt.player):[],board:ready?hand.board.slice(0,shownBoard):[]});
 }
 function setTableCue(mode='',label='',{seat='',detail=''}={}){
   $('game').dataset.presentation=mode;$('game').dataset.activeSeat=seat;const cue=$('table-cue');cue.hidden=!mode;
@@ -295,9 +313,11 @@ function updateShowdownView(){
   panel.hidden=false;
   document.querySelector('.response-panel').hidden=true;
   for(const [id,cards] of [['npc-cards',revealedNpcHole],['board',visibleBoard]])[...$(id).children].forEach((el,index)=>el.classList.toggle('npc-best',!!cards[index]&&view.npcBest5.includes(cards[index])));
-  const rate=`${Math.round(view.equity*100)}%`;
+  playerEquity.reset();
+  const rate=equityPercent(view.equity);
   renderWinRate($('player-win-rate'),view.equity,{description:`${rate} equity using ${view.revealedCount} revealed opponent cards; ties count as half a win.`,title:view.revealedCount===1?'Equity from the revealed opponent card; the second card is still unknown.':'Both hands revealed: win 100%, tie 50%, loss 0%.'});
-  $('equity').textContent=`Equity after ${view.revealedCount} revealed opponent cards: ${pct(view.equity)}`;
+  $('player-win-rate').dataset.method='revealed-enumeration';$('player-win-rate').dataset.outcomes=String(view.outcomes);
+  $('equity').textContent=`Equity after ${view.revealedCount} revealed opponent cards: ${rate}`;
   $('equity').title=view.revealedCount===1?'Exact enumeration of all 44 possible remaining opponent cards. Hidden cards are not used. Ties count as half a win.':'Both hands are revealed. Win 100%, tie 50%, loss 0%.';
   return view;
 }
@@ -330,6 +350,7 @@ function updateVisibleCards(){
   document.querySelectorAll('[data-board-group]').forEach(el=>{const i=['preflop','flop','turn','river'].indexOf(el.dataset.boardGroup);el.classList.toggle('current',!!hand&&i===current);el.classList.toggle('past',!!hand&&i<current);});
   updateShowdownView();
   updateBossRange();
+  updatePlayerEquity();
 }
 /** Play only changes already committed by the engine, in visible table order. */
 async function presentHand({releaseResponse=false}={}){
@@ -384,7 +405,7 @@ async function presentHand({releaseResponse=false}={}){
   render();
 }
 function render(){
-  if(hand!==shownHand){bossRange.reset();shownHand=hand;shownBoard=0;boardDealt=0;shownReveal=0;dealt={player:0,npc:0};settlementReleased=false;presentedCredits={player:0,npc:0};responseSource=null;responseDecision=null;activeNpcDistribution=null;responseFlight.clear();totalWin.clear();bossAction.clear();delete $('game').dataset.npcFolded;bankrollView.clearChanges();}
+  if(hand!==shownHand){bossRange.reset();playerEquity.reset();shownHand=hand;shownBoard=0;boardDealt=0;shownReveal=0;dealt={player:0,npc:0};settlementReleased=false;presentedCredits={player:0,npc:0};responseSource=null;responseDecision=null;activeNpcDistribution=null;responseFlight.clear();totalWin.clear();bossAction.clear();delete $('game').dataset.npcFolded;bankrollView.clearChanges();}
   const active=hand?.status==='playing';const handView=getCurrentHandView(hand?.holes.player.slice(0,dealt.player)||[],hand?.board.slice(0,shownBoard)||[]);const best=handView.highlighted;
   if(hand)blindDraw.renderSeat({isSmall:hand.smallBlind==='player'});else if(!session)blindDraw.clear();
   const h=hud();$('game').dataset.busy=String(busy);
@@ -405,21 +426,8 @@ function render(){
   $('leave-button').disabled=!session||active||busy;
   $('reset-demo').disabled=active||busy;
   updateVisibleCards();
-  const winRate=$('player-win-rate');
-  const readyForEquity=active&&dealt.player===2&&shownBoard===hand.board.length;
-  const revealedEquity=hand?.result?.reason==='showdown'&&shownReveal>0;
-  if(!readyForEquity&&!revealedEquity)renderWinRate(winRate);
-  if(hand){
-    const key=`${hand.handNumber}:${hand.street}:${hand.board.join('')}`;
-    if(!active&&!revealedEquity){$('equity').textContent=hand.result.reason==='showdown'?'Made-hand cards are highlighted. Kickers still break ties.':'This hand ended before showdown.';$('equity').title='';}
-    else if(readyForEquity&&equityCache!==key){equityCache=key;renderWinRate(winRate);const captured=hand,capturedStreet=hand.street,capturedBoard=hand.board.join('');setTimeout(()=>{
-      if(hand!==captured||hand.status!=='playing'||hand.street!==capturedStreet||hand.board.join('')!==capturedBoard||shownBoard!==hand.board.length||dealt.player!==2)return;
-      const visibleHand={holes:{player:hand.holes.player.slice(0,dealt.player)},board:hand.board.slice(0,shownBoard)};
-      const e=equityEstimate(visibleHand,{samples:250,seed:hand.handNumber*131+hand.board.length}),rate=`${Math.round(e.equity*100)}%`;
-      renderWinRate(winRate,e.equity,{description:`${rate} estimated win rate versus a random unknown hand; ties count as half a win.`,title:'Estimated equity versus a random unknown hand. Ties count as half a win; opponent redraws are not included.'});
-      $('equity').textContent=`Equity vs. a random hand: ${pct(e.equity)}`;$('equity').title='Ties count as half a win. 250 samples against a uniformly random unknown hand. No hidden opponent cards or redraw adjustment.';
-    },0);}
-  }else{$('equity').textContent='Two cards. Your next move.';}
+  if(!hand){$('equity').textContent='Two cards. Your next move.';$('equity').title='';}
+  else if(!active&&shownReveal===0){$('equity').textContent=hand.result.reason==='showdown'?'Made-hand cards are highlighted. Kickers still break ties.':'This hand ended before showdown.';$('equity').title='';}
   renderJackpot();renderActions();paintDistribution();
 }
 function renderActions(){

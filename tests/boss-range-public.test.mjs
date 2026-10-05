@@ -1,29 +1,22 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {DEFAULT_CONFIG} from '../src/engine.mjs';
 import {bossRangeContext} from '../src/boss-range-public.mjs';
 import {createBossRangeController} from '../src/boss-range-controller.mjs';
 
-test('worker context contains only known cards and public settings, never reserved NPC cards',()=>{
- const secret={get 0(){throw new Error('Hidden card read');},get 1(){throw new Error('Hidden card read');},length:2};
- const config={...DEFAULT_CONFIG,deal:{...DEFAULT_CONFIG.deal,npc:{...DEFAULT_CONFIG.deal.npc,manual:secret}},
-  get seed(){throw new Error('Seed read');},get deck(){throw new Error('Deck read');}};
- const result=bossRangeContext({playerHole:['As','Kd'],smallBlind:'npc',bossProfileId:'caller',config});
- assert.equal(result.config.deal.npc.manualProvided,true);
+test('worker context contains only a detached copy of the known player cards',()=>{
+ const playerHole=['As','Kd'];
+ const result=bossRangeContext({playerHole,smallBlind:'npc',bossProfileId:'caller',config:{deal:{npc:{manual:['2s','2h']}}}});
+ assert.deepEqual(result,{playerHole:['As','Kd']});
+ assert.notEqual(result.playerHole,playerHole);
+ playerHole[0]='3s';
  assert.deepEqual(result.playerHole,['As','Kd']);
- assert.equal(JSON.stringify(result).includes('manual"'),false);
- assert.deepEqual(Object.keys(result),['playerHole','smallBlind','config']);
- assert.deepEqual(Object.keys(result.config),['deal']);
 });
 
-test('card-only context never reads BOSS identity, action tables or displayed odds',()=>{
- const config={deal:DEFAULT_CONFIG.deal};
- for(const key of ['boss','npc'])Object.defineProperty(config,key,{get(){throw Error('Action model read');}});
- const input={playerHole:['As','Kd'],smallBlind:'player',config};
- for(const key of ['bossProfileId','evidence','distribution','history'])Object.defineProperty(input,key,{get(){throw Error('Action evidence read');}});
- assert.deepEqual(bossRangeContext(input),bossRangeContext({playerHole:['As','Kd'],smallBlind:'player',config:DEFAULT_CONFIG}));
+test('standard Holdem context never reads settings, blind position, manual cards, BOSS identity or action evidence',()=>{
+ const input={playerHole:['As','Kd']};
+ for(const key of ['config','smallBlind','manualProvided','manual','bossProfileId','evidence','distribution','history','deck','rng','seed'])Object.defineProperty(input,key,{get(){throw Error(`Private or model input read: ${key}`);}});
+ assert.deepEqual(bossRangeContext(input),{playerHole:['As','Kd']});
 });
-
 function setup(){
  const messages=[],paints=[];
  const worker={postMessage:data=>messages.push(structuredClone(data)),terminate(){}};

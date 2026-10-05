@@ -31,12 +31,14 @@ function fixture() {
 }
 const distribution = values => Array.from({length: 9}, (_, category) => ({category, probability: values[category] ?? 0}));
 
-test('top two retain their original probabilities, OTHER totals the rest and the full view retains nine categories', () => {
+test('the three most likely categories keep their original probabilities in hand-strength order, with all nine in details', () => {
   const f = fixture(), input = distribution([.394, .513, .059, .034]);
   Object.freeze(input); input.forEach(Object.freeze);
   f.view.render({visible: true, distribution: input});
   assert.equal(f.button.hidden, false); assert.equal(f.button.disabled, false);
-  assert.deepEqual(f.summary.children.map(node => node.textContent), ['PAIR51.3%', 'HIGH CARD39.4%', 'OTHER9.3%']);
+  assert.deepEqual(f.summary.children.map(node => node.textContent), ['TWO PAIR5.9%', 'PAIR51.3%', 'HIGH CARD39.4%']);
+  assert.equal(f.button.textContent.includes('OTHER'), false);
+  assert.equal(f.button.attributes.get('aria-label').includes('other'), false);
   f.button.emit('click'); assert.equal(f.dialog.open, true);
   assert.equal(f.doc.body.children.includes(f.dialog), true, 'modal must remain outside the scaled stage');
   assert.equal(f.stage.children.includes(f.button), true);
@@ -55,7 +57,7 @@ test('zero-mass categories are not invented in the summary; tiny possible hands 
   f.view.render({visible: true, distribution: distribution([0, 1])});
   assert.deepEqual(f.summary.children.map(node => node.textContent), ['PAIR100%']);
   f.view.render({visible: true, distribution: distribution([0, .9998, .0002])});
-  assert.deepEqual(f.summary.children.map(node => node.textContent), ['PAIR99.9%', 'TWO PAIR<0.1%']);
+  assert.deepEqual(f.summary.children.map(node => node.textContent), ['TWO PAIR<0.1%', 'PAIR99.9%']);
 });
 
 test('new pending or unavailable data clears old percentages and closes the modal, never fabricating an all-zero distribution', () => {

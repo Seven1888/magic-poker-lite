@@ -1,0 +1,1124 @@
+{
+  "version": 43,
+  "generatedAt": "2026-10-05T09:40:22.363Z",
+  "clientDate": "2026-10-05",
+  "timezone": "Asia/Taipei",
+  "sourceHashFormat": "sha256 of UTF-8 source with LF line endings",
+  "sourceHashes": {
+    "src/holdem-equity.mjs": "cadf804b47ae398dbd117445675aaf0f5b805993d3c249440ac978c5275e9435",
+    "src/holdem-rank.mjs": "746f571b66c22b30ba28a16a1394e3411786c918f78e5096bb37e524f1155ddc",
+    "src/boss-hand-range.mjs": "f8bfa233aa3eea6a5fd653759b147080c7cc4cb5522333d59f3fcb6b0300c4ae",
+    "src/boss-range-public.mjs": "f998e08253a6b7a1f57b79360f1c202a3b1405f9f5a9dfb0f4b7da1184a510ff",
+    "src/engine.mjs": "ccd275415b14c83fb18cea93ac1c845d417c238bfe64a563ed704b7c9ea815af",
+    "src/poker.mjs": "0839d22158f8210ebde21afba578f4b4087933efae26fd4fbe56ce95afbf82f9",
+    "scripts/validate-holdem-v43.mjs": "a38a61cddd8afc6b8df2d3045c46182d49573ee884b7b69426a2a15950b9d863"
+  },
+  "status": "passed",
+  "scope": "標準德州撲克顯示模型：所有未知牌等可能。BOSS 為目前最佳牌型；玩家 equity 為補齊五張公牌後的勝率加半數平手率。兩者不使用發牌重抽、指定暗牌、盲位、BOSS 身份或行動機率。引擎發牌及帳務不變；本報告不是 RTP、發牌頻率校準、瀏覽器揭牌時序或實體手機驗收。",
+  "estimatorInputs": [
+    "playerHole",
+    "board"
+  ],
+  "oracleTolerance": 1e-12,
+  "bossUniformOracle": {
+    "cases": 15,
+    "maximumAbsoluteDifference": 5.551115123125783e-17,
+    "method": "獨立建立 52 張牌組，逐一枚舉未知兩張組合；對每組 5–7 張牌枚舉所有五張子集，以獨立 rank/suit 分類器求最佳類別，不使用 production evaluateBest 或 BOSS range 分類。",
+    "results": [
+      {
+        "playerHole": [
+          "As",
+          "Kd"
+        ],
+        "board": [
+          "2s",
+          "5h",
+          "9c"
+        ],
+        "candidateCount": 1081,
+        "categoryCounts": [
+          649,
+          396,
+          27,
+          9,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "playerHole": [
+          "As",
+          "Kd"
+        ],
+        "board": [
+          "2s",
+          "2h",
+          "9c"
+        ],
+        "candidateCount": 1081,
+        "categoryCounts": [
+          0,
+          801,
+          186,
+          84,
+          0,
+          0,
+          9,
+          1,
+          0
+        ]
+      },
+      {
+        "playerHole": [
+          "As",
+          "Kd"
+        ],
+        "board": [
+          "2s",
+          "3s",
+          "4s",
+          "5s"
+        ],
+        "candidateCount": 1035,
+        "categoryCounts": [
+          171,
+          259,
+          54,
+          12,
+          207,
+          287,
+          0,
+          0,
+          45
+        ]
+      },
+      {
+        "playerHole": [
+          "As",
+          "Kd"
+        ],
+        "board": [
+          "2s",
+          "2h",
+          "2c",
+          "9s",
+          "9h"
+        ],
+        "candidateCount": 990,
+        "categoryCounts": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          945,
+          45,
+          0
+        ]
+      },
+      {
+        "playerHole": [
+          "As",
+          "Kd"
+        ],
+        "board": [
+          "Ts",
+          "Js",
+          "Qs",
+          "Ks",
+          "9s"
+        ],
+        "candidateCount": 990,
+        "categoryCounts": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          990
+        ]
+      },
+      {
+        "playerHole": [
+          "Ah",
+          "Qd"
+        ],
+        "board": [
+          "2s",
+          "5h",
+          "9c"
+        ],
+        "candidateCount": 1081,
+        "categoryCounts": [
+          649,
+          396,
+          27,
+          9,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "playerHole": [
+          "Ah",
+          "Qd"
+        ],
+        "board": [
+          "2s",
+          "2h",
+          "9c"
+        ],
+        "candidateCount": 1081,
+        "categoryCounts": [
+          0,
+          801,
+          186,
+          84,
+          0,
+          0,
+          9,
+          1,
+          0
+        ]
+      },
+      {
+        "playerHole": [
+          "Ah",
+          "Qd"
+        ],
+        "board": [
+          "2s",
+          "3s",
+          "4s",
+          "5s"
+        ],
+        "candidateCount": 1035,
+        "categoryCounts": [
+          171,
+          259,
+          54,
+          12,
+          170,
+          280,
+          0,
+          0,
+          89
+        ]
+      },
+      {
+        "playerHole": [
+          "Ah",
+          "Qd"
+        ],
+        "board": [
+          "2s",
+          "2h",
+          "2c",
+          "9s",
+          "9h"
+        ],
+        "candidateCount": 990,
+        "categoryCounts": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          945,
+          45,
+          0
+        ]
+      },
+      {
+        "playerHole": [
+          "Ah",
+          "Qd"
+        ],
+        "board": [
+          "Ts",
+          "Js",
+          "Qs",
+          "Ks",
+          "9s"
+        ],
+        "candidateCount": 990,
+        "categoryCounts": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          990
+        ]
+      },
+      {
+        "playerHole": [
+          "Ac",
+          "Jh"
+        ],
+        "board": [
+          "2s",
+          "5h",
+          "9c"
+        ],
+        "candidateCount": 1081,
+        "categoryCounts": [
+          649,
+          396,
+          27,
+          9,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "playerHole": [
+          "Ac",
+          "Jh"
+        ],
+        "board": [
+          "2s",
+          "2h",
+          "9c"
+        ],
+        "candidateCount": 1081,
+        "categoryCounts": [
+          0,
+          801,
+          186,
+          84,
+          0,
+          0,
+          9,
+          1,
+          0
+        ]
+      },
+      {
+        "playerHole": [
+          "Ac",
+          "Jh"
+        ],
+        "board": [
+          "2s",
+          "3s",
+          "4s",
+          "5s"
+        ],
+        "candidateCount": 1035,
+        "categoryCounts": [
+          171,
+          259,
+          54,
+          12,
+          170,
+          280,
+          0,
+          0,
+          89
+        ]
+      },
+      {
+        "playerHole": [
+          "Ac",
+          "Jh"
+        ],
+        "board": [
+          "2s",
+          "2h",
+          "2c",
+          "9s",
+          "9h"
+        ],
+        "candidateCount": 990,
+        "categoryCounts": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          945,
+          45,
+          0
+        ]
+      },
+      {
+        "playerHole": [
+          "Ac",
+          "Jh"
+        ],
+        "board": [
+          "Ts",
+          "Js",
+          "Qs",
+          "Ks",
+          "9s"
+        ],
+        "candidateCount": 990,
+        "categoryCounts": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          990
+        ]
+      }
+    ]
+  },
+  "excludedInputs": {
+    "cases": 8,
+    "unreadFieldChecks": 36
+  },
+  "screenshotBoardExample": {
+    "note": "公牌採使用者截圖的 7h 6s Ks；玩家 2h 3d 是明示示例假設，並非重播截圖原手牌。盲位／角色／重抽設定不影響此標準模型。",
+    "playerHole": [
+      "2h",
+      "3d"
+    ],
+    "board": [
+      "7h",
+      "6s",
+      "Ks"
+    ],
+    "candidateCount": 1081,
+    "independentCombinatorialCounts": [
+      649,
+      396,
+      27,
+      9,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "distribution": [
+      {
+        "category": 0,
+        "key": "high-card",
+        "label": "High Card",
+        "probability": 0.6003700277520814
+      },
+      {
+        "category": 1,
+        "key": "pair",
+        "label": "Pair",
+        "probability": 0.36632747456059206
+      },
+      {
+        "category": 2,
+        "key": "two-pair",
+        "label": "Two Pair",
+        "probability": 0.02497687326549491
+      },
+      {
+        "category": 3,
+        "key": "three-of-a-kind",
+        "label": "Three of a Kind",
+        "probability": 0.008325624421831638
+      },
+      {
+        "category": 8,
+        "key": "straight-flush",
+        "label": "Straight Flush",
+        "probability": 0
+      },
+      {
+        "category": 7,
+        "key": "four-of-a-kind",
+        "label": "Four of a Kind",
+        "probability": 0
+      },
+      {
+        "category": 6,
+        "key": "full-house",
+        "label": "Full House",
+        "probability": 0
+      },
+      {
+        "category": 5,
+        "key": "flush",
+        "label": "Flush",
+        "probability": 0
+      },
+      {
+        "category": 4,
+        "key": "straight",
+        "label": "Straight",
+        "probability": 0
+      }
+    ]
+  },
+  "streetUpdates": [
+    {
+      "board": [
+        "7h",
+        "6s",
+        "Ks"
+      ],
+      "candidateCount": 1081,
+      "distribution": [
+        {
+          "category": 0,
+          "key": "high-card",
+          "label": "High Card",
+          "probability": 0.6003700277520814
+        },
+        {
+          "category": 1,
+          "key": "pair",
+          "label": "Pair",
+          "probability": 0.36632747456059206
+        },
+        {
+          "category": 2,
+          "key": "two-pair",
+          "label": "Two Pair",
+          "probability": 0.02497687326549491
+        },
+        {
+          "category": 3,
+          "key": "three-of-a-kind",
+          "label": "Three of a Kind",
+          "probability": 0.008325624421831638
+        },
+        {
+          "category": 8,
+          "key": "straight-flush",
+          "label": "Straight Flush",
+          "probability": 0
+        },
+        {
+          "category": 7,
+          "key": "four-of-a-kind",
+          "label": "Four of a Kind",
+          "probability": 0
+        },
+        {
+          "category": 6,
+          "key": "full-house",
+          "label": "Full House",
+          "probability": 0
+        },
+        {
+          "category": 5,
+          "key": "flush",
+          "label": "Flush",
+          "probability": 0
+        },
+        {
+          "category": 4,
+          "key": "straight",
+          "label": "Straight",
+          "probability": 0
+        }
+      ]
+    },
+    {
+      "board": [
+        "7h",
+        "6s",
+        "Ks",
+        "7c"
+      ],
+      "candidateCount": 1035,
+      "distribution": [
+        {
+          "category": 1,
+          "key": "pair",
+          "label": "Pair",
+          "probability": 0.6270531400966184
+        },
+        {
+          "category": 2,
+          "key": "two-pair",
+          "label": "Two Pair",
+          "probability": 0.2811594202898551
+        },
+        {
+          "category": 3,
+          "key": "three-of-a-kind",
+          "label": "Three of a Kind",
+          "probability": 0.07342995169082125
+        },
+        {
+          "category": 6,
+          "key": "full-house",
+          "label": "Full House",
+          "probability": 0.017391304347826087
+        },
+        {
+          "category": 7,
+          "key": "four-of-a-kind",
+          "label": "Four of a Kind",
+          "probability": 0.000966183574879227
+        },
+        {
+          "category": 8,
+          "key": "straight-flush",
+          "label": "Straight Flush",
+          "probability": 0
+        },
+        {
+          "category": 5,
+          "key": "flush",
+          "label": "Flush",
+          "probability": 0
+        },
+        {
+          "category": 4,
+          "key": "straight",
+          "label": "Straight",
+          "probability": 0
+        },
+        {
+          "category": 0,
+          "key": "high-card",
+          "label": "High Card",
+          "probability": 0
+        }
+      ]
+    },
+    {
+      "board": [
+        "7h",
+        "6s",
+        "Ks",
+        "7c",
+        "Kd"
+      ],
+      "candidateCount": 990,
+      "distribution": [
+        {
+          "category": 2,
+          "key": "two-pair",
+          "label": "Two Pair",
+          "probability": 0.8252525252525252
+        },
+        {
+          "category": 6,
+          "key": "full-house",
+          "label": "Full House",
+          "probability": 0.17272727272727273
+        },
+        {
+          "category": 7,
+          "key": "four-of-a-kind",
+          "label": "Four of a Kind",
+          "probability": 0.00202020202020202
+        },
+        {
+          "category": 8,
+          "key": "straight-flush",
+          "label": "Straight Flush",
+          "probability": 0
+        },
+        {
+          "category": 5,
+          "key": "flush",
+          "label": "Flush",
+          "probability": 0
+        },
+        {
+          "category": 4,
+          "key": "straight",
+          "label": "Straight",
+          "probability": 0
+        },
+        {
+          "category": 3,
+          "key": "three-of-a-kind",
+          "label": "Three of a Kind",
+          "probability": 0
+        },
+        {
+          "category": 1,
+          "key": "pair",
+          "label": "Pair",
+          "probability": 0
+        },
+        {
+          "category": 0,
+          "key": "high-card",
+          "label": "High Card",
+          "probability": 0
+        }
+      ]
+    }
+  ],
+  "equityRiverOracle": {
+    "cases": 4,
+    "method": "逐一枚舉 990 個未知對手底牌，使用既有 poker.compareHands 與新數值 rank helper 交叉核對 wins/ties/losses。",
+    "results": [
+      {
+        "playerHole": [
+          "As",
+          "Kd"
+        ],
+        "board": [
+          "2s",
+          "5h",
+          "9c",
+          "Ts",
+          "Jd"
+        ],
+        "independentCounts": {
+          "wins": 340,
+          "ties": 9,
+          "losses": 641
+        },
+        "wins": 340,
+        "ties": 9,
+        "losses": 641,
+        "outcomes": 990,
+        "equity": 0.347979797979798,
+        "winRate": 0.3434343434343434,
+        "tieRate": 0.00909090909090909,
+        "lossRate": 0.6474747474747474,
+        "exact": true,
+        "method": "exact-enumeration",
+        "standardError": 0
+      },
+      {
+        "playerHole": [
+          "2h",
+          "3d"
+        ],
+        "board": [
+          "Ts",
+          "Js",
+          "Qs",
+          "Ks",
+          "As"
+        ],
+        "independentCounts": {
+          "wins": 0,
+          "ties": 990,
+          "losses": 0
+        },
+        "wins": 0,
+        "ties": 990,
+        "losses": 0,
+        "outcomes": 990,
+        "equity": 0.5,
+        "winRate": 0,
+        "tieRate": 1,
+        "lossRate": 0,
+        "exact": true,
+        "method": "exact-enumeration",
+        "standardError": 0
+      },
+      {
+        "playerHole": [
+          "Ah",
+          "Ad"
+        ],
+        "board": [
+          "2s",
+          "2h",
+          "2c",
+          "Kh",
+          "Kd"
+        ],
+        "independentCounts": {
+          "wins": 860,
+          "ties": 1,
+          "losses": 129
+        },
+        "wins": 860,
+        "ties": 1,
+        "losses": 129,
+        "outcomes": 990,
+        "equity": 0.8691919191919192,
+        "winRate": 0.8686868686868687,
+        "tieRate": 0.00101010101010101,
+        "lossRate": 0.1303030303030303,
+        "exact": true,
+        "method": "exact-enumeration",
+        "standardError": 0
+      },
+      {
+        "playerHole": [
+          "8s",
+          "7h"
+        ],
+        "board": [
+          "4s",
+          "5s",
+          "6s",
+          "9d",
+          "Tc"
+        ],
+        "independentCounts": {
+          "wins": 945,
+          "ties": 9,
+          "losses": 36
+        },
+        "wins": 945,
+        "ties": 9,
+        "losses": 36,
+        "outcomes": 990,
+        "equity": 0.9590909090909091,
+        "winRate": 0.9545454545454546,
+        "tieRate": 0.00909090909090909,
+        "lossRate": 0.03636363636363636,
+        "exact": true,
+        "method": "exact-enumeration",
+        "standardError": 0
+      }
+    ]
+  },
+  "equityFlopOracle": {
+    "cases": 1,
+    "method": "先枚舉 1,081 個 BOSS 底牌，再枚舉每組剩餘 45 張中的 990 種 TURN/RIVER；使用既有 evaluateBest + compareRanks 逐一核對 1,070,190 個非平凡 FLOP 最終結果，不使用新數值 rank helper。",
+    "results": [
+      {
+        "playerHole": [
+          "As",
+          "Kd"
+        ],
+        "board": [
+          "7h",
+          "6s",
+          "Ks"
+        ],
+        "independentCounts": {
+          "wins": 909792,
+          "ties": 6567,
+          "losses": 153831
+        },
+        "wins": 909792,
+        "ties": 6567,
+        "losses": 153831,
+        "outcomes": 1070190,
+        "equity": 0.8531900877414291,
+        "winRate": 0.8501219409637542,
+        "tieRate": 0.006136293555349985,
+        "lossRate": 0.14374176548089593,
+        "exact": true,
+        "method": "exact-enumeration",
+        "standardError": 0,
+        "measuredDurationMs": 16817.858
+      }
+    ]
+  },
+  "equityLockedRoyal": {
+    "cases": 2,
+    "results": [
+      {
+        "playerHole": [
+          "As",
+          "Ks"
+        ],
+        "board": [
+          "Qs",
+          "Js",
+          "Ts"
+        ],
+        "wins": 1070190,
+        "ties": 0,
+        "losses": 0,
+        "outcomes": 1070190,
+        "equity": 1,
+        "winRate": 1,
+        "tieRate": 0,
+        "lossRate": 0,
+        "exact": true,
+        "method": "exact-enumeration",
+        "standardError": 0
+      },
+      {
+        "playerHole": [
+          "As",
+          "Ks"
+        ],
+        "board": [
+          "Qs",
+          "Js",
+          "Ts",
+          "2h"
+        ],
+        "wins": 45540,
+        "ties": 0,
+        "losses": 0,
+        "outcomes": 45540,
+        "equity": 1,
+        "winRate": 1,
+        "tieRate": 0,
+        "lossRate": 0,
+        "exact": true,
+        "method": "exact-enumeration",
+        "standardError": 0
+      }
+    ]
+  },
+  "equityPreflopApproximation": {
+    "cases": 2,
+    "exact": false,
+    "samplesPerCase": 100000,
+    "note": "翻牌前是獨立且可重現的均勻 Monte Carlo；本檢查僅確認抽樣數、輸入順序不變性、標示、勝率合理範圍，不冒稱精確枚舉或外部真值校準。",
+    "results": [
+      {
+        "playerHole": [
+          "As",
+          "Ah"
+        ],
+        "plausibleBounds": [
+          0.84,
+          0.87
+        ],
+        "wins": 84913,
+        "ties": 513,
+        "losses": 14574,
+        "outcomes": 100000,
+        "equity": 0.851695,
+        "winRate": 0.84913,
+        "tieRate": 0.00513,
+        "lossRate": 0.14574,
+        "exact": false,
+        "method": "deterministic-monte-carlo",
+        "standardError": 0.0011181597693308415
+      },
+      {
+        "playerHole": [
+          "7s",
+          "2h"
+        ],
+        "plausibleBounds": [
+          0.32,
+          0.37
+        ],
+        "wins": 31672,
+        "ties": 5760,
+        "losses": 62568,
+        "outcomes": 100000,
+        "equity": 0.34552,
+        "winRate": 0.31672,
+        "tieRate": 0.0576,
+        "lossRate": 0.62568,
+        "exact": false,
+        "method": "deterministic-monte-carlo",
+        "standardError": 0.0014551148738158098
+      }
+    ]
+  },
+  "naturalEngineIsolation": {
+    "hands": 8,
+    "actions": 52,
+    "rangeUpdates": 112,
+    "equityCalculations": 26,
+    "sameBoardChecks": 86,
+    "categorySupportChecks": 82,
+    "minimumTrueCategoryProbability": 0.32727272727272727,
+    "maximumDistributionSumError": 1.1102230246251565e-16,
+    "seeds": [
+      7
+    ],
+    "method": "4 型 × 2 個首手小盲位置 × seed 7；玩家採 CHECK/CALL，BOSS 原引擎自然抽選。每個新公牌集合呼叫兩種顯示算法，每動作比對完全不呼叫算法的同 seed 對照局之整份手牌、session、RNG、牌面與最終帳務。",
+    "results": [
+      {
+        "profileId": "caller",
+        "smallBlind": "player",
+        "seed": 7,
+        "actions": 8,
+        "equityCalculations": 4,
+        "minimumTrueCategoryProbability": 0.34135060129509714,
+        "endingStreet": "river",
+        "result": "showdown",
+        "winner": "player",
+        "board": [
+          "6d",
+          "3c",
+          "Ah",
+          "4c",
+          "6c"
+        ],
+        "playerClosing": 10009.2,
+        "bossClosing": 9990,
+        "fee": 0.8,
+        "jackpotAward": 0,
+        "accountingError": 0,
+        "rngState": 1320036244
+      },
+      {
+        "profileId": "caller",
+        "smallBlind": "npc",
+        "seed": 7,
+        "actions": 8,
+        "equityCalculations": 4,
+        "minimumTrueCategoryProbability": 0.32727272727272727,
+        "endingStreet": "river",
+        "result": "showdown",
+        "winner": "npc",
+        "board": [
+          "9d",
+          "Th",
+          "7d",
+          "7c",
+          "8c"
+        ],
+        "playerClosing": 9990,
+        "bossClosing": 10009.2,
+        "fee": 0.8,
+        "jackpotAward": 0,
+        "accountingError": 0,
+        "rngState": 2519766387
+      },
+      {
+        "profileId": "maniac",
+        "smallBlind": "player",
+        "seed": 7,
+        "actions": 8,
+        "equityCalculations": 4,
+        "minimumTrueCategoryProbability": 0.34135060129509714,
+        "endingStreet": "river",
+        "result": "showdown",
+        "winner": "player",
+        "board": [
+          "6d",
+          "3c",
+          "Ah",
+          "4c",
+          "6c"
+        ],
+        "playerClosing": 10101.2,
+        "bossClosing": 9890,
+        "fee": 8.8,
+        "jackpotAward": 0,
+        "accountingError": 0,
+        "rngState": 1320036244
+      },
+      {
+        "profileId": "maniac",
+        "smallBlind": "npc",
+        "seed": 7,
+        "actions": 10,
+        "equityCalculations": 4,
+        "minimumTrueCategoryProbability": 0.32727272727272727,
+        "endingStreet": "river",
+        "result": "showdown",
+        "winner": "npc",
+        "board": [
+          "9d",
+          "Th",
+          "7d",
+          "7c",
+          "8c"
+        ],
+        "playerClosing": 9930,
+        "bossClosing": 10064.4,
+        "fee": 5.6,
+        "jackpotAward": 0,
+        "accountingError": 0,
+        "rngState": 2519766387
+      },
+      {
+        "profileId": "sniper",
+        "smallBlind": "player",
+        "seed": 7,
+        "actions": 8,
+        "equityCalculations": 4,
+        "minimumTrueCategoryProbability": 0.34135060129509714,
+        "endingStreet": "river",
+        "result": "showdown",
+        "winner": "player",
+        "board": [
+          "6d",
+          "3c",
+          "Ah",
+          "4c",
+          "6c"
+        ],
+        "playerClosing": 10064.4,
+        "bossClosing": 9930,
+        "fee": 5.6,
+        "jackpotAward": 0,
+        "accountingError": 0,
+        "rngState": 1320036244
+      },
+      {
+        "profileId": "sniper",
+        "smallBlind": "npc",
+        "seed": 7,
+        "actions": 1,
+        "equityCalculations": 1,
+        "minimumTrueCategoryProbability": 1,
+        "endingStreet": "preflop",
+        "result": "fold",
+        "winner": "player",
+        "board": [],
+        "playerClosing": 10004.6,
+        "bossClosing": 9995,
+        "fee": 0.4,
+        "jackpotAward": 0,
+        "accountingError": 0,
+        "rngState": 1320036244
+      },
+      {
+        "profileId": "trapper",
+        "smallBlind": "player",
+        "seed": 7,
+        "actions": 8,
+        "equityCalculations": 4,
+        "minimumTrueCategoryProbability": 0.34135060129509714,
+        "endingStreet": "river",
+        "result": "showdown",
+        "winner": "player",
+        "board": [
+          "6d",
+          "3c",
+          "Ah",
+          "4c",
+          "6c"
+        ],
+        "playerClosing": 10027.6,
+        "bossClosing": 9970,
+        "fee": 2.4,
+        "jackpotAward": 0,
+        "accountingError": 0,
+        "rngState": 1320036244
+      },
+      {
+        "profileId": "trapper",
+        "smallBlind": "npc",
+        "seed": 7,
+        "actions": 1,
+        "equityCalculations": 1,
+        "minimumTrueCategoryProbability": 1,
+        "endingStreet": "preflop",
+        "result": "fold",
+        "winner": "player",
+        "board": [],
+        "playerClosing": 10004.6,
+        "bossClosing": 9995,
+        "fee": 0.4,
+        "jackpotAward": 0,
+        "accountingError": 0,
+        "rngState": 1320036244
+      }
+    ]
+  },
+  "measuredDurationMs": 19601.786
+}
