@@ -8,6 +8,7 @@
 - 桌面 Chromium 四型自然種子 caller 22／maniac 188／sniper 246／trapper 30，沒有手動指定牌面。四型 × 320／390／430／844 寬度共 **16 組**入口無水平溢出。角色屬性完整記錄確認入場→BET→關閉重開→連點 FIGHT→發牌都為同一位；每次入口只取一次 seed。
 - 正常速度（sniper）與減少動態（其餘三型）通過。入口餘額 10,000、POT／TOTAL BET 0、牌庫 52；BET 100 開局與原引擎同 seed 對照均為雙方 9,900、POT 200、玩家 TOTAL BET 100，連點不重扣。結算後調 BET、NEXT HAND trapper→sniper、離桌保留資產再入 maniac、Reset 後 sniper neutral 均通過。
 - 320 寬圖片延遲載入：入口與 FIGHT 等待期間保持 sniper、遮罩可見、舊近景隱藏，載入後同型恢復。刻意阻擋 maniac 圖片時使用無型名替身且可正常開局，不切回 caller、不鎖死。這組網路失敗是主動注入的驗證條件。
+- 首次發布後複查截圖發現入口通用 `visibility:hidden !important` 的高優先序仍會隱藏載入遮罩；已將 `.boss-scene-transition` 排除於入口隱藏清單，並更新入口 CSS 快取。補測改查實際 computed visibility，慢圖／失敗流程與建置重跑通過，重新檢視 320 截圖確認不再露出靜態 caller。此補正另需一筆提交，最終上線以部署後完整 SHA 為準。
 - 正常流程 **0 頁面錯誤、0 HTTP 錯誤**；故障注入組亦無頁面錯誤。遊戲、工具、數學文件、API 及新模組 HTTP 200，文件保留 14 表與 section-4。截圖已檢視確認入場／發牌為相同角色。
 
 證據：`output/playwright/{tests-v39,build-v39,entry-v39-local,entry-v39-edges-local}.txt`、`v39-local-*.png`。以上為桌面 Chromium viewport，非實體手機或新機率統計；數學沿用 v35，沒有新增 RTP 校準。這份提交前紀錄不代表已推送或公開上線；精確提交 SHA、Pages run 與正式站結果由部署後證據及完成訊息補足。

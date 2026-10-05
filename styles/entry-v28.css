@@ -1,5 +1,5 @@
 /* The entry keeps the boss, Jackpot and original balance; table controls wait until entry closes. */
-html[data-entry-open='true'] .game > :not(.scene-art):not(.scene-closeup):not(.scene-light):not(.npc-grip):not(.jackpot-badge) { visibility:hidden !important; pointer-events:none !important; }
+html[data-entry-open='true'] .game > :not(.scene-art):not(.scene-closeup):not(.scene-light):not(.npc-grip):not(.jackpot-badge):not(.boss-scene-transition) { visibility:hidden !important; pointer-events:none !important; }
 #buyin-dialog::backdrop { background: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; }
 #buyin-dialog {
   --entry-top: max(180px, calc(var(--viewport-height, 100svh) * .27));
