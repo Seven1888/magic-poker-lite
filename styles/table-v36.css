@@ -21,7 +21,7 @@
 .game .win-money-layer { translate:0 72px; }
 
 /* Solid saturated rims, separated from the white faces and dark red felt. */
-.game { --best-player:#ffe019; --best-boss:#ff1748; --best-divider:#21101b; }
+.game { --best-player:#ffe019; --best-boss:#259dff; --best-divider:#21101b; }
 .game #player-cards .card.best:not(.covered):not(.blank),
 .game #board .card.best:not(.covered):not(.blank) {
  outline:4px solid var(--best-player); outline-offset:0;
@@ -44,7 +44,7 @@
  border-radius:inherit; box-shadow:inset 0 0 0 1px var(--best-divider);
  pointer-events:none; z-index:3;
 }
-/* A shared best card carries two complete rims: gold inside, red outside. */
+/* A shared best card carries two complete rims: gold inside, blue outside. */
 .game #board .card.best.npc-best:not(.covered):not(.blank):before {
  border:0; box-shadow:none;
 }

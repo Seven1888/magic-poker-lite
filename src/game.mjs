@@ -6,7 +6,8 @@ import {fitStage} from './stage-fit.mjs?v=35';
 import {getHudSnapshot} from './hud-state.mjs?v=35';
 import {createGameEffects} from './game-effects.mjs?v=36';
 import {renderBetPresets,updateBetSelection,setupEntryFeatures} from './entry-view.mjs?v=35';
-import {betOptions,minimumAssets,tableConfig} from './entry-model.mjs?v=35';
+import {betOptions,minimumAssets,tableConfig} from './entry-model.mjs?v=37';
+import {nextHandBetConfig} from './next-hand-bet.mjs?v=37';
 import {icon} from './ui-icons.mjs?v=35';
 import {JACKPOT_MULTIPLIERS,quoteJackpot} from './jackpot.mjs?v=35';
 import {renderJackpotWin} from './jackpot-view.mjs?v=35';
@@ -30,6 +31,7 @@ const $=id=>document.getElementById(id);
 const PLAYER_ACTION_LABELS={fold:'FOLD',check:'CALL',call:'CALL',bet:'RAISE',raise:'RAISE'};
 let config=loadConfig(),session=null,hand=null,busy=false,drawLog=[],lastResponse=null,handArchive=[],equityCache='',toastTimer,closedTable=null,phase='';
 let selectedBet=1,entryBase=config,betValues=[...new Set([1,...betOptions(config)])].sort((a,b)=>a-b),demoAssets=config.buyIn;
+let nextBetDraft=1,nextBetValues=[];
 const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const potView=createPotView({root:document,reducedMotion:reduceMotion,locale:'en',onPhase:presentTransferPhase});
 const effects=createGameEffects({root:document,reducedMotion:reduceMotion});
@@ -99,7 +101,7 @@ function presentTransferPhase(event){
 const tierNames={royal:'Royal Flush',straightFlush:'Straight Flush',quads:'Four of a Kind'};
 const tierCards={royal:['As','Ks','Qs','Js','Ts'],straightFlush:['9h','8h','7h','6h','5h'],quads:['As','Ah','Ad','Ac','Ks']};
 function renderJackpot(){
- const c=hand?.config||session?.config||{...config,bigBlind:selectedBet},enabled=c.jackpotEnabled!==false;
+ const c=(hand?.status==='settled'&&!busy?session?.config:hand?.config)||session?.config||{...config,bigBlind:selectedBet},enabled=c.jackpotEnabled!==false;
  $('jackpot-amount').textContent=enabled?money(quoteJackpot('royal',c.bigBlind).award):'—';
  $('jackpot-button').setAttribute('aria-label',enabled?`View Jackpot prizes, up to ${money(quoteJackpot('royal',c.bigBlind).award)}`:'Jackpot is off for this table');
  $('jackpot-tiers').innerHTML=Object.entries(JACKPOT_MULTIPLIERS).map(([tier,multiplier])=>`<div class="jp-tier jp-tier-${tier}"><div class="jp-tier-name">${icon('crown')}<b>${tierNames[tier]}</b><small>${multiplier}× BET</small></div><div class="jp-cards">${tierCards[tier].map(c=>cardMarkup(c)).join('')}</div><strong>${enabled?money(quoteJackpot(tier,c.bigBlind).award):'OFF'}</strong></div>`).join('');
@@ -117,7 +119,7 @@ function decorateMenu(){
  $('menu-dialog').append(reset);
  const rules=document.querySelector('#help-dialog .rules');
  rules.innerHTML=`<li>${icon('chip')}<b>Choose BET · Draw your blind</b><span>SMALL BLIND posts ½ BET; BIG BLIND posts 1 BET. Your first blind is drawn 50/50; positions alternate each hand. Small blind acts first preflop; big blind acts first after the flop.</span></li><li>${icon('cards')}<b>2 hole cards + 5 board cards</b><div class="rule-card-flow"><span>2</span><i>＋</i><span>3</span><i>→</i><span>1</span><i>→</i><span>1</span></div><span>PREFLOP → FLOP → TURN → RIVER</span></li><li>${icon('call')}<b>Your move · Their response</b><span>CALL matches the current bet, or checks for free when nothing is due. RAISE opens betting or increases an existing bet. The amount is what you add now. One raise per street.</span></li><li>${icon('crown')}<b>Best 5 of 7</b><span>A fold ends the hand. Otherwise, compare at showdown. Special hands earn a Jackpot bonus.</span></li>`;
- const fees=document.createElement('details');fees.className='rules-details';fees.innerHTML='<summary>Hand highlights, turn order & pot fee ⓘ</summary><p>Gold edges mark your complete best five, including kickers. Before five cards are visible, all your visible cards glow. Red edges mark the opponent’s best five using only their revealed hole cards and the board. Shared cards can carry both gold and red edges.</p><p>Your controls and BOSS responses always read FOLD, CALL and RAISE. A free CALL performs a check; RAISE opens betting when no bet exists yet. These are simplified display names for both seats. If the opponent has not acted, they may still check or bet in the same street. Two checks close the street; the next shared cards are then revealed for the new street.</p><p>Both seats post before cards are dealt: SMALL BLIND pays ½ BET and BIG BLIND pays 1 BET. Small blind acts first preflop and can fold, call the remaining ½ BET, or raise. Big blind acts first after the flop. Folding forfeits chips already committed, except any uncalled excess. Choosing a BET level does not charge chips. Both seats follow the same rule. The floating BOSS badges above your buttons show opponent FOLD and RAISE response chances, not your win chance. Other responses are omitted; the percentages need not total 100%.</p><p>After every hand, including folds, the opponent’s demo chips reset to match your remaining chips. Your own balance keeps the actual winnings and losses.</p><p id="help-fee"></p>';
+ const fees=document.createElement('details');fees.className='rules-details';fees.innerHTML='<summary>Hand highlights, turn order & pot fee ⓘ</summary><p>Gold edges mark your complete best five, including kickers. Before five cards are visible, all your visible cards glow. Blue edges mark the opponent’s best five using only their revealed hole cards and the board. Shared cards can carry both gold and blue edges.</p><p>Your controls and BOSS responses always read FOLD, CALL and RAISE. A free CALL performs a check; RAISE opens betting when no bet exists yet. These are simplified display names for both seats. If the opponent has not acted, they may still check or bet in the same street. Two checks close the street; the next shared cards are then revealed for the new street.</p><p>Both seats post before cards are dealt: SMALL BLIND pays ½ BET and BIG BLIND pays 1 BET. Small blind acts first preflop and can fold, call the remaining ½ BET, or raise. Big blind acts first after the flop. Folding forfeits chips already committed, except any uncalled excess. Choosing a BET level does not charge chips. Both seats follow the same rule. The floating BOSS badges above your buttons show opponent FOLD and RAISE response chances, not your win chance. Other responses are omitted; the percentages need not total 100%.</p><p>After every hand, including folds, the opponent’s demo chips reset to match your remaining chips. Your own balance keeps the actual winnings and losses. After settlement, use BET to set the next hand’s amount, then NEXT HAND to deal. Changing BET costs no chips; closing the picker cancels unsaved changes.</p><p id="help-fee"></p>';
  rules.after(fees);
  document.querySelector('#help-dialog>p.muted').textContent='Standard 52-card deck, no jokers. Starting-hand boosts only redraw weak hole cards during the deal. Jackpot awards use the actual showdown hand.';
  const ledger=$('settlement'),details=document.createElement('details');details.className='result-accounting';details.innerHTML=`<summary>${icon('wallet')}Chip details <span>⌄</span></summary>`;ledger.replaceWith(details);details.append(ledger);
@@ -185,8 +187,46 @@ function leaveTable(){
   if(busy||hand?.status==='playing'){toast('Finish this hand first.');return;}
   if(!session)return;const balance=session.stacks.player;closedTable={playerBalance:balance,npcBalance:session.stacks.npc,buyIn:session.config.buyIn,settledTableProfit:balance-session.config.buyIn,jackpotAwards:session.jackpotAwards};session=null;hand=null;lastResponse=null;drawLog=[];equityCache='';render();toast(`Left the table. Balance kept: ${money(balance)}.`);
 }
+function openNextBet(){
+ if(busy||!session||hand?.status!=='settled')return;
+ nextBetDraft=session.config.bigBlind;
+ nextBetValues=[...new Set([...betValues,nextBetDraft])].sort((a,b)=>a-b);
+ document.querySelectorAll('dialog[open]').forEach(dialog=>dialog.close());
+ updateNextBet();show('next-bet-dialog');
+}
+function updateNextBet(){
+ if(!session)return;
+ const index=nextBetValues.indexOf(nextBetDraft);
+ $('next-bet-value').textContent=money(nextBetDraft);
+ $('next-bet-minus').disabled=index<=0;
+ $('next-bet-plus').disabled=index>=nextBetValues.length-1;
+ $('next-bet-balance').textContent=money(session.stacks.player);
+ $('next-bet-minimum').textContent=money(minimumAssets(session.config,nextBetDraft));
+ $('next-bet-blinds').textContent=`SMALL BLIND ${blindAmount(nextBetDraft/2)} · BIG BLIND ${blindAmount(nextBetDraft)}`;
+ $('next-bet-jackpot').textContent=session.config.jackpotEnabled!==false?`ROYAL FLUSH ${money(quoteJackpot('royal',nextBetDraft).award)}`:'JACKPOT OFF';
+ let error='';
+ try{
+  if(busy||Math.min(...Object.values(session.stacks))<.01)throw new Error('Not enough chips to start another hand.');
+  nextHandBetConfig(session,nextBetDraft);
+ }catch(cause){error=translateError(cause);}
+ $('next-bet-error').textContent=error;$('next-bet-confirm').disabled=!!error;
+}
+$('round-bet').onclick=openNextBet;
+$('result-bet').onclick=openNextBet;
+$('next-bet-minus').onclick=()=>{nextBetDraft=nextBetValues[Math.max(0,nextBetValues.indexOf(nextBetDraft)-1)];updateNextBet();};
+$('next-bet-plus').onclick=()=>{nextBetDraft=nextBetValues[Math.min(nextBetValues.length-1,nextBetValues.indexOf(nextBetDraft)+1)];updateNextBet();};
+$('next-bet-form').onsubmit=e=>{
+ e.preventDefault();if(busy||!session||hand?.status!=='settled')return;
+ updateNextBet();if($('next-bet-confirm').disabled)return;
+ try{
+  // Replace only the next hand's settings; the settled hand keeps its own config.
+  session.config=nextHandBetConfig(session,nextBetDraft);selectedBet=session.config.bigBlind;
+  $('next-bet-dialog').close();renderActions();renderJackpot();
+  toast(`Next hand · BET ${money(selectedBet)}`);
+ }catch(error){$('next-bet-error').textContent=translateError(error);}
+};
 async function newHand(){
-  if(busy)return;
+  if(busy||!session||hand?.status==='playing'||$('next-bet-dialog').open)return;
   $('result-dialog').close();
   if(session&&Math.min(...Object.values(session.stacks))<.01){setupBuyin();return;}
   try{busy=true;phase='DEALING';hand=startHand(session);drawLog=[];lastResponse=null;equityCache='';pendingPlayerAction=null;delete $('game').dataset.chosenAction;paintDistribution([]);setTableCue('contribution','POST BLINDS');await presentHand();await continuePlay();}catch(error){busy=false;phase='';bossAction.clear();setTableCue();toast(translateError(error));render();setupBuyin();}
@@ -352,8 +392,15 @@ function renderActions(){
   const root=$('action-buttons'),h=hud(),playing=hand?.status==='playing',settled=hand?.status==='settled';
   for(const id of ['menu-button','deck-button','balance-button','pot-info-button','jackpot-button','table-rank-button'])$(id).disabled=busy;
   $('game').dataset.busy=String(busy);$('round-cta').hidden=!!hand&&(!settled||busy);$('result-details').hidden=false;$('result-details').disabled=!settled||busy;
+  $('round-cta').classList.toggle('has-bet-picker',settled);
+  $('round-bet').hidden=!settled;$('round-bet').disabled=busy||!settled;
+  const nextBet=session?.config.bigBlind??selectedBet,canContinue=!!session&&Math.min(...Object.values(session.stacks))>=.01;
+  $('round-bet-value').textContent=money(nextBet);
+  $('round-bet').setAttribute('aria-label',`Change next hand BET, currently ${money(nextBet)}`);
+  $('result-bet').innerHTML=`BET <b>${money(nextBet)}</b>`;$('result-bet').disabled=busy||!settled;
+  $('sit-button').disabled=busy||(settled&&!canContinue);$('next-hand').disabled=busy||!settled||!canContinue;
   if(!hand){$('sit-button').innerHTML=`${icon('play')}<b>FIGHT</b>`;$('sit-button').onclick=setupBuyin;}
-  else if(settled){$('sit-button').innerHTML=`${icon('play')}<b>${Math.min(...Object.values(session.stacks))<.01?'CHOOSE BET':'NEXT HAND'}</b>`;$('sit-button').onclick=newHand;}
+  else if(settled){$('sit-button').innerHTML=`${icon('play')}<b>NEXT HAND</b>`;$('sit-button').onclick=newHand;}
   const actions=h.actions,passive=actions.find(a=>a.type==='call'||a.type==='check'),aggressive=actions.find(a=>a.type==='raise'||a.type==='bet');
   const owed=playing?Math.max(0,hand.currentBet-hand.streetBets.player):0;
   const slots=[{type:'fold',a:actions.find(a=>a.type==='fold')},{type:passive?.type||(owed?'call':'check'),a:passive},{type:aggressive?.type||(playing&&hand.currentBet>0?'raise':'bet'),a:aggressive}];
@@ -493,7 +540,7 @@ function showResult(){
   const rows=[['Total bet','totalContribution'],['Uncalled refund','refund'],['Matched wager','matchedWager'],['Gross pot share','gross'],[`Pot fee ${pct(1-hand.config.targetRtp)}`,'fee'],['Pot return','netReturn'],['Jackpot bonus','jackpotAward'],['Total return','totalReturn'],['Net profit','profit'],['Closing balance','stackAfter']];
   $('settlement').innerHTML=(r.jackpot?`<div class="result-jp">${icon('crown')}${tierNames[r.jackpot.tier]} <b>+${money(r.jackpot.award)}</b></div>`:'')+'<div class="ledger-head"><span>Chip details</span><span>You</span><span>Opponent</span></div>'+rows.map(([label,key])=>`<div class="ledger-row ${key==='profit'?'total':''}"><span>${label}</span><span>${money(r.player[key])}</span><span>${money(r.npc[key])}</span></div>`).join('');
   $('result-note').textContent=`Opponent chips now match yours: ${money(session.stacks.player)}. This demo refresh is separate from the payout.`;
-  $('next-hand').innerHTML=`${icon('play')}${Math.min(...Object.values(session.stacks))<.01?'CHOOSE BET':'NEXT HAND'}`;show('result-dialog');
+  $('next-hand').innerHTML=`${icon('play')}NEXT HAND`;show('result-dialog');
   if(!reduceMotion&&p.profit>0)effects.animate($('result-award-value'),[{transform:'scale(.65)',filter:'brightness(2.4)'},{transform:'scale(1.1)',filter:'brightness(1.3)',offset:.65},{transform:'scale(1)',filter:'brightness(1)'}],{duration:1100,easing:'cubic-bezier(.2,.9,.3,1)'});
 }
 function renderHistory(){

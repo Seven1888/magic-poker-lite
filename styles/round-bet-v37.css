@@ -1,0 +1,254 @@
+/* Give the revealed BOSS rank more presence between its cards and the turn strip. */
+.game #showdown-preview { top:326px; width:214px; height:30px; padding:0 12px; }
+.game #showdown-preview .showdown-caption > strong { font-size:17.5px; line-height:25px; }
+
+/* Between hands: keep the next deal primary and put its adjustable BET beside it. */
+.game .controls .round-cta.has-bet-picker {
+  inset-inline:10px;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,2.2fr);
+  align-items:start;
+  gap:9px;
+}
+.game .controls:has(.round-cta.has-bet-picker:not([hidden])) .action-buttons {
+  visibility:hidden;
+  pointer-events:none;
+}
+.game .controls .round-cta:not(.has-bet-picker) .round-bet { display:none; }
+.game .controls .round-cta.has-bet-picker .action {
+  height:68px;
+  min-height:calc(48px / var(--stage-scale,1));
+  margin:0;
+  padding:6px 8px 9px;
+}
+.game .controls .round-cta.has-bet-picker .round-bet {
+  --key-top:#365573;
+  --key-bottom:#1b3049;
+  --key-edge:#9bb4c9;
+  gap:0;
+}
+.game .controls .round-cta .round-bet > span {
+  color:#d1e2f0;
+  font-size:12px;
+  line-height:17px;
+  letter-spacing:1.7px;
+}
+.game .controls .round-cta .round-bet > strong {
+  max-width:100%;
+  color:#fff0ce;
+  font-size:23px;
+  line-height:28px;
+  letter-spacing:0;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+}
+.game .controls .round-cta.has-bet-picker #sit-button {
+  gap:3px;
+  font-size:22px;
+  letter-spacing:.8px;
+}
+.game .controls .round-cta.has-bet-picker #sit-button b {
+  font-size:22px;
+  line-height:27px;
+}
+.game .controls .round-cta.has-bet-picker #sit-button small {
+  font-size:11px;
+  line-height:14px;
+  letter-spacing:.25px;
+}
+
+/* The compact picker is outside the scaled stage, with native viewport scrolling. */
+#next-bet-dialog {
+  width:360px;
+  padding:24px 22px 22px;
+  border:1px solid #c3a16f;
+  border-radius:19px;
+  background:radial-gradient(ellipse at 50% 0,#344157,#172238 60%,#111b2d);
+  box-shadow:inset 0 1px #ffebc32b,inset 0 0 0 4px #10203480,0 20px 65px #000b;
+  scrollbar-width:thin;
+  scrollbar-color:#9e8764 #152035;
+}
+#next-bet-dialog::backdrop { background:#080e1da6; backdrop-filter:blur(3px); }
+#next-bet-form { margin:0; font-family:var(--font); }
+#next-bet-dialog .dialog-close {
+  width:48px;
+  height:48px;
+  min-width:48px;
+  min-height:48px;
+  top:5px;
+  right:5px;
+  color:#e6d8bb;
+  font-size:28px;
+  line-height:44px;
+  border-radius:12px;
+}
+#next-bet-dialog .eyebrow {
+  margin-right:30px;
+  color:#c9b48e;
+  font-size:10px;
+  line-height:15px;
+  letter-spacing:1.5px;
+}
+#next-bet-title {
+  margin:5px 30px 4px 0;
+  color:var(--gold-light,#fff0ce);
+  font-size:25px;
+  font-weight:800;
+  line-height:30px;
+  letter-spacing:.6px;
+}
+#next-bet-dialog .muted {
+  margin:0 0 17px;
+  color:#bac9dc;
+  font-size:12px;
+  line-height:18px;
+}
+.next-bet-picker {
+  display:grid;
+  grid-template-columns:48px minmax(0,1fr) 48px;
+  align-items:center;
+  gap:12px;
+  padding:12px;
+  border:1px solid #9fb7d044;
+  border-radius:12px;
+  background:#0b172980;
+  box-shadow:inset 0 1px 5px #050d1d66;
+}
+.next-bet-picker button {
+  width:48px;
+  height:48px;
+  padding:0;
+  border:1px solid #9eb8cd;
+  border-radius:10px;
+  color:#f3e7cd;
+  background:linear-gradient(#385876,#213951);
+  box-shadow:inset 0 1px #d5e9f333,inset 0 -3px #0b1c2d88,0 2px #061122;
+  font-size:29px;
+  font-weight:600;
+  line-height:44px;
+  touch-action:manipulation;
+}
+.next-bet-picker button:disabled { opacity:.4; }
+#next-bet-value {
+  min-width:0;
+  color:#ffe4ad;
+  font-size:34px;
+  font-weight:800;
+  line-height:44px;
+  letter-spacing:-.5px;
+  text-align:center;
+  font-variant-numeric:tabular-nums;
+  overflow-wrap:anywhere;
+}
+.next-bet-summary {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
+  margin:15px 0 12px;
+}
+.next-bet-summary > div { min-width:0; }
+.next-bet-summary > div + div { padding-left:10px; border-left:1px solid #b6c8df26; }
+.next-bet-summary span {
+  display:block;
+  color:#aebed4;
+  font-size:9px;
+  line-height:15px;
+  letter-spacing:.7px;
+}
+.next-bet-summary strong {
+  display:block;
+  color:#f2e3c8;
+  font-size:18px;
+  line-height:24px;
+  font-variant-numeric:tabular-nums;
+  overflow-wrap:anywhere;
+}
+#next-bet-blinds,#next-bet-jackpot {
+  margin:5px 0;
+  color:#c0cce0;
+  font-size:11px;
+  line-height:17px;
+}
+#next-bet-jackpot { color:#d9c091; }
+#next-bet-error {
+  margin:11px 0 0;
+  color:#ffbcc0;
+  font-size:12px;
+  line-height:18px;
+}
+#next-bet-error:empty { display:none; }
+#next-bet-confirm {
+  min-height:52px;
+  margin-top:17px;
+  padding:12px 8px;
+  border:1px solid #e1bd80;
+  border-radius:11px;
+  color:#fff0d2;
+  background:linear-gradient(135deg,#ffffff16,transparent 50%),linear-gradient(#9b6540,#613823);
+  box-shadow:inset 0 1px #fff4,inset 0 -4px #331c2466,0 3px #100d1d;
+  font-size:15px;
+  font-weight:800;
+  letter-spacing:.8px;
+  text-shadow:0 1px 2px #241a22;
+}
+#next-bet-confirm:disabled { opacity:.45; }
+
+/* The detailed result keeps the same left BET / right NEXT HAND order. */
+#result-dialog .result-next-actions {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,2.2fr);
+  gap:9px;
+  align-items:stretch;
+  margin:15px 0 3px;
+}
+#result-dialog .result-next-actions #next-hand {
+  min-width:0;
+  min-height:56px;
+  margin:0;
+  padding:10px 7px;
+  font-size:18px;
+  letter-spacing:.3px;
+}
+#result-dialog .result-next-actions #result-bet {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:2px;
+  min-width:0;
+  min-height:56px;
+  padding:7px 5px;
+  border:1px solid #9bb4c9;
+  border-radius:13px;
+  background:linear-gradient(#365573,#1b3049);
+  color:#d1e2f0;
+  box-shadow:inset 0 1px #fff3,inset 0 -3px #07172988,0 3px #0c1121;
+  font-size:11px;
+  font-weight:700;
+  line-height:15px;
+  letter-spacing:1px;
+}
+#result-dialog #result-bet b {
+  max-width:100%;
+  color:#fff0ce;
+  font-size:19px;
+  line-height:23px;
+  letter-spacing:0;
+  font-variant-numeric:tabular-nums;
+}
+@media(max-width:359px) {
+  #next-bet-dialog { padding:21px 17px 19px; }
+  #next-bet-title { font-size:23px; }
+  .next-bet-picker { gap:8px; padding:10px; }
+  #next-bet-value { font-size:30px; }
+  #result-dialog .result-next-actions #next-hand { font-size:16px; letter-spacing:0; }
+}
+@media(max-height:650px) {
+  #next-bet-dialog .dialog-close {
+    position:sticky;
+    top:0;
+    margin-block-end:-48px;
+    margin-inline-end:-10px;
+    background:#172238;
+  }
+}

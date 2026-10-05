@@ -13,7 +13,6 @@ test('new demo sessions start at 10,000 without changing the deal or overriding 
  assert.equal(tableConfig(DEFAULT_CONFIG,1,10000).buyIn,10000);
 });
 test('BET scales required assets, both blinds and all streets without charging entry assets',()=>{
- assert.deepEqual(betOptions(DEFAULT_CONFIG),[1,2,5,10,20,50]);
  assert.equal(minimumAssets(DEFAULT_CONFIG,50),1000);
  const c=tableConfig(DEFAULT_CONFIG,20,875.6);
  assert.equal(c.smallBlind,10);assert.equal(c.bigBlind,20);assert.equal(c.buyIn,875.6);
@@ -29,11 +28,19 @@ test('earned balance above the configured maximum is preserved on re-entry',()=>
  const c=tableConfig(DEFAULT_CONFIG,10,13600.55);assert.equal(c.buyIn,13600.55);assert.equal(c.maxBuyIn,13600.55);
 });
 
-test('the +/- picker preserves fractional BET and blind values without rendering preset shortcuts',()=>{
+test('the +/- picker uses the Hands Up fixed BET ladder independently of probability settings',()=>{
+ const expected=[1,2,5,10,20,50,100,200,500,800,1000,1200,1500,1800,2000];
+ for(const config of [DEFAULT_CONFIG,{...DEFAULT_CONFIG,bigBlind:.15},{...DEFAULT_CONFIG,bigBlind:2000},undefined]){
+  const options=betOptions(config);
+  assert.deepEqual(options,expected);
+  assert.equal(renderBetPresets(options),'');
+ }
+ const changedOptions=betOptions(DEFAULT_CONFIG);
+ changedOptions[0]=.02;
+ assert.deepEqual(betOptions(DEFAULT_CONFIG),expected,'callers cannot mutate subsequent picker options');
+});
+test('the shared entry calculations preserve fractional BET settings outside the fixed UI ladder',()=>{
  const base={...DEFAULT_CONFIG,bigBlind:.15};
- const options=betOptions(base);
- assert.ok(options.includes(.075));
- assert.equal(renderBetPresets(options),'');
  const input={value:''};
  updateBetSelection(.075,{querySelector:()=>input,querySelectorAll:()=>[]});
  assert.equal(input.value,'0.075');

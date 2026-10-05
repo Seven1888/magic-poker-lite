@@ -1,12 +1,14 @@
-# Engine API contract · v36 presentation / v35 four-BOSS math · 2026-10-05
+# Engine API contract · v37 between-hand BET / v35 four-BOSS math · 2026-10-05
 
-Version v36 changes presentation while retaining the v35 model: four published street/strength BOSS tables, uniform non-repeating encounters, full action trees and player-level reports. Real shared-deck poker determines the winner; Hands Up outcome-first construction and its RTP target are not imported. `output/math-v35-validation.json` remains v35 evidence, not a new v36 RTP run.
+v37 增加局間 BET 設定並更新呈現；保留 v35 四型固定街道／牌力表、排除上一型的輪替、完整行動樹與玩家統計。勝負仍由真實共享牌庫決定，Hands Up 只提供固定 BET 級距，不移入其先定輸贏或 RTP 目標。`output/math-v35-validation.json` 仍是 v35 證據，不是 v37 新 RTP 試跑。
 
-## v36 呈現契約（不改引擎介面）
+## v37 呈現契約
+
+結算與派彩演出完成後，左側較小 BET 開啟局間調整小窗，右側 NEXT HAND 為主按鈕。＋／−只變更草稿，CONFIRM BET 只更新下一手的 `session.config`；關閉取消草稿，NEXT HAND 才呼叫 `startHand`、扣盲與發牌。BOSS 牌型文字由 14 放大至 17.5 舞台 px（＋25%），底板由 170×25 放大至 214×30，top 保持 326；玩家／BOSS 最佳五張分別為 4px `#ffe019` 金框／`#259dff` 藍框，共用牌金內藍外。以下 v36 公開資訊與演出順序繼續適用。
 
 BOSS 名稱／副標不再生成於牌桌；`hand.bossProfile`、固定表及型別稽核欄位不變。角色與桌前底牌上移，畫面順序為角色牌→當前行動→公共牌→POT→玩家手牌；行動底板位於公共牌上方，TOTAL WIN 沿用 POT 區及原本來源籌碼到達才清空的契約。
 
-每顆玩家按鈕的 preview 為左側單一 BOSS／右側原機率的異色合併塊；同手同街有效來源、玩家籌碼先抵達 POT 再飛標籤、中央完整真比例及單次 `sampleDistribution`／`applyAction` 維持。實色 4px 金／紅框標玩家／已揭 BOSS 最佳五張（含 kicker），深色分隔，共用牌金內紅外，完整揭牌後才調暗未入選牌。
+每顆玩家按鈕的 preview 為左側單一 BOSS／右側原機率的異色合併塊；同手同街有效來源、玩家籌碼先抵達 POT 再飛標籤、中央完整真比例及單次 `sampleDistribution`／`applyAction` 維持。實色 4px 金／藍框標玩家／已揭 BOSS 最佳五張（含 kicker），深色分隔，共用牌金內藍外，完整揭牌後才調暗未入選牌。
 
 `createGameEffects().reveal(targets,{onReveal,onVisible,holdMs,staggerMs})` 中，`onReveal` 在側邊換牌面，`onVisible` 在正面展開完成後執行；可見張數、牌型、亮框與公開資料估算只由後者推進。玩家兩張底牌可見後才顯示牌型，BOSS 依真正揭開的底牌逐張更新；換手清空舊牌型。減少動態仍保持換面→可見通知順序，取消不送出過期通知。
 
@@ -44,7 +46,7 @@ New rerolls use `unpaired`: a pair stops immediately; otherwise another independ
 
 Import from `./src/entry-model.mjs`. These functions are pure configuration helpers, not a wallet service.
 
-- `betOptions(config)` returns unique BET choices based on `[.1,.2,.5,1,2,5] × config.bigBlind`, with a minimum of `.02` and six-decimal rounding. Defaults: `[1,2,5,10,20,50]`.
+- `betOptions(config)` returns a fresh array of the 15 fixed Hands Up BET levels: `[1,2,5,10,20,50,100,200,500,800,1000,1200,1500,1800,2000]`. `config` does not change this ladder. Entry defaults to 1; both entry and between-hand UI move to the adjacent level rather than adding a fixed step. Source: the read-only `Hands Up/simulation-engine.js` `FIXED_STAKES` table.
 - `minimumAssets(config,bet)` returns `config.minBuyIn/config.bigBlind × bet` (default 20 BB).
 - `tableConfig(config,bet,assets)` validates affordable entry, makes `bigBlind=bet` and `smallBlind=bet/2`, scales all `betSize` values by `bet/config.bigBlind`, and sets `buyIn=assets`. Its `maxBuyIn` becomes at least the actual assets, so it does not silently discard a player's accumulated balance. The result goes through `normalizeConfig`.
 
@@ -53,6 +55,15 @@ Selecting BET and creating the session do not charge chips. `startHand` automati
 The UI initializes its in-page assets once from `config.buyIn` (default 10000). The v30 default `maxBuyIn` is also 10000 so normalization does not cap that starting amount. `loadConfig()` continues to preserve saved custom settings; the update does not overwrite saved buy-ins, an active session or an existing in-page balance. A fresh page without saved settings uses 10000, and Probability Lab's Restore defaults loads that default configuration.
 
 On leaving a table the UI retains the actual player stack, including credited Jackpot, and uses that balance at the next entry. Both seats start that new session with the same full available asset amount. The entry UI asks only for BET, never a manual buy-in; it rejects insufficient assets and never silently refills them. In-play chips committed to the pot are not available balance. This is an in-page prototype balance, not a persistent external account; page reload initializes it again. The explicit “Reset demo chips” action, available only outside a playing hand and when not busy, clears the session and resets assets to current `loadConfig().buyIn`; it therefore respects a saved custom buy-in. Ordinary re-entry does not reset assets.
+
+### 局間 BET 設定
+
+從 `./src/next-hand-bet.mjs` 匯入 `nextHandBetConfig(session,bet)`。此純 helper 只接受 `session.activeHand` 屬於同一 session、局號相符且具有 `settled`／`result` 的狀態；BET 必須是有限值且至少 0.02。固定 15 級是遊戲 UI 的選值規則，helper 保留六位小數設定的相容性。
+
+- BET 與目前值相同時直接回傳原 `config`，保留既有短籌碼續手規則。
+- 變更時依 `bet/config.bigBlind` 縮放 `smallBlind`、四街 `betSize`、`minBuyIn` 與 `maxBuyIn`；雙方 `session.stacks` 都須達新 `minBuyIn`，預設等於 20 倍新 BET。超出可表示範圍或資產不足時擲出錯誤。
+- 回傳新設定，不直接修改 session。`buyIn` 保留原桌損益基準，不以新資產或新門檻覆蓋，也不經會鉗制此基準的 `normalizeConfig`。
+- 控制器在 CONFIRM BET 時才指派 `session.config`；不呼叫 `createSession`、`startHand`、RNG、扣款或入帳。資產、歷史、局號、盲位與 BOSS 輪替延續；已結算 `hand.config` 和 JP 結果不變。下一次 `startHand` 才使用新注額與新 JP 基準。
 
 ## Session / hand
 
