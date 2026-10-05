@@ -91,9 +91,9 @@ export function createTotalWin({root = globalThis.document, effects, reducedMoti
     if (active !== record) return;
     active = null; cancelFrame(record.frame); unschedule(record.watchdog);
     clearMoney();
-    amount.textContent = record.model.formatted;
+    amount.textContent = record.model.outcome === 'loss' ? '' : record.model.formatted;
     panel.dataset.phase = 'settled';
-    announcement.textContent = `${record.model.label} ${record.model.formatted}`;
+    announcement.textContent = record.model.outcome === 'loss' ? record.model.label : `${record.model.label} ${record.model.formatted}`;
     if (audible && record.model.outcome === 'win') sound('win');
     record.resolve(true);
   }
@@ -110,6 +110,7 @@ export function createTotalWin({root = globalThis.document, effects, reducedMoti
         const line = doc.createElement('span'); line.className = 'total-win-label-word'; line.textContent = word; label.append(line);
       }
     } else label.textContent = model.label;
+    amount.hidden = model.outcome === 'loss';
     announcement.textContent = '';
     panel.hidden = false; panel.dataset.outcome = model.outcome;
     panel.dataset.motion = reducedMotion ? 'reduced' : 'normal';

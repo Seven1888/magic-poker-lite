@@ -1,66 +1,62 @@
 # Magic Poker Lite
 
-手機直版、第一人稱的 1v1 簡化德州原型：兩張底牌、五張公共牌、四街下注、真實對手行動機率。遊戲英文，機率工作台與文件繁體中文；預設資產 **10,000**。
+手機直版、第一人稱的 1v1 德州風格遊戲原型。遊戲英文，機率工作台、規格與溝通使用繁體中文；原 Boss Duel、Hands Up、Final Table 永久唯讀。
 
-- [遊戲 Demo v45](https://seven1888.github.io/magic-poker-lite/?v=45)
-- [繁中機率工作台](https://seven1888.github.io/magic-poker-lite/probability.html?v=45)
-- [完整規則、公式與帳務案例](https://seven1888.github.io/magic-poker-lite/docs/04-game-flow-and-math.html?v=45)
-- [四 BOSS 固定表與牌型模型](https://seven1888.github.io/magic-poker-lite/docs/04-game-flow-and-math.html?v=45#section-4)
-- [v45 交接](docs/15-v45-handoff.md)／[驗證與部署](docs/06-mobile-and-deployment.md)
+**v46 本機整合驗證完成，正式部署仍待 Pages 流程與公開站核對。** 本輪採用 Hands Up 的完整預建結果樹與個人雙水池，保留雙方下注形成的 POT 派彩；BOSS 改為每街固定性格機率。完整測試 420／420 通過，1,000 樹門檻校準與 102 手跨手池驗證完成；範圍與證據見 [驗證與部署](docs/06-mobile-and-deployment.md)，版本網址本身不代表部署完成。
 
-v45 將正收益 TOTAL／WIN 與贏分改為明亮金色立體美術字，直接浮在桌面，沒有底板、框線或裝飾線。雙方扣籌碼不再冒負數，行為文字不重複下注金額；可操作按鈕仍顯示本次實付。中央 BOSS 抽選時收起背後行動資訊，低於 10% 的小區段隱藏放不下的名稱與百分比，保留正確顏色與真實比例。NEXT HAND 每手重新以 50/50 抽出實際 SB／BB，並播放抽盲；BOSS 仍排除上一型。驗證及發布以 docs/06 與完成訊息為準，版本網址本身不代表已發布。
+## 現行模型
 
-## 玩法與呈現
+每手仍是兩張玩家底牌、兩張 BOSS 暗牌、五張公共牌與四街下注。開局先完成所有合法分支的 win／nonWin 目標，再建立符合目標的牌面。玩家底牌及完整公牌序固定，各節點保存對應的 BOSS 暗牌與完整狀態；操作時讀取已存分支，不臨時重抽目標或找牌。布局無解時保留全部目標重建未公開牌；超限原子失敗，不提交扣款、手數或正式 RNG。
 
-每手小盲自動投入半 BET、大盲一 BET；小盲翻牌前先動，後三街大盲先動。遊戲與連續／達標研究每手隨機抽盲，允許連續相同盲位。獨立研究與完整樹保留受控交替位置。每街最多一次加注；畫面固定 FOLD／CALL／RAISE，底層仍區分 check／call／bet／raise。付費按鈕列本次新增支付，免費 CALL 與 FOLD 不列金額；行動橫條與角色浮字只列動作。
+所有玩家付費 CALL／RAISE（引擎含 bet）在前節點 nonWin 時都有機會轉 win；免費 CALL 與 BOSS 非棄牌動作繼承前目標。win 後的非棄牌動作維持 win；玩家 FOLD 仍輸，BOSS FOLD 仍是玩家贏。nonWin 可以是輸或平手，最終依儲存牌面實際比牌結算。
 
-入口預選 BET 1；入口與局間＋／−依序選 **1、2、5、10、20、50、100、200、500、800、1,000、1,200、1,500、1,800、2,000**。結算演出完成後可開 BET 小窗，CONFIRM BET 只保存設定，關閉取消草稿；NEXT HAND 才正式抽下一手盲位、選 BOSS、扣盲與發牌。改 BET 須雙方資產達新門檻（預設 20 BB），原 BET 不變仍可短籌碼續手。兩盲及四街注額同比縮放，不重建 session 或重設損益基準，已結算 JP 保持原值。
+這是依結果目標建牌的遊戲模型，不是均勻隨機發牌的標準德州。畫面上的標準德州參考勝率只使用已公開牌，不能當作此模型的實際條件勝率。
 
-入場即呈現首手 BOSS，入口保存 seed，選 BET 或重開同一入口不換角色。局間 BET 草稿改成新值時，以 session.rng.clone() 先略過下一手抽盲的一次 RNG，再按 lastBossProfileId 預覽同一下一型；不消耗正式 RNG、不發牌或扣盲，fixed 維持同型。預覽暫藏舊 BOSS 手牌與牌型，取消或改回原 BET 還原；確認後保持至 NEXT HAND 正式選到同型。
+## 雙水池與 JP
 
-每手抽盲明示 BLIND POSITION、SB／BB 及 YOU／BOSS 真實 STARTING BET。玩家籌碼先抵達 POT，再讓同手同街有效 BOSS 回應機率飛至中央抽選。混合回應按鈕預覽只列原始 FOLD／RAISE，單一回應亦顯示 CALL／RAISE／FOLD 100%；中央列全部正機率。免費或跨街行為不借舊預覽。
+Hands Up 現行參數適配如下：
 
-玩家最佳五張採金框，已揭 BOSS 最佳五張採藍框，共用牌金內藍外，完整揭牌後才調暗未入選牌。TOTAL WIN 取底池返還＋JP、排除退款，不等於淨利；跑分、金幣與籌碼演出不重複入帳，來源籌碼保留至抵達。
+- 轉贏計分係數為 0.99，與 POT 返還係數 0.96 分開；兩者都不是含 JP 的整體 RTP 保證。
+- 贏節點的玩家有效付費分數，80% 進個人付費池、20% 進個人特殊池。原始盲注不入池；未跟注退款不賺取水池。
+- 付費池可在前節點 nonWin、全局 CD 為 0 時補轉贏機率，最多補到 100%。CD 預設 0～0，可設定範圍；只在 nonWin 後實際付費時依規則更新。
+- 三個 BET 桶為 1／2／5／10、20／50／100／200／500、800／1,000／1,200／1,500／1,800／2,000。兩種池依桶保存，CD 跨桶共用。
+- root 為 win 且特殊池足額時，先選最高可負擔的皇家同花順 200×BET、同花順 50×BET、四條 20×BET，再抽 20% 出現資格。
+- 有資格才建立對應特殊牌；玩家底牌必須參與特殊牌，公共牌不能自行形成特殊牌。正常攤牌、玩家贏且牌型符合資格才扣特殊池並派 JP；棄牌不扣、不派，資金保留但已抽資格不延到下一手。
+- 無資格的一般布局排除玩家特殊牌，沒有另一套自然 JP 額外派彩。歷史 legacy-deck 模式保留舊自然 JP 規則。
 
-v44 原創牌桌電子爵士 BGM 為 96 BPM，BOSS 實際揭牌時切換 128 BPM 配樂，完整揭牌後才依結果收尾；紙牌音效、Music／Sound effects 獨立開關與桌面靜音保留。公開勝率跨 50% 顯示超車提示，全下依已揭 0／3／4／5 張公牌計算。暖機後配樂採單音源循環，卡牌 DOM／同值勝率環／同分布牌型列保持；不冒稱所有實體手機零卡頓。
+每筆贏節點付費先記錄玩家累計投入區間，結算後以最終 matchedWager 剪裁，只有實際匹配部分分池。完整公式、實例及原作適配界線見 [規則與數學](docs/04-game-flow-and-math.md)。
 
-## 標準德州參考機率
+## 每手資產門檻與保存
 
-v43 玩家勝率與 BOSS 目前可能牌型只用已知玩家底牌及已揭公牌，其餘牌等機率；不因重抽設定、盲位、BOSS 身份、行動或秘密指定底牌改變。這是標準德州參考，未修正遊戲實際重抽或下注傾向。
+使用者已批准以「平均一手原始實扣投入 ÷ BET，向上取整」作為每手資產門檻。新模型 1,000 棵完整樹的平均為 **4.46954846265677 BET**，95% CI 為 [4.380062691021308, 4.559034234292232]，因此採 **5×BET**；預設 `minBuyIn=50`、`bigBlind=10` 維持不變。平均門檻不保證每條加注路徑都付得起。
 
-玩家 equity 為（贏＋平手÷2）／總組合或樣本數。FLOP／TURN／RIVER 精確枚舉，翻牌前固定 100,000 次抽樣估算。BOSS 目前牌型不補未來公牌：選機率最高三類，再按牌力由強至弱排列，無 OTHER、不重新湊成 100%，詳情列完整九類，皇家併同花順。FLOP 三張完全公開後才顯示，換街重算先清舊值；攤牌、棄牌與換手隱藏，演出中禁開詳情。
+[校準報告](output/entry-budget-v46.json) 使用主 seed 2026100546、四組獨立 seed cohort 各 250 副、balanced 策略、每副資產 10,000 與零初始池；共 1,312,000 節點、750,000 終端，最大機率質量誤差 3.11×10⁻¹⁵，帳務及池對帳誤差均為 0，計算來源雜湊全程一致。這是冷啟動單手平均，不是跨手水池穩態或長期 RTP 校準。
 
-## 機率工作台
+首次 FIGHT、相同 BET 的 NEXT HAND、改 BET 都檢查雙方實際資產。不足時 NEXT HAND 開啟 BET 視窗，玩家手動降低 BET 或離桌；不自動降 BET、不補資。連最低級距都不足時不能開新手。局中餘額降到門檻以下仍可正常全下完成。
 
-- 單副牌完整展開雙方所有合法動作，包含零機率分支；預設可有 **1,312 節點、750 終端**，列狀態、實付、到達機率與結算。
-- 抽樣牌序，每副完整積分動作樹後再平均；不是枚舉全部 52 張牌排列，不能用贏的葉子數除以總葉子數。
-- 三種玩家統計：每手重設資產、連續遊玩、資產達標。後兩者保留玩家餘額、每手重抽盲位，BOSS 局間刷新另列；達安全上限列截尾。
-- 四種策略、玩家／動作／街道／盲位／JP／資產／切片報表，Worker 執行與停止、設定保存及 JSON／CSV 匯出。
-- 比率 CI：四型輪替／連續／達標按玩家聚類，固定對手獨立牌局按手，樹統計按副牌；結果保留參數、種子、模式與樣本單位。
-- 起手重抽：未成對時玩家 50%／BOSS 25%，最多 50 次，成對即停、接受最後候選。舊 targetScore 設定保留 legacy-score 模式。
+個人資料鍵為 `magic-poker-lite.player.v1`，同一筆資料保存已結算餘額、兩種三桶水池、全局 CD 與跨桌手數序號。換桌、換 BET、正常重整保留。未完成牌局時重整，恢復前一筆已結算的整手快照；這是本機原型的交易邊界，不是後端續局。Reset demo chips 只重設測試資產，保留水池。設定另存 `magic-poker-lite.config.v2`，設定遷移不覆蓋玩家個人池。
 
-四型 BOSS 使用固定逐街／牌力機率表；config.npc 供模擬玩家策略及 legacy BOSS 使用。初遇各 25%，下一手排除上一型、其餘各 1/3；工具可選輪替、固定或舊模型。
+## BOSS、呈現與研究工具
 
-## JP 與驗證範圍
+BOSS 版本為 `four-boss-fixed-street-v2`：每位 BOSS 每街一組固定 FOLD／CALL／RAISE 原始權重，取自舊版該街各牌力列等權平均，不再讀私牌牌力。剔除非法動作後正規化，所以免費 CALL、加注額度用盡等狀態仍會改變實際可用分布。首手四型各 25%，後手排除上一型，其餘各 1/3。[完整固定表](docs/04-game-flow-and-math.html#section-4)
 
-JP：皇家同花順 **200×BET**、同花順 **50×BET**、四條 **20×BET**。正常攤牌只領最高一獎，可用零／一／兩張底牌，不必贏池；棄牌無 JP，BOSS 不領。JP、底池返還、退款與局間 BOSS 刷新分帳。
+FIGHT 與 NEXT HAND 每手抽真實 50/50 SB／BB；盲注為 0.5／1 BET，翻牌前小盲先動、後三街大盲先動。固定 BET 級距與局間預覽保持。BOSS WINS 與 TOTAL WIN 採金色無框美術字，BOSS WINS 不顯示金額；座位 SB／BB 下方不再附 YOU，STARTING BET 的雙方標籤保留。配樂、公開揭牌、籌碼時序與無障礙提示維持。
 
-**0.96 是匹配底池返還係數，不是玩家勝率或含 JP 總 RTP 保證。** 勝負依真實牌組決定，未採用 Hands Up 先定輸贏／配牌流程，也未導入 99% RTP 或固定高勝率。
+機率工具與遊戲共用引擎。單手樹積分的是已預建分支；多樹樣本每副從設定的初始水池冷啟動，不能代表跨手水池穩態。玩家 independent／continuous／cashout 研究都在同一玩家內保存水池；independent 僅重設資产。新水池模式的 CI 按玩家聚類，完整樹研究按副樹，少量樣本與罕見 JP 必須明示不確定性。
 
-v45 每手隨機盲位使正式引擎 RNG 排程改變；發牌／重抽規則、BOSS 表、JP 與帳務公式保持。[v35 驗證](output/math-v35-validation.json) 是當時四型固定＋輪替各 5,000 手及 1,000 副完整樹的小樣本結構／帳務資料，**不是 v45 校準**，不能保證舊 seed 後手牌序相同。舊 260,000 手不含 JP，更不能作本版證據。
+0.99 是轉贏計分係數，0.96 是匹配 POT 返還係數；整體 RTP 必須用玩家實際有效投入與返還另行估算。v35 遊戲報告、v43 參考算法報告及早期 v46 fixed-deck 門檻報告只屬歷史，不能當作新結果樹／雙池模型的校準或發布證據。
 
-[v43 參考機率驗證](output/math-v43-holdem-validation.json) 保留為純算法既有證據；v45 未改等權算法，但歷史報告的引擎來源雜湊不代表目前版本，不能宣稱整份報告所有來源仍吻合。本輪不新增大型 RTP 試跑；功能、介面與部署驗證見 docs/06 v45。
+## 本機啟動與文件
 
-## 本機啟動與驗證
+Node.js 20+，無須 npm install。在本目錄執行 `npm start`、`npm test`、`npm run build`；伺服器只綁定 127.0.0.1，預設埠 4177。瀏覽器經伺服器開啟遊戲及 `probability.html`，以支援 ES modules／Worker。原型使用本機瀏覽器保存，未接帳號、支付或後端錢包。
 
-Node.js 20+，不需 npm install。在此目錄執行 npm start、npm test、npm run build，或雙擊「啟動遊戲.cmd」。伺服器只綁定 127.0.0.1、預設埠 4177；遊戲為 http://127.0.0.1:4177/，工具為 /probability.html。ES modules／Worker 須經伺服器開啟。GitHub Actions 對 main 先測試、再建置 dist 並部署 Pages；本地通過不等於已發布。
+- [規則與數學](docs/04-game-flow-and-math.html)／[Markdown](docs/04-game-flow-and-math.md)
+- [API 契約](API-CONTRACT.md)／[v46 整合狀態](docs/16-v46-work-in-progress.md)
+- [驗證與部署](docs/06-mobile-and-deployment.md)／[工作規範](AGENTS.md)
+- [素材](assets/README.md)／[原創配樂與 SHA256](assets/audio/README.md)
+- [上一正式遊戲 v45](https://seven1888.github.io/magic-poker-lite/?v=45)／[上一正式機率工具 v45](https://seven1888.github.io/magic-poker-lite/probability.html?v=45)
+- v46 候選公開入口：[遊戲](https://seven1888.github.io/magic-poker-lite/?v=46)／[機率工作台](https://seven1888.github.io/magic-poker-lite/probability.html?v=46)／[規則](https://seven1888.github.io/magic-poker-lite/docs/04-game-flow-and-math.html?v=46)
+- v46 候選公開報告：[平均門檻](https://seven1888.github.io/magic-poker-lite/output/entry-budget-v46.json)／[跨手池驗證](https://seven1888.github.io/magic-poker-lite/output/math-v46-pooled-validation.json)；部署以 [Actions](https://github.com/Seven1888/magic-poker-lite/actions) 成功及公開資源核對為準。
+- [GitHub](https://github.com/Seven1888/magic-poker-lite)／[v45 歷史交接](docs/15-v45-handoff.md)
 
-原型未接帳號、支付或後端持久錢包。正常離桌再入桌保留當頁餘額，重載或明示 Reset demo chips 才重設。Boss Duel、Hands Up、Final Table 永久唯讀，本作不依賴舊目錄。
-
-- [流程與完整數學](docs/04-game-flow-and-math.md)
-- [API schema 與 Worker](API-CONTRACT.md)
-- [素材來源](assets/README.md)／[配樂來源與 SHA256](assets/audio/README.md)
-- [視覺演出契約](docs/05-art-and-pot.md)
-- [驗證與部署](docs/06-mobile-and-deployment.md)
-- [最新交接](docs/15-v45-handoff.md)
-- [工作規範](AGENTS.md)／[專案技能](.agents/skills/magic-poker-bridge-design/SKILL.md)
+本機整合、必要驗證與門檻重算已完成；接著依使用者授權一次提交／推送、核對 Pages 和正式站，再交接精確提交、部署 run 與所有連結。本文不預宣部署成功。

@@ -2,9 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createSession, playAutomatedHand, syncOpponentBankroll} from '../src/engine.mjs';
 import {simulateStudy, studyPlayerSeed} from '../src/simulation-study.mjs';
+import {renderStudyDetails} from '../src/probability-report-view.mjs';
 
 const near = (actual, expected, tolerance = 1e-8) => assert.ok(Math.abs(actual - expected) <= tolerance, `${actual} != ${expected}`);
 const passive = {
+  outcome: {mode: 'legacy-deck'},
   boss: {mode: 'legacy'},
   bigBlind: 1, buyIn: 10, minBuyIn: 10, jackpotEnabled: false,
   npc: {fold: 0, call: 1, raise: 0, check: 1, bet: 0, strengthInfluence: 0, priceInfluence: 0},
@@ -17,7 +19,7 @@ function referenceError(rows, key) {
 }
 
 test('independent studies preserve the shared engine ledger, blind alternation, and hand-level ratio CI', () => {
-  const report = simulateStudy({boss: {mode: 'legacy'}}, {players: 3, entries: 19, seed: 'study-ledger', policy: 'aggressive', sliceSize: 7});
+  const report = simulateStudy({outcome: {mode: 'legacy-deck'}, boss: {mode: 'legacy'}}, {players: 3, entries: 19, seed: 'study-ledger', policy: 'aggressive', sliceSize: 7});
   const rows = [], totals = {wagers: 0, refunds: 0, grossReturns: 0, netReturns: 0, totalReturns: 0, jackpotAwards: 0, fees: 0, playerFees: 0};
   for (const player of report.playerResults) {
     const session = createSession(report.config, player.seed);
@@ -53,22 +55,26 @@ test('player seeds are reproducible, independent, and stable when the requested 
   assert.notEqual(studyPlayerSeed(1, 0), studyPlayerSeed('1', 0));
 });
 
-test('continuous mode preserves balances below entry minimum and separates every NPC refresh from payouts', () => {
+test('continuous mode stops below the current BET entry minimum and separates every NPC refresh from payouts', () => {
   const report = simulateStudy({...passive, targetRtp: .5}, {players: 3, entries: 100, seed: 20261005, policy: 'call', mode: 'continuous'});
   assert.equal(report.methodMeta.blindMode, 'random-each-hand');
   assert.equal(report.playerSummary.insufficient, 3);
-  assert.ok(report.hands > 3 && report.hands < 300);
+  assert.ok(report.hands >= 3 && report.hands < 300);
+  assert.equal(report.studyVersion, 3);
+  assert.equal(report.methodMeta.insufficientThreshold, 10);
+  assert.equal(report.methodMeta.entryMinimumMultiplier, 10);
+  assert.equal(report.methodMeta.minimumEntryOnly, false);
   assert.equal(report.npcRefreshCount, report.hands);
   for (const player of report.playerResults) {
-    assert.ok(player.hands > 1); // All seats fall below entry minimum long before stopping.
-    assert.ok(player.end < .01);
+    assert.ok(player.hands >= 1); // Exactly the minimum can start; a lower settled balance cannot.
+    assert.ok(player.end > 0 && player.end < report.config.minBuyIn);
     near(player.end, player.start + player.totalReturns - player.wagers);
     near(2 * player.end + player.fees, 2 * player.start + player.jackpotAwards + player.npcRefreshAdjustment);
     assert.equal(player.npcRefreshCount, player.hands);
     near(player.npcRefreshAdjustment, player.npcRefreshAdded - player.npcRefreshRemoved);
     const session = createSession(report.config, player.seed, {firstSmallBlind: 'random'});
     let hands = 0;
-    while (session.stacks.player >= .01) {
+    while (session.stacks.player >= report.config.minBuyIn && session.stacks.npc >= report.config.minBuyIn) {
       playAutomatedHand(session, 'call'); syncOpponentBankroll(session); hands++;
       assert.ok(hands <= 100);
     }
@@ -80,7 +86,7 @@ test('continuous mode preserves balances below entry minimum and separates every
 });
 
 test('one continuous player has no cluster interval even after many hands', () => {
-  const report = simulateStudy({...passive, targetRtp: 1}, {mode: 'continuous', entries: 20, policy: 'call'});
+  const report = simulateStudy({...passive, buyIn: 100, targetRtp: 1}, {mode: 'continuous', entries: 20, policy: 'call'});
   assert.equal(report.hands, 20);
   assert.deepEqual(report.ci95, [null, null]); assert.deepEqual(report.baseCi95, [null, null]);
   assert.equal(report.standardError, null); assert.equal(report.baseStandardError, null);
@@ -89,12 +95,13 @@ test('one continuous player has no cluster interval even after many hands', () =
 
 test('cashout distinguishes attained targets, insufficient funds, and safety-limit censoring', () => {
   const common = {mode: 'cashout', players: 3, policy: 'call'};
-  const censored = simulateStudy({...passive, targetRtp: .5}, {...common, targetAsset: 1000, maxHandsPerPlayer: 3});
+  const censored = simulateStudy({...passive, minBuyIn: 1, targetRtp: .5}, {...common, targetAsset: 1000, maxHandsPerPlayer: 3});
   assert.deepEqual(censored.playerSummary, {completed: 0, target: 0, insufficient: 0, censored: 3});
   assert.equal(censored.hands, 9);
   assert.ok(censored.playerResults.every(player => player.censored && !player.reachedTarget && !player.insufficient));
-  const busted = simulateStudy({...passive, targetRtp: .5}, {...common, targetAsset: 1000, maxHandsPerPlayer: 100});
-  assert.equal(busted.playerSummary.insufficient, 3); assert.equal(busted.playerSummary.censored, 0);
+  const insufficient = simulateStudy({...passive, targetRtp: .5}, {...common, targetAsset: 1000, maxHandsPerPlayer: 100});
+  assert.equal(insufficient.playerSummary.insufficient, 3); assert.equal(insufficient.playerSummary.censored, 0);
+  assert.ok(insufficient.playerResults.every(player => player.end > 0 && player.end < insufficient.config.minBuyIn));
   const targets = simulateStudy({...passive, targetRtp: 1}, {...common, targetAsset: 11, maxHandsPerPlayer: 80});
   const reached = targets.playerResults.filter(player => player.reachedTarget);
   assert.ok(reached.length > 0);
@@ -102,7 +109,7 @@ test('cashout distinguishes attained targets, insufficient funds, and safety-lim
   assert.equal(targets.methodMeta.blindMode, 'random-each-hand');
   for (const player of targets.playerResults) {
     assert.equal(player.reachedTarget, player.end >= 11);
-    assert.equal(player.insufficient, player.end < .01);
+    assert.equal(player.insufficient, !player.reachedTarget && player.end < targets.config.minBuyIn);
     assert.equal(player.censored, !player.reachedTarget && !player.insufficient);
     if (player.censored) assert.equal(player.hands, 80);
   }
@@ -112,9 +119,21 @@ test('cashout distinguishes attained targets, insufficient funds, and safety-lim
   assert.equal(already.wagers, 0); assert.deepEqual(already.ci95, [null, null]);
 });
 
+test('study reports render the saved current or historical threshold rather than a fixed value', () => {
+  const report = simulateStudy({...passive, targetRtp: .5}, {mode: 'continuous', entries: 5, policy: 'call'});
+  const target = {id: 'study-reports', innerHTML: '', querySelector: () => ({innerHTML: ''})};
+  renderStudyDetails(report, null, target);
+  assert.match(target.innerHTML, /目前 BET 的每手開局門檻 10（10 × BET）/);
+  const historical = {...report, studyVersion: 1, methodMeta: {...report.methodMeta, minimumEntryOnly: true, insufficientThreshold: .01,
+    stopRule: '完成指定手數或同桌可用資產低於 0.01；低於最低帶入仍可繼續短籌碼牌局。'}};
+  renderStudyDetails(historical, null, target);
+  assert.match(target.innerHTML, /可用資產低於本次報表的續玩門檻 0\.01/);
+  assert.doesNotMatch(target.innerHTML, /目前 BET 的每手開局門檻/);
+});
+
 test('slice trends use cumulative paid wagers, not an average of slice RTPs', () => {
   const progress = [];
-  const report = simulateStudy({}, {players: 2, entries: 23, seed: 'different-wagers', sliceSize: 9,
+  const report = simulateStudy({outcome:{mode:'legacy-deck'}}, {players: 2, entries: 23, seed: 'different-wagers', sliceSize: 9,
     onProgress: value => progress.push(value)});
   let wagers = 0, totalReturns = 0, hands = 0;
   for (const batch of report.batches) {

@@ -12,7 +12,6 @@
 }
 .game .blind-coin[data-blind='small'] { background: radial-gradient(circle at 34% 24%, #cedfdf, #87aaa9 46%, #426766 85%); border-color: #bdd1c1; color: #223f40; text-shadow: 0 1px #deeee7; }
 .game .blind-coin[data-position='seat'] { width: 44px; height: 44px; border-width: 3px; font-size: 18px; letter-spacing: -.5px; box-shadow: inset 0 0 0 1px #f6e3b4, inset 0 0 0 3px #7b592c, 0 2px 0 #825d32, 0 4px 5px #1c090c75; }
-.game .blind-coin[data-position='seat']:after { content: 'YOU'; position: absolute; top: calc(100% + 7px); left: 50%; transform: translateX(-50%); color: #efd7ac; font: 700 8px/10px Arial, sans-serif; letter-spacing: 1px; text-shadow: 0 1px 2px #210b12; }
 .game .blind-draw-title { position: absolute; top: 344px; left: 0; right: 0; text-align: center; font-size: 11px; letter-spacing: 3px; color: #f0d29b; text-shadow: 0 2px 3px #220b12; }
 .game .blind-draw-copy { position: absolute; top: 498px; left: 30px; right: 30px; text-align: center; color: #fff0cd; text-shadow: 0 2px 2px #27101c, 0 0 5px #27101c; }
 .game .blind-draw-name { display: block; font-size: 20px; line-height: 29px; letter-spacing: 0; }

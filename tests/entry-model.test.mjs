@@ -13,14 +13,15 @@ test('new demo sessions start at 10,000 without changing the deal or overriding 
  assert.equal(tableConfig(DEFAULT_CONFIG,1,10000).buyIn,10000);
 });
 test('BET scales required assets, both blinds and all streets without charging entry assets',()=>{
- assert.equal(minimumAssets(DEFAULT_CONFIG,50),1000);
+ assert.equal(minimumAssets(DEFAULT_CONFIG,50),250);
  const c=tableConfig(DEFAULT_CONFIG,20,875.6);
  assert.equal(c.smallBlind,10);assert.equal(c.bigBlind,20);assert.equal(c.buyIn,875.6);
  assert.equal(tableConfig({...DEFAULT_CONFIG,smallBlind:0},20,875.6).smallBlind,10);
  assert.deepEqual(c.betSize,{preflop:20,flop:40,turn:80,river:80});
 });
 test('entry rejects insufficient assets instead of normalizing or topping up',()=>{
- assert.throws(()=>tableConfig(DEFAULT_CONFIG,50,999.99),/Not enough chips/);
+ assert.throws(()=>tableConfig(DEFAULT_CONFIG,50,249.999999),/Not enough chips/);
+ assert.equal(tableConfig(DEFAULT_CONFIG,50,250).buyIn,250);
  assert.throws(()=>tableConfig(DEFAULT_CONFIG,10,0),/Not enough chips/);
  assert.equal(tableConfig(DEFAULT_CONFIG,1,65).buyIn,65);
 });

@@ -48,7 +48,7 @@ test('free first-position postflop check allows an opponent bet on the same stre
   assert.equal(hand.actor, 'player');
   assert.deepEqual(types(hand), ['fold', 'call', 'raise']);
   assert.equal(legalActions(hand).find(action => action.type === 'call').amount, 20);
-  assert.throws(() => applyAction(hand, 'check'), /不能/);
+  assert.throws(() => applyAction(hand, 'check'), /不能|合法分支/);
   assert.deepEqual(actionEvents(hand).slice(-2).map(event => [event.actor, event.type, event.street]), [
     ['player', 'check', 'flop'], ['npc', 'bet', 'flop']
   ]);
@@ -128,6 +128,6 @@ test('a final river check goes directly to showdown and cannot offer or execute 
     assert.deepEqual(legalActions(hand), []);
     assert.equal(hand.rng.state(), rng);
     assert.equal(actionEvents(hand).filter(event => event.street === 'river').length, 2);
-    assert.throws(() => applyAction(hand, 'check'), /不能/);
+    assert.throws(() => applyAction(hand, 'check'), /不能|合法分支/);
   }
 });

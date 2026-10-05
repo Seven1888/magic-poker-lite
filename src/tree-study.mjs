@@ -1,6 +1,7 @@
-import {createRng,normalizeConfig,STREETS} from './engine.mjs?v=45';
-import {buildActionTree} from './action-tree.mjs?v=45';
-import {BOSS_PROFILE_IDS} from './boss-profiles.mjs?v=35';
+import {createRng,normalizeConfig,STREETS} from './engine.mjs?v=46';
+import {buildActionTree} from './action-tree.mjs?v=46';
+import {BOSS_PROFILE_IDS,BOSS_PROFILE_VERSION} from './boss-profiles.mjs?v=46';
+import {combinePoolStudySummaries} from './probability-pools.mjs?v=46';
 
 const TYPES=['fold','check','call','bet','raise'];
 const TIERS=['royal','straightFlush','quads'];
@@ -26,15 +27,16 @@ function ratioInterval(samples,totals,xKey,yKey) {
 export function simulateTreeStudy(config={}, {deals=100,seed=20261005,policy='balanced',onProgress}={}) {
   if(!Number.isSafeInteger(deals)||deals<1||deals>10000)throw new RangeError('完整樹統計須設定 1 至 10,000 副牌序樣本。');
   if(!['balanced','call','aggressive','tight'].includes(policy))throw new RangeError('未知的完整樹玩家策略。');
-  const normalized=normalizeConfig(config),seedRng=createRng(seed);
+  const normalized=normalizeConfig(config),seedRng=createRng(seed),pooled=normalized.outcome?.mode==='prebuilt-pools';
   const dealSeeds=Array.from({length:deals},()=>Math.floor(seedRng()*0x100000000));
   const totals={},samples=[],tierMass=emptyTiers(),actionRows=new Map();
   const byBoss=Object.fromEntries([...BOSS_PROFILE_IDS,'legacy'].map(id=>[id,{deals:0,totals:{}}]));
-  const bossProfileIds=[];
+  const bossProfileIds=[],poolSummaries=[];
   let totalNodes=0,totalTerminals=0,totalDecisionNodes=0,zeroProbabilityEdges=0,maxConservationError=0,maxMassError=0,totalMass=0;
   for(let index=0;index<deals;index++) {
     const firstSmallBlind=index%2===0?'player':'npc';
     const tree=buildActionTree(normalized,{seed:dealSeeds[index],firstSmallBlind,policy});
+    if(tree.summary.outcomePoolSummary)poolSummaries.push(tree.summary.outcomePoolSummary);
     totalNodes+=tree.summary.nodes;totalTerminals+=tree.summary.terminalNodes;totalDecisionNodes+=tree.summary.decisionNodes;
     zeroProbabilityEdges+=tree.summary.zeroProbabilityEdges;
     maxConservationError=Math.max(maxConservationError,tree.summary.conservationError);
@@ -72,6 +74,9 @@ export function simulateTreeStudy(config={}, {deals=100,seed=20261005,policy='ba
   weighted.showdownConditionalWinProbability=ratio(totals.showdownWinProbability,totals.showdownProbability);
   const winVariance=deals>1?samples.reduce((sum,sample)=>sum+(sample.winProbability-weighted.winProbability)**2,0)/(deals-1):null;
   const winStandardError=winVariance===null?null:Math.sqrt(winVariance/deals);
+  const contributionVariance=deals>1?samples.reduce((sum,sample)=>sum+(sample.totalContribution-weighted.totalContribution)**2,0)/(deals-1):null;
+  const contributionStandardError=contributionVariance===null?null:Math.sqrt(contributionVariance/deals);
+  const contributionCi95=contributionStandardError===null?[null,null]:[weighted.totalContribution-1.96*contributionStandardError,weighted.totalContribution+1.96*contributionStandardError];
   const winCi95=winStandardError===null?[null,null]:[
     Math.max(0,weighted.winProbability-1.96*winStandardError),
     Math.min(1,weighted.winProbability+1.96*winStandardError)
@@ -93,11 +98,14 @@ export function simulateTreeStudy(config={}, {deals=100,seed=20261005,policy='ba
     boss.baseRtp=ratio(boss.totals.baseReturn,boss.totals.matchedWager);boss.totalRtp=ratio(boss.totals.totalReturn,boss.totals.matchedWager);
   }
   return {
-    version:1,kind:'tree-study',complete:true,deals,seed,policy,config:normalized,dealSeeds,
-    meta:{cardModel:'shared-engine-fixed-deck',sampling:'sampled-deals-full-action-integration',
+    version:2,kind:'tree-study',complete:true,deals,seed,policy,config:normalized,dealSeeds,
+    outcomePoolSummary:combinePoolStudySummaries(poolSummaries,{unit:'deals'}),
+    meta:{modelVersion:`${pooled?'prebuilt-pools-v1':'legacy-deck-v1'}+${BOSS_PROFILE_VERSION}+tree-study-v2`,cardModel:pooled?'shared-engine-prebuilt-pools':'shared-engine-fixed-deck',bossProfileVersion:BOSS_PROFILE_VERSION,
+      sampling:pooled?'cold-start-prebuilt-layouts-full-action-integration':'sampled-deals-full-action-integration',
       firstSmallBlind:'alternating-player-npc',sampleUnit:'one-deal-one-full-action-tree',
       bossSampling:normalized.boss.mode==='rotate'?'每副取樣是獨立新牌桌，四型各 1/4；副與副之間不是同桌連續牌局，因此允許相同。遊戲及玩家序列研究則同桌不連續重複。':normalized.boss.mode==='fixed'?'全部獨立牌序固定同一 BOSS，刻意允許重複。':'全部牌序採舊版對手權重模型。',
-      description:'按現行共用引擎取樣牌序；每副牌展開全部合法分支，依玩家策略及對手機率積分，再跨牌序平均。不是先定輸贏，也不是枚舉全部 52 張牌的組合。',
+      description:pooled?'每副樣本都從設定的初始三桶冷啟動，開局預建目標與全部合法分支，再依玩家策略及固定街道 BOSS 機率積分。玩家／公牌布局固定，BOSS 暗牌隨預存節點變化；不在遍歷時重抽。':'歷史牌庫模式：取樣牌序後展開全部合法分支，依玩家策略及對手機率積分，再跨牌序平均。',
+      poolSampling:pooled?'每副牌是全新初始水池，沒有跨手累積。此結果是冷啟動單手期望，不是長期水池 RTP；長期研究須使用玩家連續序列。':'歷史牌庫模式，無結果水池。',
       uncertainty:'95% 區間以每副牌完整樹的條件期望為一個樣本，使用樣本均值及比率估計量的常態近似。葉子不是獨立樣本；單副牌不提供區間；稀有 JP 仍可能取樣不足。',
       actionVisits:'行為次數依到達機率加權；同一方同街可多次行動，conditionalActionProbability 的分母為該方該街全部決策的加權到達次數。',
       winDefinition:'winProbability 為全部牌局的贏池機率；showdownWinProbability 為攤牌且贏池的聯合機率；showdownConditionalWinProbability 才是攤牌條件勝率。',
@@ -106,7 +114,7 @@ export function simulateTreeStudy(config={}, {deals=100,seed=20261005,policy='ba
     blindCounts:{player:Math.ceil(deals/2),npc:Math.floor(deals/2)},
     averageTerminalProbabilityMass:totalMass/deals,weighted,totals,
     baseRtp:base.estimate,totalRtp:total.estimate,winStandardError,baseStandardError:base.standardError,totalStandardError:total.standardError,
-    winCi95,baseCi95:base.ci95,totalCi95:total.ci95,
+    winCi95,baseCi95:base.ci95,totalCi95:total.ci95,contributionStandardError,contributionCi95,
     tierProbabilities:Object.fromEntries(TIERS.map(tier=>[tier,tierMass[tier]/deals])),
     byStreet,progress:{completed:deals,total:deals}
   };

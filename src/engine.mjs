@@ -1,6 +1,11 @@
 import {makeDeck, createRng, shuffle, normalizeCard, evaluateBest, compareRanks, holeScore} from './poker.mjs?v=35';
-import {getJackpotAward} from './jackpot.mjs?v=35';
-import {normalizeBossConfig, selectBossProfile, getBossProfileDistribution} from './boss-profiles.mjs?v=35';
+import {getJackpotAward, classifyJackpot, quoteJackpot} from './jackpot.mjs?v=35';
+import {normalizeBossConfig, selectBossProfile, getBossProfileDistribution} from './boss-profiles.mjs?v=46';
+import {assertHandEntryAssets} from './hand-entry.mjs?v=46';
+import {DEFAULT_OUTCOME_POOL_CONFIG, normalizeOutcomePoolConfig, createOutcomePools, normalizeOutcomePools, compactOutcomePools,
+  drawRootPoolOutcome, drawPaidPoolOutcome, applyBranchPools, settleOutcomePools, isSpecialPoolLayout} from './outcome-pools.mjs?v=46';
+import {buildPrebuiltOutcomeTree, lookupPrebuiltOutcomeTransition} from './prebuilt-outcome-tree.mjs?v=46';
+import {createOutcomeLayout} from './outcome-layout.mjs?v=46';
 export {makeDeck, createRng, shuffle, evaluateBest, compareHands, holeScore, normalizeCard} from './poker.mjs?v=35';
 
 const SEATS = ['player', 'npc'];
@@ -12,11 +17,16 @@ const number = (n, fallback) => Number.isFinite(Number(n)) ? Number(n) : fallbac
 const epsilon = 1e-7;
 export const DEFAULT_CONFIG = Object.freeze({
   targetRtp: 0.96, jackpotEnabled: true, smallBlind: 5, bigBlind: 10,
-  minBuyIn: 200, maxBuyIn: 10000, buyIn: 10000,
+  // Rounded-up offline balanced-policy mean contribution (entry-budget-v46.json).
+  // Recalibrate whenever the outcome or action model changes.
+  minBuyIn: 50, maxBuyIn: 10000, buyIn: 10000,
   betSize: Object.freeze({preflop: 10, flop: 20, turn: 40, river: 40}),
   maxRaises: 1, animationMs: 850,
   npc: Object.freeze({fold: 0.2, call: 0.6, raise: 0.2, check: 0.65, bet: 0.35, strengthInfluence: 1, priceInfluence: 0.6}),
   boss: Object.freeze({mode: 'rotate', profileId: 'caller'}),
+  outcome: Object.freeze({mode: 'prebuilt-pools', ...DEFAULT_OUTCOME_POOL_CONFIG,
+    initialPaidActionPools: Object.freeze([0, 0, 0]), initialSpecialPools: Object.freeze([0, 0, 0]),
+    initialPaidActionCooldown: 0, stateLimit: 10000, maxLayoutAttempts: 2000}),
   deal: Object.freeze({
     player: Object.freeze({rerollMode: 'unpaired', rerollChance: 0.5, maxRerolls: 50, manual: Object.freeze([])}),
     npc: Object.freeze({rerollMode: 'unpaired', rerollChance: 0.25, maxRerolls: 50, manual: Object.freeze([])})
@@ -61,13 +71,26 @@ export function normalizeConfig(source = {}) {
   }
   const manualCards = SEATS.flatMap(seat => config.deal[seat].manual);
   if (new Set(manualCards).size !== manualCards.length) throw new Error('雙方指定手牌不可重複。');
+  const outcome = source.outcome ?? {};
+  const mode = outcome.mode ?? d.outcome.mode;
+  if (!['prebuilt-pools', 'legacy-deck'].includes(mode)) throw new TypeError('未知結果模型。');
+  const initial = createOutcomePools({paidAction: outcome.initialPaidActionPools,
+    special: outcome.initialSpecialPools, paidActionCooldown: outcome.initialPaidActionCooldown});
+  config.outcome = {mode, ...normalizeOutcomePoolConfig(outcome),
+    initialPaidActionPools: initial.buckets.map(bucket => bucket.paidAction),
+    initialSpecialPools: initial.buckets.map(bucket => bucket.special), initialPaidActionCooldown: initial.paidActionCooldown};
+  for (const key of ['stateLimit', 'maxLayoutAttempts']) {
+    const value = outcome[key] ?? d.outcome[key];
+    if (!Number.isSafeInteger(value) || value < 1 || value > 100000) throw new RangeError(key + ' 必須為 1 至 100000 的整數。');
+    config.outcome[key] = value;
+  }
   return config;
 }
 
 export function createSession(config = {}, seed = 123, options = {}) {
   if (!options || typeof options !== 'object' || Array.isArray(options)
-    || Object.keys(options).some(key => key !== 'firstSmallBlind')) {
-    throw new TypeError('Session 選項僅接受 firstSmallBlind。');
+    || Object.keys(options).some(key => !['firstSmallBlind', 'outcomePools'].includes(key))) {
+    throw new TypeError('Session 選項僅接受 firstSmallBlind 與 outcomePools。');
   }
   const choice = options.firstSmallBlind === undefined ? 'player' : options.firstSmallBlind;
   if (!['random', 'player', 'npc'].includes(choice)) {
@@ -81,6 +104,9 @@ export function createSession(config = {}, seed = 123, options = {}) {
   const blindDraw = choice === 'random' ? {smallBlind: firstSmallBlind, probability: 0.5} : null;
   const blindMode = choice === 'random' ? 'random' : 'alternate';
   return {config: normalized, seed, rng, firstSmallBlind, blindMode, blindDraw, lastBossProfileId: null,
+    outcomePools: options.outcomePools ? normalizeOutcomePools(options.outcomePools)
+      : createOutcomePools({paidAction: normalized.outcome.initialPaidActionPools,
+        special: normalized.outcome.initialSpecialPools, paidActionCooldown: normalized.outcome.initialPaidActionCooldown}),
     stacks: {player: normalized.buyIn, npc: normalized.buyIn}, handNumber: 0, fees: 0,
     jackpotAwards: 0, jackpotTierCounts: {royal: 0, straightFlush: 0, quads: 0},
     opponentBankrollRefreshes: []};
@@ -158,9 +184,9 @@ function pay(hand, seat, amount, type) {
   return actual;
 }
 
-export function startHand(session) {
-  if (SEATS.some(seat => session.stacks[seat] < 0.01)) throw new Error('其中一方籌碼不足，請重新帶入。');
+function startHandRaw(session) {
   if (session.activeHand?.status === 'playing') throw new Error('目前牌局尚未結束。');
+  assertHandEntryAssets(session);
   session.handNumber++;
   const firstSmallBlind = session.firstSmallBlind ?? 'player';
   const randomBlind = session.blindMode === 'random';
@@ -181,6 +207,8 @@ export function startHand(session) {
     streetBets: {player: 0, npc: 0}, contributions: {player: 0, npc: 0},
     currentBet: 0, raises: 0, pending: [smallBlind, bigBlind], pot: 0, history: [], result: null
   };
+  hand.outcomePoolsBefore = normalizeOutcomePools(session.outcomePools);
+  hand.outcomeHandId = String((session.outcomePools.handSequence ?? 0) + 1);
   // Non-enumerable pointer prevents JSON snapshots from acquiring circular references.
   Object.defineProperty(session, 'activeHand', {value: hand, writable: true, configurable: true, enumerable: false});
   // Choosing BET is free. Both seats post only when the hand starts.
@@ -188,6 +216,43 @@ export function startHand(session) {
   pay(hand, bigBlind, session.config.bigBlind, 'bigBlind');
   hand.currentBet = Math.max(...Object.values(hand.streetBets));
   resolveForcedState(hand);
+  return hand;
+}
+
+function attachOutcomeTree(hand, tree, nodeId) {
+  Object.defineProperties(hand, {
+    _outcomeTree: {value: tree, writable: true, configurable: true},
+    _outcomeNodeId: {value: nodeId, writable: true, configurable: true}
+  });
+  return hand;
+}
+
+/** Build privately; only a complete tree may change the live wallet or RNG. */
+export function startHand(session) {
+  if (session.activeHand?.status === 'playing') throw new Error('目前牌局尚未結束。');
+  assertHandEntryAssets(session);
+  if (session.config.outcome.mode === 'legacy-deck') return startHandRaw(session);
+  const working = {...session, rng: session.rng.clone(), stacks: {...session.stacks},
+    outcomePools: normalizeOutcomePools(session.outcomePools), jackpotTierCounts: {...session.jackpotTierCounts},
+    opponentBankrollRefreshes: [...session.opponentBankrollRefreshes]};
+  const draft = startHandRaw(working);
+  const tree = buildPrebuiltOutcomeTree({hand: draft, rng: working.rng,
+    cloneHand: hand => cloneHand(hand, {compactPools: true}), trustedInternalClone: true, legalActions, applyActionRaw,
+    stateLimit: draft.config.outcome.stateLimit, maxLayoutAttempts: draft.config.outcome.maxLayoutAttempts,
+    drawRootOutcome: ({hand, rng}) => drawRootPoolOutcome({hand, rng, pools: hand.outcomePoolsBefore, config: hand.config.outcome}),
+    drawPaidOutcome: options => drawPaidPoolOutcome({...options, config: draft.config.outcome}),
+    createLayout: ({hand, rng, requiredTargets, plan}) => createOutcomeLayout({config: hand.config, rng,
+      requiredTargets, dealHoles, firstSeat: hand.smallBlind,
+      qualification: plan.nodes[0].decision.qualification, qualifyLayout: isSpecialPoolLayout})});
+  const root = tree.nodes.find(node => node.id === tree.rootId);
+  const hand = cloneHand(root.state);
+  hand.session.outcomePools = applyBranchPools({pools: hand.outcomePoolsBefore,
+    decision: hand.outcomeDecision, handId: hand.outcomeHandId});
+  Object.assign(session, working, {rng: tree.rngAfterBuild.clone(), stacks: hand.stacks,
+    outcomePools: normalizeOutcomePools(hand.session.outcomePools)});
+  hand.session = session; hand.rng = session.rng; hand.config = session.config;
+  attachOutcomeTree(hand, tree, tree.rootId);
+  Object.defineProperty(session, 'activeHand', {value: hand, writable: true, configurable: true, enumerable: false});
   return hand;
 }
 
@@ -237,9 +302,18 @@ function settle(hand, folded = null) {
     winner = comparison > 0 ? 'player' : comparison < 0 ? 'npc' : 'tie';
   }
   const reason = folded ? 'fold' : 'showdown';
-  const jackpot = getJackpotAward({reason, evaluation: evaluations.player, baseBet: hand.config.bigBlind, enabled: hand.config.jackpotEnabled});
+  let jackpot = null, outcomePoolAudit = null;
+  if (hand.config.outcome.mode === 'prebuilt-pools' && !hand.outcomePlanning && hand.outcomeDecision?.poolBranch) {
+    const poolResult = settleOutcomePools({pools: hand.outcomePoolsBefore, decision: hand.outcomeDecision,
+      matchedWager: matched, reason, winner, actualTier: classifyJackpot(evaluations.player), handId: hand.outcomeHandId});
+    hand.session.outcomePools = poolResult.pools;
+    outcomePoolAudit = poolResult.audit;
+    if (poolResult.specialAward > 0) jackpot = quoteJackpot(hand.outcomeDecision.qualification.tier, hand.config.bigBlind);
+  } else if (hand.config.outcome.mode === 'legacy-deck') {
+    jackpot = getJackpotAward({reason, evaluation: evaluations.player, baseBet: hand.config.bigBlind, enabled: hand.config.jackpotEnabled});
+  }
   const result = {reason, winner, folded, pot, gross: pot, fee: 0, net: 0, totalReturn: 0,
-    jackpot, board: [...hand.board], evaluations};
+    jackpot, outcomePoolAudit, board: [...hand.board], evaluations};
   for (const seat of SEATS) {
     const gross = winner === seat ? pot : winner === 'tie' ? round(pot / 2) : 0;
     const netReturn = round(gross * hand.config.targetRtp);
@@ -302,7 +376,7 @@ function resolveForcedState(hand) {
   if (!hand.pending.includes(hand.actor)) hand.actor = hand.pending[0];
 }
 
-export function applyAction(hand, requested) {
+function applyActionRaw(hand, requested) {
   let type = typeof requested === 'string' ? requested : requested?.type;
   const actions = legalActions(hand);
   if (type === 'allin') type = [...actions].reverse().find(item => item.allIn)?.type;
@@ -323,6 +397,24 @@ export function applyAction(hand, requested) {
   }
   hand.actor = other(actor);
   resolveForcedState(hand);
+  if (hand.config.outcome.mode === 'prebuilt-pools' && hand.status === 'playing' && !hand.outcomePlanning && hand.outcomeDecision?.poolBranch) {
+    hand.session.outcomePools = applyBranchPools({pools: hand.outcomePoolsBefore,
+      decision: hand.outcomeDecision, handId: hand.outcomeHandId});
+  }
+  return hand;
+}
+
+/** Runtime consumes the already materialized branch; no card search or target draw. */
+export function applyAction(hand, requested) {
+  if (!hand._outcomeTree) return applyActionRaw(hand, requested);
+  const {node} = lookupPrebuiltOutcomeTransition(hand._outcomeTree, hand._outcomeNodeId, requested);
+  const snapshot = cloneHand(node.state), session = hand.session, rng = hand.rng;
+  const tree = hand._outcomeTree;
+  Object.assign(session, {stacks: snapshot.stacks, fees: snapshot.session.fees,
+    jackpotAwards: snapshot.session.jackpotAwards, jackpotTierCounts: {...snapshot.session.jackpotTierCounts},
+    outcomePools: normalizeOutcomePools(snapshot.session.outcomePools)});
+  Object.assign(hand, snapshot, {session, rng, stacks: session.stacks, config: hand.config});
+  attachOutcomeTree(hand, tree, node.id);
   return hand;
 }
 
@@ -383,14 +475,21 @@ export function sampleDistribution(distribution, rng) {
   }
 }
 
-export function cloneHand(hand) {
+export function cloneHand(hand, {compactPools = false} = {}) {
+  const copyPools = compactPools ? compactOutcomePools : normalizeOutcomePools;
   const session = {...hand.session, rng: hand.rng.clone(), stacks: {...hand.stacks},
+    outcomePools: copyPools(hand.session.outcomePools),
     blindDraw: hand.session.blindDraw ? {...hand.session.blindDraw} : null,
     jackpotTierCounts: {...hand.session.jackpotTierCounts}};
-  return {...hand, session, rng: session.rng, stacks: session.stacks,
+  const copy = {...hand, session, rng: session.rng, stacks: session.stacks,
     stacksBefore: {...hand.stacksBefore}, streetBets: {...hand.streetBets}, contributions: {...hand.contributions},
     holes: {player: [...hand.holes.player], npc: [...hand.holes.npc]}, board: [...hand.board], deck: [...hand.deck],
-    pending: [...hand.pending], history: [...hand.history]};
+    pending: [...hand.pending], history: structuredClone(hand.history), result: hand.result ? structuredClone(hand.result) : null,
+    dealAudit: hand.dealAudit ? structuredClone(hand.dealAudit) : undefined,
+    ...(hand.outcomeDecision ? {outcomeDecision: structuredClone(hand.outcomeDecision)} : {}),
+    ...(hand.outcomePoolsBefore ? {outcomePoolsBefore: copyPools(hand.outcomePoolsBefore)} : {})};
+  if (hand._outcomeTree) attachOutcomeTree(copy, hand._outcomeTree, hand._outcomeNodeId);
+  return copy;
 }
 
 export function previewResponse(hand, playerActionType) {
@@ -454,11 +553,11 @@ export function simulate(config = {}, {hands = 10000, seed = 123, policy = 'bala
   const session = createSession(normalized, seed);
   const emptyTiers = () => ({royal: 0, straightFlush: 0, quads: 0});
   const newBatch = () => ({hands: 0, wagers: 0, netReturns: 0, totalReturns: 0, jackpotAwards: 0, tierCounts: emptyTiers()});
-  const result = {ruleSet: 'heads-up-two-blinds-v1', hands, seed, policy, config: normalized, wagers: 0, refunds: 0, grossReturns: 0, netReturns: 0,
+  const result = {ruleSet: normalized.outcome.mode === 'prebuilt-pools' ? 'hands-up-pooled-pot-v46' : 'heads-up-two-blinds-v1', hands, seed, policy, config: normalized, wagers: 0, refunds: 0, grossReturns: 0, netReturns: 0,
     totalReturns: 0, jackpotAwards: 0, tierCounts: emptyTiers(),
     fees: 0, playerFees: 0, wins: 0, losses: 0, ties: 0, folds: 0, npcFolds: 0, showdowns: 0, totalActions: 0,
     conservationError: 0, batches: [],
-    method: `每手雙方重設相同帶入、輪替大小盲；小盲自動投入0.5 BET、大盲自動投入1 BET。BOSS 採 ${normalized.boss.mode === 'legacy' ? '舊版權重' : normalized.boss.mode === 'fixed' ? '固定類型' : '不連續重複的四型輪替'}，玩家使用選定策略。有效投入排除退款，JP另加，不把96%結算係數當成勝率。${normalized.boss.mode === 'rotate' ? '本函式僅有一條玩家序列，輪替BOSS跨手相關，因此不報CI；請使用simulateStudy的多玩家聚類估計。' : '95% CI為獨立牌局比值的常態近似。'}稀有JP零命中不代表機率為零。`};
+    method: `每手雙方重設相同帶入、輪替大小盲；小盲自動投入0.5 BET、大盲自動投入1 BET。BOSS 採 ${normalized.boss.mode === 'legacy' ? '舊版權重' : normalized.boss.mode === 'fixed' ? '固定類型' : '不連續重複的四型輪替'}，玩家使用選定策略。有效投入排除退款，JP另加，不把96%結算係數當成勝率。${(normalized.outcome.mode === 'prebuilt-pools' || normalized.boss.mode === 'rotate') ? '本函式僅有一條玩家序列，水池或輪替BOSS跨手相關，因此不報CI；請使用simulateStudy的多玩家聚類估計。' : '95% CI為獨立牌局比值的常態近似。'}稀有JP零命中不代表機率為零。`};
   let sumX2 = 0, sumBaseY2 = 0, sumBaseXY = 0, sumTotalY2 = 0, sumTotalXY = 0;
   let batch = newBatch();
   for (let i = 0; i < hands; i++) {
@@ -505,7 +604,7 @@ export function simulate(config = {}, {hands = 10000, seed = 123, policy = 'bala
   result.grossRtp = result.wagers ? result.grossReturns / result.wagers : 0;
   const uncertainty = (rtp, sumY2, sumXY) => {
     const residual = Math.max(0, sumY2 - 2 * rtp * sumXY + rtp ** 2 * sumX2);
-    const standardError = normalized.boss.mode !== 'rotate' && hands > 1 && result.wagers > 0 ? Math.sqrt(hands / (hands - 1) * residual) / result.wagers : null;
+    const standardError = normalized.outcome.mode === 'legacy-deck' && normalized.boss.mode !== 'rotate' && hands > 1 && result.wagers > 0 ? Math.sqrt(hands / (hands - 1) * residual) / result.wagers : null;
     return {standardError, ci95: standardError === null ? [null, null] : [rtp - 1.96 * standardError, rtp + 1.96 * standardError]};
   };
   const base = uncertainty(result.baseRtp, sumBaseY2, sumBaseXY);

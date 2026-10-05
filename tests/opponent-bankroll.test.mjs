@@ -4,7 +4,7 @@ import {createSession, startHand, legalActions, applyAction, syncOpponentBankrol
 
 const near = (actual, expected) => assert.ok(Math.abs(actual - expected) < 1e-6, `${actual} != ${expected}`);
 function fixture({player = ['As', 'Ah'], npc = ['Ks', 'Kh'], board = ['2s', '3h', '7d', '9c', 'Jd'], config = {}} = {}) {
-  const session = createSession({buyIn: 1000, ...config, deal: {player: {manual: player}, npc: {manual: npc}}}, 73);
+  const session = createSession({buyIn: 1000, ...config, outcome:{mode:'legacy-deck'}, deal: {player: {manual: player}, npc: {manual: npc}}}, 73);
   const hand = startHand(session);
   assert.equal(new Set([...player, ...npc, ...board]).size, 9);
   hand.deck = [...board, ...hand.deck.filter(card => !board.includes(card))];
@@ -75,7 +75,7 @@ test('zero player chips refresh opponent to zero and cannot silently start or fu
   applyAction(hand, 'raise'); applyAction(hand, 'call');
   assert.equal(hand.result.player.stackAfter, 0); assert.equal(hand.result.npc.stackAfter, 38.4);
   assert.equal(assertRefresh(hand).adjustment, -38.4);
-  assert.throws(() => startHand(hand.session), /不足/);
+  assert.throws(() => startHand(hand.session), {code:'INSUFFICIENT_HAND_ASSETS'});
   assert.deepEqual(hand.session.stacks, {player: 0, npc: 0});
 });
 

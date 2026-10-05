@@ -87,7 +87,7 @@ test('small blind acts preflop; a half-BET call retains the big blind option; po
 test('one raise per street, no free fold, and fixed sizes are enforced', () => {
   const hand = startHand(createSession({}, 77));
   applyAction(hand, 'call'); applyAction(hand, 'check');
-  assert.throws(() => applyAction(hand, 'fold'), /不能/);
+  assert.throws(() => applyAction(hand, 'fold'), /不能|合法分支/);
   assert.equal(legalActions(hand).find(a => a.type === 'bet').amount, 20);
   applyAction(hand, 'bet');
   assert.equal(hand.actor, 'player');
@@ -95,7 +95,7 @@ test('one raise per street, no free fold, and fixed sizes are enforced', () => {
   assert.equal(raise.amount, 40); assert.equal(raise.to, 40);
   applyAction(hand, 'raise');
   assert.deepEqual(types(hand), ['fold', 'call']);
-  assert.throws(() => applyAction(hand, 'raise'), /不能/);
+  assert.throws(() => applyAction(hand, 'raise'), /不能|合法分支/);
   applyAction(hand, 'call');
   assert.equal(hand.street, 'turn'); assert.equal(hand.raises, 0);
 });
@@ -113,7 +113,7 @@ test('uncalled raises and blinds are refunded, excluded from wagers, and settlem
   assert.equal(hand.result.pot, 10); assert.equal(hand.result.fee, .4);
   assert.deepEqual(session.stacks, {player: 995, npc: 1004.6});
   near(session.stacks.player + session.stacks.npc + session.fees, 2000);
-  assert.throws(() => applyAction(hand, 'call'), /不能/);
+  assert.throws(() => applyAction(hand, 'call'), /不能|合法分支/);
 });
 
 test('settled balances carry to the next hand and blinds alternate', () => {
@@ -144,20 +144,20 @@ test('matched all-in runs out once, caps effective wager, and never offers raisi
   near(hand.stacks.player + hand.stacks.npc + hand.result.fee, 120);
 });
 
-test('a short small blind is all-in on posting, runs out once and receives the matched pot only', () => {
-  const session = createSession({buyIn: 1000}, 33);
+test('a small blind below the hand minimum cannot post or advance the table', () => {
+  const session = createSession({minBuyIn: 50, buyIn: 1000}, 33);
   session.stacks.player = 3;
-  const hand = startHand(session);
-  assert.equal(hand.status, 'settled'); assert.equal(hand.board.length, 5);
-  assert.equal(hand.contributions.player, 3); assert.deepEqual(types(hand), []);
-  assert.deepEqual(hand.history.filter(event => event.amount).map(event => [event.type, event.amount]), [['smallBlind', 3], ['bigBlind', 10]]);
-  assert.equal(hand.result.npc.refund, 7);
-  assert.equal(hand.result.player.matchedWager, 3);
-  near(hand.stacks.player + hand.stacks.npc + hand.result.fee, 1003);
+  const before = JSON.stringify(session), state = session.rng.state();
+  assert.throws(() => startHand(session), {code: 'INSUFFICIENT_HAND_ASSETS'});
+  assert.equal(JSON.stringify(session), before);
+  assert.equal(session.rng.state(), state);
+  assert.equal(session.handNumber, 0);
+  assert.equal(session.activeHand, undefined);
+  assert.deepEqual(session.stacks, {player: 3, npc: 1000});
 });
 
 test('common board tie splits contested gross and applies symmetric fee', () => {
-  const hand = startHand(createSession({buyIn: 1000, jackpotEnabled: false, deal: {player: {manual: ['2c', '3d']}, npc: {manual: ['4c', '5d']}}}, 1));
+  const hand = startHand(createSession({outcome: {mode: 'legacy-deck'}, buyIn: 1000, jackpotEnabled: false, deal: {player: {manual: ['2c', '3d']}, npc: {manual: ['4c', '5d']}}}, 1));
   const board = ['As', 'Ks', 'Qs', 'Js', 'Ts'];
   hand.deck = [...board, ...hand.deck.filter(card => !board.includes(card))];
   passive(hand);
@@ -172,14 +172,14 @@ test('legacy score redraw imports respect the limit, improve aggregate quality, 
   const low = {rerollChance: 0, maxRerolls: 0};
   const high = {rerollChance: 1, maxRerolls: 6, targetScore: 0.75};
   for (let seed = 0; seed < 300; seed++) {
-    const plain = startHand(createSession({deal: {player: low, npc: low}}, seed));
-    const boosted = startHand(createSession({deal: {player: high, npc: high}}, seed));
+    const plain = startHand(createSession({outcome: {mode: 'legacy-deck'}, deal: {player: low, npc: low}}, seed));
+    const boosted = startHand(createSession({outcome: {mode: 'legacy-deck'}, deal: {player: high, npc: high}}, seed));
     natural += holeScore(plain.holes.player); enhanced += holeScore(boosted.holes.player);
     for (const seat of ['player', 'npc']) assert.ok(boosted.dealAudit[seat].rerolls <= 6);
     assert.equal(new Set([...boosted.holes.player, ...boosted.holes.npc, ...boosted.board, ...boosted.deck]).size, 52);
   }
   assert.ok(enhanced > natural * 1.10, '有限次弱牌重抽應提高平均起手品質，但不保證每手達標。');
-  const fixed = startHand(createSession({deal: {player: {...high, manual: ['2c', '7d']}}}, 12));
+  const fixed = startHand(createSession({outcome: {mode: 'legacy-deck'}, deal: {player: {...high, manual: ['2c', '7d']}}}, 12));
   assert.deepEqual(fixed.holes.player, ['2c', '7d']); assert.equal(fixed.dealAudit.player.rerolls, 0);
 });
 
@@ -245,7 +245,7 @@ test('equity estimates use only actor-visible cards, never mutate game RNG, and 
 
 test('2,000 varied strategy hands preserve wallets, cards, contribution accounting and termination', () => {
   for (let seed = 0; seed < 2000; seed++) {
-    const session = createSession({targetRtp: 0.96, jackpotEnabled: false, buyIn: seed % 2 ? 230.15 : 1000}, seed);
+    const session = createSession({outcome: {mode: 'legacy-deck'}, targetRtp: 0.96, jackpotEnabled: false, buyIn: seed % 2 ? 230.15 : 1000}, seed);
     const hand = playAutomatedHand(session, ['balanced', 'call', 'tight', 'aggressive'][seed % 4]);
     const r = hand.result;
     assert.equal(hand.status, 'settled');
@@ -259,7 +259,7 @@ test('2,000 varied strategy hands preserve wallets, cards, contribution accounti
 });
 
 test('symmetric reference simulation brackets 96%; fees and refunds use correct denominator; reproducible CI', () => {
-  const result = simulate({boss: {mode: 'legacy'}, jackpotEnabled: false, deal: {npc: {rerollChance: 0.5}}}, {hands: 30000, seed: 1984});
+  const result = simulate({outcome: {mode: 'legacy-deck'}, boss: {mode: 'legacy'}, jackpotEnabled: false, deal: {npc: {rerollChance: 0.5}}}, {hands: 30000, seed: 1984});
   assert.ok(result.ci95[0] < 0.96 && result.ci95[1] > 0.96);
   near(result.netReturns / result.wagers, result.rtp, 1e-10);
   near(result.netReturns / result.grossReturns, 0.96, 1e-10);
@@ -267,8 +267,8 @@ test('symmetric reference simulation brackets 96%; fees and refunds use correct 
   assert.equal(result.wins + result.losses + result.ties, result.hands);
   assert.equal(result.folds + result.npcFolds + result.showdowns, result.hands);
   assert.ok(result.refunds > 0); near(result.conservationError, 0, 0.000003);
-  const a = simulate({}, {hands: 100, seed: 'repeat', policy: 'aggressive'});
-  const b = simulate({}, {hands: 100, seed: 'repeat', policy: 'aggressive'});
+  const a = simulate({outcome: {mode: 'legacy-deck'}}, {hands: 100, seed: 'repeat', policy: 'aggressive'});
+  const b = simulate({outcome: {mode: 'legacy-deck'}}, {hands: 100, seed: 'repeat', policy: 'aggressive'});
   assert.deepEqual(a, b);
   assert.deepEqual(simulate({}, {hands: 1}).ci95, [null, null]);
 });

@@ -2,9 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createSession, startHand, legalActions, applyAction, syncOpponentBankroll} from '../src/engine.mjs';
 import {nextHandBetConfig} from '../src/next-hand-bet.mjs';
+import {minimumAssets, tableConfig} from '../src/entry-model.mjs';
 
 function settledSession(config = {}, seed = 7182) {
-  const session = createSession(config, seed, {firstSmallBlind: 'random'});
+  const session = createSession({minBuyIn: 200, ...config}, seed, {firstSmallBlind: 'random'});
   applyAction(startHand(session), 'fold');
   return session;
 }
@@ -88,6 +89,29 @@ test('BET, blinds, limits and all street stakes use the engine six-decimal preci
   assert.equal(nextHandBetConfig(session, 0.0333331), config, 'equivalent rounded BET is unchanged');
 });
 
+test('entry display, first-hand config and next-hand quote agree at fractional minimum boundaries', () => {
+  for (const [minBuyIn, bet, expected] of [[10.000001, 5, 5], [200, 0.0333333, 0.66666], [200, 5.0000004, 100]]) {
+    const session = settledSession({minBuyIn, ...(bet<1?{outcome:{mode:'legacy-deck'}}:{})}), base = session.config;
+    assert.equal(minimumAssets(base, bet), expected);
+    const entry = tableConfig(base, bet, expected);
+    session.stacks = {player: expected, npc: expected};
+    const before = snapshot(session), next = nextHandBetConfig(session, bet);
+    assert.deepEqual(snapshot(session), before);
+    assert.equal(entry.minBuyIn, expected);
+    assert.equal(next.minBuyIn, expected);
+    assert.equal(entry.bigBlind, next.bigBlind);
+    assert.deepEqual(entry.betSize, next.betSize);
+    session.stacks.player = Math.round((expected - 0.000001) * 1e6) / 1e6;
+    assert.throws(() => nextHandBetConfig(session, bet), {code: 'INSUFFICIENT_HAND_ASSETS'});
+    assert.throws(() => tableConfig(base, bet, session.stacks.player), /Not enough chips/);
+    session.stacks.player = expected;
+    session.config = next;
+    const hand = startHand(session);
+    assert.equal(hand.stacksBefore.player, expected);
+    assert.equal(hand.stacksBefore.npc, expected);
+  }
+});
+
 test('both balances must meet the scaled configured minimum and rejection never replenishes chips', () => {
   for (const seat of ['player', 'npc']) {
     const session = settledSession();
@@ -105,15 +129,33 @@ test('both balances must meet the scaled configured minimum and rejection never 
   assert.equal(nextHandBetConfig(custom, 2).minBuyIn, 70, 'retain a configured minimum other than 20 BB');
 });
 
-test('retaining the original BET allows existing short-stack play without adding chips', () => {
-  const session = settledSession(), config = session.config;
-  session.stacks = {player: 0.02, npc: 0.01};
+test('retaining the original BET uses the same exact minimum as changing BET', () => {
+  for (const seat of ['player', 'npc']) {
+    const session = settledSession(), config = session.config;
+    session.stacks = {player: 200, npc: 200, [seat]: 199.999999};
+    const before = snapshot(session);
+    assert.throws(() => nextHandBetConfig(session, 10), {code: 'INSUFFICIENT_HAND_ASSETS'});
+    assert.deepEqual(snapshot(session), before);
+    assert.throws(() => startHand(session), {code: 'INSUFFICIENT_HAND_ASSETS'});
+    assert.deepEqual(snapshot(session), before);
+    session.stacks[seat] = 200;
+    assert.equal(nextHandBetConfig(session, 10), config);
+    const next = startHand(session);
+    assert.deepEqual(next.stacksBefore, {player: 200, npc: 200});
+  }
+});
+
+test('lowering BET can restore hand eligibility without replenishing the session', () => {
+  const session = settledSession(), original = session.config;
+  session.stacks = {player: 100, npc: 100};
   const before = snapshot(session);
-  assert.equal(nextHandBetConfig(session, 10), config);
+  assert.throws(() => nextHandBetConfig(session, 10), {code: 'INSUFFICIENT_HAND_ASSETS'});
+  const config = nextHandBetConfig(session, 5);
+  assert.equal(config.minBuyIn, 100);
+  assert.equal(session.config, original);
   assert.deepEqual(snapshot(session), before);
-  const next = startHand(session);
-  assert.deepEqual(next.stacksBefore, {player: 0.02, npc: 0.01});
-  assert.equal(next.status, 'settled');
+  session.config = config;
+  assert.deepEqual(startHand(session).stacksBefore, {player: 100, npc: 100});
 });
 
 test('accepted stakes affect only the next hand, retaining RNG, boss rotation and the fresh blind draw', () => {
@@ -149,7 +191,7 @@ test('accepted stakes affect only the next hand, retaining RNG, boss rotation an
 });
 
 test('the next hand pays Jackpot using its new BET while the previous result keeps its old BET', () => {
-  const session = createSession({deal: {player: {manual: ['2c', '3d']}, npc: {manual: ['4c', '5d']}}}, 73);
+  const session = createSession({outcome:{mode:'legacy-deck'}, deal: {player: {manual: ['2c', '3d']}, npc: {manual: ['4c', '5d']}}}, 73);
   const royal = ['As', 'Ks', 'Qs', 'Js', 'Ts'];
   function royalHand() {
     const hand = startHand(session);

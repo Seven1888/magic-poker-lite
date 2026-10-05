@@ -17,6 +17,7 @@ const nativeErrors=[
 /** Preserve actionable engine validation, while hiding untranslated native errors. */
 export function translateLabError(error){
   const message=String(error?.message??error??'').trim().split(/\r?\n\s*at\s/)[0];
+  if(error?.code==='INSUFFICIENT_HAND_ASSETS'||/^Not enough chips\./.test(message))return '資產低於目前 BET 的每手開局門檻，請選較低 BET。';
   // A bad card may itself say "worker" or "quota". It is still a card error.
   if(/^無效牌張[：:]/u.test(message))return message;
   const isValidation=/^(?:[\u3400-\u9fff]|(?:(?:player|npc|jackpotEnabled|Jackpot|baseBet|firstSmallBlind|Session)\s+)+[\u3400-\u9fff])/u.test(message);

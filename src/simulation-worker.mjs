@@ -1,6 +1,6 @@
-import {simulateStudy} from './simulation-study.mjs?v=45';
-import {buildActionTree} from './action-tree.mjs?v=45';
-import {simulateTreeStudy} from './tree-study.mjs?v=45';
+import {simulateStudy} from './simulation-study.mjs?v=46';
+import {buildActionTree} from './action-tree.mjs?v=46';
+import {simulateTreeStudy} from './tree-study.mjs?v=46';
 self.onmessage=event=>{
   const {type,config,policies,...settings}=event.data||{};
   try{

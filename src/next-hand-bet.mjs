@@ -1,3 +1,5 @@
+import {assertHandEntryAssets, minimumAssetsForBet} from './hand-entry.mjs?v=46';
+
 const STREETS = ['preflop', 'flop', 'turn', 'river'];
 const round = value => Math.round((value + Number.EPSILON) * 1e6) / 1e6;
 
@@ -14,11 +16,13 @@ export function nextHandBetConfig(session, bet) {
   const bigBlind = round(bet);
   if (!Number.isFinite(bigBlind)) throw new RangeError('BET is too large.');
   const config = session.config;
-  // Keeping the same BET preserves the existing short-stack continuation rule.
-  if (bigBlind === config.bigBlind) return config;
+  if (bigBlind === config.bigBlind) {
+    assertHandEntryAssets(session, config);
+    return config;
+  }
 
   const ratio = bigBlind / config.bigBlind;
-  const minBuyIn = round(config.minBuyIn * ratio);
+  const minBuyIn = minimumAssetsForBet(config, bigBlind);
   const maxBuyIn = round(config.maxBuyIn * ratio);
   const smallBlind = round(bigBlind / 2);
   const betSize = {...config.betSize};
@@ -27,10 +31,7 @@ export function nextHandBetConfig(session, bet) {
     .every(value => Number.isFinite(value) && value > 0)) {
     throw new RangeError('BET is outside the supported range.');
   }
-  if (!['player', 'npc'].every(seat => Number.isFinite(session.stacks?.[seat])
-    && session.stacks[seat] >= minBuyIn)) {
-    throw new RangeError('Not enough chips. Choose a lower BET.');
-  }
+  assertHandEntryAssets(session, {...config, minBuyIn});
   // buyIn is the original table-profit baseline, even if the new limits differ.
   // Never normalize here: normalization would clamp that baseline to the limits.
   return {...config, bigBlind, smallBlind, minBuyIn, maxBuyIn, betSize};

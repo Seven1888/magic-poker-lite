@@ -1,43 +1,55 @@
-import {createSession,startHand,legalActions,applyAction,getActionDistribution,sampleDistribution,previewResponse,holeScore,syncOpponentBankroll} from './engine.mjs?v=45';
-import {loadConfig,CONFIG_KEY,money,pct,esc,cardMarkup,cardText} from './shared.mjs?v=45';
-import {GAME_LABELS as LABELS,GAME_STREETS as STREETS,handName,translateError} from './game-text.mjs?v=35';
+import {createSession,startHand,legalActions,applyAction,getActionDistribution,sampleDistribution,previewResponse,holeScore,syncOpponentBankroll} from './engine.mjs?v=46';
+import {loadConfig,CONFIG_KEY,money,pct,esc,cardMarkup,cardText} from './shared.mjs?v=46';
+import {GAME_LABELS as LABELS,GAME_STREETS as STREETS,handName,translateError} from './game-text.mjs?v=46';
 import {createPotView} from './pot-view.mjs?v=35';
 import {fitStage} from './stage-fit.mjs?v=35';
-import {getHudSnapshot} from './hud-state.mjs?v=45';
+import {getHudSnapshot} from './hud-state.mjs?v=46';
 import {createGameEffects} from './game-effects.mjs?v=44';
-import {renderBetPresets,updateBetSelection,setupEntryFeatures} from './entry-view.mjs?v=35';
-import {betOptions,minimumAssets,tableConfig} from './entry-model.mjs?v=45';
-import {nextHandBetConfig} from './next-hand-bet.mjs?v=37';
-import {createEntryEncounter,previewNextEncounter} from './entry-encounter.mjs?v=45';
+import {renderBetPresets,updateBetSelection,setupEntryFeatures} from './entry-view.mjs?v=46';
+import {betOptions,minimumAssets,tableConfig} from './entry-model.mjs?v=46';
+import {nextHandBetConfig} from './next-hand-bet.mjs?v=46';
+import {handEntryStatus} from './hand-entry.mjs?v=46';
+import {loadPlayerProfile,savePlayerProfile} from './outcome-profile.mjs?v=46';
+import {createOutcomePools,normalizeOutcomePools} from './outcome-pools.mjs?v=46';
+import {createEntryEncounter,previewNextEncounter} from './entry-encounter.mjs?v=46';
 import {icon} from './ui-icons.mjs?v=35';
 import {JACKPOT_MULTIPLIERS,quoteJackpot} from './jackpot.mjs?v=35';
-import {renderJackpotWin} from './jackpot-view.mjs?v=45';
-import {getCurrentHandView} from './hand-view.mjs?v=35';
+import {renderJackpotWin} from './jackpot-view.mjs?v=46';
+import {getCurrentHandView} from './hand-view.mjs?v=46';
 import {decisionMotion} from './decision-motion.mjs?v=35';
-import {getShowdownView} from './showdown-view.mjs?v=35';
+import {getShowdownView} from './showdown-view.mjs?v=46';
 import {GAME_SPEED,atGameSpeed} from './presentation-timing.mjs?v=35';
-import {createBankrollView} from './bankroll-view.mjs?v=45';
+import {createBankrollView} from './bankroll-view.mjs?v=46';
 import {renderWinRate,equityPercent} from './win-rate-view.mjs?v=44';
 import {createHoldemEquityController} from './holdem-equity-controller.mjs?v=43';
-import {responseBadgeView,responseActionLabel,captureResponseSource,responseSourceMatches} from './action-response-view.mjs?v=45';
+import {responseBadgeView,responseActionLabel,captureResponseSource,responseSourceMatches} from './action-response-view.mjs?v=46';
 import {boardCardView,nextBoardReveal,tableDeckCounts} from './board-presentation.mjs?v=35';
-import {createResponseFlight} from './response-flight-view.mjs?v=45';
-import {createActionFlow} from './action-flow-view.mjs?v=45';
+import {createResponseFlight} from './response-flight-view.mjs?v=46';
+import {createActionFlow} from './action-flow-view.mjs?v=46';
 import {createBlindDraw} from './blind-draw-view.mjs?v=40';
-import {createTotalWin} from './total-win-view.mjs?v=44';
+import {createTotalWin} from './total-win-view.mjs?v=46';
 import {createBossActionView} from './boss-action-view.mjs?v=35';
 import {renderBossIdentity,preloadBossScenes,waitForBossScene} from './boss-scene-view.mjs?v=36';
 import {createBossRangeView} from './boss-range-view.mjs?v=44';
 import {createBossRangeController} from './boss-range-controller.mjs?v=43';
 import {bossRangeContext} from './boss-range-public.mjs?v=43';
 import {createEquityMomentum} from './equity-momentum.mjs?v=44';
-import {renderCardRow} from './card-row-view.mjs?v=45';
+import {renderCardRow} from './card-row-view.mjs?v=46';
 document.documentElement.style.setProperty('--game-speed',String(GAME_SPEED));
 const $=id=>document.getElementById(id);
 // Stable player controls; engine actions and opponent response types stay unchanged.
 const PLAYER_ACTION_LABELS={fold:'FOLD',check:'CALL',call:'CALL',bet:'RAISE',raise:'RAISE'};
 let config=loadConfig(),session=null,hand=null,busy=false,drawLog=[],lastResponse=null,handArchive=[],toastTimer,closedTable=null,phase='';
 let selectedBet=1,entryBase=config,betValues=[...new Set([1,...betOptions(config)])].sort((a,b)=>a-b),demoAssets=config.buyIn;
+const savedPlayer=loadPlayerProfile();
+let personalPools=savedPlayer?.outcomePools??createOutcomePools({paidAction:config.outcome.initialPaidActionPools,
+ special:config.outcome.initialSpecialPools,paidActionCooldown:config.outcome.initialPaidActionCooldown});
+if(savedPlayer)demoAssets=savedPlayer.balance;
+function saveSettledPlayer(balance=session?.stacks.player??demoAssets){
+ if(session?.activeHand?.status==='playing')return;
+ if(session)personalPools=normalizeOutcomePools(session.outcomePools);
+ if(!savePlayerProfile({version:1,balance,outcomePools:personalPools}))toast('Progress could not be saved on this device.');
+}
 let nextBetDraft=1,nextBetValues=[];
 let entryEncounter=null,nextEncounter=null,nextBetEncounter=null;
 const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -135,13 +147,13 @@ function decorateMenu(){
  const map={'help-dialog':'rules','menu-ranks':'cards','menu-history':'history','menu-balance':'wallet','result-details':'chip','leave-button':'leave'};
  document.querySelectorAll('.menu-grid>button').forEach(b=>{const key=b.dataset.open||b.id;b.insertAdjacentHTML('afterbegin',icon(map[key]||'cards'));});
  document.querySelector('.sound-setting>span').insertAdjacentHTML('afterbegin',icon('sound'));
- const reset=document.createElement('button');reset.id='reset-demo';reset.className='text-button wide';reset.textContent='↻ Reset demo chips';reset.onclick=()=>{if(busy||hand?.status==='playing')return;session=null;hand=null;closedTable=null;config=loadConfig();demoAssets=config.buyIn;selectedBet=1;handArchive=[];drawLog=[];lastResponse=null;entryEncounter=null;prepareEntry();$('menu-dialog').close();render();setupBuyin();};
+ const reset=document.createElement('button');reset.id='reset-demo';reset.className='text-button wide';reset.textContent='↻ Reset demo chips';reset.onclick=()=>{if(busy||hand?.status==='playing')return;session=null;hand=null;closedTable=null;config=loadConfig();demoAssets=config.buyIn;saveSettledPlayer(demoAssets);selectedBet=1;handArchive=[];drawLog=[];lastResponse=null;entryEncounter=null;prepareEntry();$('menu-dialog').close();render();setupBuyin();};
  $('menu-dialog').append(reset);
  const rules=document.querySelector('#help-dialog .rules');
- rules.innerHTML=`<li>${icon('chip')}<b>Choose BET · Draw your blind</b><span>SMALL BLIND posts ½ BET; BIG BLIND posts 1 BET. Your blind position is redrawn 50/50 before every hand. Small blind acts first preflop; big blind acts first after the flop.</span></li><li>${icon('cards')}<b>2 hole cards + 5 board cards</b><div class="rule-card-flow"><span>2</span><i>＋</i><span>3</span><i>→</i><span>1</span><i>→</i><span>1</span></div><span>PREFLOP → FLOP → TURN → RIVER</span></li><li>${icon('call')}<b>Your move · Their response</b><span>CALL matches the current bet, or checks for free when nothing is due. RAISE opens betting or increases an existing bet. The amount is what you add now. One raise per street.</span></li><li>${icon('crown')}<b>Best 5 of 7</b><span>A fold ends the hand. Otherwise, compare at showdown. Special hands earn a Jackpot bonus.</span></li>`;
+ rules.innerHTML=`<li>${icon('chip')}<b>Choose BET · Draw your blind</b><span>SMALL BLIND posts ½ BET; BIG BLIND posts 1 BET. Your blind position is redrawn 50/50 before every hand. Small blind acts first preflop; big blind acts first after the flop.</span></li><li>${icon('cards')}<b>2 hole cards + 5 board cards</b><div class="rule-card-flow"><span>2</span><i>＋</i><span>3</span><i>→</i><span>1</span><i>→</i><span>1</span></div><span>PREFLOP → FLOP → TURN → RIVER</span></li><li>${icon('call')}<b>Your move · Their response</b><span>CALL matches the current bet, or checks for free when nothing is due. RAISE opens betting or increases an existing bet. The amount is what you add now. One raise per street.</span></li><li>${icon('crown')}<b>Best 5 of 7</b><span>A fold ends the hand. Otherwise, compare at showdown. Win at showdown with a qualifying special hand to earn a Jackpot bonus.</span></li>`;
  const fees=document.createElement('details');fees.className='rules-details';fees.innerHTML='<summary>Hand highlights, turn order & pot fee ⓘ</summary><p>Gold edges mark your complete best five, including kickers. Before five cards are visible, all your visible cards glow. Blue edges mark the opponent’s best five using only their revealed hole cards and the board. Shared cards can carry both gold and blue edges.</p><p>Your controls and BOSS responses always read FOLD, CALL and RAISE. A free CALL performs a check; RAISE opens betting when no bet exists yet. These are simplified display names for both seats. If the opponent has not acted, they may still check or bet in the same street. Two checks close the street; the next shared cards are then revealed for the new street.</p><p>Both seats post before cards are dealt: SMALL BLIND pays ½ BET and BIG BLIND pays 1 BET. Small blind acts first preflop and can fold, call the remaining ½ BET, or raise. Big blind acts first after the flop. Folding forfeits chips already committed, except any uncalled excess. Choosing a BET level does not charge chips. Both seats follow the same rule. The floating BOSS badges above your buttons show opponent responses, not your win chance. A certain same-street response is shown as 100%, including CALL. Mixed responses show FOLD and RAISE only, so their percentages need not total 100%. Actions that end the hand or move to the next street have no same-street response badge.</p><p>After every hand, including folds, the opponent’s demo chips reset to match your remaining chips. Your own balance keeps the actual winnings and losses. After settlement, use BET to set the next hand’s amount, then NEXT HAND to deal. Changing BET costs no chips; closing the picker cancels unsaved changes.</p><p id="help-fee"></p>';
  rules.after(fees);
- document.querySelector('#help-dialog>p.muted').textContent='Standard 52-card deck, no jokers. Starting-hand boosts only redraw weak hole cards during the deal. Jackpot awards use the actual showdown hand.';
+ document.querySelector('#help-dialog>p.muted').textContent='Standard 52-card deck, no jokers. Paid CALL and RAISE can improve your showdown result. Free CALL keeps the current result; a fold still ends the hand. Boss action chances depend on the current street and the available actions. Your settled chips and bonus progress are saved on this device. Reloading an unfinished demo hand restores the previous completed hand.';
  const ledger=$('settlement'),details=document.createElement('details');details.className='result-accounting';details.innerHTML=`<summary>${icon('wallet')}Chip details <span>⌄</span></summary>`;ledger.replaceWith(details);details.append(ledger);
  const overview=document.createElement('div');overview.id='result-overview';overview.className='result-overview';details.before(overview);
 }
@@ -191,18 +203,18 @@ function updateEntry(){
  const jackpotOn=entryBase.jackpotEnabled!==false;
  $('entry-jp-award').textContent=jackpotOn?money(quoteJackpot('royal',selectedBet).award):'OFF';
  $('entry-jp-label').textContent=jackpotOn?'ROYAL FLUSH · 200× BET':'JACKPOT DISABLED';
- $('entry-jp-caption').innerHTML=jackpotOn?'Special hands at showdown.<br>Highest bonus paid on top of the pot return.':'Jackpot is off for this table.<br>Win the pot with the best hand or a fold.';
+ $('entry-jp-caption').innerHTML=jackpotOn?'Win a showdown with a qualifying special hand.<br>Highest bonus paid on top of the pot return.':'Jackpot is off for this table.<br>Win the pot with the best hand or a fold.';
  document.querySelector('.feature-jp-tiers').hidden=!jackpotOn;
  $('bet-minus').disabled=index<=0;$('bet-plus').disabled=index===betValues.length-1;
  $('entry-start').disabled=available<minimum||busy;$('buyin-error').textContent=available<minimum?'Not enough chips. Choose a lower BET.':'';
- $('fee-notice').textContent=`Choosing BET does not charge chips. Minimum balance: ${money(minimum)}. Each hand, SMALL BLIND automatically posts ${blindAmount(selectedBet/2)} and BIG BLIND posts ${blindAmount(selectedBet)}. Your blind position is redrawn 50/50 before every hand. Small blind acts first preflop; big blind acts first after the flop. The opponent matches your balance after every hand, including folds. Pot fee: ${pct(1-entryBase.targetRtp)}. Uncalled bets are refunded in full. Demo chips only.`;
+ $('fee-notice').textContent=`Choosing BET does not charge chips. Minimum balance before each hand: ${money(minimum)}. If your balance falls below the minimum, choose a lower BET. Once a hand starts, you can still go all-in. Each hand, SMALL BLIND automatically posts ${blindAmount(selectedBet/2)} and BIG BLIND posts ${blindAmount(selectedBet)}. Your blind position is redrawn 50/50 before every hand. Small blind acts first preflop; big blind acts first after the flop. The opponent matches your balance after every hand, including folds. Pot fee: ${pct(1-entryBase.targetRtp)}. Uncalled bets are refunded in full. Demo chips only.`;
 }
 $('bet-minus').onclick=()=>{selectedBet=betValues[Math.max(0,betValues.indexOf(selectedBet)-1)];updateEntry();};
 $('bet-plus').onclick=()=>{selectedBet=betValues[Math.min(betValues.length-1,betValues.indexOf(selectedBet)+1)];updateEntry();};
 $('buyin-form').onsubmit=async e=>{e.preventDefault();if(busy)return;
   try{
    config=tableConfig(entryBase,selectedBet,bankroll());const seed=entryEncounter.seed;
-   session=createSession(config,seed,{firstSmallBlind:'random'});hand=null;handArchive=[];closedTable=null;lastResponse=null;drawLog=[];
+   session=createSession(config,seed,{firstSmallBlind:'random',outcomePools:personalPools});hand=null;handArchive=[];closedTable=null;lastResponse=null;drawLog=[];
    $('buyin-dialog').close();await newHand();
   }catch(error){busy=false;phase='';blindDraw.clear();$('buyin-error').textContent=translateError(error);show('buyin-dialog');render();}
 };
@@ -235,15 +247,25 @@ function updateNextBet(){
  $('next-bet-jackpot').textContent=session.config.jackpotEnabled!==false?`ROYAL FLUSH ${money(quoteJackpot('royal',nextBetDraft).award)}`:'JACKPOT OFF';
  let error='';
  try{
-  if(busy||Math.min(...Object.values(session.stacks))<.01)throw new Error('Not enough chips to start another hand.');
+  if(busy)throw new Error('Wait for this hand to finish.');
   nextHandBetConfig(session,nextBetDraft);
  }catch(cause){error=translateError(cause);}
+ if(error&&!busy){
+  const available=Math.min(session.stacks.player,session.stacks.npc);
+  const minimum=minimumAssets(session.config,nextBetDraft);
+  const lowest=minimumAssets(session.config,nextBetValues[0]);
+  const seat=session.stacks.npc<session.stacks.player?'Opponent balance':'Balance';
+  if(available<minimum)error=available<lowest
+   ?`${seat} ${money(available)}. Minimum for BET ${money(nextBetValues[0])}: ${money(lowest)}. Not enough chips to start another hand.`
+   :`${seat} ${money(available)}. This BET needs ${money(minimum)}. Choose a lower BET.`;
+ }
  $('next-bet-error').textContent=error;$('next-bet-confirm').disabled=!!error;
  updateExpression(settlementReleased?hand?.result?.winner||'':'');
 }
 $('next-bet-dialog').addEventListener('close',()=>{nextBetEncounter=null;updateExpression(settlementReleased?hand?.result?.winner||'':'');});
 $('round-bet').onclick=openNextBet;
 $('result-bet').onclick=openNextBet;
+$('next-bet-leave').onclick=()=>{$('next-bet-dialog').close();leaveTable();};
 $('next-bet-minus').onclick=()=>{nextBetDraft=nextBetValues[Math.max(0,nextBetValues.indexOf(nextBetDraft)-1)];updateNextBet();};
 $('next-bet-plus').onclick=()=>{nextBetDraft=nextBetValues[Math.min(nextBetValues.length-1,nextBetValues.indexOf(nextBetDraft)+1)];updateNextBet();};
 $('next-bet-form').onsubmit=e=>{
@@ -261,9 +283,12 @@ $('next-bet-form').onsubmit=e=>{
 async function newHand(){
   if(busy||!session||hand?.status==='playing'||$('next-bet-dialog').open)return;
   $('result-dialog').close();
-  if(session&&Math.min(...Object.values(session.stacks))<.01){setupBuyin();return;}
+  if(!handEntryStatus(session).canStart){
+   if(hand?.status==='settled')openNextBet();else setupBuyin();
+   return;
+  }
   try{
-   busy=true;phase='DRAWING YOUR BLIND';hand=startHand(session);
+   busy=true;phase='PREPARING HAND';render();await delay(0);hand=startHand(session);phase='DRAWING YOUR BLIND';
    entryEncounter=null;nextEncounter=null;nextBetEncounter=null;drawLog=[];lastResponse=null;pendingPlayerAction=null;
    delete $('game').dataset.chosenAction;paintDistribution([]);
    // Show this hand's committed blind before presenting its payments or cards.
@@ -466,11 +491,14 @@ function renderActions(){
   $('game').dataset.busy=String(busy);$('round-cta').hidden=!!hand&&(!settled||busy);$('result-details').hidden=false;$('result-details').disabled=!settled||busy;
   $('round-cta').classList.toggle('has-bet-picker',settled);
   $('round-bet').hidden=!settled;$('round-bet').disabled=busy||!settled;
-  const nextBet=session?.config.bigBlind??selectedBet,canContinue=!!session&&Math.min(...Object.values(session.stacks))>=.01;
+  const nextBet=session?.config.bigBlind??selectedBet,canContinue=!!session&&handEntryStatus(session).canStart;
   $('round-bet-value').textContent=money(nextBet);
   $('round-bet').setAttribute('aria-label',`Change next hand BET, currently ${money(nextBet)}`);
   $('result-bet').innerHTML=`BET <b>${money(nextBet)}</b>`;$('result-bet').disabled=busy||!settled;
-  $('sit-button').disabled=busy||(settled&&!canContinue);$('next-hand').disabled=busy||!settled||!canContinue;
+  // Keep the recovery route available: an unaffordable BET opens its picker.
+  $('sit-button').disabled=busy;$('next-hand').disabled=busy||!settled;
+  const nextHint=canContinue?'Start next hand':'Choose a lower BET to start another hand';
+  $('sit-button').title=settled?nextHint:'Enter the table';$('next-hand').title=nextHint;
   if(!hand){$('sit-button').innerHTML=`${icon('play')}<b>FIGHT</b>`;$('sit-button').onclick=setupBuyin;}
   else if(settled){$('sit-button').innerHTML=`${icon('play')}<b>NEXT HAND</b>`;$('sit-button').onclick=newHand;}
   const actions=h.actions,passive=actions.find(a=>a.type==='call'||a.type==='check'),aggressive=actions.find(a=>a.type==='raise'||a.type==='bet');
@@ -518,7 +546,7 @@ async function playerAct(type){
     const before=hand.board.length;
     pendingPlayerAction={...chosen};responseSource=captureResponseSource(hand,chosen);responseDecision=null;$('game').dataset.chosenAction=type;renderActions();paintDistribution();
     setTableCue('action',`YOU ${PLAYER_ACTION_LABELS[type]}`,{seat:'player',detail:chosen.amount?'CHIPS TO THE POT':type==='check'?'NO CHIPS REQUIRED':'END THIS HAND'});
-    applyAction(hand,type);phase=hand.board.length===5&&before<4?'ALL-IN · RUNNING THE BOARD':hand.board.length>before?`DEAL ${STREETS[hand.street]}`:hand.status==='settled'?'SETTLING':'CHIPS TO POT';
+    applyAction(hand,type);if(hand.status==='settled')saveSettledPlayer();phase=hand.board.length===5&&before<4?'ALL-IN · RUNNING THE BOARD':hand.board.length>before?`DEAL ${STREETS[hand.street]}`:hand.status==='settled'?'SETTLING':'CHIPS TO POT';
     paintDistribution();
     if(chosen.amount)setTableCue('contribution',`YOU ${PLAYER_ACTION_LABELS[type]}`,{seat:'player',detail:'CHIPS TO THE POT'});
     // Commit once, then finish the player's chip arrival before presenting the
@@ -563,7 +591,7 @@ async function continuePlay(){
       await delay(Math.max(0,motion.duration-sweepMs),{speed:1});
     }else{lastResponse=null;setTableCue('action',`OPPONENT ${responseActionLabel(selected.type)}`,{seat:'npc'});await delay(reduceMotion?0:550,{speed:1});}
     const before=hand.board.length,historyStart=hand.history.length;
-    applyAction(hand,selected.type);drawLog.push(entry);$('game').dataset.npcState=selected.type;
+    applyAction(hand,selected.type);if(hand.status==='settled')saveSettledPlayer();drawLog.push(entry);$('game').dataset.npcState=selected.type;
     // Use only the committed history event. Paid action text starts from the
     // same contribution notification as the actual chips; free actions start now.
     const actionEvent=hand.history.slice(historyStart).find(event=>event.actor==='npc');

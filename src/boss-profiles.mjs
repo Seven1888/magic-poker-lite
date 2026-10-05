@@ -5,7 +5,7 @@ const freeze = value => {
   return value;
 };
 const row = (fold, call, raise) => ({fold, call, raise});
-export const BOSS_PROFILE_VERSION = 'four-boss-v1';
+export const BOSS_PROFILE_VERSION = 'four-boss-fixed-street-v2';
 export const BOSS_BANDS = freeze({
   weak: {label: '弱起手', description: '翻牌前兩張起手分數低於 0.42。'},
   playable: {label: '可玩起手', description: '翻牌前起手分數介於 0.42（含）至 0.66。'},
@@ -18,33 +18,43 @@ export const BOSS_BANDS = freeze({
 export const BOSS_BANDS_BY_STREET = freeze({preflop: ['weak', 'playable', 'premium'],
   flop: ['high', 'pair', 'draw', 'strong'], turn: ['high', 'pair', 'draw', 'strong'], river: ['high', 'pair', 'strong']});
 
-/** Published percentages before legal-action filtering; every row sums to 100. */
+function averageStreetRows(tables) {
+  return Object.fromEntries(Object.entries(BOSS_BANDS_BY_STREET).map(([street, bands]) => {
+    const weights = Object.fromEntries(['fold', 'call', 'raise'].map(action => [action,
+      bands.reduce((sum, band) => sum + tables[street][band][action], 0) / bands.length]));
+    // Correct only binary floating-point residue; keep the unrounded equal-weight means.
+    weights.raise += 100 - (weights.fold + weights.call + weights.raise);
+    return [street, weights];
+  }));
+}
+
+/** Keep the v1 tables as the readable historical source; only streetWeights drive v2 actions. */
 export const BOSS_PROFILES = freeze([
-  {id: 'caller', name: '死跟型', nickname: '不信邪', description: '弱對子和聽牌也願意跟，較少主動加注。', tables: {
+  {id: 'caller', name: '死跟型', nickname: '不信邪', description: '各街以過牌或跟注為主，較少主動加注。', tables: {
     preflop: {weak: row(8,88,4), playable: row(3,91,6), premium: row(0,85,15)},
     flop: {high: row(12,83,5), pair: row(3,92,5), draw: row(3,90,7), strong: row(0,85,15)},
     turn: {high: row(18,77,5), pair: row(6,88,6), draw: row(8,85,7), strong: row(0,82,18)},
     river: {high: row(24,71,5), pair: row(8,86,6), strong: row(0,78,22)}
   }},
-  {id: 'maniac', name: '狂攻型', nickname: '瘋狗', description: '弱牌也常開注加注，持續施壓。', tables: {
+  {id: 'maniac', name: '狂攻型', nickname: '瘋狗', description: '各街都有較高的開注與加注機率，持續施壓。', tables: {
     preflop: {weak: row(8,22,70), playable: row(4,21,75), premium: row(0,15,85)},
     flop: {high: row(10,20,70), pair: row(3,22,75), draw: row(2,18,80), strong: row(0,15,85)},
     turn: {high: row(14,21,65), pair: row(5,20,75), draw: row(5,20,75), strong: row(0,12,88)},
     river: {high: row(20,20,60), pair: row(8,27,65), strong: row(0,10,90)}
   }},
-  {id: 'sniper', name: '狙擊型', nickname: '冷面殺手', description: '弱牌多棄牌，強成牌才大幅提高攻擊機率。', tables: {
+  {id: 'sniper', name: '狙擊型', nickname: '冷面殺手', description: '面對下注時較常棄牌，仍保留固定的跟注與加注機率。', tables: {
     preflop: {weak: row(70,27,3), playable: row(22,63,15), premium: row(0,20,80)},
     flop: {high: row(75,23,2), pair: row(28,62,10), draw: row(12,73,15), strong: row(0,20,80)},
     turn: {high: row(82,17,1), pair: row(42,50,8), draw: row(28,62,10), strong: row(0,15,85)},
     river: {high: row(92,7,1), pair: row(55,40,5), strong: row(0,10,90)}
   }},
-  {id: 'trapper', name: '設局型', nickname: '狐狸', description: '強牌在前段常過牌或跟注，轉牌、河牌再提高攻擊。', tables: {
+  {id: 'trapper', name: '設局型', nickname: '狐狸', description: '前段偏向過牌或跟注，轉牌與河牌再提高加注機率。', tables: {
     preflop: {weak: row(35,58,7), playable: row(12,75,13), premium: row(0,85,15)},
     flop: {high: row(45,48,7), pair: row(12,78,10), draw: row(8,82,10), strong: row(0,88,12)},
     turn: {high: row(55,38,7), pair: row(22,66,12), draw: row(15,73,12), strong: row(0,70,30)},
     river: {high: row(70,20,10), pair: row(35,50,15), strong: row(0,35,65)}
   }}
-]);
+].map(profile => ({...profile, streetWeights: averageStreetRows(profile.tables)})));
 export const BOSS_PROFILE_IDS = freeze(BOSS_PROFILES.map(profile => profile.id));
 export const BOSS_PROFILE_BY_ID = freeze(Object.fromEntries(BOSS_PROFILES.map(profile => [profile.id, profile])));
 
@@ -68,7 +78,7 @@ export function selectBossProfile(rng, previousId = null, input = {}) {
   return {profile: BOSS_PROFILE_BY_ID[id], selection: {mode, probability: 1 / eligibleIds.length, previousId, eligibleIds}};
 }
 
-/** No opponent cards, future board, deck or RNG are read by this classifier. */
+/** Historical v1 classifier for research only; fixed-street v2 decisions never call it. */
 export function classifyBossStrength(hand) {
   const hole = hand.holes.npc, board = hand.board;
   if (board.length < 3) {
@@ -96,11 +106,11 @@ export function getBossProfileDistribution(hand, actions) {
   if (!actions.length) return [];
   const profile = BOSS_PROFILE_BY_ID[hand.bossProfile?.id];
   if (!profile) throw new Error('牌局缺少已鎖定的 BOSS 類型。');
-  const {band} = classifyBossStrength(hand), weights = profile.tables[hand.street]?.[band];
-  if (!weights) throw new Error('BOSS 行為表缺少目前街道與牌力分組。');
-  const owed = Math.max(0, hand.currentBet - hand.streetBets.npc);
+  const weights = profile.streetWeights[hand.street];
+  if (!weights) throw new Error('BOSS 行為表缺少目前街道。');
+  const canCheck = actions.some(action => action.type === 'check');
   const keys = {fold: 'fold', call: 'call', check: 'call', bet: 'raise', raise: 'raise'};
-  const raw = actions.map(action => action.type === 'fold' && owed <= 1e-7 ? 0 : weights[keys[action.type]] || 0);
+  const raw = actions.map(action => action.type === 'fold' && canCheck ? 0 : weights[keys[action.type]] || 0);
   let total = raw.reduce((sum, value) => sum + value, 0);
   if (!total) {
     const passive = actions.findIndex(action => action.type === 'check' || action.type === 'call');

@@ -1,12 +1,12 @@
-/* Floating gold lettering: TOTAL above WIN, together beside the counted award. */
-.game .table-total-win[data-outcome='win'] {
+/* Floating gold lettering: TOTAL above WIN beside its award; BOSS WINS stands alone. */
+.game .table-total-win:is([data-outcome='win'], [data-outcome='loss']) {
   flex-direction:row; align-items:center; justify-content:center; gap:8px;
   padding:6px 12px; border:0; border-radius:0;
   background:none; box-shadow:none;
   transition:transform calc(.36s / var(--game-speed,1.2)) ease-out;
 }
-.game .table-total-win[data-outcome='win']::before,
-.game .table-total-win[data-outcome='win']::after {
+.game .table-total-win:is([data-outcome='win'], [data-outcome='loss'])::before,
+.game .table-total-win:is([data-outcome='win'], [data-outcome='loss'])::after {
   content:none; display:none;
 }
 .game .table-total-win[data-outcome='win'] .total-win-label {
@@ -16,7 +16,8 @@
   text-shadow:none;
 }
 .game .total-win-label-word,
-.game .table-total-win[data-outcome='win'] .total-win-amount {
+.game .table-total-win[data-outcome='win'] .total-win-amount,
+.game .table-total-win[data-outcome='loss'] .total-win-label {
   /* An opaque gold face keeps dark depth shadows behind the glyphs. */
   color:#ffd75e; background:none; -webkit-text-fill-color:currentColor;
   -webkit-text-stroke:.45px #9d5c0d;
@@ -31,6 +32,11 @@
   line-height:48px; letter-spacing:-.8px; font-style:italic;
   transition:none;
 }
+.game .table-total-win[data-outcome='loss'] .total-win-label {
+  font:900 italic 32px/40px Georgia,'Times New Roman',serif;
+  letter-spacing:-.5px; white-space:nowrap;
+}
+.game .table-total-win[data-outcome='loss'] .total-win-amount { display:none; }
 /* While chips leave the pot, retain its clear centre and use the existing right bay. */
 .game[data-total-win]:has(#pot-chips .casino-chip) .table-total-win[data-outcome='win'] {
   --total-win-scale:.45; padding:5px; gap:4px; transition:none;
@@ -39,6 +45,7 @@
 .game[data-total-win]:has(#pot-chips .casino-chip) .table-total-win .total-win-label-word { font-size:9px; line-height:11px; }
 .game[data-total-win]:has(#pot-chips .casino-chip) .table-total-win .total-win-label-word:last-child { font-size:13px; line-height:14px; }
 .game[data-total-win]:has(#pot-chips .casino-chip) .table-total-win[data-outcome='win'] .total-win-amount { max-width:calc(100% - 38px); line-height:32px; letter-spacing:-.35px; }
+.game[data-total-win]:has(#pot-chips .casino-chip) .table-total-win[data-outcome='loss'] .total-win-label { font-size:16px; line-height:22px; letter-spacing:-.25px; }
 .game .table-total-win[data-phase='settled'][data-outcome='win'] .total-win-amount {
   animation:total-win-land-v44 calc(.36s / var(--game-speed,1.2)) ease-out both;
 }

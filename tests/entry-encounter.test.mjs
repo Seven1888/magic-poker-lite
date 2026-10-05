@@ -12,6 +12,21 @@ const modes = [
   {mode: 'legacy'}
 ];
 const options = {firstSmallBlind: 'random'};
+
+test('default pooled model commits the reserved identity at both BET bucket extremes', () => {
+  for (const boss of modes) for (const bet of [1, 2000]) {
+    const config = tableConfig(normalizeConfig({boss}), bet, 100000);
+    const entry = createEntryEncounter(config, 72);
+    const session = createSession(config, entry.seed, options);
+    const before = session.rng.state();
+    assert.equal(createEntryEncounter(config, 72).bossProfile?.id, entry.bossProfile?.id);
+    assert.equal(session.rng.state(), before);
+    const hand = startHand(session);
+    assert.equal(hand._outcomeTree.complete, true);
+    assert.deepEqual(hand.bossProfile, entry.bossProfile);
+  }
+});
+
 const snapshot = session => ({
   session: JSON.stringify(session),
   hand: JSON.stringify(session.activeHand),
@@ -29,7 +44,7 @@ for (const boss of modes) {
   test(`entry identity matches the first real hand without changing blind, deal or RNG: ${boss.mode}/${boss.profileId || 'all'}`, () => {
     const seen = new Set();
     for (const seed of seeds) {
-      const config = {boss};
+      const config = {boss, outcome:{mode:'legacy-deck'}};
       const baseline = createSession(config, seed, options);
       const baselineOpening = snapshot(baseline);
       const expected = startHand(baseline);
@@ -71,7 +86,7 @@ for (const boss of modes) {
 
 test('all entry BET levels retain the reserved identity and seed in every boss mode', () => {
   for (const boss of modes) {
-    const base = normalizeConfig({boss});
+    const base = normalizeConfig({boss, outcome:{mode:'legacy-deck'}});
     for (const seed of [0, 22, 30, 188, 246]) {
       const entry = createEntryEncounter(base, seed);
       for (const bet of betOptions(base)) {

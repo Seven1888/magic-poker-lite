@@ -1,4 +1,4 @@
-import {money} from './shared.mjs?v=45';
+import {money} from './shared.mjs?v=46';
 
 /** Visible chip sources only. Exact balances come from the controller, never a wallet copy. */
 export function createBankrollView({root = globalThis.document} = {}) {

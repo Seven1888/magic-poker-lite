@@ -1,6 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {DEFAULT_CONFIG, normalizeConfig, makeDeck, createSession, startHand, cloneHand, applyAction} from '../src/engine.mjs';
+import {DEFAULT_CONFIG, normalizeConfig, makeDeck, createSession as createEngineSession, startHand, cloneHand, applyAction} from '../src/engine.mjs';
+
+// These fixtures specify the historical deal RNG and reroll acceptance rules.
+const createSession = (config = {}, seed, options) => createEngineSession(
+  {...config, outcome: {mode: 'legacy-deck', ...config.outcome}}, seed, options);
 
 const bossManual = ['As', 'Ah'];
 const available = makeDeck().filter(card => !bossManual.includes(card));

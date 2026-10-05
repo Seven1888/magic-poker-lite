@@ -48,7 +48,7 @@ test('live commitments reduce available funds without pretending that unsettled 
 });
 
 test('fractional blind HUD and money labels agree with opening commitments, calls and the settled ledger', () => {
-  const session = createSession({buyIn: 1000, bigBlind: .03, jackpotEnabled: false}, 42), hand = startHand(session);
+  const session = createSession({outcome:{mode:'legacy-deck'}, buyIn: 1000, bigBlind: .03, jackpotEnabled: false}, 42), hand = startHand(session);
   const opening = getHudSnapshot({session, hand});
   assert.equal(opening.playerSeat, 'SB'); assert.equal(opening.npcSeat, 'BB');
   assert.equal(opening.smallBlind, .015); assert.equal(opening.bigBlind, .03);
@@ -96,7 +96,7 @@ test('closed-table snapshot preserves carried-out balances and its original buy-
 });
 
 test('active hand settings and live stacks take priority over pending config and old table snapshots', () => {
-  const session = createSession({buyIn: 800, smallBlind: 3, bigBlind: 6, betSize: {preflop: 12, flop: 24}}, 33);
+  const session = createSession({outcome:{mode:'legacy-deck'}, buyIn: 800, smallBlind: 3, bigBlind: 6, betSize: {preflop: 12, flop: 24}}, 33);
   const hand = startHand(session);
   const args = {session, hand, config: {buyIn: 2000, smallBlind: 50, bigBlind: 100}, closedTable: {playerBalance: 12, npcBalance: 13, buyIn: 100, settledTableProfit: -88}};
   let hud = getHudSnapshot(args);

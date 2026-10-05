@@ -1,4 +1,4 @@
-import {cardMarkup, cardText} from './shared.mjs?v=45';
+import {cardMarkup, cardText} from './shared.mjs?v=46';
 
 /** Keep card/animation nodes stable; models contain only already-public faces. */
 export function renderCardRow(element, models = []) {

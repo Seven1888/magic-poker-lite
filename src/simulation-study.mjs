@@ -1,5 +1,8 @@
-import {normalizeConfig, createSession, playAutomatedHand, syncOpponentBankroll} from './engine.mjs?v=45';
-import {BOSS_PROFILE_IDS} from './boss-profiles.mjs?v=35';
+import {normalizeConfig, createSession, playAutomatedHand, syncOpponentBankroll} from './engine.mjs?v=46';
+import {BOSS_PROFILE_IDS} from './boss-profiles.mjs?v=46';
+import {handEntryStatus} from './hand-entry.mjs?v=46';
+import {BOSS_PROFILE_VERSION} from './boss-profiles.mjs?v=46';
+import {createPoolStudySummary, collectPoolStudyAudit, finishPoolStudySummary, combinePoolStudySummaries} from './probability-pools.mjs?v=46';
 
 const SEATS = ['player', 'npc'];
 const STREETS = ['preflop', 'flop', 'turn', 'river'];
@@ -137,9 +140,12 @@ export function simulateStudy(config = {}, {
   const target = targetAsset === undefined ? round(normalized.buyIn * 2) : targetAsset;
   if (mode === 'cashout' && (!Number.isFinite(target) || target <= 0)) throw new RangeError('目標資產必須是有限正數。');
   const independent = mode === 'independent';
-  const clustered = !independent || normalized.boss.mode === 'rotate';
+  const pooled = normalized.outcome?.mode === 'prebuilt-pools';
+  const clustered = pooled || !independent || normalized.boss.mode === 'rotate';
   const encounterCounts = () => Object.fromEntries([...BOSS_PROFILE_IDS, 'legacy'].map(id => [id, 0]));
-  const result = {...summary(), ruleSet: 'heads-up-two-blinds-v1', studyVersion: 1, mode, players, entries,
+  const result = {...summary(), ruleSet: 'heads-up-two-blinds-v1', studyVersion: 3,
+    modelVersion: `${pooled?'prebuilt-pools-v1':'legacy-deck-v1'}+${BOSS_PROFILE_VERSION}+study-v3`,
+    outcomeModel: pooled ? 'prebuilt-pools' : 'legacy-deck', bossProfileVersion: BOSS_PROFILE_VERSION, mode, players, entries,
     seed, policy, config: normalized, sliceSize, targetAsset: mode === 'cashout' ? target : null, maxHandsPerPlayer,
     playerResults: [], playerSummary: {completed: 0, target: 0, insufficient: 0, censored: 0},
     byBlind: {small: summary(), big: summary()}, actionStats: newActionStats(), dealAudit: newDealAudit(),
@@ -154,12 +160,15 @@ export function simulateStudy(config = {}, {
       seedDerivation: '每位玩家由主種子及零起算索引固定派生獨立亂數流；增加玩家數不改變既有玩家。',
       blindMode: independent ? 'alternating' : 'random-each-hand',
       initialBlind: independent ? '每位玩家首手固定小盲，之後逐手輪替。' : '每位玩家入桌首手及每次下一手均以 50/50 重新抽盲位，允許連續同盲位。',
-      bankroll: independent ? '每手雙方重設相同帶入；end 僅為最後一手結束餘額，不能當作連續資產。' : '同桌連續保留玩家餘額；每手結束包含最後一手，對手資產匹配玩家，調整另列且不計派彩。',
-      insufficientThreshold: 0.01, minimumEntryOnly: true,
-      stopRule: mode === 'cashout' ? '達到目標、可用資產低於 0.01 或安全手數上限；截尾另列，不能算達標或失敗。' : independent ? '每位玩家完成指定獨立手數。' : '完成指定手數或同桌可用資產低於 0.01；低於最低帶入仍可繼續短籌碼牌局。',
+      bankroll: independent ? '每手只重設雙方相同帶入；同一玩家的水池與冷卻跨手保留。end 僅為最後一手結束餘額，不能當作連續資產。' : '同桌連續保留玩家餘額、水池與冷卻；每手結束包含最後一手，對手資產匹配玩家，調整另列且不計派彩。',
+      outcomeModel: pooled ? 'prebuilt-pools' : 'legacy-deck',
+      poolContinuity: pooled ? '每位玩家開始時建立自己的初始三桶，之後所有研究模式均跨手保留；independent 只重設資產。玩家之間不共用水池。' : '歷史牌庫模式，沒有跨手結果水池。',
+      insufficientThreshold: normalized.minBuyIn, minimumEntryOnly: false,
+      entryMinimumMultiplier: normalized.minBuyIn / normalized.bigBlind,
+      stopRule: mode === 'cashout' ? '達到目標優先停止；否則任一方資產不足目前 BET 的每手開局門檻即停止，不自動降低 BET。安全手數上限列為截尾。' : independent ? '每位玩家完成指定獨立手數；每手重設資產並符合目前 BET 的開局門檻。' : '完成指定手數或任一方資產不足目前 BET 的每手開局門檻即停止，不自動降低 BET；已開始的牌局正常完成。',
       actionOutcomeUnit: 'count 是動作次數；hands 與結果欄是含該街／座位／動作的手數，同手只計一次，勝負均指玩家。',
       returnDenominator: '單手倍數＝含 JP 總返還／有效投入；退款不進分子或分母。',
-      uncertainty: !clustered ? '以獨立牌局充分統計量計算比值的 95% 常態近似區間。' : `以每位玩家整段分子／分母聚類，計算比值的 95% 常態近似區間；少於兩位玩家不報區間。${independent ? '雖然每手重設資產，BOSS 不連續重複會產生跨手相關，因此仍須按玩家聚類。' : ''}`,
+      uncertainty: !clustered ? '以獨立牌局充分統計量計算比值的 95% 常態近似區間。' : `以每位玩家整段分子／分母聚類，計算比值的 95% 常態近似區間；少於兩位玩家不報區間。${pooled ? '水池與冷卻跨手相依，即使 independent 或固定 BOSS 也不能按單手當獨立樣本。' : independent ? '雖然每手重設資產，BOSS 不連續重複會產生跨手相關，因此仍須按玩家聚類。' : ''}`,
       limitation: '不是後端玩家帳本或 RTP 認證；零次稀有 JP 不代表機率為零，少量樣本不能證明尾部已收斂。'},
   };
   result.method = [result.methodMeta.bankroll, result.methodMeta.stopRule, result.methodMeta.uncertainty, result.methodMeta.limitation].join(' ');
@@ -180,19 +189,21 @@ export function simulateStudy(config = {}, {
     const playerSeed = studyPlayerSeed(seed, playerIndex);
     const session = createSession(normalized, playerSeed, {firstSmallBlind: independent ? 'player' : 'random'});
     const player = {...summary(), playerIndex, seed: playerSeed, start: normalized.buyIn, end: normalized.buyIn,
+      outcomePoolSummary: pooled ? createPoolStudySummary(session.outcomePools) : null,
       endMeaning: independent ? 'last-independent-hand' : 'continuous-balance', status: 'completed',
       reachedTarget: false, insufficient: false, censored: false, npcRefreshCount: 0,
       bossProfileSequence: [], bossEncounterCounts: encounterCounts(), bossConsecutiveRepeats: 0,
       npcRefreshAdjustment: 0, npcRefreshAdded: 0, npcRefreshRemoved: 0};
     const terminal = () => {
       if (mode === 'cashout' && session.stacks.player >= target) return 'target';
-      if (!independent && SEATS.some(seat => session.stacks[seat] < 0.01)) return 'insufficient';
+      if (!independent && !handEntryStatus(session).canStart) return 'insufficient';
       return null;
     };
     let status = terminal();
     while (!status && player.hands < handLimit) {
       if (independent) session.stacks = {player: normalized.buyIn, npc: normalized.buyIn};
       const hand = playAutomatedHand(session, policy), settled = hand.result, p = settled.player;
+      if (pooled) collectPoolStudyAudit(player.outcomePoolSummary, settled.outcomePoolAudit);
       const bossId = hand.bossProfile?.id ?? 'legacy';
       const priorBoss = player.bossProfileSequence.at(-1), repeated = priorBoss === bossId;
       player.bossProfileSequence.push(bossId); player.bossEncounterCounts[bossId]++;
@@ -231,10 +242,12 @@ export function simulateStudy(config = {}, {
     result.playerSummary[player.status]++;
     if (clustered) observe(stats, player.wagers, player.netReturns, player.totalReturns);
     for (const key of ['npcRefreshAdjustment', 'npcRefreshAdded', 'npcRefreshRemoved']) player[key] = round(player[key]);
+    if (pooled) finishPoolStudySummary(player.outcomePoolSummary, session.outcomePools);
     result.playerResults.push(finishSummary(player)); completedPlayers++; progress();
   }
   flushBatch();
   result.methodMeta.ciSamples = stats.n;
+  result.outcomePoolSummary = combinePoolStudySummaries(result.playerResults.map(player => player.outcomePoolSummary));
   const baseEstimate = ratio(result.netReturns, result.wagers), totalEstimate = ratio(result.totalReturns, result.wagers);
   const base = uncertainty(stats, baseEstimate, result.wagers, 'base'), total = uncertainty(stats, totalEstimate, result.wagers, 'total');
   result.baseStandardError = base.standardError; result.baseCi95 = base.ci95;

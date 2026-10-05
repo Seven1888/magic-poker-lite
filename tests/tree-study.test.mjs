@@ -6,7 +6,7 @@ import {createRng,createSession,startHand} from '../src/engine.mjs';
 
 const near=(actual,expected,tolerance=1e-8)=>assert.ok(Math.abs(actual-expected)<=tolerance,`${actual} != ${expected}`);
 const natural={rerollMode:'unpaired',rerollChance:0,maxRerolls:0,manual:[]};
-const config={boss:{mode:'legacy'},deal:{player:natural,npc:natural}};
+const config={outcome:{mode:'legacy-deck'},boss:{mode:'legacy'},deal:{player:natural,npc:natural}};
 
 test('tree study preserves probability and accounting mass, with deal-based denominators and progress',()=>{
   const progress=[],result=simulateTreeStudy(config,{deals:13,seed:210,policy:'aggressive',onProgress:value=>progress.push(value)});
@@ -50,11 +50,15 @@ test('confidence intervals use per-deal integrated samples, and one deal has no 
   const single=simulateTreeStudy(config,{deals:1,seed:931});
   assert.deepEqual(single.winCi95,[null,null]);assert.deepEqual(single.baseCi95,[null,null]);assert.deepEqual(single.totalCi95,[null,null]);
   assert.equal(single.winStandardError,null);
+  assert.equal(single.contributionStandardError,null);assert.deepEqual(single.contributionCi95,[null,null]);
   const result=simulateTreeStudy(config,{deals:6,seed:931});
   const values=result.dealSeeds.map((seed,index)=>buildActionTree(config,{seed,firstSmallBlind:index%2?'npc':'player'}).summary.weighted);
   const mean=values.reduce((sum,value)=>sum+value.winProbability,0)/6;
   const se=Math.sqrt(values.reduce((sum,value)=>sum+(value.winProbability-mean)**2,0)/5/6);
   near(result.winStandardError,se);near(result.winCi95[0],Math.max(0,mean-1.96*se));
+  const contributionMean=values.reduce((sum,value)=>sum+value.totalContribution,0)/6;
+  const contributionSe=Math.sqrt(values.reduce((sum,value)=>sum+(value.totalContribution-contributionMean)**2,0)/5/6);
+  near(result.contributionStandardError,contributionSe);near(result.contributionCi95[1],contributionMean+1.96*contributionSe);
   const residual=values.reduce((sum,value)=>sum+(value.totalReturn-result.totalRtp*value.matchedWager)**2,0);
   const totalSe=Math.sqrt(6/5*residual)/values.reduce((sum,value)=>sum+value.matchedWager,0);
   near(result.totalStandardError,totalSe);near(result.totalCi95[1],result.totalRtp+1.96*totalSe);
@@ -85,7 +89,7 @@ test('Monte Carlo draws through tree branches agree with the full weighted integ
 });
 
 test('tier probabilities and zero-weight paths use conditional masses, not jackpot leaf counts',()=>{
-  const small={minBuyIn:10,maxBuyIn:20,buyIn:20,deal:{player:{manual:['As','Ah']},npc:{manual:['Ks','Kh']}}};
+  const small={outcome:{mode:'legacy-deck'},minBuyIn:10,maxBuyIn:20,buyIn:20,deal:{player:{manual:['As','Ah']},npc:{manual:['Ks','Kh']}}};
   let seed=1,chosen;
   // Find a repeatable quads deal using exactly the study's seed derivation.
   for(;seed<5000;seed++){

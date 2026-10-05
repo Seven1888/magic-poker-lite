@@ -11,13 +11,30 @@ const modes = [
   ...BOSS_PROFILE_IDS.map(profileId => ({mode: 'fixed', profileId})),
   {mode: 'legacy'}
 ];
+
+test('pooled hands preserve next encounter previews across all pool buckets and random blinds', () => {
+  const session=createSession({buyIn:100000,maxBuyIn:100000,
+    outcome:{initialPaidActionPools:[50,100,200],initialSpecialPools:[2000,5000,50000]}},72,{firstSmallBlind:'random'});
+  applyAction(startHand(session),'fold');
+  for(const bet of [1,50,2000]){
+    const before=JSON.stringify(session),rng=session.rng.state(),preview=previewNextEncounter(session);
+    assert.deepEqual(previewNextEncounter(session),preview);
+    assert.equal(JSON.stringify(session),before);assert.equal(session.rng.state(),rng);
+    session.config=nextHandBetConfig(session,bet);
+    assert.deepEqual(previewNextEncounter(session),preview);
+    const hand=startHand(session);
+    assert.equal(hand._outcomeTree.complete,true);assert.deepEqual(hand.bossProfile,preview.bossProfile);
+    applyAction(hand,'fold');
+  }
+});
 const snapshot = session => ({
   session: JSON.stringify(session),
   hand: JSON.stringify(session.activeHand),
   rngState: session.rng.state()
 });
 function settledSession(boss = {mode: 'rotate'}, seed = 72) {
-  const session = createSession({boss, buyIn: 100000, maxBuyIn: 100000}, seed, {firstSmallBlind: 'random'});
+  // Exhaustive historical seed/BET matrix; pooled integration is checked below.
+  const session = createSession({outcome:{mode:'legacy-deck'}, boss, buyIn: 100000, maxBuyIn: 100000}, seed, {firstSmallBlind: 'random'});
   applyAction(startHand(session), 'fold');
   syncOpponentBankroll(session);
   return session;
@@ -93,7 +110,7 @@ test('BET drafts and confirmed changes retain the same next identity and baselin
 
 test('explicit research blinds preview the unshifted BOSS stream and retain alternation', () => {
   for (const firstSmallBlind of ['player', 'npc']) for (const seed of seeds) {
-    const session = createSession({}, seed, {firstSmallBlind});
+    const session = createSession({outcome:{mode:'legacy-deck'}}, seed, {firstSmallBlind});
     for (let turn = 0; turn < 4; turn++) {
       const previous = startHand(session);
       applyAction(previous, 'fold');

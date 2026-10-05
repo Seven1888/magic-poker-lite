@@ -28,7 +28,7 @@ export function setupEntryFeatures(root = globalThis.document) {
       <small class="entry-guide-eyebrow">3 / 3 · EXTRA REWARDS</small><h3>JACKPOT BONUS</h3>
       <div class="entry-guide-royal" aria-label="Royal flush example"><img src="assets/cards/s10.png" alt="Ten of spades" draggable="false"><img src="assets/cards/s11.png" alt="Jack of spades" draggable="false"><img src="assets/cards/s12.png" alt="Queen of spades" draggable="false"><img src="assets/cards/s13.png" alt="King of spades" draggable="false"><img src="assets/cards/s1.png" alt="Ace of spades" draggable="false"></div>
       <div class="entry-guide-prize"><span class="feature-jp-label" id="entry-jp-label">ROYAL FLUSH · 200× BET</span><strong id="entry-jp-award">200</strong></div>
-      <p id="entry-jp-caption">Special hands at showdown.<br>Highest bonus paid on top of the pot return.</p><div class="feature-jp-tiers"><span>STRAIGHT FLUSH <b>50×</b></span><span>FOUR OF A KIND <b>20×</b></span></div>
+      <p id="entry-jp-caption">Win a showdown with a qualifying special hand.<br>Highest bonus paid on top of the pot return.</p><div class="feature-jp-tiers"><span>STRAIGHT FLUSH <b>50×</b></span><span>FOUR OF A KIND <b>20×</b></span></div>
     </section>`;
   panel.insertAdjacentHTML('afterend', `<nav class="entry-feature-nav" aria-label="Feature pages"><button type="button" id="entry-feature-prev" aria-label="Previous feature">‹</button><div>${['Beat the boss','Choose your move','Jackpot bonus'].map((name,i)=>`<button type="button" data-feature="${i}" aria-label="${name}" aria-controls="entry-feature-${i}"></button>`).join('')}</div><button type="button" id="entry-feature-next" aria-label="Next feature">›</button></nav>`);
   let current = 0;

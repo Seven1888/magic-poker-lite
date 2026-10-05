@@ -4,6 +4,8 @@ export const GAME_STREETS=Object.freeze({preflop:'PREFLOP',flop:'FLOP',turn:'TUR
 const HAND_NAMES=['High Card','Pair','Two Pair','Three of a Kind','Straight','Flush','Full House','Four of a Kind','Straight Flush'];
 export const handName=evaluation=>evaluation?.royal?'Royal Flush':HAND_NAMES[evaluation?.category]||'Your Hand';
 const ERROR_TEXT=[
+ [/未能建立完整結果樹|完整結果樹超過/,'This hand could not be prepared. No chips were charged. Please try again or check the settings.'],
+ [/BET 不屬於三個正式水池桶/,'Choose a supported BET level.'],
  [/資產不足/,'Not enough chips. Select a lower BET.'],
  [/其中一方籌碼不足/,'A stack is empty. Select BET to enter a new table.'],
  [/目前牌局尚未結束/,'Finish the current hand first.'],

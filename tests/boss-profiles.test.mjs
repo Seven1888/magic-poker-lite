@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {BOSS_PROFILES, BOSS_PROFILE_IDS, BOSS_PROFILE_BY_ID, BOSS_BANDS_BY_STREET, normalizeBossConfig,
+import {BOSS_PROFILES, BOSS_PROFILE_VERSION, BOSS_PROFILE_IDS, BOSS_PROFILE_BY_ID, BOSS_BANDS_BY_STREET, normalizeBossConfig,
   selectBossProfile, classifyBossStrength, getBossProfileDistribution} from '../src/boss-profiles.mjs';
+import {renderBossProbabilityTables} from '../src/boss-probability-view.mjs';
 import {createRng, normalizeConfig, createSession, startHand, applyAction, legalActions, getActionDistribution,
   previewResponse, cloneHand, sampleDistribution, simulate} from '../src/engine.mjs';
 import {buildActionTree} from '../src/action-tree.mjs';
@@ -10,10 +11,10 @@ import {simulateStudy} from '../src/simulation-study.mjs';
 
 const near = (a, b, tolerance = 1e-10) => assert.ok(Math.abs(a-b) <= tolerance, `${a} != ${b}`);
 const manual = {player: {manual: ['As', 'Ah']}, npc: {manual: ['2s', '7c']}};
-const fixed = (profileId, config = {}, firstSmallBlind = 'player') => startHand(createSession({boss: {mode: 'fixed', profileId}, deal: manual, ...config}, 1729, {firstSmallBlind}));
+const fixed = (profileId, config = {}, firstSmallBlind = 'player') => startHand(createSession({outcome:{mode:'legacy-deck'},boss: {mode: 'fixed', profileId}, deal: manual, ...config}, 1729, {firstSmallBlind}));
 const sampleHand = (hole, board = [], street = board.length === 5 ? 'river' : board.length === 4 ? 'turn' : board.length === 3 ? 'flop' : 'preflop') => ({holes: {npc: hole}, board, street});
 
-test('four published immutable profile tables have complete street/band coverage and exact percentages', () => {
+test('historical v1 source tables retain complete street/band coverage and exact percentages', () => {
   assert.deepEqual(BOSS_PROFILE_IDS, ['caller', 'maniac', 'sniper', 'trapper']);
   assert.deepEqual(BOSS_PROFILES.map(p => `${p.name}｜${p.nickname}`), ['死跟型｜不信邪', '狂攻型｜瘋狗', '狙擊型｜冷面殺手', '設局型｜狐狸']);
   for (const profile of BOSS_PROFILES) for (const [street, bands] of Object.entries(BOSS_BANDS_BY_STREET)) {
@@ -25,6 +26,27 @@ test('four published immutable profile tables have complete street/band coverage
       assert.ok(Object.isFrozen(weights));
     }
   }
+});
+
+test('v2 fixed street weights equally average every historical row without rounding the inputs', () => {
+  assert.equal(BOSS_PROFILE_VERSION, 'four-boss-fixed-street-v2');
+  for (const profile of BOSS_PROFILES) {
+    assert.deepEqual(Object.keys(profile.streetWeights), ['preflop','flop','turn','river']);
+    assert.ok(Object.isFrozen(profile.streetWeights));
+    for (const [street, bands] of Object.entries(BOSS_BANDS_BY_STREET)) {
+      const weights = profile.streetWeights[street];
+      assert.ok(Object.isFrozen(weights));
+      assert.deepEqual(Object.keys(weights), ['fold','call','raise']);
+      assert.equal(weights.fold + weights.call + weights.raise, 100);
+      for (const action of ['fold','call','raise']) {
+        near(weights[action], bands.reduce((sum, band) => sum + profile.tables[street][band][action], 0) / bands.length);
+      }
+    }
+  }
+  assert.deepEqual(BOSS_PROFILE_BY_ID.caller.streetWeights.flop, {fold:4.5,call:87.5,raise:8});
+  assert.deepEqual(BOSS_PROFILE_BY_ID.maniac.streetWeights.turn, {fold:6,call:18.25,raise:75.75});
+  assert.deepEqual(BOSS_PROFILE_BY_ID.sniper.streetWeights.river, {fold:49,call:19,raise:32});
+  near(BOSS_PROFILE_BY_ID.trapper.streetWeights.preflop.call, 218 / 3);
 });
 
 test('new defaults rotate, fixed and legacy are explicit, and invalid profile configuration fails', () => {
@@ -78,7 +100,7 @@ test('a long rotating profile sequence is reproducible, approximately uniform, a
 });
 
 test('startHand owns the sole profile draw and preserves no-repeat history across stack resets', () => {
-  const seed = 7182, session = createSession({deal: manual}, seed), reference = createRng(seed);
+  const seed = 7182, session = createSession({outcome:{mode:'legacy-deck'},deal: manual}, seed), reference = createRng(seed);
   let previous = null;
   for (let turn = 0; turn < 15; turn++) {
     session.stacks = {player: 10000, npc: 10000};
@@ -95,7 +117,7 @@ test('startHand owns the sole profile draw and preserves no-repeat history acros
   }
 });
 
-test('strength bands use only currently visible own cards and detect weak pairs, flush draws, gutshots and strong made hands', () => {
+test('historical strength classifier remains available for v1 research', () => {
   const cases = [
     [sampleHand(['2s','7c']), 'weak'], [sampleHand(['2s','2h']), 'playable'], [sampleHand(['As','Ah']), 'premium'],
     [sampleHand(['2c','7d'],['As','Kh','9c']), 'high'], [sampleHand(['2c','2d'],['As','Kh','9c']), 'pair'],
@@ -111,9 +133,9 @@ test('strength bands use only currently visible own cards and detect weak pairs,
   }
 });
 
-test('facing a wager uses the exact table percentages; no-cost fold is zero and passive/aggressive weights renormalize', () => {
+test('facing a wager uses fixed street percentages; no-cost fold is zero and remaining weights renormalize', () => {
   for (const profileId of BOSS_PROFILE_IDS) {
-    const hand = fixed(profileId, {}, 'npc'), table = BOSS_PROFILE_BY_ID[profileId].tables.preflop.weak;
+    const hand = fixed(profileId, {}, 'npc'), table = BOSS_PROFILE_BY_ID[profileId].streetWeights.preflop;
     const facing = getActionDistribution(hand);
     for (const action of facing) near(action.probability, table[action.type] / 100);
     const free = {...hand, currentBet: hand.streetBets.npc};
@@ -129,18 +151,93 @@ test('facing a wager uses the exact table percentages; no-cost fold is zero and 
 test('when raising is unavailable only the remaining fold/call weights are normalized', () => {
   const hand = fixed('maniac'); applyAction(hand, 'raise');
   assert.deepEqual(legalActions(hand).map(action => action.type), ['fold','call']);
-  const distribution = getActionDistribution(hand), weights = BOSS_PROFILE_BY_ID.maniac.tables.preflop.weak;
+  const distribution = getActionDistribution(hand), weights = BOSS_PROFILE_BY_ID.maniac.streetWeights.preflop;
   near(distribution[0].probability, weights.fold / (weights.fold + weights.call));
   near(distribution[1].probability, weights.call / (weights.fold + weights.call));
 });
 
-test('caller keeps weak pairs and draws, sniper differentiates strength, and fox traps early with strong hands', () => {
+test('fixed street personalities retain calling, attacking, folding and later-street aggression', () => {
   const p = BOSS_PROFILE_BY_ID;
-  assert.ok(p.caller.tables.flop.pair.call >= 90 && p.caller.tables.flop.draw.call >= 90);
-  assert.ok(p.maniac.tables.flop.high.raise > p.caller.tables.flop.strong.raise);
-  assert.ok(p.sniper.tables.river.high.fold > 80 && p.sniper.tables.river.strong.raise > 80);
-  assert.ok(p.trapper.tables.flop.strong.call > p.trapper.tables.flop.strong.raise);
-  assert.ok(p.trapper.tables.river.strong.raise > p.trapper.tables.flop.strong.raise);
+  for (const street of ['preflop','flop','turn','river']) {
+    assert.ok(p.caller.streetWeights[street].call > 75);
+    assert.ok(p.maniac.streetWeights[street].raise > 70);
+    assert.ok(p.sniper.streetWeights[street].fold > p.caller.streetWeights[street].fold);
+  }
+  assert.ok(p.trapper.streetWeights.flop.call > p.trapper.streetWeights.flop.raise);
+  assert.ok(p.trapper.streetWeights.river.raise > p.trapper.streetWeights.turn.raise);
+  assert.ok(p.trapper.streetWeights.turn.raise > p.trapper.streetWeights.flop.raise);
+});
+
+test('fixed distributions never read any card, bankroll, betting or RNG fields', () => {
+  const actions = [{type:'fold',amount:0},{type:'call',amount:5},{type:'raise',amount:15}];
+  const beforeActions = structuredClone(actions);
+  for (const profile of BOSS_PROFILES) for (const street of Object.keys(BOSS_BANDS_BY_STREET)) {
+    const hand = {bossProfile:{id:profile.id},street};
+    for (const key of ['holes','board','deck','currentBet','streetBets','stacks','rng']) {
+      Object.defineProperty(hand,key,{get() {throw new Error(`unexpected ${key} read`);}});
+    }
+    const actual = getBossProfileDistribution(hand,actions);
+    for (const item of actual) near(item.probability,profile.streetWeights[street][item.type]/100);
+    assert.deepEqual(actions,beforeActions);
+  }
+});
+
+test('changing both private hands and public cards leaves same-street Boss decisions unchanged', () => {
+  for (const profileId of BOSS_PROFILE_IDS) {
+    const hand = fixed(profileId, {}, 'npc');
+    for (const street of ['preflop','flop','turn','river']) {
+      hand.street = street;
+      const baseline = getActionDistribution(hand);
+      for (const [npc,player,board] of [
+        [['As','Ah'],['2c','7d'],[]],
+        [['2c','7d'],['As','Ah'],['Ks','Qh','Tc']],
+        [['Js','9s'],['2c','2d'],['Ts','8s','3d','Kh']],
+        [['2c','7d'],['3c','4d'],['As','Ks','Qs','Js','Ts']]
+      ]) {
+        hand.holes = {npc,player}; hand.board = board;
+        assert.deepEqual(getActionDistribution(hand),baseline);
+      }
+    }
+  }
+});
+
+test('all fixed street rows filter and normalize every legal action boundary consistently', () => {
+  const scenarios = [
+    [['fold','call','raise'],['fold','call','raise']],
+    [['fold','call'],['fold','call']],
+    [['check','bet'],['call','raise']],
+    [['check','raise'],['call','raise']],
+    [['check'],['call']],
+    [['call'],['call']]
+  ];
+  for (const profile of BOSS_PROFILES) for (const street of Object.keys(BOSS_BANDS_BY_STREET)) {
+    const hand = {bossProfile:{id:profile.id},street}, weights = profile.streetWeights[street];
+    assert.deepEqual(getBossProfileDistribution(hand,[]),[]);
+    for (const [types,keys] of scenarios) {
+      const actions = types.map((type,index)=>({type,amount:index*5,to:index*10,allIn:index===types.length-1}));
+      const distribution = getBossProfileDistribution(hand,actions);
+      const sum = keys.reduce((total,key)=>total+weights[key],0);
+      distribution.forEach(({probability,...action},index)=>{
+        assert.deepEqual(action,actions[index]);
+        near(probability,weights[keys[index]]/sum);
+      });
+      near(distribution.reduce((total,item)=>total+item.probability,0),1);
+    }
+  }
+});
+
+test('probability tables show one fixed row per street and explain averaging without strength classifications', () => {
+  const element = {innerHTML:''};
+  renderBossProbabilityTables({getElementById:id=>id==='boss-profile-tables'?element:null});
+  const bodies = [...element.innerHTML.matchAll(/<tbody>(.*?)<\/tbody>/gs)];
+  assert.equal(bodies.length,4);
+  for (const body of bodies) assert.equal([...body[1].matchAll(/<tr>/g)].length,4);
+  assert.match(element.innerHTML,/等權算術平均/);
+  assert.match(element.innerHTML,/翻牌前與河牌各除以 3，翻牌與轉牌各除以 4/);
+  assert.match(element.innerHTML,/不是實測行動頻率/);
+  assert.match(element.innerHTML,/不因雙方底牌或公牌改變/);
+  assert.match(element.innerHTML,/非法欄位移除後，其餘欄位按比例正規化/);
+  assert.doesNotMatch(element.innerHTML,/<th>當下牌力|弱起手|可玩起手|強起手|強成牌|牌力分級/);
 });
 
 test('player model weights and Boss profile weights are separate while legacy mode reproduces the old weights', () => {
@@ -151,7 +248,7 @@ test('player model weights and Boss profile weights are separate while legacy mo
   assert.notDeepEqual(getActionDistribution(configured), getActionDistribution(caller));
   applyAction(configured, 'raise'); applyAction(caller, 'raise');
   assert.deepEqual(getActionDistribution(configured), getActionDistribution(caller));
-  const legacy = startHand(createSession({boss:{mode:'legacy'},npc:{fold:0,call:1,raise:0,check:1,bet:0}},1729));
+  const legacy = startHand(createSession({outcome:{mode:'legacy-deck'},boss:{mode:'legacy'},npc:{fold:0,call:1,raise:0,check:1,bet:0}},1729));
   applyAction(legacy, 'raise'); assert.equal(getActionDistribution(legacy).find(a => a.type === 'call').probability, 1);
 });
 
@@ -179,7 +276,7 @@ test('sampled Boss actions follow the published distribution', () => {
 });
 
 test('profile studies reconcile per-Boss summaries and audit every no-repeat transition across independent stack resets', () => {
-  const result = simulateStudy({}, {players:4,entries:30,seed:'profile-audit'});
+  const result = simulateStudy({outcome:{mode:'legacy-deck'}}, {players:4,entries:30,seed:'profile-audit'});
   assert.equal(result.bossEncounterAudit.checkedTransitions, 116);
   assert.equal(result.bossEncounterAudit.firstSelections, 4);
   assert.equal(result.bossEncounterAudit.unexpectedRepeats, 0);
@@ -199,27 +296,27 @@ test('profile studies reconcile per-Boss summaries and audit every no-repeat tra
 });
 
 test('fixed-profile studies intentionally repeat and keep hand CI; one rotating sequence cannot claim independent-hand CI', () => {
-  const fixedStudy = simulateStudy({boss:{mode:'fixed',profileId:'caller'}},{players:2,entries:5});
+  const fixedStudy = simulateStudy({outcome:{mode:'legacy-deck'},boss:{mode:'fixed',profileId:'caller'}},{players:2,entries:5});
   assert.equal(fixedStudy.byBoss.caller.hands,10);
   assert.equal(fixedStudy.bossEncounterAudit.consecutiveRepeats,8);
   assert.equal(fixedStudy.bossEncounterAudit.unexpectedRepeats,0);
   assert.equal(fixedStudy.methodMeta.ciUnit,'hand'); assert.equal(fixedStudy.methodMeta.ciSamples,10);
-  assert.deepEqual(simulateStudy({}, {players:1,entries:40}).ci95,[null,null]);
-  assert.deepEqual(simulate({}, {hands:40}).ci95,[null,null]);
+  assert.deepEqual(simulateStudy({outcome:{mode:'legacy-deck'}}, {players:1,entries:40}).ci95,[null,null]);
+  assert.deepEqual(simulate({outcome:{mode:'legacy-deck'}}, {hands:40}).ci95,[null,null]);
 });
 
 test('complete trees lock one Boss for all counterfactual paths and tree-study samples disclose independent encounters', () => {
-  const tree = buildActionTree({}, {seed:6612}), actual = startHand(createSession({},6612));
+  const tree = buildActionTree({outcome:{mode:'legacy-deck'}}, {seed:6612}), actual = startHand(createSession({outcome:{mode:'legacy-deck'},},6612));
   assert.equal(tree.bossProfileId,actual.bossProfile.id);
   assert.deepEqual(tree.bossSelection,actual.bossSelection);
   assert.equal(tree.meta.rngStateAfterDeal,tree.meta.rngStateAfterTraversal);
   assert.equal(tree.complete,true); near(tree.summary.terminalProbabilityMass,1);
-  const study = simulateTreeStudy({}, {deals:8,seed:441});
-  const paired = simulateTreeStudy({}, {deals:8,seed:441,policy:'call'});
+  const study = simulateTreeStudy({outcome:{mode:'legacy-deck'}}, {deals:8,seed:441});
+  const paired = simulateTreeStudy({outcome:{mode:'legacy-deck'}}, {deals:8,seed:441,policy:'call'});
   assert.deepEqual(study.dealSeeds,paired.dealSeeds); assert.deepEqual(study.bossProfileIds,paired.bossProfileIds);
   assert.match(study.meta.bossSampling,/獨立新牌桌/);
   assert.equal(Object.values(study.byBoss).reduce((sum, item) => sum+item.deals,0),8);
   near(Object.values(study.byBoss).reduce((sum,item)=>sum+(item.totals.winProbability||0),0),study.totals.winProbability);
-  const fixedStudy = simulateTreeStudy({boss:{mode:'fixed',profileId:'sniper'}},{deals:3,seed:54});
+  const fixedStudy = simulateTreeStudy({outcome:{mode:'legacy-deck'},boss:{mode:'fixed',profileId:'sniper'}},{deals:3,seed:54});
   assert.equal(fixedStudy.byBoss.sniper.deals,3);
 });

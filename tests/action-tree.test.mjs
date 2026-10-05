@@ -5,7 +5,7 @@ import {createSession,startHand,legalActions,applyAction,getActionDistribution,e
 
 const near=(actual,expected,tolerance=1e-8)=>assert.ok(Math.abs(actual-expected)<=tolerance,`${actual} != ${expected}`);
 const natural={rerollMode:'unpaired',rerollChance:0,maxRerolls:0,manual:[]};
-const config={boss:{mode:'legacy'},deal:{player:natural,npc:natural}};
+const config={outcome:{mode:'legacy-deck'},boss:{mode:'legacy'},deal:{player:natural,npc:natural}};
 const passive={fold:0,call:1,raise:0,check:1,bet:0};
 
 test('both blind positions enumerate every legal fixed-deck path, including zero-probability branches, without RNG draws',()=>{
@@ -64,7 +64,7 @@ test('weighted outcomes equal the probability-weighted leaves and root action va
 });
 
 test('all-in trees shrink through the shared engine and retain real JP, fee and refund accounting',()=>{
-  const manualConfig={minBuyIn:10,maxBuyIn:20,buyIn:20,deal:{player:{manual:['As','Ah']},npc:{manual:['Ks','Kh']}}};
+  const manualConfig={outcome:{mode:'legacy-deck'},minBuyIn:10,maxBuyIn:20,buyIn:20,deal:{player:{manual:['As','Ah']},npc:{manual:['Ks','Kh']}}};
   let seed=1;
   for(;seed<5000;seed++){
     const hand=startHand(createSession(manualConfig,seed));

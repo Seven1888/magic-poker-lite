@@ -1,11 +1,23 @@
-import {DEFAULT_CONFIG,normalizeConfig} from './engine.mjs?v=45';
-export const CONFIG_KEY='magic-poker-lite.config.v1';
+import {DEFAULT_CONFIG,normalizeConfig} from './engine.mjs?v=46';
+export const CONFIG_KEY='magic-poker-lite.config.v2';
+const LEGACY_CONFIG_KEY='magic-poker-lite.config.v1';
 export const LABELS={fold:'棄牌',check:'過牌',call:'跟注',bet:'下注',raise:'加注',smallBlind:'小盲',bigBlind:'大盲'};
 export const STREETS={preflop:'翻牌前',flop:'翻牌',turn:'轉牌',river:'河牌'};
 export const money=n=>Number(n||0).toLocaleString('en-US',{maximumFractionDigits:6});
 export const pct=n=>`${(100*n).toFixed(1)}%`;
 export const esc=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-export function loadConfig(){try{return normalizeConfig(JSON.parse(localStorage.getItem(CONFIG_KEY)||'null')||DEFAULT_CONFIG);}catch{return normalizeConfig(DEFAULT_CONFIG);}}
+export function loadConfig(){
+ try{
+  const saved=localStorage.getItem(CONFIG_KEY);
+  if(saved)return normalizeConfig(JSON.parse(saved)||DEFAULT_CONFIG);
+  const legacy=JSON.parse(localStorage.getItem(LEGACY_CONFIG_KEY)||'null');
+  // Migrate the old default ratio once; explicit v2/imported custom limits stay exact.
+  if(legacy&&legacy.minBuyIn/(legacy.bigBlind||10)===20){
+   legacy.minBuyIn=(legacy.bigBlind||10)*DEFAULT_CONFIG.minBuyIn/DEFAULT_CONFIG.bigBlind;
+  }
+  return normalizeConfig(legacy||DEFAULT_CONFIG);
+ }catch{return normalizeConfig(DEFAULT_CONFIG);}
+}
 export function cardText(card){return card?`${({s:'♠',h:'♥',d:'♦',c:'♣'})[card[1]]}${card[0]==='T'?'10':card[0]}`:'暗牌';}
 export function cardMarkup(card,{back=false,best=false}={}){
   if(!card&&!back)return '<div class="card blank" aria-label="Unrevealed community card">♠</div>';

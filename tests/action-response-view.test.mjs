@@ -44,8 +44,9 @@ test('sole responses include passive CALL and retain original types, probability
     'a sole positive value is never silently normalized to 100%');
 });
 
-test('seed 22 keeps the real CALL 100% source without mutating RNG, while free CALL still changes street', () => {
-  const config={bigBlind:100,betSize:{preflop:100,flop:200,turn:400,river:400}};
+test('a guaranteed CALL source does not mutate RNG, while free CALL still changes street', () => {
+  const config={bigBlind:100,betSize:{preflop:100,flop:200,turn:400,river:400},
+    boss:{mode:'legacy'},npc:{fold:0,call:1,raise:0,check:1,bet:0,strengthInfluence:0,priceInfluence:0}};
   const make=()=>{const hand=startHand(createSession(config,22,{firstSmallBlind:'random'}));assert.equal(stepNpc(hand).selected.type,'call');return hand;};
   const hand=make(),control=make(),before=JSON.stringify(hand),rng=hand.rng.state();
   assert.equal(hand.actor,'player');

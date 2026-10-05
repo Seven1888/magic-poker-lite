@@ -80,7 +80,7 @@ function passive(hand) {
 function splitHand(config = {}) {
   // Pin the original split-pot fixture independently of the current default deal model.
   const setting = {rerollMode: 'legacy-score', rerollChance: .75, maxRerolls: 2, targetScore: .48};
-  return startHand(createSession({...config, boss: {mode: 'legacy'}, deal: {player: {...setting}, npc: {...setting}}}, 20));
+  return startHand(createSession({...config, outcome:{mode:'legacy-deck'}, boss: {mode: 'legacy'}, deal: {player: {...setting}, npc: {...setting}}}, 20));
 }
 
 function scaleLayout(doc, scaleX, scaleY) {
@@ -122,7 +122,7 @@ test('pot view renders both blinds and never changes the hand, balances or RNG',
 
 test('fractional blinds show the exact pot, posted chips, uncalled refund and net payout', async () => {
   const doc = fakeDocument(), view = createPotView({root: doc, locale: 'en'});
-  const hand = startHand(createSession({bigBlind: .03, jackpotEnabled: false}, 42));
+  const hand = startHand(createSession({outcome:{mode:'legacy-deck'}, bigBlind: .03, jackpotEnabled: false}, 42));
   view.render(hand);
   await finishMotion(doc); await view.whenIdle();
   assert.equal(hand.pot, .045); assert.equal(text(doc, 'pot-value'), '0.045');

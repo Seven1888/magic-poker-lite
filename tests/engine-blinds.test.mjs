@@ -1,9 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  createRng, createSession, startHand, legalActions, applyAction,
+  createRng, createSession as createEngineSession, startHand, legalActions, applyAction,
   previewResponse, getActionDistribution
 } from '../src/engine.mjs';
+
+// Preserve the exact historical blind/deal RNG reference; current default
+// prebuilt-pool execution and random blinds are covered in outcome-engine.test.
+const createSession = (config = {}, seed, options) => createEngineSession(
+  {...config, outcome: {mode: 'legacy-deck', ...config.outcome}}, seed, options);
 
 const other = seat => seat === 'player' ? 'npc' : 'player';
 const types = hand => legalActions(hand).map(action => action.type);
@@ -144,7 +149,7 @@ test('failed or duplicate starts cannot consume another blind draw or change the
   applyAction(first, 'fold');
   session.stacks.player = 0;
   const insufficient = snapshot();
-  assert.throws(() => startHand(session), /籌碼不足/);
+  assert.throws(() => startHand(session), {code: 'INSUFFICIENT_HAND_ASSETS'});
   assert.deepEqual(snapshot(), insufficient);
 });
 
