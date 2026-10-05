@@ -1,5 +1,15 @@
 # 完整場景、遊戲介面與 POT 呈現
 
+## v40：小盲／大盲提示與局間 BET 預覽下一位 BOSS（2026-10-05）
+
+遊戲仍使用英文，抽盲改回小盲／大盲：標題 `BLIND POSITION`，抽選中 `DRAWING YOUR BLIND`；中央 coin 與飛至座位的 coin 皆用 `SB`／`BB`，結果標題依玩家盲位為 `YOU · SMALL BLIND` 或 `YOU · BIG BLIND`。aria／title 明示 `You: SMALL BLIND. Boss: BIG BLIND.` 或相反；`STARTING BET` 保留 YOU／BOSS 真實初始投入，BET 1 為 0.5／1。
+
+本節覆蓋歷史 OPENING ORDER 與 1ST／2ND 文案。只改呈現，不改一次盲位抽樣、逐手輪替、翻牌前小盲先動／翻牌後大盲先動及實際扣款；v39 入場已確定的 BOSS 也保持。數學沿用 v35；驗證與發布狀態以 [docs/06](06-mobile-and-deployment.md) 對應版本紀錄為準。
+
+局間 BET 的＋／−把草稿改為不同於開窗時的值，角色立即預覽下一手 BOSS neutral。以 `session.rng.clone()` 與 `lastBossProfileId` 推導同一下一型；多次改 BET 不重選，fixed 模式維持同型，不消耗正式 RNG、不發牌或扣盲。CONFIRM BET 保留下一手 neutral，NEXT HAND 才由原 `startHand` 正式選到同型。取消或改回原 BET 還原開窗前畫面。
+
+下一手預覽期間一律隱藏舊 BOSS 手牌與牌型，fixed／legacy 即使角色相同也不能把上一手牌當成下一手牌；取消時恢復開窗前可見狀態，不修改已結算牌局。入口首手沿用 v39 固定 seed，BET 比例不影響首型。以上覆蓋歷史局間 BET 必須一直保留舊角色的呈現限制，其他最佳五張、金流與公開資訊時序維持。
+
 ## v38：單一回應保留 BOSS 機率標籤（2026-10-05）
 
 按鈕上方每塊預覽仍為左側單一 BOSS／右側動作與機率的異色合併塊。同一手、同一街確有 BOSS 直接回應時，一個正機率動作也顯示 **CALL 100%／RAISE 100%／FOLD 100%**；`check`／`call` 顯示 CALL，`bet`／`raise` 顯示 RAISE。混合分布仍僅列原始 FOLD／RAISE，不補比例、不重新正規化。此節覆蓋下方歷史「至少兩個正機率才列預覽」的限制。

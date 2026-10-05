@@ -2,11 +2,13 @@
 
 手機直版、第一人稱的 1v1 簡化德州原型：兩張底牌、五張公共牌、四街下注、真實對手行動機率。遊戲介面英文，機率工作台與文件繁體中文；預設資產 **10,000**。
 
-- [遊戲 Demo](https://seven1888.github.io/magic-poker-lite/?v=39)
-- [機率工作台：完整行動樹與玩家統計](https://seven1888.github.io/magic-poker-lite/probability.html?v=39)
-- [模型文件：公式、分母與帳務案例](https://seven1888.github.io/magic-poker-lite/docs/04-game-flow-and-math.html?v=39)
+- [遊戲 Demo](https://seven1888.github.io/magic-poker-lite/?v=40)
+- [機率工作台：完整行動樹與玩家統計](https://seven1888.github.io/magic-poker-lite/probability.html?v=40)
+- [模型文件：公式、分母與帳務案例](https://seven1888.github.io/magic-poker-lite/docs/04-game-flow-and-math.html?v=40)
 
-目前整理 v39：玩家入場時就呈現首手的當前 BOSS，調整 BET、關閉後重開入口、按 FIGHT 及抽盲期間維持同一角色。入口先保存本桌 seed 與設定，以隔離 session 讀取同一抽盲→選型流程的公開身份，不發牌、不扣款；FIGHT 仍以同 seed 走原引擎開局。NEXT HAND 保留排除上一型的輪替，離桌或 Reset demo chips 才準備新的入口。本輪驗證與發布狀態以 [docs/06](docs/06-mobile-and-deployment.md) 對應版本紀錄為準，版本網址本身不代表已發布。
+目前整理 v40：抽盲明示小盲／大盲，coin 顯示 SB／BB，結果為 YOU · SMALL BLIND／YOU · BIG BLIND；STARTING BET 仍列 YOU／BOSS 的真實初始投入。局間調整 BET 草稿時立即預覽下一位 BOSS，確認後保持至 NEXT HAND；取消或改回原 BET 還原開窗前畫面。遊戲維持英文，正式 RNG、輪替、行動順序與金流不變；數學沿用 v35。驗證及發布狀態以 [docs/06](docs/06-mobile-and-deployment.md) 對應版本紀錄為準，版本網址本身不代表已發布。
+
+v39 起，玩家入場時就呈現首手的當前 BOSS，調整 BET、關閉後重開入口、按 FIGHT 及抽盲期間維持同一角色。入口先保存本桌 seed 與設定，以隔離 session 讀取同一抽盲→選型流程的公開身份，不發牌、不扣款；FIGHT 仍以同 seed 走原引擎開局。NEXT HAND 保留排除上一型的輪替，離桌或 Reset demo chips 才準備新的入口。
 
 v38 已補上同街 BOSS 只有一種回應時的 CALL 100%／RAISE 100%／FOLD 100% 提示。混合分布仍只列原始 FOLD／RAISE；直接換街或結束牌局不虛構回應。決策、RNG、帳務及 v37 局間 BET 保持。歷史交接保留於 [v38 交接](docs/10-v38-handoff.md) 與 [v37 交接](docs/09-v37-handoff.md)。
 
@@ -27,9 +29,11 @@ v38 已補上同街 BOSS 只有一種回應時的 CALL 100%／RAISE 100%／FOLD 
 
 入口預選 BET 1；入口與局間＋／−依序選 **1、2、5、10、20、50、100、200、500、800、1,000、1,200、1,500、1,800、2,000**。每手結算演出完成後可開 BET 小窗，CONFIRM BET 只保存下一手設定，關閉取消草稿；NEXT HAND 才扣盲與發牌。改 BET 須雙方資產達新門檻（預設 20 BB），原 BET 不變仍可短籌碼續手。兩盲及四街注額同比縮放，不重建 session 或重設原桌損益基準，已結算 JP 保持原值。
 
-入場角色就是即將對戰的 BOSS。選 BET 或重開同一入口不重選；FIGHT 只沿用已保存 seed 建立正式 session，抽盲演出後才由 `startHand` 扣盲發牌。入口身份準備不讀底牌、未來公牌或牌力，也不推進正式 session 的 RNG。
+局間＋／−將草稿改成新 BET 時，以 `session.rng.clone()` 與 `lastBossProfileId` 推導下一手 BOSS，立即顯示 neutral；多次改值仍是同一下一型，fixed 模式維持同型。預覽不消耗正式 RNG、不發牌或扣盲；一律暫藏舊 BOSS 手牌與牌型，fixed／legacy 即使同角色也不沿用舊牌畫面。取消或改回原 BET 還原開窗前畫面；CONFIRM BET 保留預覽，NEXT HAND 才由原 `startHand` 選到同型並正式開局。
 
-開局只說先後及雙方初始投入。對手機率獨立浮在按鈕上方，每組只保留一個 BOSS，標題與數值異色；玩家籌碼先抵達 POT，再飛標籤、演 BOSS 決策。對手底牌與行動底板都在公共牌上方，玩家手牌上方直接是 POT。玩家最佳五張用實色金框，BOSS 已揭最佳五張用藍框，共用牌金內藍外，完整揭牌後調暗未入選牌。TOTAL WIN 在 POT 區跑分與噴金幣，金額取底池返還＋JP，排除退款；動畫不重抽或重複入帳。
+入場角色就是即將對戰的 BOSS。首手 seed 已固定，入口 BET 比例或重開同一入口不影響首型；FIGHT 只沿用已保存 seed 建立正式 session，抽盲演出後才由 `startHand` 扣盲發牌。入口身份準備不讀底牌、未來公牌或牌力，也不推進正式 session 的 RNG。
+
+開局明示玩家小盲／大盲及雙方初始投入。對手機率獨立浮在按鈕上方，每組只保留一個 BOSS，標題與數值異色；玩家籌碼先抵達 POT，再飛標籤、演 BOSS 決策。對手底牌與行動底板都在公共牌上方，玩家手牌上方直接是 POT。玩家最佳五張用實色金框，BOSS 已揭最佳五張用藍框，共用牌金內藍外，完整揭牌後調暗未入選牌。TOTAL WIN 在 POT 區跑分與噴金幣，金額取底池返還＋JP，排除退款；動畫不重抽或重複入帳。
 
 ## JP 與數學範圍
 

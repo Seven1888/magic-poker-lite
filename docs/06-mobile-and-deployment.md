@@ -1,5 +1,20 @@
 # 手機相容與公開 Demo
 
+## v40 小盲／大盲提示與局間 BET 預覽 BOSS（2026-10-05，本機驗證紀錄）
+
+抽盲改回 `BLIND POSITION`、`DRAWING YOUR BLIND`、中央／座位 coin 的 SB／BB，以及 YOU · SMALL BLIND／YOU · BIG BLIND；aria／title 明示雙方盲位，STARTING BET 保留真實初始投入。局間 BET 草稿改值時以 `session.rng.clone()` 和 `lastBossProfileId` 預覽同一下一型 neutral，不消耗正式 RNG、不發牌扣盲。取消或改回原 BET 還原開窗前畫面；確認保留預覽，NEXT HAND 仍由原 `startHand` 選到同型。下一手預覽一律隱藏舊 BOSS 手牌與牌型，fixed／legacy 同角色也適用；入口 v39 的首手 seed 固定規則保持。
+
+- 全套自動測試 **276／276**、抽盲測試 **4／4**、下一手身份 helper 測試 **9／9** 通過；helper 涵蓋 rotate／四型 fixed／legacy、重複預覽、BET 設定、正式 RNG 與原引擎下一手一致。正式建置 **184 檔**通過。
+- 抽盲使用原引擎固定種子 **seed 1（玩家 BB）／seed 7（玩家 SB）**，未手動指定牌面。各在 320×740 減少動態及 390×844 正常速度檢查，共 **4 組**中央揭示與座位落點；SB／BB、完整名稱、aria、STARTING BET 的 0.5／1 均正確，無溢出。結果與相同 seed 原引擎基準一致，不因文字變更增加 RNG；另確認下一手由 SB 輪替為 BB。
+- 局間 BET 使用原引擎 **seed 30**，玩家自然執行四次 check 至攤牌，對手 trapper、玩家勝，結算及對手刷新後雙方資產 **10,092**。修改草稿立即預覽 sniper neutral，連續改值仍為同型且不改資產／POT／TOTAL BET／seed 次數；改回原 BET 或取消，恢復 trapper frown 及舊手牌。確認 **BET 100→200** 後保留 sniper neutral、隱藏舊 BOSS 手牌；再次開窗改值並取消仍保留先前已確認的預覽。
+- 連點 NEXT HAND 仍只開一次，正式 BOSS 為 sniper、玩家改為 SB；與無預覽的原引擎基準一致：玩家 **9,992**、BOSS **9,892**、POT **300**、玩家 TOTAL BET **100**。沒有重扣、舊預覽殘留或錯誤換角。確認預覽在 **320／390／844** 寬度無水平溢出。
+- fixed／caller 瀏覽器補測亦通過：seed 30 自然四次 check 攤牌，原畫面 caller smile、兩張已揭底牌與 Pair。草稿及確認後仍為 caller neutral，但舊底牌與 Pair 均隱藏；取消完整恢復 smile、原兩張底牌與 Pair。NEXT HAND 同為 caller、清除預覽，顯示兩張新背牌且牌型隱藏；資產 **9,800／9,700**、POT **300**、TOTAL BET **100**。
+- 上述三組瀏覽器腳本均為 **0 頁面錯誤、0 HTTP 錯誤**，抽盲／座位與 BET 確認／下一手截圖已檢視。
+
+證據：`output/playwright/{tests-v40,build-v40,blind-tests-v40,blind-v40-local,bet-boss-v40-local,bet-boss-v40-fixed-local}.txt`、`output/playwright/v40-local-*.png`；下一手身份 helper 結果包含於全套測試紀錄。瀏覽器為桌面 Chromium viewport，非實體手機；固定種子原引擎流程不當作新機率統計。數學仍沿用 `output/math-v35-validation.json` 的 v35 證據，沒有新增 RTP 校準。
+
+以上是提交前本機證據，不代表已推送或公開上線。全部驗證完成後一次提交／推送，核對完整 SHA 的 Pages 成功與正式站結果，再依使用者要求重開聊天室。精確 SHA、成功 Pages run 及公開驗證由部署後證據與主交接訊息補足；新聊天室交接見 [docs/11](11-v40-handoff.md)。
+
 ## v39 入場即顯示首局 BOSS（2026-10-05，本機驗證通過）
 
 入口先保存 seed 與 entryBase，以隔離 session 的既有抽盲→選型順序取得公開角色；不呼叫 startHand、不發牌、不扣款。調 BET、教學換頁、關閉重開入口、FIGHT 與抽盲期間保持同一位 neutral BOSS；正式 FIGHT 使用同 seed，實際選型／發牌／扣盲仍走原引擎。成功開手才清入口狀態。離桌／Reset demo 建立新入口，NEXT HAND 維持原輪替。

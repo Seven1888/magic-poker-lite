@@ -8,7 +8,7 @@ import {createGameEffects} from './game-effects.mjs?v=36';
 import {renderBetPresets,updateBetSelection,setupEntryFeatures} from './entry-view.mjs?v=35';
 import {betOptions,minimumAssets,tableConfig} from './entry-model.mjs?v=37';
 import {nextHandBetConfig} from './next-hand-bet.mjs?v=37';
-import {createEntryEncounter} from './entry-encounter.mjs?v=39';
+import {createEntryEncounter,previewNextEncounter} from './entry-encounter.mjs?v=40';
 import {icon} from './ui-icons.mjs?v=35';
 import {JACKPOT_MULTIPLIERS,quoteJackpot} from './jackpot.mjs?v=35';
 import {renderJackpotWin} from './jackpot-view.mjs?v=35';
@@ -22,7 +22,7 @@ import {responseBadgeView,responseActionLabel,captureResponseSource,responseSour
 import {boardCardView,nextBoardReveal,tableDeckCounts} from './board-presentation.mjs?v=35';
 import {createResponseFlight} from './response-flight-view.mjs?v=38';
 import {createActionFlow} from './action-flow-view.mjs?v=35';
-import {createBlindDraw} from './blind-draw-view.mjs?v=35';
+import {createBlindDraw} from './blind-draw-view.mjs?v=40';
 import {createTotalWin} from './total-win-view.mjs?v=35';
 import {createBossActionView} from './boss-action-view.mjs?v=35';
 import {renderBossIdentity,preloadBossScenes,waitForBossScene} from './boss-scene-view.mjs?v=36';
@@ -33,7 +33,7 @@ const PLAYER_ACTION_LABELS={fold:'FOLD',check:'CALL',call:'CALL',bet:'RAISE',rai
 let config=loadConfig(),session=null,hand=null,busy=false,drawLog=[],lastResponse=null,handArchive=[],equityCache='',toastTimer,closedTable=null,phase='';
 let selectedBet=1,entryBase=config,betValues=[...new Set([1,...betOptions(config)])].sort((a,b)=>a-b),demoAssets=config.buyIn;
 let nextBetDraft=1,nextBetValues=[];
-let entryEncounter=null;
+let entryEncounter=null,nextEncounter=null,nextBetEncounter=null;
 const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const potView=createPotView({root:document,reducedMotion:reduceMotion,locale:'en',onPhase:presentTransferPhase});
 const effects=createGameEffects({root:document,reducedMotion:reduceMotion});
@@ -153,6 +153,7 @@ $('pot-info-button').onclick=()=>{
 $('leave-button').onclick=()=>{$('menu-dialog').close();leaveTable();};$('result-leave').onclick=()=>{$('result-dialog').close();leaveTable();};
 function prepareEntry(){
   if(entryEncounter)return;
+  nextEncounter=null;nextBetEncounter=null;
   entryBase=loadConfig();
   entryEncounter=createEntryEncounter(entryBase,crypto.getRandomValues(new Uint32Array(1))[0]);
 }
@@ -197,6 +198,7 @@ function leaveTable(){
 function openNextBet(){
  if(busy||!session||hand?.status!=='settled')return;
  nextBetDraft=session.config.bigBlind;
+ nextBetEncounter=nextEncounter||previewNextEncounter(session);
  nextBetValues=[...new Set([...betValues,nextBetDraft])].sort((a,b)=>a-b);
  document.querySelectorAll('dialog[open]').forEach(dialog=>dialog.close());
  updateNextBet();show('next-bet-dialog');
@@ -217,7 +219,9 @@ function updateNextBet(){
   nextHandBetConfig(session,nextBetDraft);
  }catch(cause){error=translateError(cause);}
  $('next-bet-error').textContent=error;$('next-bet-confirm').disabled=!!error;
+ updateExpression(settlementReleased?hand?.result?.winner||'':'');
 }
+$('next-bet-dialog').addEventListener('close',()=>{nextBetEncounter=null;updateExpression(settlementReleased?hand?.result?.winner||'':'');});
 $('round-bet').onclick=openNextBet;
 $('result-bet').onclick=openNextBet;
 $('next-bet-minus').onclick=()=>{nextBetDraft=nextBetValues[Math.max(0,nextBetValues.indexOf(nextBetDraft)-1)];updateNextBet();};
@@ -227,8 +231,10 @@ $('next-bet-form').onsubmit=e=>{
  updateNextBet();if($('next-bet-confirm').disabled)return;
  try{
   // Replace only the next hand's settings; the settled hand keeps its own config.
-  session.config=nextHandBetConfig(session,nextBetDraft);selectedBet=session.config.bigBlind;
-  $('next-bet-dialog').close();renderActions();renderJackpot();
+  const nextConfig=nextHandBetConfig(session,nextBetDraft);
+  if(nextConfig!==session.config)nextEncounter=nextBetEncounter;
+  session.config=nextConfig;selectedBet=session.config.bigBlind;
+  $('next-bet-dialog').close();updateExpression(settlementReleased?hand?.result?.winner||'':'');renderActions();renderJackpot();
   toast(`Next hand · BET ${money(selectedBet)}`);
  }catch(error){$('next-bet-error').textContent=translateError(error);}
 };
@@ -236,7 +242,7 @@ async function newHand(){
   if(busy||!session||hand?.status==='playing'||$('next-bet-dialog').open)return;
   $('result-dialog').close();
   if(session&&Math.min(...Object.values(session.stacks))<.01){setupBuyin();return;}
-  try{busy=true;phase='DEALING';hand=startHand(session);entryEncounter=null;drawLog=[];lastResponse=null;equityCache='';pendingPlayerAction=null;delete $('game').dataset.chosenAction;paintDistribution([]);setTableCue('contribution','POST BLINDS');await presentHand();await continuePlay();}catch(error){busy=false;phase='';bossAction.clear();setTableCue();toast(translateError(error));render();setupBuyin();}
+  try{busy=true;phase='DEALING';hand=startHand(session);entryEncounter=null;nextEncounter=null;nextBetEncounter=null;drawLog=[];lastResponse=null;equityCache='';pendingPlayerAction=null;delete $('game').dataset.chosenAction;paintDistribution([]);setTableCue('contribution','POST BLINDS');await presentHand();await continuePlay();}catch(error){busy=false;phase='';bossAction.clear();setTableCue();toast(translateError(error));render();setupBuyin();}
 }
 $('next-hand').onclick=newHand;
 const visibleStreet=()=>shownBoard>=5?'river':shownBoard===4?'turn':shownBoard>0?'flop':'preflop';
@@ -282,8 +288,14 @@ function updateShowdownView(){
   return view;
 }
 function updateExpression(winner=''){
-  $('game').dataset.winner=entryEncounter?'':winner;
-  renderBossIdentity(entryEncounter||hand,document);
+  const draft=$('next-bet-dialog').open&&nextBetDraft!==session?.config.bigBlind?nextBetEncounter:null;
+  const encounter=entryEncounter||draft||nextEncounter||hand;
+  const shownWinner=encounter===hand?winner:'';
+  $('game').dataset.winner=shownWinner;
+  renderBossIdentity(encounter,document);
+  // Returning from a cancelled next-hand preview restores this hand's result.
+  if(shownWinner&&$('game').dataset.winner!==shownWinner){$('game').dataset.winner=shownWinner;renderBossIdentity(encounter,document);}
+  $('game').dataset.bossPreview=String(!!hand&&encounter!==hand);
 }
 function updateVisibleCards(){
   const holes=hand?.holes.player.slice(0,dealt.player)||[],board=hand?.board.slice(0,shownBoard)||[];

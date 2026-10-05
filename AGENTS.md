@@ -1,5 +1,15 @@
 # 新遊戲工作規範
 
+## v40：小盲／大盲提示與局間 BET 預覽下一位 BOSS（2026-10-05）
+
+遊戲仍使用英文。抽盲標題為 `BLIND POSITION`，抽選中為 `DRAWING YOUR BLIND`；中央 coin 與飛至座位的 coin 都顯示 `SB`／`BB`，結果標題為 `YOU · SMALL BLIND`／`YOU · BIG BLIND`。aria／title 明示 `You: SMALL BLIND. Boss: BIG BLIND.` 或相反。`STARTING BET` 保留 YOU／BOSS 的真實初始投入金額，BET 1 為 0.5／1，不能改成資產餘額。
+
+上述抽盲文案覆蓋歷史 `1ST`／`2ND` 與 OPENING ORDER；原盲位 RNG、逐手輪替、翻牌前小盲先動／翻牌後大盲先動及金流不變。
+
+每手結算後，局間 BET 的＋／−只要將草稿改成不同於開窗時的 BET，就用 `session.rng.clone()` 與 `lastBossProfileId` 預覽同一位下一手 BOSS neutral。多次改 BET 不重選，不消耗正式 RNG、不發牌或扣盲；fixed 模式仍維持同型。取消或草稿改回原 BET 還原開窗前畫面，CONFIRM BET 保留下一手 neutral，NEXT HAND 仍由原 `startHand` 選到同型。下一手預覽期間一律隱藏上一手 BOSS 手牌與牌型，fixed／legacy 即使角色相同也不能把舊牌當成下一手牌；取消時恢復開窗前可見狀態。
+
+v39 入口首手 seed 保持固定，BET 比例不影響首型；局間預覽不改輪替或固定機率表。數學仍沿用 v35；驗證與發布以 docs/06 對應版本紀錄為準，下方歷史條目不改寫。使用者要求完成全部驗證後一次提交／推送，核對 Pages 與公開站後再重開聊天室；未驗證或尚未發布不得先宣稱完成。
+
 ## v39：入場即顯示首局 BOSS（2026-10-05）
 
 入口準備時保留一個 seed 與同份 entryBase，以隔離 session 的原抽盲→選型順序推導公開 BOSS 身份，不呼叫 startHand、不發牌、不扣款。入場、BET 調整、關閉重開、FIGHT 與抽盲期間保持該 BOSS neutral；正式 FIGHT 使用同 seed，仍由原引擎 startHand 做實際選型與發牌，不追加正式牌局 RNG。成功開手才清入口保留；離桌與 Reset demo 建立新入口。入口存在時優先於已結算舊手，不帶入舊勝負表情。

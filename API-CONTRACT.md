@@ -1,4 +1,16 @@
-# Engine API contract · v39 entry BOSS identity / v35 four-BOSS math · 2026-10-05
+# Engine API contract · v40 blind labels and next-BOSS preview / v35 four-BOSS math · 2026-10-05
+
+## v40 抽盲文字契約
+
+抽盲改回明確的小盲／大盲英文：標題 `BLIND POSITION`、抽選中 `DRAWING YOUR BLIND`，中央與座位 coin 均為 `SB`／`BB`，結果標題為 `YOU · SMALL BLIND` 或 `YOU · BIG BLIND`。aria／title 依實際盲位使用 `You: SMALL BLIND. Boss: BIG BLIND.` 或 `You: BIG BLIND. Boss: SMALL BLIND.`。`STARTING BET` 繼續顯示 YOU／BOSS 真實初始投入，不以資產替代。
+
+只更新上述呈現文字，覆蓋歷史 1ST／2ND 與 OPENING ORDER；盲位 RNG、先後規則、每手輪替、扣款及 v39 入場 BOSS 契約保持。數學沿用 v35，驗證與發布狀態依 [docs/06](docs/06-mobile-and-deployment.md) 對應版本紀錄。
+
+### v40 局間 BET 的下一手 BOSS 預覽
+
+局間 BET 的＋／−將草稿改成不同於開窗時的值，即以 `session.rng.clone()`、`session.lastBossProfileId` 及目前 BOSS 設定推導下一手的公開身份並顯示 neutral。正式 RNG、`lastBossProfileId`、`handNumber`、資產及已結算手牌均不修改；不呼叫 `startHand`、不發牌或扣盲。多次改 BET 使用相同正式 RNG 狀態，因此不重選下一型；fixed 模式仍為原固定型。
+
+取消或草稿改回原 BET，還原開窗前畫面與 BOSS 牌的可見狀態；CONFIRM BET 保存下一手設定並保留下一手 neutral，NEXT HAND 由原 `startHand` 正式選到相同型別。下一手預覽期間一律隱藏上一手 BOSS 手牌與牌型，fixed／legacy 即使角色相同也不把舊牌當作下一手牌；不把預覽身份寫入已結算 `hand.bossProfile`。首手入口仍用 v39 保留的 seed，入口 BET 比例不影響首型。
 
 ## v39 入場 BOSS 身份契約
 
@@ -66,7 +78,7 @@ Import from `./src/entry-model.mjs`. These functions are pure configuration help
 - `minimumAssets(config,bet)` returns `config.minBuyIn/config.bigBlind × bet` (default 20 BB).
 - `tableConfig(config,bet,assets)` validates affordable entry, makes `bigBlind=bet` and `smallBlind=bet/2`, scales all `betSize` values by `bet/config.bigBlind`, and sets `buyIn=assets`. Its `maxBuyIn` becomes at least the actual assets, so it does not silently discard a player's accumulated balance. The result goes through `normalizeConfig`.
 
-Selecting BET and creating the session do not charge chips. `startHand` automatically posts each seat's blind once; subsequent call/bet/raise actions deduct only their actual incremental amounts. At BET 1 the SB is .5; there is no whole-chip rounding. The blind UI shows opening first/second order and each seat's starting payment, using the one already-determined draw. This opening order is preflop only; the big blind acts first postflop.
+Selecting BET and creating the session do not charge chips. `startHand` automatically posts each seat's blind once; subsequent call/bet/raise actions deduct only their actual incremental amounts. At BET 1 the SB is .5; there is no whole-chip rounding. The blind UI shows SMALL BLIND/BIG BLIND identity, SB/BB on the central and seat coins, and each seat's actual starting payment, using the one already-determined draw. The small blind acts first preflop; the big blind acts first postflop.
 
 The UI initializes its in-page assets once from `config.buyIn` (default 10000). The v30 default `maxBuyIn` is also 10000 so normalization does not cap that starting amount. `loadConfig()` continues to preserve saved custom settings; the update does not overwrite saved buy-ins, an active session or an existing in-page balance. A fresh page without saved settings uses 10000, and Probability Lab's Restore defaults loads that default configuration.
 
@@ -79,7 +91,7 @@ On leaving a table the UI retains the actual player stack, including credited Ja
 - BET 與目前值相同時直接回傳原 `config`，保留既有短籌碼續手規則。
 - 變更時依 `bet/config.bigBlind` 縮放 `smallBlind`、四街 `betSize`、`minBuyIn` 與 `maxBuyIn`；雙方 `session.stacks` 都須達新 `minBuyIn`，預設等於 20 倍新 BET。超出可表示範圍或資產不足時擲出錯誤。
 - 回傳新設定，不直接修改 session。`buyIn` 保留原桌損益基準，不以新資產或新門檻覆蓋，也不經會鉗制此基準的 `normalizeConfig`。
-- 控制器在 CONFIRM BET 時才指派 `session.config`；不呼叫 `createSession`、`startHand`、RNG、扣款或入帳。資產、歷史、局號、盲位與 BOSS 輪替延續；已結算 `hand.config` 和 JP 結果不變。下一次 `startHand` 才使用新注額與新 JP 基準。
+- 控制器在 CONFIRM BET 時才指派 `session.config`；不呼叫 `createSession`、`startHand`、正式 RNG、扣款或入帳。v40 草稿身份預覽只讀 RNG clone，確認後保留下一手 neutral。資產、歷史、局號、盲位與 BOSS 輪替延續；已結算 `hand.config` 和 JP 結果不變。下一次 `startHand` 才使用新注額與新 JP 基準，並正式選到預覽的同一型。
 
 ## Session / hand
 

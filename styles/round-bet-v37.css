@@ -1,5 +1,7 @@
 /* Give the revealed BOSS rank more presence between its cards and the turn strip. */
 .game #showdown-preview { top:326px; width:214px; height:30px; padding:0 12px; }
+/* The next opponent must not inherit the previous opponent's revealed cards. */
+.game[data-boss-preview='true'] :is(.opponent,#showdown-preview) { visibility:hidden; }
 .game #showdown-preview .showdown-caption > strong { font-size:17.5px; line-height:25px; }
 
 /* Between hands: keep the next deal primary and put its adjustable BET beside it. */

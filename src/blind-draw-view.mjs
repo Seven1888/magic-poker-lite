@@ -28,11 +28,11 @@ export function createBlindDraw({root = globalThis.document, effects, reducedMot
     coin.dataset.position = seated ? 'seat' : 'center';
   }
   function identify(isSmall) {
-    const order = isSmall ? 'YOU FIRST · BOSS SECOND' : 'BOSS FIRST · YOU SECOND';
+    const identity = `You: ${isSmall ? 'SMALL BLIND' : 'BIG BLIND'}. Boss: ${isSmall ? 'BIG BLIND' : 'SMALL BLIND'}.`;
     coin.dataset.blind = isSmall ? 'small' : 'big';
-    coin.textContent = isSmall ? '1ST' : '2ND';
-    coin.setAttribute('aria-label', `Opening order: ${order}`);
-    coin.title = `Opening order: ${order}`;
+    coin.textContent = isSmall ? 'SB' : 'BB';
+    coin.setAttribute('aria-label', identity);
+    coin.title = identity;
   }
   function clear() {
     active?.cancel(); active = null;
@@ -60,11 +60,11 @@ export function createBlindDraw({root = globalThis.document, effects, reducedMot
     clear();
     if (!stage) return false;
     createLayer(); position(CENTER, false);
-    coin.textContent = '?'; coin.setAttribute('aria-label', 'Drawing the opening order');
-    const title = element('strong', 'blind-draw-title', 'OPENING ORDER');
+    coin.textContent = '?'; coin.setAttribute('aria-label', 'Drawing your blind position');
+    const title = element('strong', 'blind-draw-title', 'BLIND POSITION');
     const copy = element('div', 'blind-draw-copy');
     copy.setAttribute('role', 'status'); copy.setAttribute('aria-live', 'polite');
-    const heading = element('strong', 'blind-draw-name', 'WHO GOES FIRST?');
+    const heading = element('strong', 'blind-draw-name', 'DRAWING YOUR BLIND');
     copy.append(heading); layer.append(title, copy);
     let cancel, stopTimer = null;
     const cancelled = new Promise(resolve => { cancel = () => { stopTimer?.(); resolve(false); }; });
@@ -86,7 +86,7 @@ export function createBlindDraw({root = globalThis.document, effects, reducedMot
       ], {duration: 1050, easing: 'cubic-bezier(.2,.65,.3,1)', fill: 'both'})) return false;
       if (!alive()) return false;
       identify(isSmall);
-      heading.textContent = isSmall ? 'YOU FIRST · BOSS SECOND' : 'BOSS FIRST · YOU SECOND';
+      heading.textContent = isSmall ? 'YOU · SMALL BLIND' : 'YOU · BIG BLIND';
       const label = element('p', 'blind-draw-stakes', 'STARTING BET');
       const payment = element('div', 'blind-draw-payment');
       for (const [who, value] of [['YOU', isSmall ? smallBlind : bigBlind], ['BOSS', isSmall ? bigBlind : smallBlind]]) {

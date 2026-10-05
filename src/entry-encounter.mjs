@@ -10,3 +10,14 @@ export function createEntryEncounter(config, seed) {
  const {profile} = selectBossProfile(preview.rng, null, preview.config.boss);
  return Object.freeze({seed, bossProfile:profile});
 }
+
+/** Read the next public identity from an isolated copy of the current stream. */
+export function previewNextEncounter(session) {
+ const hand = session?.activeHand;
+ if (!hand || hand.session !== session || hand.handNumber !== session.handNumber
+   || hand.status !== 'settled' || !hand.result) {
+  throw new Error('The next BOSS can be previewed only after this hand has settled.');
+ }
+ const {profile} = selectBossProfile(session.rng.clone(), session.lastBossProfileId, session.config.boss);
+ return Object.freeze({bossProfile:profile});
+}

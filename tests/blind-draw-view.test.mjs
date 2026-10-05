@@ -54,7 +54,7 @@ for (const isSmall of [true, false]) test(`preselected ${isSmall ? 'SB' : 'BB'} 
   t.mock.method(Math, 'random', () => { throw new Error('Presentation cannot draw another outcome.'); });
   const pending = draw.play(result);
   assert.equal(f.stage.dataset.blindDraw, 'revealed');
-  assert.equal(f.find('blind-draw-name').textContent, isSmall ? 'YOU FIRST · BOSS SECOND' : 'BOSS FIRST · YOU SECOND');
+  assert.equal(f.find('blind-draw-name').textContent, isSmall ? 'YOU · SMALL BLIND' : 'YOU · BIG BLIND');
   assert.match(f.find('blind-draw-payment').textContent, isSmall ? /YOU 0\.123456 BOSS 0\.246912/ : /YOU 0\.246912 BOSS 0\.123456/);
   assert.equal(f.find('blind-draw-stakes').textContent, 'STARTING BET');
   assert.equal(f.animations.length, 0);
@@ -62,13 +62,14 @@ for (const isSmall of [true, false]) test(`preselected ${isSmall ? 'SB' : 'BB'} 
   assert.equal(f.stage.dataset.blindDraw, 'revealed', 'a reduced-motion user still has time to read');
   await f.tick(1); assert.equal(await pending, true);
   const coin = f.find('blind-coin');
-  assert.equal(coin.textContent, isSmall ? '1ST' : '2ND');
+  assert.equal(coin.textContent, isSmall ? 'SB' : 'BB');
+  assert.equal(coin.attrs['aria-label'], `You: ${isSmall ? 'SMALL BLIND' : 'BIG BLIND'}. Boss: ${isSmall ? 'BIG BLIND' : 'SMALL BLIND'}.`);
   assert.equal(coin.dataset.position, 'seat');
   assert.equal(f.find('blind-draw-copy'), undefined);
   assert.deepEqual({rng: session.rng.state(), stacks: session.stacks, handNumber: session.handNumber}, before);
   draw.renderSeat({isSmall: !isSmall});
   assert.equal(f.find('blind-coin'), coin, 'next hand updates the single seated coin');
-  assert.equal(coin.textContent, isSmall ? '2ND' : '1ST');
+  assert.equal(coin.textContent, isSmall ? 'BB' : 'SB');
   draw.renderSeat(null); assert.equal(f.stage.children.length, 0);
 });
 
@@ -78,7 +79,7 @@ test('normal draw reveals the known side before flying, then retains a coin at t
   const coin = f.find('blind-coin');
   assert.equal(coin.textContent, '?'); assert.equal(f.stage.dataset.blindDraw, 'drawing');
   f.animations[0].finish(); await flush();
-  assert.equal(coin.textContent, '1ST'); assert.equal(f.stage.dataset.blindDraw, 'revealed');
+  assert.equal(coin.textContent, 'SB'); assert.equal(f.stage.dataset.blindDraw, 'revealed');
   assert.equal(f.animations.length, 2);
   f.animations[1].finish(); await flush();
   await f.tick(atGameSpeed(2400));
@@ -106,6 +107,6 @@ test('clearing or replacing a pending draw releases it without a stale coin or t
   reduced.renderSeat({isSmall: false});
   assert.equal(await second, false); assert.equal(f.timers.size, 0);
   await f.tick(10000);
-  assert.equal(f.find('blind-coin').textContent, '2ND');
+  assert.equal(f.find('blind-coin').textContent, 'BB');
   assert.equal(f.stage.children.length, 1); assert.equal(f.stage.dataset.blindDraw, 'seated');
 });

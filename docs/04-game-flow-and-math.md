@@ -1,12 +1,16 @@
 # Magic Poker Lite
 
-v39 入場即確定 BOSS／v35 四種 BOSS 與完整行動樹數學 · 2026-10-05
+v40 小盲／大盲與局間 BOSS 預覽／v35 四種 BOSS 與完整行動樹數學 · 2026-10-05
+
+v40 抽盲改回小盲／大盲，遊戲文字維持英文：BLIND POSITION、DRAWING YOUR BLIND、中央與座位 coin 的 SB／BB，以及 YOU · SMALL BLIND／YOU · BIG BLIND 結果標題。STARTING BET 保留 YOU／BOSS 真實初始投入；盲位 RNG、輪替、行動順序與金流不變，數學仍沿用 v35。
+
+v40 局間 BET 草稿改值時立即預覽下一手 BOSS neutral，確認後保持至 NEXT HAND；取消或改回原 BET 還原開窗前畫面。身份由正式 RNG 的 clone 推導，多次改值不重選、不提前發牌或扣盲，原本輪替與固定機率表不變。
 
 v39 讓玩家入場就看見首手的當前 BOSS；選 BET、關閉後重開入口、FIGHT 及抽盲期間保持同一角色。入口只準備公開身份，正式牌局仍以同一 seed 走原本抽盲、選型及發牌流程。同桌 NEXT HAND 保留原輪替；引擎、牌庫與 BOSS 固定機率表未改。
 
 v38 補上同街單一 BOSS 回應的 100% 預覽，保留 v37 局間 BET、藍色最佳五張與放大牌型；決策、RNG 與帳務不變。數學沿用 v35 四種 BOSS、固定性格機率、完整行動樹及玩家資產統計。四種對手機率表仍為 `four-boss-v1`，遊戲與工具共用同一份資料；沒有新增 RTP 校準。
 
-[機率工作台](../probability.html?v=39) · [遊戲](../index.html?v=39) · [API 契約](../API-CONTRACT.md) · [驗證與部署](06-mobile-and-deployment.md)
+[機率工作台](../probability.html?v=40) · [遊戲](../index.html?v=40) · [API 契約](../API-CONTRACT.md) · [驗證與部署](06-mobile-and-deployment.md)
 
 本文件以目前共用引擎為準。遊戲使用英文；工具與文件使用繁體中文。勝負仍由同一副 52 張牌的真實最佳五張比較，或一方棄牌決定。本輪參考 Hands Up 改造工具架構、完整分支與玩家統計；本作仍依真實牌力決定勝負；Hands Up 的先定輸贏／依目標配牌不是本版發牌規則。沒有設定玩家固定高勝率，也沒有把 Hands Up 的 99% 目標移入本作。
 
@@ -32,11 +36,13 @@ v38 補上同街單一 BOSS 回應的 100% 預覽，保留 v37 局間 BET、藍�
 
 玩家入場時的角色就是首手 BOSS。入口保存本次 seed 與基礎設定 `entryBase`，`createEntryEncounter(config,seed)` 以隔離 session 沿用原本抽盲→選型順序，只回傳公開 `bossProfile`；不發牌、不扣款、不讀暗牌或秘密牌力，也不推進正式 session 的 RNG。調整 BET、關閉後重開入口、FIGHT 及抽盲演出均維持同一角色。離桌或 Reset demo chips 才準備新的入口遭遇。
 
-入口選 BET 不扣款或抽牌。FIGHT 用已保存的同一 seed 建立正式 session，以原本一次 50/50 抽樣決定首手盲位，其後逐手交換；抽盲演出後才呼叫原本 `startHand`，選到相同 BOSS 並扣盲發牌。不覆寫角色或為配合入口重抽。提示只列開局誰先／誰後，以及 YOU／BOSS 各自初始投入；BET 1 時是 0.5／1，不是各 10,000 的持有資產。小盲翻牌前先行動；翻牌、轉牌及河牌由大盲先行動。
+入口選 BET 不扣款或抽牌。FIGHT 用已保存的同一 seed 建立正式 session，以原本一次 50/50 抽樣決定首手盲位，其後逐手交換；抽盲演出後才呼叫原本 `startHand`，選到相同 BOSS 並扣盲發牌。不覆寫角色或為配合入口重抽。抽盲標題為 BLIND POSITION，抽選中為 DRAWING YOUR BLIND；中央與座位 coin 顯示 SB／BB，結果為 YOU · SMALL BLIND 或 YOU · BIG BLIND。aria／title 明示 `You: SMALL BLIND. Boss: BIG BLIND.` 或相反。STARTING BET 列 YOU／BOSS 各自真實初始投入；BET 1 時是 0.5／1，不是各 10,000 的持有資產。小盲翻牌前先行動；翻牌、轉牌及河牌由大盲先行動。
 
 入口及局間 BET 使用 Hands Up 正式 `simulation-engine.js` 的 `FIXED_STAKES`：**1、2、5、10、20、50、100、200、500、800、1,000、1,200、1,500、1,800、2,000**，共 15 級，入口預選 1。＋／−移至相鄰級距，不採固定加法 step；工具的基礎 bigBlind 不會改變此選單。
 
-每手結算及派彩演出完成後，左側較小 BET 開調整小窗，右側 NEXT HAND 開下一手。＋／−只調草稿；CONFIRM BET 只保存下一手設定，關閉取消草稿，不扣款或抽 RNG。`nextHandBetConfig(session,bet)` 按目前 `bet/config.bigBlind` 比例縮放兩盲、四街注額及資產門檻；變更時雙方實際資產須達 `minBuyIn/bigBlind × 新 BET`（預設 20 BB）。原 BET 不變保留短籌碼續手；NEXT HAND 才依新設定扣盲發牌。
+每手結算及派彩演出完成後，左側較小 BET 開調整小窗，右側 NEXT HAND 開下一手。＋／−調整草稿並預覽下一手 BOSS；CONFIRM BET 只保存下一手設定與預覽，關閉取消草稿，不扣款或消耗正式 RNG。`nextHandBetConfig(session,bet)` 按目前 `bet/config.bigBlind` 比例縮放兩盲、四街注額及資產門檻；變更時雙方實際資產須達 `minBuyIn/bigBlind × 新 BET`（預設 20 BB）。原 BET 不變保留短籌碼續手；NEXT HAND 才依新設定扣盲發牌。
+
+局間草稿不同於開窗時的 BET 時，以 `session.rng.clone()` 與 `lastBossProfileId` 推導下一手公開身份並顯示 neutral；多次調整仍是同一下一型，fixed 模式維持同型，不改正式 RNG、已結算手牌或輪替紀錄。下一手預覽期間一律隱藏舊 BOSS 手牌與牌型，fixed／legacy 即使角色相同也不沿用舊牌畫面；取消或改回原 BET 還原開窗前畫面。CONFIRM BET 保留下一手 neutral，NEXT HAND 仍由原 `startHand` 選到同型。這是下一手身份預覽，不發牌或扣盲；入口首手仍維持 v39 的固定 seed，BET 比例不影響首型。
 
 局間確認不重建 session：保留原資產、`buyIn` 損益基準、歷史、RNG、局號、盲位輪替與 BOSS 排除上一型的序列。只更新 `session.config`，本手已結算 `hand.config`、派彩和 JP 結果不變；新 BET 對應的 JP 金額由下一手使用。
 
@@ -103,7 +109,7 @@ P(最後成對) = a × (1 + q + ... + q^K)
 
 ### 4.1 均等輪替與固定機率
 
-首手四種各 25%；之後排除上一手類型，其餘三種各 1/3。長期邊際機率相同，不代表有限牌局四型次數必相等。正式 session 只在 `startHand` 選取一次；v39 入口先以相同 seed 的隔離 session 讀取首手公開身份，不推進正式 RNG，也不抽牌。入口 BET、重開、動畫、行動機率預覽及全樹展開均不重選；NEXT HAND 才選下一型。
+首手四種各 25%；之後排除上一手類型，其餘三種各 1/3。長期邊際機率相同，不代表有限牌局四型次數必相等。正式 session 只在 `startHand` 選取一次；v39 入口先以相同 seed 的隔離 session 讀取首手公開身份，不推進正式 RNG，也不抽牌。入口 BET、重開、動畫、行動機率預覽及全樹展開均不重選；v40 局間 BET 可先用 RNG clone 預覽同一下一型，NEXT HAND 才在正式 session 選型。
 
 `config.boss={mode:'rotate',profileId:'caller'}` 為新預設。mode 可為 rotate（輪替）、fixed（固定研究、允許重複）或 legacy（舊權重模型）。固定研究由 profileId 指定 caller／maniac／sniper／trapper。舊設定未含 boss 時採新輪替；要重現舊數據必須明示 legacy，不能假設舊種子在新模型仍發出同一副牌。
 
@@ -414,11 +420,11 @@ Boss Duel 的起手重抽已適配為兩張未成對、玩家 50%／BOSS 25%、�
 
 ## 12. 驗證與交接
 
-v39 入場 BOSS 一致性的介面、測試與發布狀態以 [docs/06](06-mobile-and-deployment.md) 對應版本紀錄為準；版本網址本身不代表已部署。v38 單一回應預覽及 v37 局間 BET 的紀錄同樣保留於 docs/06，歷史交接見 [docs/10](10-v38-handoff.md) 與 [docs/09](09-v37-handoff.md)。數學沿用下列明示為 v35 的資料，未重跑 RTP 校準。單樹節點／質量／逐終端守恆／RNG 不變是結構驗證；受控 JP 只能證明規則，不證明自然頻率。新測試報告應保存來源雜湊，避免程式變更後沿用舊結果。
+v40 盲位文字、局間 BOSS 預覽及 v39 入場 BOSS 一致性的介面、測試與發布狀態以 [docs/06](06-mobile-and-deployment.md) 對應版本紀錄為準；版本網址本身不代表已部署。v38 單一回應預覽及 v37 局間 BET 的紀錄同樣保留於 docs/06，歷史交接見 [docs/10](10-v38-handoff.md) 與 [docs/09](09-v37-handoff.md)。數學沿用下列明示為 v35 的資料，未重跑 RTP 校準。單樹節點／質量／逐終端守恆／RNG 不變是結構驗證；受控 JP 只能證明規則，不證明自然頻率。新測試報告應保存來源雜湊，避免程式變更後沿用舊結果。
 
 `output/math-validation.json` 的 260,000 手是舊版未含 JP 的歷史底池基準，沒有目前 50%／25% 未成對重抽，不是本版完整樹、多玩家或總 RTP 校準；舊種子案例也不能推稱新版手牌相同。v34 舊權重模型數學檢查保存於 `output/math-v34-validation.json`；四種 BOSS 的 v35 驗證另見最新部署紀錄，不沿用該數據。該舊檔，保留種子、設定、來源雜湊與驗證範圍，仍不是商用 RTP 認證。
 
-沿用的 [v35 四型驗證資料](../output/math-v35-validation.json) 使用 seed 2026100535，各固定對手及輪替各 5,000 手，加上 1,000 副完整樹。balanced 輪替樣本玩家贏池率 41.98%、攤牌勝率 49.41%、含 JP RTP 92.22%；這些是不同分母，不能把 96% 結算係數或舊版積極策略數字當作本版玩家勝率。固定狂攻樣本實際開注／加注決策率 69.80%，死跟型 8.13%，顯示行為差異；未校準為固定高勝率或固定總 RTP，亦非 v37／v38／v39 新數據。
+沿用的 [v35 四型驗證資料](../output/math-v35-validation.json) 使用 seed 2026100535，各固定對手及輪替各 5,000 手，加上 1,000 副完整樹。balanced 輪替樣本玩家贏池率 41.98%、攤牌勝率 49.41%、含 JP RTP 92.22%；這些是不同分母，不能把 96% 結算係數或舊版積極策略數字當作本版玩家勝率。固定狂攻樣本實際開注／加注決策率 69.80%，死跟型 8.13%，顯示行為差異；未校準為固定高勝率或固定總 RTP，亦非 v37／v38／v39／v40 新數據。
 
 - [API 與資料契約](../API-CONTRACT.md)
 - [場景與演出](05-art-and-pot.md)
