@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createSession,startHand,legalActions,applyAction,getActionDistribution} from '../src/engine.mjs';
+import {createSession,startHand,legalActions,applyAction,getActionDistribution,stepNpc,previewResponse} from '../src/engine.mjs';
 import {responseBadges,responseBadgeView,captureResponseSource,responseSourceMatches} from '../src/action-response-view.mjs';
 
 test('badges preserve raw FOLD/RAISE probabilities and tiny positives without displaying CALL or rescaling', () => {
@@ -16,7 +16,7 @@ test('badges preserve raw FOLD/RAISE probabilities and tiny positives without di
   assert.ok(responseBadgeView(distribution,{phase:'result',selected:'raise'}).markup.includes('is-selected" data-response="raise"'));
 });
 
-test('FOLD/CALL keeps its FOLD badge, CHECK/BET maps only its raw aggressive outcome, and forced actions show none', () => {
+test('mixed FOLD/CALL and CHECK/BET keep only their raw fold/aggressive outcomes', () => {
   assert.deepEqual(responseBadges([{type:'fold',probability:.3},{type:'call',probability:.7}]),[{type:'fold',probability:.3,label:'30.0%'}]);
   const betting=Object.freeze([{type:'check',probability:.6},{type:'bet',probability:.4}].map(Object.freeze));
   assert.deepEqual(responseBadges(betting),[{type:'bet',probability:.4,label:'40.0%'}]);
@@ -25,11 +25,42 @@ test('FOLD/CALL keeps its FOLD badge, CHECK/BET maps only its raw aggressive out
   assert.match(view.markup,/>RAISE<\/span>/);
   assert.doesNotMatch(view.markup,/>BET<|>CHECK<|>CALL</);
   assert.equal(view.description,'opponent RAISE 40.0%');
-  for(const distribution of [[],
-    [{type:'fold',probability:1},{type:'call',probability:0}],
-    [{type:'raise',probability:1}],[{type:'call',probability:1}]]) {
+  for(const distribution of [[], [{type:'fold',probability:0},{type:'call',probability:NaN}]]) {
     assert.deepEqual(responseBadgeView(distribution),{markup:'',description:''});
   }
+});
+
+test('sole responses include passive CALL and retain original types, probability and selection', () => {
+  for(const type of ['fold','call','check','bet','raise']) {
+    const distribution=Object.freeze([{type,probability:1},{type:'fold',probability:0}].map(Object.freeze));
+    const label=type==='check'?'CALL':type==='bet'?'RAISE':type.toUpperCase();
+    assert.deepEqual(responseBadges(distribution),[{type,probability:1,label:'100%'}]);
+    const view=responseBadgeView(distribution,{phase:'result',selected:type});
+    assert.ok(view.markup.includes(`is-selected" data-response="${type}" data-probability="1"`));
+    assert.ok(view.markup.includes(`>${label}</span>`));
+    assert.equal(view.description,`opponent ${label} 100%`);
+  }
+  assert.deepEqual(responseBadges([{type:'call',probability:.4}]),[{type:'call',probability:.4,label:'40.0%'}],
+    'a sole positive value is never silently normalized to 100%');
+});
+
+test('seed 22 keeps the real CALL 100% source without mutating RNG, while free CALL still changes street', () => {
+  const config={bigBlind:100,betSize:{preflop:100,flop:200,turn:400,river:400}};
+  const make=()=>{const hand=startHand(createSession(config,22,{firstSmallBlind:'random'}));assert.equal(stepNpc(hand).selected.type,'call');return hand;};
+  const hand=make(),control=make(),before=JSON.stringify(hand),rng=hand.rng.state();
+  assert.equal(hand.actor,'player');
+  assert.deepEqual(previewResponse(hand,'check').distribution,[]);
+  assert.equal(captureResponseSource(hand,{type:'check',amount:0}),null);
+  const source=captureResponseSource(hand,legalActions(hand).find(a=>a.type==='raise'));
+  assert.ok(source);
+  assert.deepEqual(responseBadges(source.distribution),[{type:'call',probability:1,label:'100%'}]);
+  assert.equal(JSON.stringify(hand),before);assert.equal(hand.rng.state(),rng);
+  applyAction(hand,'raise');applyAction(control,'raise');
+  assert.equal(responseSourceMatches(source,hand),true);
+  assert.deepEqual(source.distribution,getActionDistribution(hand));
+  assert.deepEqual(stepNpc(hand),stepNpc(control));
+  assert.equal(JSON.stringify(hand),JSON.stringify(control),'preview adds no game action, chip movement or RNG draw');
+  assert.equal(responseSourceMatches(source,hand),false,'the old source cannot cross the street');
 });
 
 test('capturing a player choice does not mutate the hand/RNG and matches only its immediate same-street NPC response', () => {

@@ -28,6 +28,9 @@
 .game .controls .action-slot .action-response-preview .action-response-badge:is([data-response='raise'],[data-response='bet']) {
  background:linear-gradient(#614b79,#3b2b50); color:#fff1ff;
 }
+.game .controls .action-slot .action-response-preview .action-response-badge:is([data-response='call'],[data-response='check']) {
+ background:linear-gradient(#285c80,#183654); color:#effaff;
+}
 .game .controls .action-slot .action-response-preview .response-badge-label {
  font-size:10px; line-height:10px; letter-spacing:.1px;
 }

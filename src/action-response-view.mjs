@@ -5,15 +5,13 @@ import {icon} from './ui-icons.mjs?v=35';
 /** Table-facing vocabulary only; the underlying action type stays unchanged. */
 export const responseActionLabel = type => ({fold:'FOLD',check:'CALL',call:'CALL',bet:'RAISE',raise:'RAISE'}[type] || String(type).toUpperCase());
 
-/** Project fold/aggressive outcomes, retaining each original type and probability. */
+/** Show a sole response, or project mixed fold/aggressive outcomes without rescaling. */
 export function responseBadges(distribution = []) {
   const positive = distribution.filter(outcome => Number.isFinite(outcome.probability) && outcome.probability > 0);
-  if (positive.length < 2) return [];
-  return ['fold', 'raise', 'bet'].flatMap(type => {
-    const outcome = positive.find(item => item.type === type);
-    return outcome ? [{type, probability: outcome.probability,
-      label: outcome.probability < .001 ? '<0.1%' : pct(outcome.probability)}] : [];
-  });
+  const visible = positive.length === 1 ? positive
+    : ['fold', 'raise', 'bet'].flatMap(type => positive.filter(outcome => outcome.type === type));
+  return visible.map(({type, probability}) => ({type, probability,
+    label: probability === 1 ? '100%' : probability < .001 ? '<0.1%' : pct(probability)}));
 }
 
 export function responseBadgeView(distribution, {phase = 'preview', selected = null} = {}) {

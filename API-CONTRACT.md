@@ -1,4 +1,10 @@
-# Engine API contract · v37 between-hand BET / v35 four-BOSS math · 2026-10-05
+# Engine API contract · v38 deterministic BOSS preview / v35 four-BOSS math · 2026-10-05
+
+## v38 單一回應預覽契約
+
+玩家行動若在同一手、同一街留下 BOSS 直接回應，按鈕上方的 preview 包含只有一個正機率動作的情況，顯示 **BOSS CALL 100%／RAISE 100%／FOLD 100%**。`check`／`call` 映射 CALL，`bet`／`raise` 映射 RAISE，底層 `type` 不變。混合分布仍只顯示原始 FOLD／RAISE 機率，不補列 CALL、不重新正規化；中央完整分布沿用既有契約。
+
+行動直接換街、結束牌局或沒有同街回應時不顯示 preview，不以未公開下一街或上一次分布填空。此修正只改唯讀預覽的篩選及呈現，不改變引擎決策、RNG 次數、必然動作／中央抽選演出、`applyAction` 或帳務。以下 v37 局間 BET 與其他呈現契約繼續適用；數學證據仍是 v35，非 v38 新 RTP 驗證。
 
 v37 增加局間 BET 設定並更新呈現；保留 v35 四型固定街道／牌力表、排除上一型的輪替、完整行動樹與玩家統計。勝負仍由真實共享牌庫決定，Hands Up 只提供固定 BET 級距，不移入其先定輸贏或 RTP 目標。`output/math-v35-validation.json` 仍是 v35 證據，不是 v37 新 RTP 試跑。
 

@@ -1,8 +1,8 @@
 import {pct,esc} from './shared.mjs?v=35';
 import {icon} from './ui-icons.mjs?v=35';
-import {responseActionLabel} from './action-response-view.mjs?v=35';
+import {responseActionLabel} from './action-response-view.mjs?v=38';
 
-/** The central draw shows every real outcome; button previews stay FOLD/RAISE only. */
+/** Central decisions show every real outcome; mixed button previews stay FOLD/RAISE only. */
 export function responseDistributionView(distribution=[],{phase='preview',selected=null,roll=null}={}){
  const outcomes=distribution.filter(outcome=>Number.isFinite(outcome.probability)&&outcome.probability>0);
  const state=['preview','drawing','result'].includes(phase)?phase:'preview';

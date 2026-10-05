@@ -2,11 +2,11 @@
 
 手機直版、第一人稱的 1v1 簡化德州原型：兩張底牌、五張公共牌、四街下注、真實對手行動機率。遊戲介面英文，機率工作台與文件繁體中文；預設資產 **10,000**。
 
-- [遊戲 Demo](https://seven1888.github.io/magic-poker-lite/?v=37)
-- [機率工作台：完整行動樹與玩家統計](https://seven1888.github.io/magic-poker-lite/probability.html?v=37)
-- [模型文件：公式、分母與帳務案例](https://seven1888.github.io/magic-poker-lite/docs/04-game-flow-and-math.html?v=37)
+- [遊戲 Demo](https://seven1888.github.io/magic-poker-lite/?v=38)
+- [機率工作台：完整行動樹與玩家統計](https://seven1888.github.io/magic-poker-lite/probability.html?v=38)
+- [模型文件：公式、分母與帳務案例](https://seven1888.github.io/magic-poker-lite/docs/04-game-flow-and-math.html?v=38)
 
-目前整理 v37：BOSS 最佳五張改藍框、牌型顯示放大；每手結束後左側 BET 可調下一手注額，右側 NEXT HAND 開局。BET 級距與 Hands Up 相同，確認只更新下一手設定，保留資產、歷史、盲位及 BOSS 輪替。本輪驗證與發布狀態以 [docs/06](docs/06-mobile-and-deployment.md) 為準，交接見 [v37 交接](docs/09-v37-handoff.md)，前版保留於 [v36 交接](docs/08-v36-handoff.md)。
+目前整理 v38：同街 BOSS 只有一種回應時，按鈕上方也顯示 CALL 100%／RAISE 100%／FOLD 100%，避免誤以為決策提示消失。混合分布仍只列原始 FOLD／RAISE；直接換街或結束牌局不虛構回應。決策、RNG、帳務及 v37 局間 BET 保持。本輪驗證與發布狀態以 [docs/06](docs/06-mobile-and-deployment.md) 為準，交接見 [v38 交接](docs/10-v38-handoff.md)，前版保留於 [v37 交接](docs/09-v37-handoff.md)。
 
 ## 目前機率工具
 
@@ -36,6 +36,8 @@ JP 牌型／倍數：皇家同花順 **200×BET**、同花順 **50×BET**、四�
 舊 `output/math-validation.json` 的 260,000 手不含 JP，是歷史資料，不代表本版 50%／25% 重抽、完整樹或多玩家模型。現行 [v35 驗證資料](output/math-v35-validation.json) 包含四型固定＋輪替各 5,000 手，以及 1,000 副完整樹；僅為小樣本結構／帳務驗證。v34 舊權重模型的本機檔不代表新版。
 
 v37 增加局間 BET 設定及呈現調整，沿用 v35 共用引擎、固定 BOSS 表、輪替、起手重抽及結算規則。以上數學檔仍是 **v35 證據**，並非 v37 新跑的 RTP 或機率校準；局間設定、介面回歸與部署紀錄另列。
+
+v38 只修正單一 BOSS 回應預覽的顯示；以上數學檔同樣不是 v38 新跑的 RTP 或機率校準。
 
 ## 本機啟動與驗證
 
