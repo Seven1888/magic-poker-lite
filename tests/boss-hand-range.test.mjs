@@ -2,15 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createBossHandRange, BOSS_HAND_CATEGORIES} from '../src/boss-hand-range.mjs';
 import {makeDeck, evaluateBest, holeScore} from '../src/poker.mjs';
-import {BOSS_PROFILE_BY_ID, getBossProfileDistribution} from '../src/boss-profiles.mjs';
-import {createSession, startHand, legalActions, getActionDistribution, normalizeConfig} from '../src/engine.mjs';
-import {responseBadges} from '../src/action-response-view.mjs';
 
 const PLAYER = ['As', 'Kh'], BOARD = ['2s', '7h', 'Qc'];
 const DECK = makeDeck();
 const near = (actual, expected, tolerance = 1e-11) => assert.ok(Math.abs(actual - expected) <= tolerance, `${actual} != ${expected}`);
 const uniform = {deal: {player: {rerollChance: 0}, npc: {rerollChance: 0}}};
-const context = (config = {}, smallBlind = 'player', playerHole = PLAYER, bossProfileId = 'sniper') => ({playerHole, smallBlind, config, bossProfileId});
+const context = (config = {}, smallBlind = 'player', playerHole = PLAYER) => ({playerHole, smallBlind, config});
 const distribution = result => Object.fromEntries(result.distribution.map(item => [item.category, item.probability]));
 const pairs = pool => pool.flatMap((card, index) => pool.slice(index + 1).map(next => [card, next]));
 const key = pair => [...pair].sort().join('');
@@ -61,20 +58,6 @@ function assertDistribution(result, expected) {
   assert.equal(result.distribution.length, 9);
   near(result.distribution.reduce((sum, item) => sum + item.probability, 0), 1);
   for (const [category, probability] of Object.entries(expected)) near(distribution(result)[category], probability);
-}
-
-function profileDistribution(hole, event, profileId = 'sniper') {
-  return getBossProfileDistribution({holes: {npc: hole}, board: event.board, street: event.street,
-    bossProfile: BOSS_PROFILE_BY_ID[profileId], currentBet: event.owed, streetBets: {npc: 0}}, event.actions);
-}
-
-function observation(hole, overrides = {}, profileId = 'sniper') {
-  const event = {id: 'flop-preview', street: 'flop', board: BOARD, actions: ['fold', 'call', 'raise'].map(type => ({type})),
-    owed: 2, pot: 5, shownMode: 'badges', ...overrides};
-  const probabilities = profileDistribution(hole, event, profileId);
-  return {...event, shown: event.shown ?? (event.shownMode === 'badges' ? responseBadges(probabilities)
-    : probabilities.filter(item => item.probability > 0).map(item => ({...item, label: `${(item.probability * 100).toFixed(1)}%`})))
-    .map(({type, label}) => ({type, label}))};
 }
 
 test('uniform no-redraw baseline enumerates exactly the nonblocked hole pairs and nine exclusive current categories', () => {
@@ -152,127 +135,110 @@ test('zero redraw cap is uniform even at chance one, and a nonzero cap retains l
   assertDistribution(result, expectedFromWeights(PLAYER, BOARD, hole => expected.get(key(hole))));
 });
 
-test('currently displayed badge percentages constrain the range without reading a hidden strength band', () => {
-  const pair = observation(['2c', '9d']);
-  assert.deepEqual(pair.shown, [{type: 'fold', label: '28.0%'}, {type: 'raise', label: '10.0%'}]);
-  const result = createBossHandRange(context(uniform)).update({board: BOARD, evidence: [pair]});
-  near(distribution(result)[1], 1);
-  assert.ok(result.candidateCount < 1081);
-  const strong = observation(['2c', '2d']);
-  assert.deepEqual(strong.shown, [{type: 'raise', label: '80.0%'}]);
-  const strongResult = createBossHandRange(context(uniform)).update({board: BOARD, evidence: [strong]});
-  near(distribution(strongResult)[0] + distribution(strongResult)[1], 0);
-});
-
-test('rounded public labels preserve indistinguishable candidates and do not accidentally use raw probability precision', () => {
-  const config = {...uniform, boss: {mode: 'legacy'}, npc: {strengthInfluence: .000001, priceInfluence: 0}};
-  const actions = ['fold', 'call', 'raise'].map(type => {
-    const item = {type};
-    Object.defineProperty(item, 'probability', {get() {throw new Error('raw private probability read');}});
-    return item;
-  });
-  const event = {id: 'rounded', street: 'flop', board: BOARD, actions, owed: 2, pot: 5, shownMode: 'all',
-    shown: [{type: 'fold', label: '20.0%'}, {type: 'call', label: '60.0%'}, {type: 'raise', label: '20.0%'}]};
-  const result = createBossHandRange(context(config)).update({board: BOARD, evidence: [event]});
-  assert.equal(result.candidateCount, 1081);
-  assertDistribution(result, expectedFromWeights(PLAYER, BOARD, () => 1));
-  const tiny = {...config, npc: {...config.npc, fold: .000001}};
-  event.shown = [{type: 'fold', label: '<0.1%'}, {type: 'call', label: '75.0%'}, {type: 'raise', label: '25.0%'}];
-  assert.equal(createBossHandRange(context(tiny)).update({board: BOARD, evidence: [event]}).candidateCount, 1081);
-});
-
-test('single certain responses accept badge 100% and central 100.0% and visible action sets are evidence', () => {
-  const base = {id: 'certain', street: 'flop', board: BOARD, actions: [{type: 'check'}], owed: 0, pot: 5};
-  for (const [shownMode, label] of [['badges', '100%'], ['all', '100.0%']]) {
-    const result = createBossHandRange(context(uniform)).update({board: BOARD,
-      evidence: [{...base, shownMode, shown: [{type: 'check', label}]}]});
+test('the reported 7h 6s Ks flop has several possible made hands instead of inverting BOSS action odds', () => {
+  const player = ['2h', '3d'], board = ['7h', '6s', 'Ks'];
+  for (const smallBlind of ['player', 'npc']) {
+    const range = createBossHandRange(context({}, smallBlind, player));
+    const result = range.update({board, evidence: [{shown: [{type: 'fold', label: '12%'}, {type: 'raise', label: '5%'}]}]});
+    assert.equal(result.status, 'ready');
     assert.equal(result.candidateCount, 1081);
+    assert.ok(result.distribution.filter(item => item.probability > 0).length > 1);
+    assert.ok(distribution(result)[0] > 0 && distribution(result)[0] < 1);
+    assert.ok(distribution(result)[1] > 0 && distribution(result)[1] < 1);
+    assert.ok(distribution(result)[2] > 0 && distribution(result)[3] > 0);
   }
-  const impossible = {...observation(['2c', '2d']), shown: [{type: 'fold', label: '0.0%'}, {type: 'raise', label: '80.0%'}]};
-  const result = createBossHandRange(context(uniform)).update({board: BOARD, evidence: [impossible]});
-  assert.equal(result.unavailable, 'inconsistent-public-evidence');
-  assert.deepEqual(result.distribution, []);
 });
 
-test('an executed NPC action multiplies likelihood once, even after repeated updates and duplicate ids', () => {
-  const event = {id: 'decision', street: 'flop', board: BOARD,
-    actions: ['fold', 'call', 'raise'].map(type => ({type})), owed: 2, pot: 5, shown: [], shownMode: 'partial'};
-  const range = createBossHandRange(context(uniform));
-  range.update({board: BOARD, evidence: [event]});
-  event.selectedType = 'raise';
-  const first = range.update({board: BOARD, evidence: [event]});
-  const expected = expectedFromWeights(PLAYER, BOARD, hole => profileDistribution(hole, event).find(action => action.type === 'raise').probability);
-  assertDistribution(first, expected);
-  for (let index = 0; index < 4; index++) assert.deepEqual(range.update({board: BOARD, evidence: [event]}), first);
-  assert.deepEqual(range.update({board: BOARD, evidence: [event, {...event}]}), first);
-  assert.deepEqual(createBossHandRange(context(uniform)).update({board: BOARD, evidence: [event]}), first);
-});
-
-test('preflop public evidence is accumulated before showing a flop distribution and stays conditioned on the earlier board', () => {
-  const preflop = observation(['2c', '9d'], {id: 'preflop', street: 'preflop', board: [], shownMode: 'all'});
-  const range = createBossHandRange(context(uniform));
-  const before = range.update({board: [], evidence: [preflop]});
-  assert.equal(before.status, 'waiting-for-flop');
-  assert.equal(before.evidenceCount, 1);
-  assert.ok(before.candidateCount < 1225);
-  const after = range.update({board: BOARD, evidence: [preflop]});
-  assert.deepEqual(after, createBossHandRange(context(uniform)).update({board: BOARD, evidence: [preflop]}));
-  const expected = expectedFromWeights(PLAYER, BOARD, hole => {
-    const observed = profileDistribution(hole, preflop).filter(item => item.probability > 0)
-      .map(item => `${item.type}:${(item.probability * 100).toFixed(1)}%`).join('|');
-    return observed === preflop.shown.map(item => `${item.type}:${item.label}`).join('|') ? 1 : 0;
-  });
-  assertDistribution(after, expected);
-});
-
-test('evidence replacement, withdrawal and a shorter visible board replay the prior without stale zero weights', () => {
-  const range = createBossHandRange(context(uniform));
-  const evidence = [observation(['2c', '9d'])];
-  range.update({board: BOARD, evidence});
-  range.update({board: [...BOARD, 'Jd'], evidence});
-  assert.deepEqual(range.update({board: BOARD, evidence: []}), createBossHandRange(context(uniform)).update({board: BOARD}));
-  const replacement = [observation(['2c', '2d'])];
-  range.update({board: BOARD, evidence});
-  assert.deepEqual(range.update({board: BOARD, evidence: replacement}),
-    createBossHandRange(context(uniform)).update({board: BOARD, evidence: replacement}));
-});
-
-test('legacy action likelihoods match the actual engine at every street with public legal-action filtering', () => {
-  const config = normalizeConfig({...uniform, boss: {mode: 'legacy'}, npc: {strengthInfluence: 1.3, priceInfluence: .7}});
-  const session = createSession(config, 128);
-  const real = startHand(session);
-  const initialRng = session.rng.state(), initial = JSON.stringify(real);
-  for (const board of [[], BOARD, [...BOARD, 'Jd'], [...BOARD, 'Jd', '4c']]) {
-    const street = Object.keys({preflop: 0, flop: 3, turn: 4, river: 5}).find(key => ({preflop: 0, flop: 3, turn: 4, river: 5})[key] === board.length);
-    const synthetic = {...real, actor: 'npc', street, board, currentBet: 20, streetBets: {player: 20, npc: 0},
-      stacks: {player: 990, npc: 1000}, pot: 40, raises: 0, config};
-    const event = {id: street, street, board, actions: legalActions(synthetic).map(({type}) => ({type})),
-      owed: 20, pot: 40, shownMode: 'partial', shown: [], selectedType: 'raise'};
-    const current = board.length ? board : BOARD;
-    const expected = expectedFromWeights(PLAYER, current, hole => getActionDistribution({...synthetic, holes: {npc: hole}})
-      .find(action => action.type === 'raise').probability);
-    assertDistribution(createBossHandRange(context(config)).update({board: current, evidence: [event]}), expected);
+test('turn and river reevaluate current categories against the newly revealed board', () => {
+  const player = ['2h', '3d'], flop = ['7h', '6s', 'Ks'], turn = [...flop, '7d'], river = [...turn, '7c'];
+  const range = createBossHandRange(context(uniform, 'player', player));
+  const flopResult = range.update({board: flop}), turnResult = range.update({board: turn}), riverResult = range.update({board: river});
+  for (const [board, result] of [[flop, flopResult], [turn, turnResult], [river, riverResult]]) {
+    assertDistribution(result, expectedFromWeights(player, board, () => 1));
   }
-  assert.equal(session.rng.state(), initialRng);
-  assert.equal(JSON.stringify(real), initial);
+  assert.ok(distribution(flopResult)[0] > 0);
+  near(distribution(turnResult)[0], 0);
+  assert.ok(distribution(turnResult)[1] > 0);
+  near(distribution(riverResult)[1], 0);
+  assert.ok(distribution(riverResult)[3] > 0);
+  assert.notDeepEqual(flopResult.distribution, turnResult.distribution);
+  assert.notDeepEqual(turnResult.distribution, riverResult.distribution);
 });
 
-test('privacy boundary ignores private state properties and validates cards, future evidence and contradictory actions', () => {
-  const input = context(uniform);
-  for (const property of ['holes', 'deck', 'seed', 'rng', 'dealAudit']) {
-    Object.defineProperty(input, property, {get() {throw new Error(`private ${property} read`);}});
+test('BOSS identity, behavior settings, visible odds and executed actions cannot condition the board distribution', () => {
+  const expected = createBossHandRange(context(uniform)).update({board: BOARD});
+  for (const bossProfileId of ['caller', 'maniac', 'sniper', 'trapper', 'unknown']) {
+    for (const selectedType of ['fold', 'call', 'raise']) {
+      const input = {...context({...uniform, boss: {mode: 'fixed', profileId: bossProfileId}, npc: {fold: 1, raise: 0}}), bossProfileId};
+      const event = {id: 'same-event', board: BOARD, selectedType, shown: [{type: selectedType, label: '100%'}]};
+      const range = createBossHandRange(input);
+      assert.deepEqual(range.update({board: BOARD, evidence: [event]}), expected);
+      assert.deepEqual(range.update({board: BOARD, evidence: [event, {...event, selectedType: 'contradictory'}]}), expected);
+      assert.deepEqual(range.update({board: BOARD, evidence: null}), expected);
+    }
   }
-  const range = createBossHandRange(input);
-  const request = {board: BOARD};
-  for (const property of ['npcHole', 'deck', 'rng']) Object.defineProperty(request, property, {get() {throw new Error(`private ${property} read`);}});
-  assert.equal(range.update(request).status, 'ready');
+});
+
+test('legacy and private extra properties are never read, including throwing getters', () => {
+  const poison = (object, properties) => {
+    for (const property of properties) Object.defineProperty(object, property, {get() {throw new Error(`unexpected ${property} read`);}});
+    return object;
+  };
+  const config = poison({deal: {player: {rerollChance: 0}, npc: {rerollChance: 0}}}, ['boss', 'npc', 'rng', 'hand']);
+  poison(config.deal.player, ['manual']);
+  poison(config.deal.npc, ['manual']);
+  const input = poison(context(config), ['bossProfileId', 'profileId', 'actions', 'odds', 'evidence', 'holes', 'deck', 'seed', 'rng', 'dealAudit']);
+  const request = poison({board: BOARD}, ['evidence', 'actions', 'odds', 'selectedType', 'bossProfileId', 'npcHole', 'deck', 'rng']);
+  assert.deepEqual(createBossHandRange(input).update(request), createBossHandRange(context(uniform)).update({board: BOARD}));
+});
+
+test('repeated, replaced and shortened boards rebuild blockers from the same immutable deal prior', () => {
+  const range = createBossHandRange(context());
+  const first = range.update({board: BOARD});
+  for (let index = 0; index < 3; index++) assert.deepEqual(range.update({board: BOARD}), first);
+  range.update({board: [...BOARD, 'Jd', '4c']});
+  assert.deepEqual(range.update({board: BOARD}), first);
+  const replacement = ['Ts', 'Tc', '4d'];
+  assert.deepEqual(range.update({board: replacement}), createBossHandRange(context()).update({board: replacement}));
+  assert.deepEqual(range.update({board: []}), createBossHandRange(context()).update({board: []}));
+  assert.deepEqual(range.update({board: BOARD}), first);
+});
+
+test('partial flop reveal has no distribution until all three cards are visible', () => {
+  const range = createBossHandRange(context());
+  for (let count = 0; count < 3; count++) {
+    const result = range.update({board: BOARD.slice(0, count)});
+    assert.equal(result.status, 'waiting-for-flop');
+    assert.deepEqual(result.distribution, []);
+  }
+  assert.equal(range.update({board: BOARD}).status, 'ready');
+});
+
+test('known cards and deal settings are validated without accepting impossible public boards', () => {
+  const range = createBossHandRange(context());
   assert.throws(() => range.update({board: [...BOARD, 'As']}), /公共牌/);
-  assert.throws(() => range.update({board: [], evidence: [observation(['2c', '9d'])]}), /尚未揭開/);
+  assert.throws(() => range.update({board: [...BOARD, BOARD[0]]}), /重複/);
+  assert.throws(() => range.update({board: [...BOARD, 'Jd', '4c', '5s']}), /公共牌/);
+  assert.throws(() => range.update({board: '2s7hQc'}), /數量/);
   assert.throws(() => createBossHandRange(context({}, 'player', ['As', 'As'])), /重複/);
-  const event = {...observation(['2c', '9d']), selectedType: 'call'};
-  assert.throws(() => range.update({board: BOARD, evidence: [event, {...event, selectedType: 'raise'}]}), /矛盾/);
+  assert.throws(() => createBossHandRange(context({}, 'player', ['As'])), /數量/);
+  assert.throws(() => createBossHandRange(context({}, 'other')), /小盲/);
+  for (const npc of [{rerollChance: -1}, {maxRerolls: 51}, {maxRerolls: 1.2}, {rerollMode: 'unknown'}, {targetScore: 2}]) {
+    assert.throws(() => createBossHandRange(context({deal: {npc}})), /重抽/);
+  }
 });
 
+test('caller-owned input arrays and returned distributions cannot mutate a later update', () => {
+  const input = context(uniform, 'player', [...PLAYER]), board = [...BOARD];
+  const range = createBossHandRange(input);
+  const expected = createBossHandRange(context(uniform)).update({board: BOARD});
+  const result = range.update({board});
+  input.playerHole[0] = '3s';
+  board[0] = '4s';
+  result.distribution[0].probability = -1;
+  result.distribution[0].label = 'changed';
+  assert.deepEqual(range.update({board: BOARD}), expected);
+});
 test('a royal flush on the board belongs wholly to Straight Flush, never to an overlapping extra category', () => {
   const result = createBossHandRange(context(uniform, 'player', ['2c', '3d'])).update({board: ['Ts', 'Js', 'Qs', 'Ks', 'As']});
   near(distribution(result)[8], 1);

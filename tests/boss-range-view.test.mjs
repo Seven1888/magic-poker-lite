@@ -46,6 +46,7 @@ test('top two retain their original probabilities, OTHER totals the rest and the
   assert.match(f.dialog.textContent, /current best hand category/);
   assert.match(f.dialog.textContent, /not your win chance/);
   assert.match(f.dialog.textContent, /never reads hidden BOSS cards/);
+  assert.match(f.dialog.textContent, /Betting actions and action percentages do not affect/);
   assert.deepEqual(input, distribution([.394, .513, .059, .034]));
 });
 

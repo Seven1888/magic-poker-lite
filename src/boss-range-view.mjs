@@ -42,7 +42,7 @@ export function createBossRangeView({root = globalThis.document} = {}) {
   button.id = 'boss-hand-range'; button.type = 'button'; button.hidden = true; button.disabled = true;
   button.setAttribute('aria-haspopup', 'dialog'); button.setAttribute('aria-controls', 'boss-range-dialog');
   button.setAttribute('aria-expanded', 'false');
-  const heading = make('span', 'boss-range-heading', 'BOSS HAND');
+  const heading = make('span', 'boss-range-heading', 'POSSIBLE HANDS');
   const hint = make('span', 'boss-range-info', 'ⓘ'); hint.setAttribute('aria-hidden', 'true'); heading.append(hint);
   const summary = make('span', 'boss-range-summary');
   button.append(heading, summary); stage.append(button);
@@ -52,12 +52,12 @@ export function createBossRangeView({root = globalThis.document} = {}) {
   dialog.setAttribute('aria-describedby', 'boss-range-description');
   const closeButton = make('button', 'dialog-close', '×'); closeButton.type = 'button';
   closeButton.setAttribute('aria-label', 'Close BOSS hand distribution');
-  const eyebrow = make('span', 'eyebrow', 'PUBLIC INFORMATION');
-  const title = make('h2', '', 'BOSS HAND RANGE'); title.id = 'boss-range-title';
-  const description = make('p', 'boss-range-description', 'Chances of the BOSS’s current best hand category. This is not your win chance or a forecast of future cards.');
+  const eyebrow = make('span', 'eyebrow', 'READ THE BOARD');
+  const title = make('h2', '', 'POSSIBLE BOSS HANDS'); title.id = 'boss-range-title';
+  const description = make('p', 'boss-range-description', 'What could the BOSS have right now? These are the chances of each current best hand category, based on the cards you can see. Updates on the FLOP, TURN and RIVER. This is not your win chance or a forecast of future cards.');
   description.id = 'boss-range-description';
   const list = make('dl', 'boss-range-list');
-  const method = make('p', 'boss-range-method', 'Uses your known cards, the revealed board, public BOSS odds and actions, and the starting-hand redraw rules. It never reads hidden BOSS cards or unrevealed board cards.');
+  const method = make('p', 'boss-range-method', 'Uses your hand, the revealed board and the starting-hand redraw rules. Betting actions and action percentages do not affect these estimates. It never reads hidden BOSS cards or unrevealed board cards.');
   const note = make('p', 'boss-range-note', 'Each possible hand belongs to one category. OTHER combines the categories outside the top two. Percentages are rounded; the complete distribution totals 100% before rounding.');
   dialog.append(closeButton, eyebrow, title, description, list, method, note); doc.body.append(dialog);
   let current = null;

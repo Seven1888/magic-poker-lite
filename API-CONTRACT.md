@@ -1,44 +1,37 @@
-# Engine API contract · v41 public BOSS hand range / v35 four-BOSS game math · 2026-10-05
+# Engine API contract · v42 possible BOSS hands / v35 four-BOSS game math · 2026-10-05
 
-## v41 行動橫幅與公開 BOSS 目前牌型分布
+## v42 依已知牌估算 BOSS 可能牌型
 
-行動資訊橫跨整個舞台，以平面長條呈現，取消左右邊框、圓角框與桌面物件式厚陰影。原本 DEALING／YOUR TURN／BOSS TURN／HAND COMPLETE 的內容、公開順序、真比例抽選與單次行動保持；此視覺變更不修改引擎或帳務。
+本版回答「根據已知牌面，BOSS 目前可能有哪些牌型」，幫助玩家理解 FLOP／TURN／RIVER。v41 的角色、動作與可見行動機率反推模型已停用；不再用那些訊號篩除候選或增加動作 likelihood。保留 v41 平面行動橫幅與既有遊戲行為。
 
-`src/boss-hand-range.mjs` 匯出 `BOSS_HAND_CATEGORIES` 及 `createBossHandRange({playerHole,smallBlind,bossProfileId,config})`。`smallBlind` 為公開的 `player`／`npc`，`bossProfileId` 為本手公開身份，`playerHole` 必須是玩家已看見的兩張牌。`config` 只接受經 allowlist 投影的公開 BOSS 模式、legacy 權重及雙方重抽模式／機率／上限／舊分數門檻；manual 只傳 `manualProvided` 布林，不傳 BOSS 指定牌值。
+`src/boss-hand-range.mjs` 匯出 `BOSS_HAND_CATEGORIES` 及 `createBossHandRange({playerHole,smallBlind,config:{deal}})`。`smallBlind` 為公開的 `player`／`npc`，用來判斷發牌先後；`playerHole` 必須是玩家已看見的兩張牌。`config.deal` 只接受 allowlist 投影的雙方重抽模式／機率／上限／舊分數門檻與 `manualProvided` 布林，不傳 BOSS 指定牌值。BOSS 身份、BOSS 模式、行動權重與下注資料不在輸入契約內。
 
 ```js
-const tracker = createBossHandRange({playerHole, smallBlind, bossProfileId, config});
-const result = tracker.update({board, evidence});
+const tracker = createBossHandRange({playerHole, smallBlind, config: {deal}});
+const result = tracker.update({board});
 // result = {
-//   status: 'ready' | 'waiting-for-flop' | 'unavailable' | 'inconsistent',
+//   status: 'ready' | 'waiting-for-flop' | 'unavailable',
 //   distribution: [{category, key, label, probability}],
-//   candidateCount, evidenceCount, exact,
-//   unavailable? // 'manual-boss-prior' | 'inconsistent-public-evidence'
+//   candidateCount, exact,
+//   unavailable? // 'manual-boss-prior'; worker 運算失敗另為 'calculation-unavailable'
 // }
 ```
 
-`board` 僅含已真正揭開的公共牌；不足 FLOP 時為 `waiting-for-flop`。`ready` 回傳完整九類（category 0–8，高牌至同花順，皇家同花順合併同花順），按機率降冪排序，每類為「目前最佳牌型」而非未來河牌成牌率。分母是所有仍符合公開資訊的候選底牌權重總和；重抽、發牌先後及公開動作已納入，不能改成同權重組合數或玩家勝率。最多枚舉 `C(50,2)=1,225` 組；`exact:true` 指在本作指定規則與公開證據下作有限枚舉／解析重抽，不是 Monte Carlo 抽樣，也不是讀到 BOSS 真實底牌。浮點數尾差由最大機率類別收攏，不改變 top-two 的顯示分母。
+`board` 僅含已真正揭開的公共牌；不足 FLOP 時為 `waiting-for-flop`。`ready` 回傳完整九類（category 0–8，高牌至同花順，皇家同花順合併同花順），按機率降冪排序，每類為「目前最佳牌型」，不補未來公牌。分母是所有不與已知玩家牌／公牌重複的候選底牌之起手權重總和。最多枚舉 `C(50,2)=1,225` 組；`exact:true` 指對本作公開起手規則做有限枚舉／解析重抽，不是抽樣或知道 BOSS 真實底牌。浮點尾差由最大機率類別收攏，不改變前兩名的顯示分母。
 
-每次 `update` 傳入截至目前的完整公開證據列表；同 `id` 重複呈現不能重乘行動機率。原事件先有已顯示機率，動作真正公開後才能補上 `selectedType`，且只乘一次該動作的 likelihood。證據前綴更動會由起手 prior 重算。玩家行動是已發生的條件，不套入臆測的玩家策略機率。
+有限重抽先驗沿用真實起手規則：玩家先發時，從移除玩家牌的 50 張池計算 BOSS 採用率；BOSS 先發時，另乘各候選被移除後玩家已知底牌的採用率。指定玩家牌事先保留；指定 BOSS 牌只傳 `manualProvided` 並回傳 `unavailable`。牌型分類與精確加權公式見 [數學文件第 4.7 節](docs/04-game-flow-and-math.md)。
 
-```js
-{
-  id, street, board,
-  actions: [{type}], // 所有當時合法引擎動作；不傳未四捨五入的 probability
-  owed, pot,
-  shownMode: 'badges' | 'all',
-  shown: [{type, label}], // 實際顯示的字串，例如 '3.2%'、'<0.1%'、'100%'
-  selectedType? // 僅已公開的 BOSS 動作
-}
-```
+每次 `update` 只傳已揭公牌，不傳 `evidence`。相同玩家牌、公牌、盲位與重抽設定得到相同分布，不受 BOSS 性格、FOLD／CALL／RAISE、已顯示機率文字、合法動作、POT 或待補金額影響。因此原本可能因固定行動表被縮成 HIGH CARD 100% 的牌面，改為呈現完整的牌型可能性；100% 只可能來自牌面與起手規則本身的必然性。
 
-`badges` 使用實際顯示的正機率項目集合：混合分布只列 FOLD／RAISE（底層 bet／raise），唯一正機率動作則可為 CALL／RAISE／FOLD 100%；`all` 是中央完整正機率分布。候選只依顯示文字的有效精度與項目集合相容性篩選，不讀未顯示的小數位。相同顯示機率不是新亂數事件；只有真正公開的動作才增加一次機率因子。手動 BOSS prior 不以秘密指定牌偽裝成公開推估，回傳 `unavailable`；矛盾證據回傳 `inconsistent`，均沒有虛構全零分布。
+這是依已知牌與起手規則條件化的牌型模型，不是納入真實下注策略後的後驗範圍；預設重抽會改變起手權重，所以也不是一律等權的未知兩張牌。
 
-`src/boss-range-public.mjs` 的 `bossRangeContext` 與 `publicBossEvidence` 建立上述明確 allowlist；worker 不接收 hand／session、NPC 底牌、未揭公牌、牌庫、seed、原始 roll、dealAudit 或未顯示的分布小數。`src/boss-range-worker.mjs` 接收 `{epoch,request,context,board,evidence}`，回覆 `{epoch,request,result}`；運算失敗回覆 `unavailable:'calculation-unavailable'`。`src/boss-range-controller.mjs` 以 epoch 隔離不同手牌、request 隔離同手不同公開狀態，過期結果不可覆蓋新畫面；不呼叫正式牌局 RNG。
+指定 BOSS 底牌回傳 `unavailable`，沒有虛構的全零九類分布。無效或重複的已知牌由純計算模組拋出錯誤，再由 worker 轉為 `unavailable:'calculation-unavailable'`。`output/math-v41-range-validation.json` 僅是已停用的 v41 行動證據模型歷史報告，本版驗證另存 `output/math-v42-range-validation.json`。
 
-`src/boss-range-view.mjs` 的 `createBossRangeView({root})` 動態建立 `#boss-hand-range` 及舞台外的 `#boss-range-dialog`，提供 `render({visible,busy,calculating,distribution,unavailable})`、`clear()`、`close()`。左側常駐最高兩個正機率牌型＋OTHER，其餘機率直接相加、不重新正規化；完整視窗列九類及公開資訊說明。顯示百分比四捨五入，極小正值為 `<0.1%`，實際未達 1 不顯示為 100%；完整原始分布合計 1。新計算移除舊街數字；FLOP 起且牌面完整公開後才可見，攤牌、棄牌、換手隱藏，busy 關閉並禁開詳情。資料缺漏／錯誤顯示 UNAVAILABLE，不視為所有牌型 0%。
+`src/boss-range-public.mjs` 的 `bossRangeContext` 建立 allowlist；context 僅有 `playerHole`、`smallBlind`、`config.deal`。worker 不接收 hand／session、NPC 底牌、未揭公牌、牌庫、seed、原始 roll、dealAudit、身份或任何行動證據。`src/boss-range-worker.mjs` 接收 `{epoch,request,context,board}`，回覆 `{epoch,request,result}`；運算失敗回覆 `unavailable:'calculation-unavailable'`。`src/boss-range-controller.mjs` 以 epoch 隔離不同手牌、request 隔離同手不同公牌，過期結果不可覆蓋新畫面；不呼叫正式牌局 RNG。同街下注與動作標籤更新不啟動新的牌型分析。
 
-v41 只增加公開資訊分析與呈現；引擎、固定 BOSS 表、輪替、正式 RNG、金流及 JP 保持。算法／介面驗證與發布狀態依 [docs/06](docs/06-mobile-and-deployment.md)；沿用的 `output/math-v35-validation.json` 仍是 v35 遊戲模型證據，不是 v41 新 RTP 校準。
+`src/boss-range-view.mjs` 的 `createBossRangeView({root})` 動態建立 `#boss-hand-range` 及舞台外的 `#boss-range-dialog`，提供 `render({visible,busy,calculating,distribution,unavailable})`、`clear()`、`close()`。主畫面標示 POSSIBLE HANDS，詳情標題 POSSIBLE BOSS HANDS；說明以已知玩家牌、已揭公牌與起手重抽規則估算，忽略下注行動及行動機率。左側保留最高兩個正機率牌型＋OTHER，其餘機率直接相加、不重新正規化；完整視窗列九類。顯示百分比四捨五入，極小正值為 `<0.1%`，實際未達 1 不顯示為 100%；完整原始分布合計 1。FLOP 三張完整揭開後才顯示，TURN／RIVER 揭開後重新計算並先清舊數字；攤牌、棄牌、換手隱藏，busy 關閉並禁開詳情。資料缺漏／錯誤顯示 UNAVAILABLE，不視為所有牌型 0%。
+
+v42 只修改牌型可能性的分析與呈現；引擎、固定 BOSS 表、輪替、正式 RNG、金流及 JP 保持。算法／介面驗證與發布狀態依 [docs/06](docs/06-mobile-and-deployment.md)；沿用的 `output/math-v35-validation.json` 仍是 v35 遊戲模型證據，不是 v42 新 RTP 校準。
 
 ## v40 抽盲文字契約
 

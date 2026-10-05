@@ -1,13 +1,13 @@
 /** Async presentation coordinator. Old streets/hands can never publish late results. */
-export function createBossRangeController({view,workerFactory=()=>new Worker(new URL('./boss-range-worker.mjs?v=41',import.meta.url),{type:'module'})}) {
+export function createBossRangeController({view,workerFactory=()=>new Worker(new URL('./boss-range-worker.mjs?v=42',import.meta.url),{type:'module'})}) {
  let worker=null,epoch=0,request=0,key='',state={visible:false,busy:false},result=null,pending=false,failed=false;
  function paint(){view.render({...state,calculating:pending,distribution:result?.distribution||[],
-  unavailable:failed?'calculation-unavailable':result?.unavailable||(result?.status==='inconsistent'?'inconsistent-evidence':undefined)});}
+  unavailable:failed?'calculation-unavailable':result?.unavailable});}
  function reset(){epoch++;request=0;key='';result=null;pending=false;state={visible:false,busy:false};view.clear();}
- function update({visible,busy,context,board=[],evidence=[]}) {
+ function update({visible,busy,context,board=[]}) {
   state={visible,busy};
   if(!context){paint();return;}
-  const nextKey=JSON.stringify({board,evidence});
+  const nextKey=JSON.stringify(board);
   if(key!==nextKey){
    key=nextKey;result=null;pending=true;request++;
    try {
@@ -19,7 +19,7 @@ export function createBossRangeController({view,workerFactory=()=>new Worker(new
      };
      worker.onerror=()=>{failed=true;pending=false;result=null;worker?.terminate();worker=null;paint();};
     }
-    if(worker)worker.postMessage({epoch,request,context,board,evidence});
+    if(worker)worker.postMessage({epoch,request,context,board});
     else pending=false;
    }catch{failed=true;pending=false;worker?.terminate();worker=null;}
   }

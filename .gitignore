@@ -20,6 +20,7 @@ Thumbs.db
 !/output/math-validation.json
 !/output/math-v35-validation.json
 !/output/math-v41-range-validation.json
+!/output/math-v42-range-validation.json
 
 # Historical research and unused presentation files
 /docs/01-existing-games.md

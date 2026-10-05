@@ -1,0 +1,979 @@
+{
+  "version": 42,
+  "generatedAt": "2026-10-05T09:04:52.105Z",
+  "clientDate": "2026-10-05",
+  "timezone": "Asia/Taipei",
+  "sourceHashFormat": "sha256 of UTF-8 source with LF line endings",
+  "sourceHashes": {
+    "src/boss-hand-range.mjs": "8dcfca886d02fd362d9cba31cd0314c2b31d9266d9709ceca2722dab67f20e16",
+    "src/boss-range-public.mjs": "9214203f79efae93c9627ac91fe9c19ad2be36791b596f1a34d3ffbac28db28d",
+    "src/engine.mjs": "ccd275415b14c83fb18cea93ac1c845d417c238bfe64a563ed704b7c9ea815af",
+    "src/poker.mjs": "0839d22158f8210ebde21afba578f4b4087933efae26fd4fbe56ce95afbf82f9",
+    "src/boss-profiles.mjs": "0aff4eef99cc6d5817e06ccc87642f5d5fc6e8b957f361027683b34e360e3d8a",
+    "scripts/validate-range-v42.mjs": "f1d6b61d23943e42c80bb79b4ed226fe0805569b4c3f2fd04209e30bcf4f6ffa"
+  },
+  "status": "passed",
+  "scope": "v42 只依玩家已知底牌、已揭公共牌、公開發牌順序與有限次起手重抽規則估算 BOSS 目前最佳牌型；不使用角色、動作或行為機率。含獨立枚舉與引擎隔離驗證；不是 RTP、發牌頻率校準、瀏覽器揭牌時序或實體手機驗收。",
+  "estimatorInputs": [
+    "playerHole",
+    "smallBlind",
+    "config.deal",
+    "board"
+  ],
+  "oracleTolerance": 1e-12,
+  "directEnumeration": {
+    "cases": 40,
+    "maximumAbsoluteDifference": 1.1268763699945339e-14,
+    "method": "4 組玩家底牌 × 5 種公牌 × 2 種發牌順序，關閉重抽後逐一枚舉剩餘兩張候選，直接 evaluateBest 分類；不含角色或動作 likelihood。"
+  },
+  "finiteCapExtremes": {
+    "cases": 2
+  },
+  "legacyProbabilityBounds": {
+    "cases": 130,
+    "minimumProbability": 0,
+    "maximumProbability": 0.9079503632744265,
+    "maximumSumError": 2.220446049250313e-16
+  },
+  "reverseOrderOracle": {
+    "cases": 2,
+    "maximumAbsoluteDifference": 1.587618925213974e-14,
+    "method": "每個候選獨立枚舉移除兩牌後的 50 張池 eligible 組合，以倒推遞迴求有限次接受率，不使用模組 degree 修正公式。"
+  },
+  "manualPlayerReservation": {
+    "cases": 2
+  },
+  "manualBossUnavailable": {
+    "cases": 2
+  },
+  "screenshotBoardExample": {
+    "note": "採用使用者截圖的 7h 6s Ks 公牌，玩家 2h 3d 與小盲位置為示例假設，並非重播截圖原手牌。",
+    "playerHole": [
+      "2h",
+      "3d"
+    ],
+    "smallBlind": "player",
+    "board": [
+      "7h",
+      "6s",
+      "Ks"
+    ],
+    "deal": {
+      "player": {
+        "rerollMode": "unpaired",
+        "rerollChance": 0.5,
+        "maxRerolls": 50
+      },
+      "npc": {
+        "rerollMode": "unpaired",
+        "rerollChance": 0.25,
+        "maxRerolls": 50
+      }
+    },
+    "candidateCount": 1081,
+    "distribution": [
+      {
+        "category": 0,
+        "key": "high-card",
+        "label": "High Card",
+        "probability": 0.5889292196007196
+      },
+      {
+        "category": 1,
+        "key": "pair",
+        "label": "Pair",
+        "probability": 0.3756805807622561
+      },
+      {
+        "category": 2,
+        "key": "two-pair",
+        "label": "Two Pair",
+        "probability": 0.02450090744101686
+      },
+      {
+        "category": 3,
+        "key": "three-of-a-kind",
+        "label": "Three of a Kind",
+        "probability": 0.010889292196007492
+      },
+      {
+        "category": 8,
+        "key": "straight-flush",
+        "label": "Straight Flush",
+        "probability": 0
+      },
+      {
+        "category": 7,
+        "key": "four-of-a-kind",
+        "label": "Four of a Kind",
+        "probability": 0
+      },
+      {
+        "category": 6,
+        "key": "full-house",
+        "label": "Full House",
+        "probability": 0
+      },
+      {
+        "category": 5,
+        "key": "flush",
+        "label": "Flush",
+        "probability": 0
+      },
+      {
+        "category": 4,
+        "key": "straight",
+        "label": "Straight",
+        "probability": 0
+      }
+    ]
+  },
+  "streetUpdates": {
+    "cases": 3,
+    "stages": [
+      {
+        "street": "flop",
+        "board": [
+          "7h",
+          "6s",
+          "Ks"
+        ],
+        "candidateCount": 1081,
+        "distribution": [
+          {
+            "category": 0,
+            "key": "high-card",
+            "label": "High Card",
+            "probability": 0.5889292196007196
+          },
+          {
+            "category": 1,
+            "key": "pair",
+            "label": "Pair",
+            "probability": 0.3756805807622561
+          },
+          {
+            "category": 2,
+            "key": "two-pair",
+            "label": "Two Pair",
+            "probability": 0.02450090744101686
+          },
+          {
+            "category": 3,
+            "key": "three-of-a-kind",
+            "label": "Three of a Kind",
+            "probability": 0.010889292196007492
+          },
+          {
+            "category": 8,
+            "key": "straight-flush",
+            "label": "Straight Flush",
+            "probability": 0
+          },
+          {
+            "category": 7,
+            "key": "four-of-a-kind",
+            "label": "Four of a Kind",
+            "probability": 0
+          },
+          {
+            "category": 6,
+            "key": "full-house",
+            "label": "Full House",
+            "probability": 0
+          },
+          {
+            "category": 5,
+            "key": "flush",
+            "label": "Flush",
+            "probability": 0
+          },
+          {
+            "category": 4,
+            "key": "straight",
+            "label": "Straight",
+            "probability": 0
+          }
+        ]
+      },
+      {
+        "street": "turn",
+        "board": [
+          "7h",
+          "6s",
+          "Ks",
+          "7c"
+        ],
+        "candidateCount": 1035,
+        "distribution": [
+          {
+            "category": 1,
+            "key": "pair",
+            "label": "Pair",
+            "probability": 0.6149715729627204
+          },
+          {
+            "category": 2,
+            "key": "two-pair",
+            "label": "Two Pair",
+            "probability": 0.29279848389135216
+          },
+          {
+            "category": 3,
+            "key": "three-of-a-kind",
+            "label": "Three of a Kind",
+            "probability": 0.07201516108654613
+          },
+          {
+            "category": 6,
+            "key": "full-house",
+            "label": "Full House",
+            "probability": 0.01895135818067001
+          },
+          {
+            "category": 7,
+            "key": "four-of-a-kind",
+            "label": "Four of a Kind",
+            "probability": 0.0012634238787113342
+          },
+          {
+            "category": 8,
+            "key": "straight-flush",
+            "label": "Straight Flush",
+            "probability": 0
+          },
+          {
+            "category": 5,
+            "key": "flush",
+            "label": "Flush",
+            "probability": 0
+          },
+          {
+            "category": 4,
+            "key": "straight",
+            "label": "Straight",
+            "probability": 0
+          },
+          {
+            "category": 0,
+            "key": "high-card",
+            "label": "High Card",
+            "probability": 0
+          }
+        ]
+      },
+      {
+        "street": "river",
+        "board": [
+          "7h",
+          "6s",
+          "Ks",
+          "7c",
+          "Kd"
+        ],
+        "candidateCount": 990,
+        "distribution": [
+          {
+            "category": 2,
+            "key": "two-pair",
+            "label": "Two Pair",
+            "probability": 0.827005612413334
+          },
+          {
+            "category": 6,
+            "key": "full-house",
+            "label": "Full House",
+            "probability": 0.17035325189831996
+          },
+          {
+            "category": 7,
+            "key": "four-of-a-kind",
+            "label": "Four of a Kind",
+            "probability": 0.0026411356883460427
+          },
+          {
+            "category": 8,
+            "key": "straight-flush",
+            "label": "Straight Flush",
+            "probability": 0
+          },
+          {
+            "category": 5,
+            "key": "flush",
+            "label": "Flush",
+            "probability": 0
+          },
+          {
+            "category": 4,
+            "key": "straight",
+            "label": "Straight",
+            "probability": 0
+          },
+          {
+            "category": 3,
+            "key": "three-of-a-kind",
+            "label": "Three of a Kind",
+            "probability": 0
+          },
+          {
+            "category": 1,
+            "key": "pair",
+            "label": "Pair",
+            "probability": 0
+          },
+          {
+            "category": 0,
+            "key": "high-card",
+            "label": "High Card",
+            "probability": 0
+          }
+        ]
+      }
+    ]
+  },
+  "actionProfileIndependence": {
+    "cases": 20,
+    "unreadFieldChecks": 4,
+    "method": "相同已知底牌、公牌及重抽設定下，傳入舊角色、策略及動作證據欄位也不改變結果；以會拋錯的 getter 確認核心不讀這些欄位。"
+  },
+  "forcedRoyalBoard": {
+    "board": [
+      "Ts",
+      "Js",
+      "Qs",
+      "Ks",
+      "As"
+    ],
+    "playerHole": [
+      "2h",
+      "3d"
+    ],
+    "note": "公牌本身已是皇家同花順，所有合法底牌的目前最佳牌型皆為同花順；九類將皇家併入同花順。",
+    "candidateCount": 990,
+    "distribution": [
+      {
+        "category": 8,
+        "key": "straight-flush",
+        "label": "Straight Flush",
+        "probability": 1
+      },
+      {
+        "category": 7,
+        "key": "four-of-a-kind",
+        "label": "Four of a Kind",
+        "probability": 0
+      },
+      {
+        "category": 6,
+        "key": "full-house",
+        "label": "Full House",
+        "probability": 0
+      },
+      {
+        "category": 5,
+        "key": "flush",
+        "label": "Flush",
+        "probability": 0
+      },
+      {
+        "category": 4,
+        "key": "straight",
+        "label": "Straight",
+        "probability": 0
+      },
+      {
+        "category": 3,
+        "key": "three-of-a-kind",
+        "label": "Three of a Kind",
+        "probability": 0
+      },
+      {
+        "category": 2,
+        "key": "two-pair",
+        "label": "Two Pair",
+        "probability": 0
+      },
+      {
+        "category": 1,
+        "key": "pair",
+        "label": "Pair",
+        "probability": 0
+      },
+      {
+        "category": 0,
+        "key": "high-card",
+        "label": "High Card",
+        "probability": 0
+      }
+    ]
+  },
+  "naturalEngineIsolation": {
+    "hands": 24,
+    "actions": 172,
+    "rangeUpdates": 368,
+    "categorySupportChecks": 272,
+    "sameBoardChecks": 212,
+    "minimumTrueCategoryProbability": 0.3249739447628952,
+    "maximumDistributionSumError": 1.1102230246251565e-16,
+    "seeds": [
+      1,
+      7,
+      30
+    ],
+    "results": [
+      {
+        "profileId": "caller",
+        "smallBlind": "player",
+        "seed": 1,
+        "actions": 8,
+        "categorySupportChecks": 13,
+        "minimumTrueCategoryProbability": 0.5031363486299014,
+        "endingStreet": "river",
+        "result": "showdown",
+        "winner": "player",
+        "board": [
+          "8c",
+          "4d",
+          "Ks",
+          "Td",
+          "Kd"
+        ],
+        "playerClosing": 10046,
+        "bossClosing": 9950,
+        "fee": 4,
+        "jackpotAward": 0,
+        "accountingError": 0,
+        "rngState": 1320036238
+      },
+      {
+        "profileId": "caller",
+        "smallBlind": "player",
+        "seed": 7,
+        "actions": 8,
+        "categorySupportChecks": 13,
+        "minimumTrueCategoryProbability": 0.35198064711219235,
+        "endingStreet": "river",
+        "result": "showdown",
+        "winner": "player",
+        "board": [
+          "6d",
+          "3c",
+          "Ah",
+          "4c",
+          "6c"
+        ],
+        "playerClosing": 10009.2,
+        "bossClosing": 9990,
+        "fee": 0.8,
+        "jackpotAward": 0,
+        "accountingError": 0,
+        "rngState": 1320036244
+      },
+      {
+        "profileId": "caller",
+        "smallBlind": "player",
+        "seed": 30,
+        "actions": 8,
+        "categorySupportChecks": 13,
+        "minimumTrueCategoryProbability": 0.4473933649289152,
+        "endingStreet": "river",
+        "result": "showdown",
+        "winner": "npc",
+        "board": [
+          "4s",
+          "Ks",
+          "Ah",
+          "5h",
+          "6d"
+        ],
+        "playerClosing": 9990,
+        "bossClosing": 10009.2,
+        "fee": 0.8,
+        "jackpotAward": 0,
+        "accountingError": 0,
+        "rngState": 3719496553
+      },
+      {
+        "profileId": "caller",
+        "smallBlind": "npc",
+        "seed": 1,
+        "actions": 8,
+        "categorySupportChecks": 13,
+        "minimumTrueCategoryProbability": 0.47261706536607184,
+        "endingStreet": "river",
+        "result": "showdown",
+        "winner": "player",
+        "board": [
+          "Ah",
+          "5s",
+          "7c",
+          "Qh",
+          "5h"
+        ],
+        "playerClosing": 10009.2,
+        "bossClosing": 9990,
+        "fee": 0.8,
+        "jackpotAward": 0,
+        "accountingError": 0,
+        "rngState": 2327942790
+      },
+      {
+        "profileId": "caller",
+        "smallBlind": "npc",
+        "seed": 7,
+        "actions": 8,
+        "categorySupportChecks": 13,
+        "minimumTrueCategoryProbability": 0.3249739447628952,
+        "endingStreet": "river",
+        "result": "showdown",
+        "winner": "npc",
+        "board": [
+          "9d",
+          "Th",
+          "7d",
+          "7c",
+          "8c"
+        ],
+        "playerClosing": 9990,
+        "bossClosing": 10009.2,
+        "fee": 0.8,
+        "jackpotAward": 0,
+        "accountingError": 0,
+        "rngState": 2519766387
+      },
+      {
+        "profileId": "caller",
+        "smallBlind": "npc",
+        "seed": 30,
+        "actions": 8,
+        "categorySupportChecks": 13,
+        "minimumTrueCategoryProbability": 0.4726170653660722,
+        "endingStreet": "river",
+        "result": "showdown",
+        "winner": "player",
+        "board": [
+          "Kd",
+          "Qd",
+          "Qh",
+          "5d",
+          "4c"
+        ],
+        "playerClosing": 10009.2,
+        "bossClosing": 9990,
+        "fee": 0.8,
+        "jackpotAward": 0,
+        "accountingError": 0,
+        "rngState": 2519766410
+      },
+      {
+        "profileId": "maniac",
+        "smallBlind": "player",
+        "seed": 1,
+        "actions": 9,
+        "categorySupportChecks": 13,
+        "minimumTrueCategoryProbability": 0.5031363486299014,
+        "endingStreet": "river",
+        "result": "showdown",
+        "winner": "player",
+        "board": [
+          "8c",
+          "4d",
+          "Ks",
+          "Td",
+          "Kd"
+        ],
+        "playerClosing": 10110.4,
+        "bossClosing": 9880,
+        "fee": 9.6,
+        "jackpotAward": 0,
+        "accountingError": 0,
+        "rngState": 1320036238
+      },
+      {
+        "profileId": "maniac",
+        "smallBlind": "player",
+        "seed": 7,
+        "actions": 8,
+        "categorySupportChecks": 13,
+        "minimumTrueCategoryProbability": 0.35198064711219235,
+        "endingStreet": "river",
+        "result": "showdown",
+        "winner": "player",
+        "board": [
+          "6d",
+          "3c",
+          "Ah",
+          "4c",
+          "6c"
+        ],
+        "playerClosing": 10101.2,
+        "bossClosing": 9890,
+        "fee": 8.8,
+        "jackpotAward": 0,
+        "accountingError": 0,
+        "rngState": 1320036244
+      },
+      {
+        "profileId": "maniac",
+        "smallBlind": "player",
+        "seed": 30,
+        "actions": 8,
+        "categorySupportChecks": 13,
+        "minimumTrueCategoryProbability": 0.4473933649289152,
+        "endingStreet": "river",
+        "result": "showdown",
+        "winner": "npc",
+        "board": [
+          "4s",
+          "Ks",
+          "Ah",
+          "5h",
+          "6d"
+        ],
+        "playerClosing": 9930,
+        "bossClosing": 10064.4,
+        "fee": 5.6,
+        "jackpotAward": 0,
+        "accountingError": 0,
+        "rngState": 3719496553
+      },
+      {
+        "profileId": "maniac",
+        "smallBlind": "npc",
+        "seed": 1,
+        "actions": 11,
+        "categorySupportChecks": 19,
+        "minimumTrueCategoryProbability": 0.47261706536607184,
+        "endingStreet": "river",
+        "result": "showdown",
+        "winner": "player",
+        "board": [
+          "Ah",
+          "5s",
+          "7c",
+          "Qh",
+          "5h"
+        ],
+        "playerClosing": 10101.2,
+        "bossClosing": 9890,
+        "fee": 8.8,
+        "jackpotAward": 0,
+        "accountingError": 0,
+        "rngState": 2327942790
+      },
+      {
+        "profileId": "maniac",
+        "smallBlind": "npc",
+        "seed": 7,
+        "actions": 10,
+        "categorySupportChecks": 17,
+        "minimumTrueCategoryProbability": 0.3249739447628952,
+        "endingStreet": "river",
+        "result": "showdown",
+        "winner": "npc",
+        "board": [
+          "9d",
+          "Th",
+          "7d",
+          "7c",
+          "8c"
+        ],
+        "playerClosing": 9930,
+        "bossClosing": 10064.4,
+        "fee": 5.6,
+        "jackpotAward": 0,
+        "accountingError": 0,
+        "rngState": 2519766387
+      },
+      {
+        "profileId": "maniac",
+        "smallBlind": "npc",
+        "seed": 30,
+        "actions": 9,
+        "categorySupportChecks": 15,
+        "minimumTrueCategoryProbability": 0.4726170653660722,
+        "endingStreet": "river",
+        "result": "showdown",
+        "winner": "player",
+        "board": [
+          "Kd",
+          "Qd",
+          "Qh",
+          "5d",
+          "4c"
+        ],
+        "playerClosing": 10055.2,
+        "bossClosing": 9940,
+        "fee": 4.8,
+        "jackpotAward": 0,
+        "accountingError": 0,
+        "rngState": 2519766410
+      },
+      {
+        "profileId": "sniper",
+        "smallBlind": "player",
+        "seed": 1,
+        "actions": 9,
+        "categorySupportChecks": 13,
+        "minimumTrueCategoryProbability": 0.5031363486299014,
+        "endingStreet": "river",
+        "result": "showdown",
+        "winner": "player",
+        "board": [
+          "8c",
+          "4d",
+          "Ks",
+          "Td",
+          "Kd"
+        ],
+        "playerClosing": 10055.2,
+        "bossClosing": 9940,
+        "fee": 4.8,
+        "jackpotAward": 0,
+        "accountingError": 0,
+        "rngState": 1320036238
+      },
+      {
+        "profileId": "sniper",
+        "smallBlind": "player",
+        "seed": 7,
+        "actions": 8,
+        "categorySupportChecks": 13,
+        "minimumTrueCategoryProbability": 0.35198064711219235,
+        "endingStreet": "river",
+        "result": "showdown",
+        "winner": "player",
+        "board": [
+          "6d",
+          "3c",
+          "Ah",
+          "4c",
+          "6c"
+        ],
+        "playerClosing": 10064.4,
+        "bossClosing": 9930,
+        "fee": 5.6,
+        "jackpotAward": 0,
+        "accountingError": 0,
+        "rngState": 1320036244
+      },
+      {
+        "profileId": "sniper",
+        "smallBlind": "player",
+        "seed": 30,
+        "actions": 8,
+        "categorySupportChecks": 13,
+        "minimumTrueCategoryProbability": 0.4473933649289152,
+        "endingStreet": "river",
+        "result": "showdown",
+        "winner": "npc",
+        "board": [
+          "4s",
+          "Ks",
+          "Ah",
+          "5h",
+          "6d"
+        ],
+        "playerClosing": 9990,
+        "bossClosing": 10009.2,
+        "fee": 0.8,
+        "jackpotAward": 0,
+        "accountingError": 0,
+        "rngState": 3719496553
+      },
+      {
+        "profileId": "sniper",
+        "smallBlind": "npc",
+        "seed": 1,
+        "actions": 1,
+        "categorySupportChecks": 0,
+        "minimumTrueCategoryProbability": 1,
+        "endingStreet": "preflop",
+        "result": "fold",
+        "winner": "player",
+        "board": [],
+        "playerClosing": 10004.6,
+        "bossClosing": 9995,
+        "fee": 0.4,
+        "jackpotAward": 0,
+        "accountingError": 0,
+        "rngState": 1128212647
+      },
+      {
+        "profileId": "sniper",
+        "smallBlind": "npc",
+        "seed": 7,
+        "actions": 1,
+        "categorySupportChecks": 0,
+        "minimumTrueCategoryProbability": 1,
+        "endingStreet": "preflop",
+        "result": "fold",
+        "winner": "player",
+        "board": [],
+        "playerClosing": 10004.6,
+        "bossClosing": 9995,
+        "fee": 0.4,
+        "jackpotAward": 0,
+        "accountingError": 0,
+        "rngState": 1320036244
+      },
+      {
+        "profileId": "sniper",
+        "smallBlind": "npc",
+        "seed": 30,
+        "actions": 8,
+        "categorySupportChecks": 13,
+        "minimumTrueCategoryProbability": 0.4726170653660722,
+        "endingStreet": "river",
+        "result": "showdown",
+        "winner": "player",
+        "board": [
+          "Kd",
+          "Qd",
+          "Qh",
+          "5d",
+          "4c"
+        ],
+        "playerClosing": 10009.2,
+        "bossClosing": 9990,
+        "fee": 0.8,
+        "jackpotAward": 0,
+        "accountingError": 0,
+        "rngState": 2519766410
+      },
+      {
+        "profileId": "trapper",
+        "smallBlind": "player",
+        "seed": 1,
+        "actions": 8,
+        "categorySupportChecks": 13,
+        "minimumTrueCategoryProbability": 0.5031363486299014,
+        "endingStreet": "river",
+        "result": "showdown",
+        "winner": "player",
+        "board": [
+          "8c",
+          "4d",
+          "Ks",
+          "Td",
+          "Kd"
+        ],
+        "playerClosing": 10046,
+        "bossClosing": 9950,
+        "fee": 4,
+        "jackpotAward": 0,
+        "accountingError": 0,
+        "rngState": 1320036238
+      },
+      {
+        "profileId": "trapper",
+        "smallBlind": "player",
+        "seed": 7,
+        "actions": 8,
+        "categorySupportChecks": 13,
+        "minimumTrueCategoryProbability": 0.35198064711219235,
+        "endingStreet": "river",
+        "result": "showdown",
+        "winner": "player",
+        "board": [
+          "6d",
+          "3c",
+          "Ah",
+          "4c",
+          "6c"
+        ],
+        "playerClosing": 10027.6,
+        "bossClosing": 9970,
+        "fee": 2.4,
+        "jackpotAward": 0,
+        "accountingError": 0,
+        "rngState": 1320036244
+      },
+      {
+        "profileId": "trapper",
+        "smallBlind": "player",
+        "seed": 30,
+        "actions": 8,
+        "categorySupportChecks": 13,
+        "minimumTrueCategoryProbability": 0.4473933649289152,
+        "endingStreet": "river",
+        "result": "showdown",
+        "winner": "npc",
+        "board": [
+          "4s",
+          "Ks",
+          "Ah",
+          "5h",
+          "6d"
+        ],
+        "playerClosing": 9990,
+        "bossClosing": 10009.2,
+        "fee": 0.8,
+        "jackpotAward": 0,
+        "accountingError": 0,
+        "rngState": 3719496553
+      },
+      {
+        "profileId": "trapper",
+        "smallBlind": "npc",
+        "seed": 1,
+        "actions": 1,
+        "categorySupportChecks": 0,
+        "minimumTrueCategoryProbability": 1,
+        "endingStreet": "preflop",
+        "result": "fold",
+        "winner": "player",
+        "board": [],
+        "playerClosing": 10004.6,
+        "bossClosing": 9995,
+        "fee": 0.4,
+        "jackpotAward": 0,
+        "accountingError": 0,
+        "rngState": 1128212647
+      },
+      {
+        "profileId": "trapper",
+        "smallBlind": "npc",
+        "seed": 7,
+        "actions": 1,
+        "categorySupportChecks": 0,
+        "minimumTrueCategoryProbability": 1,
+        "endingStreet": "preflop",
+        "result": "fold",
+        "winner": "player",
+        "board": [],
+        "playerClosing": 10004.6,
+        "bossClosing": 9995,
+        "fee": 0.4,
+        "jackpotAward": 0,
+        "accountingError": 0,
+        "rngState": 1320036244
+      },
+      {
+        "profileId": "trapper",
+        "smallBlind": "npc",
+        "seed": 30,
+        "actions": 8,
+        "categorySupportChecks": 13,
+        "minimumTrueCategoryProbability": 0.4726170653660722,
+        "endingStreet": "river",
+        "result": "showdown",
+        "winner": "player",
+        "board": [
+          "Kd",
+          "Qd",
+          "Qh",
+          "5d",
+          "4c"
+        ],
+        "playerClosing": 10009.2,
+        "bossClosing": 9990,
+        "fee": 0.8,
+        "jackpotAward": 0,
+        "accountingError": 0,
+        "rngState": 2519766410
+      }
+    ],
+    "method": "4 型 × 2 個首手小盲位置 × 3 seeds；玩家選免費 CHECK 或 CALL。原引擎自然發牌及抽 BOSS 動作，逐動作與完全未呼叫 range 的同 seed 對照局比較。"
+  }
+}

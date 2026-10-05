@@ -1,6 +1,20 @@
 # 新遊戲工作規範
 
+## v42：幫助理解牌面的 BOSS 可能牌型（2026-10-05）
+
+使用者看到 FLOP `7♥ 6♠ K♠` 顯示 HIGH CARD 100% 後，明確要求算出 BOSS「可能是什麼牌型的機率」，幫助玩家看懂牌面。本版覆蓋下方 v41 以角色、行動或已顯示行動機率反推暗牌的規格；v41 算法與驗證只保留為歷史。行動橫幅、引擎與 BOSS 行動機率表維持。
+
+分析只用玩家已知兩張底牌、已揭公牌、公開發牌先後及雙方起手重抽規則。枚舉可用 BOSS 底牌，依精確有限次重抽先驗加權；BOSS 先發時保留後發玩家已知手牌的反向條件權重，指定玩家牌事先保留，指定 BOSS 牌只傳 manualProvided 並回報無法估算。不得再讀 BOSS 身份、行動、按鈕／中央行動機率、合法動作、POT 或待補金額來縮窄牌型；相同已知牌與起手設定下，下注與 BOSS 類型不能改變分布。
+
+API 為 `createBossHandRange({playerHole,smallBlind,config:{deal}}).update({board})`。Worker 只收 `{epoch,request,context,board}`，context 僅含上述已知玩家牌、盲位與 allowlist 重抽參數；不收 hand/session、BOSS 暗牌、牌庫、未揭公牌、seed、roll 或 dealAudit，不消耗正式 RNG。
+
+主畫面標示 POSSIBLE HANDS，詳情標題 POSSIBLE BOSS HANDS；FLOP 三張完整揭開後才顯示，TURN／RIVER 揭開後重新計算、先清舊數字。同街下注不更新牌型分布；busy 關閉並禁開詳情，攤牌／棄牌／換手隱藏。維持最高兩類＋OTHER 原比例、詳情互斥九類、皇家併同花順；估算目前最佳牌型，不補未來公牌，不是玩家勝率或 BOSS 行動機率。只有已知牌及起手規則真的迫使同一牌型時可顯示 100%，不能因公開行動率推成 100%。
+
+遊戲模型與數學證據仍沿用 v35；新 `output/math-v42-range-validation.json` 專屬本版牌型算法／引擎隔離驗證，不能沿用 v41 數值冒稱本版通過。驗證與發布狀態依 docs/06 v42，交接見 docs/13-v42-handoff.md；未驗證、未部署不得先宣稱完成。原 Boss Duel／Hands Up／Final Table 永久唯讀；遊戲英文，工具、文件與溝通繁中。
+
 ## v41：平面行動橫幅與 BOSS 目前牌型分布（2026-10-05）
+
+本節為歷史：行動橫幅規格仍適用；牌型推估所用的角色／行動／已顯示機率證據已由上方 v42 取代。
 
 使用者指定 YOUR TURN／CHOOSE YOUR MOVE 等行動資訊為整個舞台寬的平面橫幅，左右不封框、無圓角、厚邊、內框與桌面物件式陰影；位置 top 358／高 68 及既有動作內容、中央抽選、籌碼時序保持。此規格覆蓋歷史行動底板外觀。
 
