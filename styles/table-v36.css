@@ -5,8 +5,15 @@
 .game #showdown-preview { top:326px; }
 .game #npc-asset-panel { top:262px; }
 .game #table-rank-button[hidden] { display:none; }
-.game .action-flow-strip { top:358px; height:68px; }
-.game .action-flow-current { padding-block:5px; }
+/* Screen-wide HUD ribbon: open sides, no plaque, bevel or tabletop shadow. */
+.game .action-flow-strip,
+.game .action-flow-strip[data-step='you'] {
+ top:358px; height:68px; left:0; right:0; border:0; border-radius:0;
+ background:linear-gradient(90deg,#111b2beb,#172338f5 50%,#111b2beb);
+ box-shadow:none;
+}
+.game .action-flow-strip:before { content:none; }
+.game .action-flow-current { padding-block:5px; border-radius:0; }
 .game .action-flow-copy { gap:2px; }
 .game .action-flow-verb { font-size:18px; line-height:22px; }
 .game .response-flyout { top:400px; height:43px; }

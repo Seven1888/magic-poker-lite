@@ -1,5 +1,22 @@
 # 手機相容與公開 Demo
 
+## v41 平面行動橫幅與 BOSS 目前牌型分布（2026-10-05，本機驗證通過）
+
+行動資訊改為橫跨整個 400px 舞台的平面橫幅，左右無封框、無圓角／雙層內框／厚陰影，保留 top 358、高 68 與既有演出流程。BOSS 底牌左側新增目前牌型分布：FLOP 起顯示最高兩類＋OTHER，點開看完整互斥九類；按原始概率列示，不重新正規化前兩項。
+
+算法枚舉未知 BOSS 候選，解析積分有限次起手重抽，處理先發 BOSS 與已知玩家手牌的条件權重，以及指定玩家事先保留。只用 allowlist 公開資訊、可見機率標籤與已公開動作；Worker 不收暗牌、牌庫、seed、roll 或隱藏重抽紀錄，不消耗正式 RNG。新街先清舊數值、舊 request／hand 回覆不覆蓋新畫面；busy 禁開詳情，攤牌／棄牌／換手清空。完整推導見 docs/04 第 4.7 節與 API。
+
+- 自動測試 **300／300** 通過，包括新增純數學 **15**、公開投影／Worker 時序 **4**、呈現 **5** 項。正式建置 **191 檔**通過。
+- 獨立驗證 `scripts/validate-range-v41.mjs`：40 組直接枚舉、2 組有限次極端、130 組 legacy 邊界、2 組反向發牌 oracle、2 組指定玩家驗證。最大機率差 **1.59e-14**。4 型×2 盲×3 seed 共 **24 手／172 動作**與無分析器基準的 RNG、牌面、帳務完全一致；**272** 次真實牌型後驗皆為正，各手守恆誤差 0。新 JSON 保存來源 SHA256、seed 與參數邊界。
+- 自然固定種子 caller 22／maniac 188／sniper 246／trapper 30，4 型×320／390 共 **8 組**完整四街→攤牌→NEXT HAND，另 430／844 寬度檢查。入口與 preflop 不露分布，FLOP／TURN／RIVER 可讀，詳情九類及原比例完整，開關不扣款；攤牌及下一手無殘留。Worker 所有請求僅公開欄位、證據公牌為已揭 prefix，回覆無 unavailable／inconsistent。
+- seed 18 正常動畫：自然 FLOP `5c 6h 6d`，BOSS 顯示 **TWO PAIR 59.9%／TRIPS 36.6%／OTHER 3.5%**；seed 57 減少動態顯示 **TWO PAIR 95.9%／FULL HOUSE 4.1%**，320px 完整無溢出。數字來自原引擎固定 seed，不是手動牌或呈現 fixture。
+- 正常速度 **1,616 個 25ms 取樣幀**涵蓋 DEALING／YOUR TURN／BOSS TURN／HAND COMPLETE；左右框、圓角、厚陰影沒有復現，busy 時分布詳情始終不可點。BET 草稿／確認／NEXT HAND 沒有舊分布；自然 FLOP 棄牌後 BOSS 仍兩張牌背、分布隱藏。
+- 上述本機瀏覽器驗證 **0 頁面錯誤、0 HTTP 錯誤**；完整遊戲與詳情截圖已檢視。皆為桌面 Chromium viewport，非實體手機驗收。新驗證是牌型推估與呈現，不是 RTP 校準，原遊戲數學仍沿用 v35。
+
+證據：`output/playwright/{tests-v41,build-v41,range-v41-local,range-v41-edges-local}.txt`、兩個 range JSON 及 `v41-local-*.png`；可重跑數學證據為 `output/math-v41-range-validation.json`。
+
+以上為提交前本機紀錄。使用者要求全部完成後一次提交／推送，核對完整 SHA 的 Pages 成功與正式站驗證後，再開新聊天室提供所有連結。確切 SHA、run 及公開結果由部署後證據／主交接訊息補足；交接見 [docs/12](12-v41-handoff.md)。
+
 ## v40 小盲／大盲提示與局間 BET 預覽 BOSS（2026-10-05，本機驗證紀錄）
 
 抽盲改回 `BLIND POSITION`、`DRAWING YOUR BLIND`、中央／座位 coin 的 SB／BB，以及 YOU · SMALL BLIND／YOU · BIG BLIND；aria／title 明示雙方盲位，STARTING BET 保留真實初始投入。局間 BET 草稿改值時以 `session.rng.clone()` 和 `lastBossProfileId` 預覽同一下一型 neutral，不消耗正式 RNG、不發牌扣盲。取消或改回原 BET 還原開窗前畫面；確認保留預覽，NEXT HAND 仍由原 `startHand` 選到同型。下一手預覽一律隱藏舊 BOSS 手牌與牌型，fixed／legacy 同角色也適用；入口 v39 的首手 seed 固定規則保持。

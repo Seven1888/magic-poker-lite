@@ -1,0 +1,38 @@
+/* Small public range readout beside the BOSS cards; no framed panel. */
+.game #boss-hand-range {
+  position:absolute; left:10px; top:242px; width:110px; min-height:80px; z-index:6;
+  display:flex; flex-direction:column; justify-content:flex-start; gap:5px;
+  margin:0; padding:5px 3px 6px; border:0; border-radius:0;
+  background:linear-gradient(90deg,#130d2099,#130d2066 75%,transparent);
+  box-shadow:none; color:#fff1cf; font-family:var(--font); text-align:left;
+  text-shadow:0 1px 2px #08040b,0 0 5px #08040b;
+  font-variant-numeric:tabular-nums; cursor:pointer;
+}
+.game #boss-hand-range[hidden] { display:none; }
+.game #boss-hand-range:disabled { opacity:1; cursor:default; }
+.game #boss-hand-range:focus-visible { outline:2px solid #ffe7a7; outline-offset:2px; }
+.game .boss-range-heading {
+  display:flex; align-items:center; gap:5px; color:#ffe4a4;
+  font-size:11px; font-weight:800; line-height:14px; letter-spacing:.65px;
+}
+.game .boss-range-info { font:12px/1 var(--font); color:#e4d3bb; }
+.game .boss-range-summary { display:flex; flex-direction:column; width:100%; gap:4px; }
+.game .boss-range-row { display:flex; align-items:baseline; justify-content:space-between; gap:3px; line-height:16px; }
+.game .boss-range-label { font-size:10.5px; font-weight:700; white-space:nowrap; letter-spacing:-.15px; }
+.game .boss-range-percent { font-size:12px; font-weight:800; white-space:nowrap; color:#fff7dd; }
+.game .boss-range-other .boss-range-label { color:#d6c8c2; font-weight:500; }
+.game .boss-range-other .boss-range-percent { color:#e1d7cc; font-weight:600; }
+.game .boss-range-status { display:block; padding-top:9px; color:#ddd0c3; font-size:10px; line-height:17px; letter-spacing:.15px; }
+#boss-range-dialog { width:380px; }
+#boss-range-dialog h2 { padding-right:12px; font-size:21px; }
+#boss-range-dialog .boss-range-description { margin-bottom:14px; }
+.boss-range-list { margin:0 0 15px; padding:0; }
+.boss-range-detail-row {
+  display:flex; align-items:baseline; justify-content:space-between; gap:12px;
+  padding:7px 1px; border-bottom:1px solid #c9b38429; font-size:13px; line-height:18px;
+}
+.boss-range-detail-row dt { color:#f2e7d4; }
+.boss-range-detail-row dd { margin:0; color:#ffe4a3; font-size:14px; font-weight:800; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.boss-range-detail-row.is-zero dt,.boss-range-detail-row.is-zero dd { color:#9bafc6; font-weight:400; }
+#boss-range-dialog .boss-range-method { margin-bottom:10px; }
+#boss-range-dialog .boss-range-note { margin-bottom:0; font-size:11px; color:#aabbd0; }

@@ -26,6 +26,9 @@ import {createBlindDraw} from './blind-draw-view.mjs?v=40';
 import {createTotalWin} from './total-win-view.mjs?v=35';
 import {createBossActionView} from './boss-action-view.mjs?v=35';
 import {renderBossIdentity,preloadBossScenes,waitForBossScene} from './boss-scene-view.mjs?v=36';
+import {createBossRangeView} from './boss-range-view.mjs?v=41';
+import {createBossRangeController} from './boss-range-controller.mjs?v=41';
+import {bossRangeContext,publicBossEvidence} from './boss-range-public.mjs?v=41';
 document.documentElement.style.setProperty('--game-speed',String(GAME_SPEED));
 const $=id=>document.getElementById(id);
 // Stable player controls; engine actions and opponent response types stay unchanged.
@@ -42,6 +45,8 @@ const actionFlow=createActionFlow({root:document});
 const blindDraw=createBlindDraw({root:document,effects,reducedMotion:reduceMotion});
 const totalWin=createTotalWin({root:document,effects,reducedMotion:reduceMotion});
 const bossAction=createBossActionView({root:document,reducedMotion:reduceMotion});
+const bossRange=createBossRangeController({view:createBossRangeView({root:document})});
+const bossRangeEvidence=new Map();
 preloadBossScenes(document);
 const bankrollView=createBankrollView({root:document});
 let soundOn=true;
@@ -246,6 +251,23 @@ async function newHand(){
 }
 $('next-hand').onclick=newHand;
 const visibleStreet=()=>shownBoard>=5?'river':shownBoard===4?'turn':shownBoard>0?'flop':'preflop';
+function updateBossRange(){
+ const known=!!hand&&dealt.player===2;
+ const board=known?hand.board.slice(0,shownBoard):[];
+ const ready=known&&hand.status==='playing'&&shownReveal===0&&shownBoard===hand.board.length;
+ bossRange.update({visible:ready&&board.length>=3,busy,
+  context:known?bossRangeContext({playerHole:hand.holes.player.slice(0,dealt.player),smallBlind:hand.smallBlind,
+   bossProfileId:hand.bossProfile?.id??null,config:hand.config}):null,
+  board,evidence:[...bossRangeEvidence.values()]});
+}
+function observeBossOdds(distribution,id,shownMode,playerAction=null){
+ if(!hand||dealt.player!==2||shownBoard!==hand.board.length||!distribution.length)return null;
+ // A preview's response node uses only the player's public, hypothetical payment.
+ const currentBet=playerAction?Math.max(hand.currentBet,playerAction.to||0):hand.currentBet;
+ const event=publicBossEvidence({id,street:hand.street,board:hand.board.slice(0,shownBoard),distribution,
+  owed:Math.round(Math.max(0,currentBet-hand.streetBets.npc)*1e6)/1e6,pot:Math.round((hand.pot+(playerAction?.amount||0))*1e6)/1e6,shownMode});
+ bossRangeEvidence.set(id,event);return event;
+}
 function setTableCue(mode='',label='',{seat='',detail=''}={}){
   $('game').dataset.presentation=mode;$('game').dataset.activeSeat=seat;const cue=$('table-cue');cue.hidden=!mode;
   actionFlow.render({mode,label,seat,detail,actor:hand?.actor,playing:hand?.status==='playing',settled:hand?.status==='settled'});
@@ -259,6 +281,7 @@ function replaceCardFace(element,card,options={}){
   element.replaceChildren(...face.childNodes);
 }
 function updateShowdownView(){
+  if(shownReveal>0)updateBossRange();
   const panel=$('showdown-preview');
   $('game').dataset.revealed=String(shownReveal);
   if(!hand||hand.result?.reason!=='showdown'||shownReveal===0||shownBoard!==5){
@@ -315,6 +338,7 @@ function updateVisibleCards(){
   document.querySelectorAll('#streets [data-street]').forEach((el,i)=>{el.classList.toggle('current',!!hand&&i===current);el.classList.toggle('past',!!hand&&i<current);});
   document.querySelectorAll('[data-board-group]').forEach(el=>{const i=['preflop','flop','turn','river'].indexOf(el.dataset.boardGroup);el.classList.toggle('current',!!hand&&i===current);el.classList.toggle('past',!!hand&&i<current);});
   updateShowdownView();
+  updateBossRange();
 }
 /** Play only changes already committed by the engine, in visible table order. */
 async function presentHand({releaseResponse=false}={}){
@@ -369,7 +393,7 @@ async function presentHand({releaseResponse=false}={}){
   render();
 }
 function render(){
-  if(hand!==shownHand){shownHand=hand;shownBoard=0;boardDealt=0;shownReveal=0;dealt={player:0,npc:0};settlementReleased=false;presentedCredits={player:0,npc:0};responseSource=null;responseDecision=null;activeNpcDistribution=null;responseFlight.clear();totalWin.clear();bossAction.clear();delete $('game').dataset.npcFolded;bankrollView.clearChanges();}
+  if(hand!==shownHand){bossRange.reset();bossRangeEvidence.clear();shownHand=hand;shownBoard=0;boardDealt=0;shownReveal=0;dealt={player:0,npc:0};settlementReleased=false;presentedCredits={player:0,npc:0};responseSource=null;responseDecision=null;activeNpcDistribution=null;responseFlight.clear();totalWin.clear();bossAction.clear();delete $('game').dataset.npcFolded;bankrollView.clearChanges();}
   const active=hand?.status==='playing';const handView=getCurrentHandView(hand?.holes.player.slice(0,dealt.player)||[],hand?.board.slice(0,shownBoard)||[]);const best=handView.highlighted;
   if(hand)blindDraw.renderSeat({isSmall:hand.smallBlind==='player'});else if(!session)blindDraw.clear();
   const h=hud();$('game').dataset.busy=String(busy);
@@ -423,6 +447,7 @@ function renderActions(){
   const actions=h.actions,passive=actions.find(a=>a.type==='call'||a.type==='check'),aggressive=actions.find(a=>a.type==='raise'||a.type==='bet');
   const owed=playing?Math.max(0,hand.currentBet-hand.streetBets.player):0;
   const slots=[{type:'fold',a:actions.find(a=>a.type==='fold')},{type:passive?.type||(owed?'call':'check'),a:passive},{type:aggressive?.type||(playing&&hand.currentBet>0?'raise':'bet'),a:aggressive}];
+  const publicPreviews=[];
   root.innerHTML=slots.map(({type,a})=>{
     const sameSlot=pendingPlayerAction&&(pendingPlayerAction.type==='fold'?type==='fold':['call','check'].includes(pendingPlayerAction.type)?['call','check'].includes(type):['bet','raise'].includes(type));
     const choice=busy&&sameSlot?pendingPlayerAction:null;if(choice)type=choice.type;
@@ -435,6 +460,7 @@ function renderActions(){
     const chip='<img class="action-cost-chip" src="assets/chip-face-v24.svg" alt="" aria-hidden="true">';
     const cost=['call','bet','raise'].includes(type)&&displayed?.amount>0?`${chip}<span>${money(displayed.amount)}</span>`:'';
     const distribution=choice?responseSource?.distribution||[]:a?previewResponse(hand,type).distribution:[];
+    if(a&&!busy&&playing&&hand.actor==='player')publicPreviews.push({distribution,type,action:a});
     const badge=responseBadgeView(distribution,choice?responseDecision||{}:{});
     const name=PLAYER_ACTION_LABELS[type];
     const semantics=displayed?(type==='check'?'; check for free':type==='bet'?'; opens betting this round':''):'';
@@ -444,6 +470,8 @@ function renderActions(){
   }).join('');
   root.querySelectorAll('[data-action]').forEach(b=>{b.onclick=()=>playerAct(b.dataset.action);});
   responseFlight.update(activeNpcDistribution||responseSource?.distribution||[],responseDecision||{});
+  for(const {distribution,type,action} of publicPreviews)observeBossOdds(distribution,`preview:${hand.history.length}:${type}`,'badges',action);
+  updateBossRange();
   if(busy||!playing||hand.actor!=='player'){const previews=$('preview-actions');previews.hidden=true;previews.replaceChildren();}
 }
 function paintDistribution(){
@@ -460,7 +488,7 @@ function clearResponseSource(){
 }
 async function playerAct(type){
   if(busy||hand?.actor!=='player'||hand.status!=='playing')return;
-  try{busy=true;phase='YOUR MOVE';lastResponse=null;const chosen=legalActions(hand).find(a=>a.type===type);if(!chosen)throw new Error('This action is not available.');
+  try{busy=true;bossRange.close();phase='YOUR MOVE';lastResponse=null;const chosen=legalActions(hand).find(a=>a.type===type);if(!chosen)throw new Error('This action is not available.');
     const before=hand.board.length;
     pendingPlayerAction={...chosen};responseSource=captureResponseSource(hand,chosen);responseDecision=null;$('game').dataset.chosenAction=type;renderActions();paintDistribution();
     setTableCue('action',`YOU ${PLAYER_ACTION_LABELS[type]}${chosen.amount?' '+money(chosen.amount):''}`,{seat:'player',detail:chosen.amount?'CHIPS TO THE POT':type==='check'?'NO CHIPS REQUIRED':'END THIS HAND'});
@@ -490,6 +518,7 @@ async function continuePlay(){
     responseDecision={phase:hasDraw?'drawing':'result',selected:hasDraw?null:selected.type};
     if(!source)responseFlight.show(distribution,responseDecision);
     renderActions();paintDistribution();
+    const rangeEvent=observeBossOdds(distribution,`action:${hand.history.length}`,'all');updateBossRange();
     if(hasDraw){
       const target=responseFlight.target();
       const marker=target?document.createElement('span'):null;
@@ -509,6 +538,7 @@ async function continuePlay(){
     }else{lastResponse=null;setTableCue('action',`OPPONENT ${responseActionLabel(selected.type)}${selected.amount?' '+money(selected.amount):''}`,{seat:'npc'});await delay(reduceMotion?0:550,{speed:1});}
     const before=hand.board.length,historyStart=hand.history.length;
     applyAction(hand,selected.type);drawLog.push(entry);$('game').dataset.npcState=selected.type;
+    if(rangeEvent)bossRangeEvidence.set(rangeEvent.id,{...rangeEvent,selectedType:selected.type});
     // Use only the committed history event. Paid action text starts from the
     // same contribution notification as the actual chips; free actions start now.
     const actionEvent=hand.history.slice(historyStart).find(event=>event.actor==='npc');

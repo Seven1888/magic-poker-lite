@@ -1,5 +1,17 @@
 # 新遊戲工作規範
 
+## v41：平面行動橫幅與 BOSS 目前牌型分布（2026-10-05）
+
+使用者指定 YOUR TURN／CHOOSE YOUR MOVE 等行動資訊為整個舞台寬的平面橫幅，左右不封框、無圓角、厚邊、內框與桌面物件式陰影；位置 top 358／高 68 及既有動作內容、中央抽選、籌碼時序保持。此規格覆蓋歷史行動底板外觀。
+
+BOSS 底牌左側新增目前最佳牌型分布，FLOP 起且玩家底牌／該街公牌完整公開後顯示最高兩類＋OTHER，點開看完整互斥九類（皇家併入同花順）。保留原始比例，不將前兩類重新湊成 100%；聽牌不是獨立牌型。只用玩家已知底牌、已揭公牌、BOSS 公開身份、動作與可見機率文字，以及公開重抽規則。不同百分比含義須區分：目前牌型、BOSS 行動、玩家 equity、未來成牌率。
+
+新純計算模組枚舉候選並解析積分有限次重抽；BOSS 先發時加入之後玩家已知手牌的條件權重。指定玩家牌事先保留；指定 BOSS 牌僅傳 manualProvided，顯示不可估算，不把其牌值送入分析。已顯示機率依文字精度及可见項目篩相容候選，公開實際動作 likelihood 每事件只乘一次。分母為全部相容候選總權重。Worker 僅收 allowlist 公開資料，不收 hand/session、BOSS 暗牌、未來公牌／牌庫、seed、roll、重抽紀錄或原始未顯示精確率；不消耗正式 RNG。epoch/request 隔離舊手／舊街延遲結果，更新先清舊數值；busy 禁開詳情，攤牌／棄牌／換手隱藏。
+
+引擎、BOSS 表、盲位輪替、金流及 JP 不變。新增 output/math-v41-range-validation.json 是分析算法及引擎隔離驗證，非新 RTP／發牌頻率校準；遊戲模型數據仍明示沿 v35。遊戲英文，工具／文件／溝通繁中；原三款永久唯讀。
+
+使用者要求兩項完成驗證後整批一次上 Git，確認 Pages 與正式站，再開新聊天室附全部連結。本輪驗證看 docs/06 v41，交接看 docs/12-v41-handoff.md；提交前文件不冒稱已發布，確切 SHA／Pages run／公開證據由部署後主交接訊息補足。
+
 ## v40：小盲／大盲提示與局間 BET 預覽下一位 BOSS（2026-10-05）
 
 遊戲仍使用英文。抽盲標題為 `BLIND POSITION`，抽選中為 `DRAWING YOUR BLIND`；中央 coin 與飛至座位的 coin 都顯示 `SB`／`BB`，結果標題為 `YOU · SMALL BLIND`／`YOU · BIG BLIND`。aria／title 明示 `You: SMALL BLIND. Boss: BIG BLIND.` 或相反。`STARTING BET` 保留 YOU／BOSS 的真實初始投入金額，BET 1 為 0.5／1，不能改成資產餘額。
