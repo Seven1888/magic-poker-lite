@@ -1,6 +1,7 @@
-import {makeDeck, createRng, shuffle, normalizeCard, evaluateBest, compareRanks, holeScore} from './poker.mjs';
-import {getJackpotAward} from './jackpot.mjs';
-export {makeDeck, createRng, shuffle, evaluateBest, compareHands, holeScore, normalizeCard} from './poker.mjs';
+import {makeDeck, createRng, shuffle, normalizeCard, evaluateBest, compareRanks, holeScore} from './poker.mjs?v=35';
+import {getJackpotAward} from './jackpot.mjs?v=35';
+import {normalizeBossConfig, selectBossProfile, getBossProfileDistribution} from './boss-profiles.mjs?v=35';
+export {makeDeck, createRng, shuffle, evaluateBest, compareHands, holeScore, normalizeCard} from './poker.mjs?v=35';
 
 const SEATS = ['player', 'npc'];
 export const STREETS = ['preflop', 'flop', 'turn', 'river'];
@@ -15,9 +16,10 @@ export const DEFAULT_CONFIG = Object.freeze({
   betSize: Object.freeze({preflop: 10, flop: 20, turn: 40, river: 40}),
   maxRaises: 1, animationMs: 850,
   npc: Object.freeze({fold: 0.2, call: 0.6, raise: 0.2, check: 0.65, bet: 0.35, strengthInfluence: 1, priceInfluence: 0.6}),
+  boss: Object.freeze({mode: 'rotate', profileId: 'caller'}),
   deal: Object.freeze({
-    player: Object.freeze({rerollChance: 0.75, maxRerolls: 2, targetScore: 0.48, manual: Object.freeze([])}),
-    npc: Object.freeze({rerollChance: 0.75, maxRerolls: 2, targetScore: 0.48, manual: Object.freeze([])})
+    player: Object.freeze({rerollMode: 'unpaired', rerollChance: 0.5, maxRerolls: 50, manual: Object.freeze([])}),
+    npc: Object.freeze({rerollMode: 'unpaired', rerollChance: 0.25, maxRerolls: 50, manual: Object.freeze([])})
   })
 });
 
@@ -34,7 +36,7 @@ export function normalizeConfig(source = {}) {
     smallBlind: round(bigBlind / 2), bigBlind,
     minBuyIn, maxBuyIn, buyIn: round(clamp(number(source.buyIn, d.buyIn), minBuyIn, maxBuyIn)),
     betSize: {}, maxRaises: 1, animationMs: Math.round(clamp(number(source.animationMs, d.animationMs), 0, 3000)),
-    npc: {}, deal: {}
+    npc: {}, boss: normalizeBossConfig(source.boss), deal: {}
   };
   for (const street of STREETS) config.betSize[street] = round(Math.max(bigBlind, number(source.betSize?.[street], d.betSize[street])));
   for (const key of ['fold', 'call', 'raise', 'check', 'bet']) config.npc[key] = clamp(number(source.npc?.[key], d.npc[key]), 0, 1);
@@ -44,10 +46,16 @@ export function normalizeConfig(source = {}) {
     let manual = input.manual || [];
     if (typeof manual === 'string') manual = manual.trim() ? manual.trim().split(/[\s,，]+/) : [];
     if (!Array.isArray(manual) || (manual.length !== 0 && manual.length !== 2)) throw new Error(`${seat} 指定手牌必須留空或填兩張。`);
+    // Imported score-based settings retain their old meaning under an explicit mode.
+    // New two-card deals adapt Boss Duel's high-card condition to an unpaired hand.
+    const rerollMode = input.rerollMode ?? (input.targetScore !== undefined ? 'legacy-score' : d.deal[seat].rerollMode);
+    if (!['unpaired', 'legacy-score'].includes(rerollMode)) throw new TypeError(`${seat} 起手重抽模式必須為 unpaired 或 legacy-score。`);
+    const legacy = rerollMode === 'legacy-score';
     config.deal[seat] = {
-      rerollChance: clamp(number(input.rerollChance, d.deal[seat].rerollChance), 0, 1),
-      maxRerolls: Math.round(clamp(number(input.maxRerolls, d.deal[seat].maxRerolls), 0, 50)),
-      targetScore: clamp(number(input.targetScore, d.deal[seat].targetScore), 0, 1),
+      rerollMode,
+      rerollChance: clamp(number(input.rerollChance, legacy ? 0.75 : d.deal[seat].rerollChance), 0, 1),
+      maxRerolls: Math.round(clamp(number(input.maxRerolls, legacy ? 2 : d.deal[seat].maxRerolls), 0, 50)),
+      ...(legacy ? {targetScore: clamp(number(input.targetScore, 0.48), 0, 1)} : {}),
       manual: manual.map(normalizeCard)
     };
   }
@@ -70,7 +78,7 @@ export function createSession(config = {}, seed = 123, options = {}) {
   // Draw once on entry, before dealing. Fixed positions preserve the old RNG stream.
   const firstSmallBlind = choice === 'random' ? (rng() < 0.5 ? 'player' : 'npc') : choice;
   const blindDraw = choice === 'random' ? {smallBlind: firstSmallBlind, probability: 0.5} : null;
-  return {config: normalized, seed, rng, firstSmallBlind, blindDraw,
+  return {config: normalized, seed, rng, firstSmallBlind, blindDraw, lastBossProfileId: null,
     stacks: {player: normalized.buyIn, npc: normalized.buyIn}, handNumber: 0, fees: 0,
     jackpotAwards: 0, jackpotTierCounts: {royal: 0, straightFlush: 0, quads: 0},
     opponentBankrollRefreshes: []};
@@ -113,15 +121,27 @@ function dealHoles(config, rng, firstSeat) {
     let cards = setting.manual.length ? [...setting.manual] : pickPair(available, rng);
     let rerolls = 0;
     const initialScore = holeScore(cards);
+    const classify = pair => pair[0][0] === pair[1][0] ? 'pair' : 'unpaired';
+    const initialClass = classify(cards);
+    let stopReason = 'manual';
     if (!setting.manual.length) {
-      while (holeScore(cards) < setting.targetScore && rerolls < setting.maxRerolls && rng() < setting.rerollChance) {
+      while (true) {
+        const eligible = setting.rerollMode === 'legacy-score'
+          ? holeScore(cards) < setting.targetScore : classify(cards) === 'unpaired';
+        if (!eligible) { stopReason = setting.rerollMode === 'legacy-score' ? 'score-threshold' : 'pair'; break; }
+        if (rerolls >= setting.maxRerolls) { stopReason = 'limit'; break; }
+        if (rng() >= setting.rerollChance) { stopReason = 'probability'; break; }
+        // Rejected candidates remain in the pool; accept the final candidate,
+        // even if it is worse. Never inspect the board or the opponent's result.
         cards = pickPair(available, rng);
         rerolls++;
       }
       available = available.filter(card => !cards.includes(card));
     }
     holes[seat] = cards;
-    audit[seat] = {manual: !!setting.manual.length, initialScore, finalScore: holeScore(cards), rerolls};
+    audit[seat] = {manual: !!setting.manual.length, rerollMode: setting.rerollMode,
+      initialClass, finalClass: classify(cards), initialScore, finalScore: holeScore(cards),
+      attempts: setting.manual.length ? 0 : rerolls + 1, rerolls, stopReason};
   }
   return {holes, audit, deck: shuffle(available, rng)};
 }
@@ -143,9 +163,12 @@ export function startHand(session) {
   const firstSmallBlind = session.firstSmallBlind ?? 'player';
   const smallBlind = session.handNumber % 2 === 1 ? firstSmallBlind : other(firstSmallBlind);
   const bigBlind = other(smallBlind);
+  const boss = selectBossProfile(session.rng, session.lastBossProfileId, session.config.boss);
+  session.lastBossProfileId = boss.profile?.id ?? null;
   const deal = dealHoles(session.config, session.rng, smallBlind);
   const hand = {
     session, config: session.config, rng: session.rng, handNumber: session.handNumber, smallBlind, bigBlind,
+    bossProfile: boss.profile, bossSelection: boss.selection,
     street: 'preflop', status: 'playing', actor: smallBlind,
     holes: deal.holes, deck: deal.deck, dealAudit: deal.audit, board: [],
     stacks: session.stacks, stacksBefore: {...session.stacks},
@@ -307,6 +330,7 @@ function knownStrength(hand, actor) {
 export function getActionDistribution(hand, actor = hand.actor, policy = 'balanced') {
   const actions = legalActions(hand, actor);
   if (!actions.length) return [];
+  if (actor === 'npc' && hand.config.boss.mode !== 'legacy') return getBossProfileDistribution(hand, actions);
   if (policy === 'call') {
     const chosen = actions.find(a => a.type === 'call') || actions.find(a => a.type === 'check') || actions[0];
     return actions.map(a => ({...a, probability: a.type === chosen.type ? 1 : 0}));
@@ -353,7 +377,7 @@ export function sampleDistribution(distribution, rng) {
   }
 }
 
-function cloneHand(hand) {
+export function cloneHand(hand) {
   const session = {...hand.session, rng: hand.rng.clone(), stacks: {...hand.stacks},
     blindDraw: hand.session.blindDraw ? {...hand.session.blindDraw} : null,
     jackpotTierCounts: {...hand.session.jackpotTierCounts}};
@@ -417,7 +441,7 @@ export function playAutomatedHand(session, policy = 'balanced') {
   return hand;
 }
 
-/** Independent equal-stack hands, alternating blinds; ratio-estimator normal CI. */
+/** Equal-stack hands. Rotating bosses form one correlated sequence: use simulateStudy for a clustered CI. */
 export function simulate(config = {}, {hands = 10000, seed = 123, policy = 'balanced', onProgress} = {}) {
   hands = Math.round(clamp(number(hands, 10000), 1, 1000000));
   const normalized = normalizeConfig(config);
@@ -428,7 +452,7 @@ export function simulate(config = {}, {hands = 10000, seed = 123, policy = 'bala
     totalReturns: 0, jackpotAwards: 0, tierCounts: emptyTiers(),
     fees: 0, playerFees: 0, wins: 0, losses: 0, ties: 0, folds: 0, npcFolds: 0, showdowns: 0, totalActions: 0,
     conservationError: 0, batches: [],
-    method: '每手雙方重設相同帶入、輪替大小盲；小盲自動投入0.5 BET、大盲自動投入1 BET，短籌碼按可用額投入。NPC 使用 balanced，玩家使用選定策略。有效投注排除未跟注退款；小盲開局棄牌仍損失已付小盲，雙方匹配底池依返還係數結算。96% 僅為底池對稱條件參考，含JP總RTP另外計算，策略或手牌不對稱亦會改變RTP。95% CI 為獨立牌局比值近似；JP稀有，零命中不代表機率為零，少量樣本不能確認稀有JP尾端。'};
+    method: `每手雙方重設相同帶入、輪替大小盲；小盲自動投入0.5 BET、大盲自動投入1 BET。BOSS 採 ${normalized.boss.mode === 'legacy' ? '舊版權重' : normalized.boss.mode === 'fixed' ? '固定類型' : '不連續重複的四型輪替'}，玩家使用選定策略。有效投入排除退款，JP另加，不把96%結算係數當成勝率。${normalized.boss.mode === 'rotate' ? '本函式僅有一條玩家序列，輪替BOSS跨手相關，因此不報CI；請使用simulateStudy的多玩家聚類估計。' : '95% CI為獨立牌局比值的常態近似。'}稀有JP零命中不代表機率為零。`};
   let sumX2 = 0, sumBaseY2 = 0, sumBaseXY = 0, sumTotalY2 = 0, sumTotalXY = 0;
   let batch = newBatch();
   for (let i = 0; i < hands; i++) {
@@ -475,7 +499,7 @@ export function simulate(config = {}, {hands = 10000, seed = 123, policy = 'bala
   result.grossRtp = result.wagers ? result.grossReturns / result.wagers : 0;
   const uncertainty = (rtp, sumY2, sumXY) => {
     const residual = Math.max(0, sumY2 - 2 * rtp * sumXY + rtp ** 2 * sumX2);
-    const standardError = hands > 1 && result.wagers > 0 ? Math.sqrt(hands / (hands - 1) * residual) / result.wagers : null;
+    const standardError = normalized.boss.mode !== 'rotate' && hands > 1 && result.wagers > 0 ? Math.sqrt(hands / (hands - 1) * residual) / result.wagers : null;
     return {standardError, ci95: standardError === null ? [null, null] : [rtp - 1.96 * standardError, rtp + 1.96 * standardError]};
   };
   const base = uncertainty(result.baseRtp, sumBaseY2, sumBaseXY);

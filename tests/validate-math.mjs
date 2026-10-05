@@ -4,7 +4,10 @@ import {createSession, startHand, legalActions, applyAction, getActionDistributi
 
 const out = fileURLToPath(new URL('../output/heads-up-two-blinds-v1/', import.meta.url));
 mkdirSync(out, {recursive: true});
-const natural = {rerollChance: 0, maxRerolls: 0, targetScore: 0.48, manual: []};
+// Reproduce the historical v1 symmetric model instead of following live defaults.
+const legacyScore = {rerollMode: 'legacy-score', rerollChance: 0.75, maxRerolls: 2, targetScore: 0.48, manual: []};
+const historicalConfig = {boss: {mode: 'legacy'}, deal: {player: legacyScore, npc: legacyScore}};
+const natural = {...legacyScore, rerollChance: 0, maxRerolls: 0};
 const runs = [
   {id: 'natural-balanced', config: {deal: {player: natural, npc: natural}}, hands: 100000, seed: 20260929, policy: 'balanced'},
   {id: 'redraw-balanced', config: {}, hands: 100000, seed: 20260930, policy: 'balanced'},
@@ -12,7 +15,7 @@ const runs = [
   {id: 'redraw-aggressive', config: {}, hands: 20000, seed: 20260932, policy: 'aggressive'},
   {id: 'redraw-tight', config: {}, hands: 20000, seed: 20260933, policy: 'tight'}
 ].map(run => {
-  const result = simulate({...run.config, jackpotEnabled: false}, run);
+  const result = simulate({...historicalConfig, ...run.config, jackpotEnabled: false}, run);
   console.log(`${run.id}: RTP ${(result.rtp * 100).toFixed(4)}%, CI ${result.ci95.map(n => (n * 100).toFixed(4)).join('–')}%, conservation ${result.conservationError}`);
   return {id: run.id, ...result};
 });
@@ -25,7 +28,7 @@ writeFileSync(out + 'math-validation.json', JSON.stringify({
 }, null, 2), 'utf8');
 
 function example(id, title, seed, config = {}, actions = null) {
-  const session = createSession({...config, jackpotEnabled: false}, seed);
+  const session = createSession({...historicalConfig, ...config, jackpotEnabled: false}, seed);
   const hand = startHand(session);
   const steps = [];
   let index = 0;

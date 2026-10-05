@@ -1,4 +1,4 @@
-import {esc} from './shared.mjs';
+import {esc} from './shared.mjs?v=35';
 
 const clean=value=>String(value??'').replace(/\s+/g,' ').trim();
 const actorStep=actor=>actor==='npc'?'boss':'you';

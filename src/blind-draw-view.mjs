@@ -1,4 +1,4 @@
-import {atGameSpeed} from './presentation-timing.mjs';
+import {atGameSpeed} from './presentation-timing.mjs?v=35';
 
 const amount = value => value.toLocaleString('en-US', {maximumFractionDigits: 6});
 const CENTER = {x: 200, y: 427, size: 104};
@@ -28,11 +28,11 @@ export function createBlindDraw({root = globalThis.document, effects, reducedMot
     coin.dataset.position = seated ? 'seat' : 'center';
   }
   function identify(isSmall) {
-    const name = isSmall ? 'SMALL BLIND' : 'BIG BLIND';
+    const order = isSmall ? 'YOU FIRST · BOSS SECOND' : 'BOSS FIRST · YOU SECOND';
     coin.dataset.blind = isSmall ? 'small' : 'big';
-    coin.textContent = isSmall ? 'SB' : 'BB';
-    coin.setAttribute('aria-label', `Your position: ${name}`);
-    coin.title = `${name} · ${isSmall ? '½' : '1'} BET`;
+    coin.textContent = isSmall ? '1ST' : '2ND';
+    coin.setAttribute('aria-label', `Opening order: ${order}`);
+    coin.title = `Opening order: ${order}`;
   }
   function clear() {
     active?.cancel(); active = null;
@@ -60,11 +60,11 @@ export function createBlindDraw({root = globalThis.document, effects, reducedMot
     clear();
     if (!stage) return false;
     createLayer(); position(CENTER, false);
-    coin.textContent = '?'; coin.setAttribute('aria-label', 'Drawing your blind position');
-    const title = element('strong', 'blind-draw-title', 'YOUR BLIND');
+    coin.textContent = '?'; coin.setAttribute('aria-label', 'Drawing the opening order');
+    const title = element('strong', 'blind-draw-title', 'OPENING ORDER');
     const copy = element('div', 'blind-draw-copy');
     copy.setAttribute('role', 'status'); copy.setAttribute('aria-live', 'polite');
-    const heading = element('strong', 'blind-draw-name', 'DRAWING BLIND POSITION');
+    const heading = element('strong', 'blind-draw-name', 'WHO GOES FIRST?');
     copy.append(heading); layer.append(title, copy);
     let cancel, stopTimer = null;
     const cancelled = new Promise(resolve => { cancel = () => { stopTimer?.(); resolve(false); }; });
@@ -86,11 +86,15 @@ export function createBlindDraw({root = globalThis.document, effects, reducedMot
       ], {duration: 1050, easing: 'cubic-bezier(.2,.65,.3,1)', fill: 'both'})) return false;
       if (!alive()) return false;
       identify(isSmall);
-      heading.textContent = isSmall ? 'SMALL BLIND' : 'BIG BLIND';
-      const payment = element('p', 'blind-draw-payment', `YOU AUTO-POST ${amount(isSmall ? smallBlind : bigBlind)} · ${isSmall ? '½' : '1'} BET`);
-      const stakes = element('p', 'blind-draw-stakes', `SB ${amount(smallBlind)} · ½ BET   /   BB ${amount(bigBlind)} · 1 BET`);
-      const order = element('p', 'blind-draw-order', isSmall ? 'First preflop · Second after the flop' : 'Second preflop · First after the flop');
-      copy.append(payment, stakes, order);
+      heading.textContent = isSmall ? 'YOU FIRST · BOSS SECOND' : 'BOSS FIRST · YOU SECOND';
+      const label = element('p', 'blind-draw-stakes', 'STARTING BET');
+      const payment = element('div', 'blind-draw-payment');
+      for (const [who, value] of [['YOU', isSmall ? smallBlind : bigBlind], ['BOSS', isSmall ? bigBlind : smallBlind]]) {
+        const stake = element('div', 'blind-draw-stake');
+        stake.append(element('span', 'blind-draw-player', who), element('strong', 'blind-draw-amount', amount(value)));
+        payment.append(stake);
+      }
+      copy.append(label, payment);
       stage.dataset.blindDraw = 'revealed'; effects?.play?.('chip');
       if (!reducedMotion && !await animate([
         {transform: 'translate(-50%,-50%) perspective(550px) rotateY(-90deg)'},

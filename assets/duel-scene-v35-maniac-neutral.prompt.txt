@@ -1,0 +1,10 @@
+Mode: built-in image_gen edit, 2026-10-05 Asia/Taipei.
+Output: assets/duel-scene-v35-maniac-neutral.png.
+Image 1 edit target: assets/duel-scene-v34-table-neutral.png.
+Image 2 user character reference: codex-clipboard-bab1c120-8898-4bec-94b3-68971ba85c4c.png.
+
+Use case: compositing / precise-object-edit.
+Asset type: mobile poker full-scene background, opaque PNG, exactly 887 x 1774 portrait.
+Input image 1 is the EDIT TARGET and must preserve its exact casino background, perspective, chair, red table felt and gold/wood border coordinates. Input image 2 is a CHARACTER IDENTITY REFERENCE ONLY; never copy its white background or any chips.
+Replace only the central monster in image 1 with the character from image 2, seated behind the same far table rim at the same scale, close low tabletop viewpoint. Preserve target's canvas, layout, lighting, materials, color of the red felt table, background details, and table geometry. Keep the table clear: no playing cards, no chips, no text, no numbers, no UI, no extra characters or extra limbs. Do not zoom, crop, reframe or move the table.
+Character: the exact orange-red frenzied monster identity from image 2, two asymmetric jagged pointed horns, large bulging pale cream eyes with tiny pupils, triangular expressive brow, red-orange painterly skin and dark red side spines. Its huge toothy open mouth and orange tongue are key user-specified identity features and must be preserved, unlike the former red neutral monster's small mouth. Show a lively eager competitive grin as its normal neutral gameplay expression, but no victory effects. Fit complete horn tips inside the original top portrait area; head center near source x445,y230. Keep its large torso seated behind the table. Both arms must be lowered outward and rest simple hands wide apart on the far rim (approximately x180..270 and x635..745,y445..485); no raised pinching/holding pose, and absolutely no chips held in the hands. Central chest and tabletop in front of the monster remain free for DOM cards.

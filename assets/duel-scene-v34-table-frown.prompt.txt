@@ -1,0 +1,8 @@
+Mode: built-in image_gen edit; generated 2026-10-05 Asia/Taipei.
+Output: assets/duel-scene-v34-table-frown.png (887 x 1774 opaque PNG).
+
+Use case: precise-object-edit.
+Asset type: mobile poker full-scene portrait game background, 887 x 1774 opaque PNG.
+Input image 1 is the EDIT TARGET (the approved v34 scene with relaxed hands resting far apart on the table edge). Input image 2 is an EXPRESSION REFERENCE ONLY (old v15 sad face); do not copy its raised pinching hands.
+Change ONLY the mouth of image 1 to the small, closed downward-curved frown seen in image 2, representing the player winning. Preserve the monster's original face identity, dazed round eyes, ears, body, texture, colors, scale, lighting and exact location. No tongue; no tears or extra emotion effects. Keep the simple closed downward mouth as the reference.
+CRITICAL invariants: preserve image 1's hands down wide apart on the table rim, its uninterrupted center chest, all table and background geometry, original canvas aspect ratio and 887x1774 size. Everything outside the tiny mouth region must remain visually identical to image 1. No raised holding/pinching hands, cards, chips, text, numbers, UI, extra limbs or characters. No reframing, no crop, no zoom.

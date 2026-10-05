@@ -77,6 +77,12 @@ function passive(hand) {
   while (hand.status === 'playing') applyAction(hand, legalActions(hand).find(action => action.type === 'check' || action.type === 'call').type);
 }
 
+function splitHand(config = {}) {
+  // Pin the original split-pot fixture independently of the current default deal model.
+  const setting = {rerollMode: 'legacy-score', rerollChance: .75, maxRerolls: 2, targetScore: .48};
+  return startHand(createSession({...config, boss: {mode: 'legacy'}, deal: {player: {...setting}, npc: {...setting}}}, 20));
+}
+
 function scaleLayout(doc, scaleX, scaleY) {
   const layer = doc.getElementById('pot-flight-layer'), origin = {...layer.rect};
   layer.offsetWidth = origin.width; layer.offsetHeight = origin.height;
@@ -148,7 +154,7 @@ test('missing or hidden stack labels use visible card groups for chip flights at
       else doc.elements.get(`${seat}-stack`).rect = {left: 0, top: 0, width: 0, height: 0};
     }
     scaleLayout(doc, .75, .75);
-    const view = createPotView({root: doc}), hand = startHand(createSession({}, 20));
+    const view = createPotView({root: doc}), hand = splitHand();
     view.render(hand);
     const contributions = flights(doc).filter(flight => flight.dataset.flow === 'contribution');
     assert.equal(contributions.length, 2);
@@ -231,7 +237,7 @@ test('1.2x refunds wait for contribution and arrival, then payouts wait for refu
 
 test('tie settlement splits net awards to both stack endpoints, after final matched call', async () => {
   const doc = fakeDocument(), view = createPotView({root: doc});
-  const hand = startHand(createSession({}, 20));
+  const hand = splitHand();
   view.render(hand); passive(hand); assert.equal(hand.result.winner, 'tie'); view.render(hand);
   assert.equal(flights(doc).some(flight => flight.dataset.flow === 'payout'), false);
   await finishMotion(doc); await view.whenIdle();
@@ -321,7 +327,7 @@ test('nonuniform scale uses separate axes for contributions, refunds and payout 
 
 test('deferred final call finishes before payouts; repeated renders never replay or mutate the hand', async () => {
   const doc = fakeDocument(), view = createPotView({root: doc});
-  const hand = startHand(createSession({jackpotEnabled: false}, 20));
+  const hand = splitHand({jackpotEnabled: false});
   while (hand.street !== 'river') applyAction(hand, legalActions(hand).find(action => ['check', 'call'].includes(action.type)).type);
   applyAction(hand, 'bet'); view.render(hand); await finishMotion(doc); await view.whenIdle();
   applyAction(hand, 'call'); assert.equal(hand.status, 'settled');

@@ -122,7 +122,7 @@ test('fractional BET keeps its exact half-blind, call and refund amounts without
 });
 
 test('opening folds produce matched half-blind wagers and preserve simulated refunds, fees and RTP denominator', () => {
-  const result=simulate({jackpotEnabled:false,npc:{fold:1,call:0,raise:0,check:1,bet:0,strengthInfluence:0,priceInfluence:0}},
+  const result=simulate({boss:{mode:'legacy'},jackpotEnabled:false,npc:{fold:1,call:0,raise:0,check:1,bet:0,strengthInfluence:0,priceInfluence:0}},
     {hands:100,seed:20260930,policy:'balanced'});
   assert.equal(result.ruleSet,'heads-up-two-blinds-v1');
   assert.equal(result.wagers,500); assert.equal(result.fees,40); assert.equal(result.netReturns,480);

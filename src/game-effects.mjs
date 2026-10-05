@@ -1,4 +1,4 @@
-import {atGameSpeed} from './presentation-timing.mjs';
+import {atGameSpeed} from './presentation-timing.mjs?v=35';
 
 /** Presentation only: no game state, card markup, or random-number access. */
 export function createGameEffects({root = globalThis.document, reducedMotion = false} = {}) {

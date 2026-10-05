@@ -18,6 +18,7 @@ Thumbs.db
 # The probability lab reads this one historical baseline at runtime.
 /output/*
 !/output/math-validation.json
+!/output/math-v35-validation.json
 
 # Historical research and unused presentation files
 /docs/01-existing-games.md

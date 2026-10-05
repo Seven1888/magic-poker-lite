@@ -1,9 +1,15 @@
-import {simulate} from './engine.mjs';
+import {simulateStudy} from './simulation-study.mjs?v=35';
+import {buildActionTree} from './action-tree.mjs?v=35';
+import {simulateTreeStudy} from './tree-study.mjs?v=35';
 self.onmessage=event=>{
-  if(event.data?.type!=='run')return;
-  const {config,hands,seed,policies}=event.data;
-  try{const reports=[];for(let i=0;i<policies.length;i++){
-    const report=simulate(config,{hands,seed,policy:policies[i],onProgress:p=>self.postMessage({type:'progress',completed:i*hands+p.completed,total:hands*policies.length,policy:policies[i]})});
+  const {type,config,policies,...settings}=event.data||{};
+  try{
+   if(type==='tree'){self.postMessage({type:'treeResult',tree:buildActionTree(config,settings)});return;}
+   if(type==='treeStudy'){self.postMessage({type:'treeStudyResult',report:simulateTreeStudy(config,{...settings,onProgress:p=>self.postMessage({type:'treeProgress',...p})})});return;}
+   if(type!=='run')return;
+   if(!Array.isArray(policies)||!policies.length)throw new Error('請選擇玩家策略。');
+   const reports=[];for(let i=0;i<policies.length;i++){
+    const report=simulateStudy(config,{...settings,policy:policies[i],onProgress:p=>self.postMessage({type:'progress',...p,policy:policies[i],policyIndex:i,policyCount:policies.length})});
     reports.push(report);self.postMessage({type:'partial',report});
   }self.postMessage({type:'result',reports});}catch(error){self.postMessage({type:'error',message:error.message});}
 };

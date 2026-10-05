@@ -1,6 +1,64 @@
 # 美術素材與來源
 
-> Git 收錄目前 HTML／載入中 CSS／JS 所引用的素材及 v15 提示。下方保留製作沿革；未使用的舊圖、舊提示、研究文件及 QA 截圖留在本機，相關歷史連結不包含在此儲存庫。現行畫面以 v15 持牌場景、v24 霧面籌碼、v29 圖解入口／寶石按鈕／原牌型美術與 v30 得獎底板／金幣演出為準。
+## v35 三個新 BOSS 的同桌場景（2026-10-05）
+
+依使用者新增的角色參考，以內建 imagegen 編修 v34 完整場景，保留原藍金大廳、紅絨桌、金木桌緣、低視角與卡牌可放置的中央桌面。角色識別與表情取最新參考，覆蓋舊單一怪獸「兩顆小牙、不露舌頭」的外觀限制。死跟型沿用 v34 原怪獸三表情；狂攻、設局與狙擊新增以下九張。
+
+| 角色 | 使用者角色參考（本機附件） | 外觀／姿態 |
+| --- | --- | --- |
+| 狂攻 maniac | `codex-clipboard-bab1c120-8898-4bec-94b3-68971ba85c4c.png` | 紅橘、鋸齒尖角、凸眼、大嘴牙與橘舌；雙手分開搭桌緣 |
+| 設局 trapper | `codex-clipboard-5bb4e841-9c45-44e1-90ce-50849d1e025a.png` | 粉紫、捲角、窄眼狡笑；雙手低放於桌緣 |
+| 狙擊 sniper | `codex-clipboard-412b3ca8-b26c-4973-be24-293a1967dc9a.png` | 冰藍、單眼金瞳、彎角、小牙、低抱胸；冷臉與輕微情緒變化 |
+
+先以 v34 neutral＋角色附件編修各角色中性場景，再以該中性場景只改臉部製作 BOSS 勝 smile／玩家勝 frown。狂攻中性是興奮的大嘴表情，勝版眼皮稍瞇更得意，敗版收嘴露牙皺眉；狙擊勝版嘴角微提、敗版皺眉下彎，保留單眼與抱胸。沒有把參考白底或參考中的籌碼複製到場景。
+
+| 角色 | 中性 | BOSS 勝 | 玩家勝 |
+| --- | --- | --- | --- |
+| 狂攻 | [neutral](duel-scene-v35-maniac-neutral.png) · [提示](duel-scene-v35-maniac-neutral.prompt.txt) | [smile](duel-scene-v35-maniac-smile.png) · [提示](duel-scene-v35-maniac-smile.prompt.txt) | [frown](duel-scene-v35-maniac-frown.png) · [提示](duel-scene-v35-maniac-frown.prompt.txt) |
+| 設局 | [neutral](duel-scene-v35-trapper-neutral.png) · [提示](duel-scene-v35-trapper-neutral.prompt.txt) | [smile](duel-scene-v35-trapper-smile.png) · [提示](duel-scene-v35-trapper-smile.prompt.txt) | [frown](duel-scene-v35-trapper-frown.png) · [提示](duel-scene-v35-trapper-frown.prompt.txt) |
+| 狙擊 | [neutral](duel-scene-v35-sniper-neutral.png) · [提示](duel-scene-v35-sniper-neutral.prompt.txt) | [smile](duel-scene-v35-sniper-smile.png) · [提示](duel-scene-v35-sniper-smile.prompt.txt) | [frown](duel-scene-v35-sniper-frown.png) · [提示](duel-scene-v35-sniper-frown.prompt.txt) |
+
+PNG header 實測：狂攻及狙擊六張均 **887×1774**；設局 smile／frown 為 **887×1774**，設局 neutral 為 **886×1774**。提示雖要求 887×1774，生成 neutral 實際相差一像素，未以程式裁切或補圖掩飾。三角色已目視檢查完整桌景、角色辨識及無牌／籌碼／字／UI；狂攻與狙擊逐張檢查表情，設局由生成整合者檢查。圖像視覺對位不代表逐像素一致，實際背景縮放與表情切換仍以整合瀏覽器 QA 為準。
+
+原始 imagegen 輸出留在本機 generated_images；最終副本寫入本專案，舊素材不覆蓋。來源與 SHA-256：
+
+| 專案檔（省略 duel-scene-v35- 前綴） | 原始生成檔 | SHA-256 |
+| --- | --- | --- |
+| maniac-neutral.png | `exec-1f172bc8-3822-4754-9b1c-88789d752fd6.png` | `C7A861FBDF903F5490C719730D1E73994B4E165CE007432412BD344E2497FB3B` |
+| maniac-smile.png | `exec-4aa3a7c8-df4c-418e-8508-d48cde0c6eba.png` | `48CD04418CA5E630EB466F48991D1C03065AE33732218E5664BF4BFBCE1C1CB3` |
+| maniac-frown.png | `exec-5282f8aa-c94f-496a-8270-7451237d07fa.png` | `7424CBDDA5DABA00B7F523FBC29F9EE4580CF1794532EEE50823089B4B787981` |
+| trapper-neutral.png | `exec-fd4ac2e3-5a62-4095-997a-f362fa9f7c71.png` | `5446E1C07710A6DEA250714FE4D6A810A2602F1E0D156ED28BFCAA653CABD253` |
+| trapper-smile.png | `exec-4a14c1cd-7d53-4d6d-8ce7-3af348e44f07.png` | `84EBF28103E4718C62B47D4C1298B368A86462556F42096B0F6389C22834FF36` |
+| trapper-frown.png | `exec-20d8f1b1-5709-4140-a550-8a805d946285.png` | `A3CCFFCB8DA9771F43A85EC048C4A7EE1D54A33619E1E8AFB836236FA8CC538C` |
+| sniper-neutral.png | `exec-d8581c97-f063-4255-9b58-55388ae409e0.png` | `E3D323957E68A8B62EB07C68B68B7F22A839F311FAD894F88893253A90305856` |
+| sniper-smile.png | `exec-b902588d-7b3a-426e-ab99-d3b8ab58007d.png` | `23EC03126EE02BAF0345562C519E2ABD1A442FCC0661DA92406D573C241EDD79` |
+| sniper-frown.png | `exec-62374b6d-57b7-4c50-add2-52de27d59650.png` | `25089DC722FC6C839C249D9C78A78AB25D44715AC617DED27D7F6849405AFB76` |
+
+角色圖片不包含機率數值；四種 BOSS 的行為表屬引擎設定，不能從外觀推斷或改寫。三張表情依實際已公開勝負切換，圖像製作不增加 RNG、不改派彩。
+
+> Git 收錄目前 HTML／載入中 CSS／JS 所引用的素材及對應提示。下方保留製作沿革；未使用的舊圖、舊提示、研究文件及 QA 截圖留在本機，相關歷史連結不包含在此儲存庫。v34 新增雙手放回桌緣的三表情場景；介面及演出採用狀態以實際載入的 CSS／JS 與本輪 QA 為準。
+
+## 雙手放回桌緣、牌置桌面 v34
+
+2026-10-05 依使用者「對手的牌放在 BOSS 前桌面，不再拿著」的要求，使用內建 imagegen 編修 v15 中性場景，移除胸前兩隻持牌／捏牌手勢，將雙臂放低、雙手自然分開搭在遠側桌緣。再以新的中性圖為共同編修底圖、舊 v15 表情圖僅作嘴形參考，產生微笑與嘴角下垂兩版。沒有使用 API／CLI 替代模式，也沒有以程式裁切、合成或重繪圖片。
+
+三張 PNG header 實測均為 **887 × 1774**，不透明；已逐張視覺檢查：只有兩隻手，胸前中央乾淨，桌前留有放牌空間，長耳與眼睛、原低視角、藍金大廳、紅桌布及金色桌緣保持視覺對位。中性保留微張嘴與兩顆小牙，微笑／下垂沿用原閉嘴表情，三者均不露舌頭。手掌實際約位於 x150–260／640–750、y435–495，較提示預估更向兩側展開；這是生成結果，不宣稱逐像素一致或精確遵守提示座標。
+
+| 表情 | 全場景素材 | 完整實際提示 | 原始生成檔 |
+| --- | --- | --- | --- |
+| 中性 | [duel-scene-v34-table-neutral.png](duel-scene-v34-table-neutral.png) | [neutral prompt](duel-scene-v34-table-neutral.prompt.txt) | `exec-bbdfaf3b-a1f2-4d18-8b9a-8bd154ee7d94.png` |
+| BOSS 勝微笑 | [duel-scene-v34-table-smile.png](duel-scene-v34-table-smile.png) | [smile prompt](duel-scene-v34-table-smile.prompt.txt) | `exec-6751dca4-175b-4513-b732-f9463896b5ab.png` |
+| 玩家勝嘴角下垂 | [duel-scene-v34-table-frown.png](duel-scene-v34-table-frown.png) | [frown prompt](duel-scene-v34-table-frown.prompt.txt) | `exec-a7724897-3645-4ae1-b738-36365ec5d95a.png` |
+
+原始生成檔留在本機 Codex generated_images 目錄，最終副本已複製到本專案 assets，不覆寫 v15 或原三款遊戲素材。SHA-256：
+
+```text
+neutral  3CBD65D1074F81FDD9319852B1FAF9E503BAC6B7BE226AB2BE0BE9F7BD37B3CC
+smile    00F0A76816106906CCD9B2AF8BA17D75AC8701B98BED7D5F337F7281D8753EF3
+frown    5153EC6D8C59D838C3F50A3812369F08C05D80860E558835D4A86C2A59F44B25
+```
+
+圖片內沒有卡牌、籌碼、文字或 UI；兩張底牌繼續由 DOM 在桌面上顯示。整合時要移除 v15 前景指尖圖層，並同步更新中性背景和兩個勝負表情來源；表情仍只在真實結果公開後切換。本節僅記錄素材與視覺檢查，完整牌局及部署驗證見 [手機與部署紀錄](../docs/06-mobile-and-deployment.md)。
 
 ## 原創得獎金幣與琺瑯底板 v30
 

@@ -1,0 +1,9 @@
+Mode: built-in image_gen edit; generated 2026-10-05 Asia/Taipei.
+Output: assets/duel-scene-v34-table-neutral.png (887 x 1774 opaque PNG).
+
+Use case: precise-object-edit.
+Asset type: full-scene mobile poker game background, portrait 887 x 1774, nontransparent PNG.
+Input image 1 is the EDIT TARGET. Edit the existing illustration, preserve its exact composition, canvas aspect ratio, original image dimensions, background cathedral casino, blue/gold lighting, ornate chair, red felt poker table, gold wooden table border and their coordinates.
+Primary change ONLY: The same red-purple long-eared silly cartoon monster must NOT be holding cards or making a raised pinching/holding gesture. Remove both raised chest-level pinching hands. Reconstruct the uninterrupted red torso where those raised hands were. Lower its two arms and place its two relaxed open hands naturally down on the far table rim, far apart at the left and right of its body. Keep the central chest and the central table area completely clear, as DOM cards will be placed on the table in front of the boss. Fingers simple and clean, facing/resting down, never pinching or raised in front of the chest.
+Maintain precisely the original head height and shape, same long ears, round off-white eyes and small pupils, neutral dazed mouth slightly open with two small teeth, no tongue. Preserve same close low tabletop camera, scale, perspective, painterly cartoon texture, color and all unaffected objects.
+Do not draw cards, chips, text, UI, numbers, symbols, extra hands, or extra characters. No zooming, no cropping, no reframing. The new hands should rest wide at approximately x260 and x635 around y465 on this 887x1774 canvas, leaving the center x320..570 clear. Keep table geometry unchanged.

@@ -16,9 +16,16 @@ test('badges preserve raw FOLD/RAISE probabilities and tiny positives without di
   assert.ok(responseBadgeView(distribution,{phase:'result',selected:'raise'}).markup.includes('is-selected" data-response="raise"'));
 });
 
-test('FOLD/CALL keeps its FOLD badge, CHECK/BET and forced 100% actions show none', () => {
+test('FOLD/CALL keeps its FOLD badge, CHECK/BET maps only its raw aggressive outcome, and forced actions show none', () => {
   assert.deepEqual(responseBadges([{type:'fold',probability:.3},{type:'call',probability:.7}]),[{type:'fold',probability:.3,label:'30.0%'}]);
-  for(const distribution of [[],[{type:'check',probability:.6},{type:'bet',probability:.4}],
+  const betting=Object.freeze([{type:'check',probability:.6},{type:'bet',probability:.4}].map(Object.freeze));
+  assert.deepEqual(responseBadges(betting),[{type:'bet',probability:.4,label:'40.0%'}]);
+  const view=responseBadgeView(betting,{phase:'result',selected:'bet'});
+  assert.match(view.markup,/is-selected" data-response="bet" data-probability="0.4"/);
+  assert.match(view.markup,/>RAISE<\/span>/);
+  assert.doesNotMatch(view.markup,/>BET<|>CHECK<|>CALL</);
+  assert.equal(view.description,'opponent RAISE 40.0%');
+  for(const distribution of [[],
     [{type:'fold',probability:1},{type:'call',probability:0}],
     [{type:'raise',probability:1}],[{type:'call',probability:1}]]) {
     assert.deepEqual(responseBadgeView(distribution),{markup:'',description:''});

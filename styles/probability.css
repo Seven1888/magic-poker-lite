@@ -1,4 +1,4 @@
-/* Full-width control workbench, adapted from the read-only Boss Duel lab. */
+/* Full-width controls and stacked reports, following the Hands Up workbench. */
 :root{--bg:#080a0f;--surface:#111820;--surface-soft:#151d27;--ink:#e5edf5;--muted:#9aa8b8;--line:#283342;--line-strong:#3a485a;--heading:#f0f5fa;--accent:#68b8e4;--green:#78d8a5;--red:#ef938d;--purple:#b69aea;--gold:#e4c978;color-scheme:dark;font-family:Arial,"Microsoft JhengHei",sans-serif;font-variant-numeric:tabular-nums}
 
 *{box-sizing:border-box}
@@ -267,3 +267,55 @@ th,td{padding:8px}
 
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important}
 }
+
+/* v34: model controls, complete trees and player-level reports. */
+.lab-layout{max-width:1480px}
+.lab-header{min-height:80px;padding:12px 22px}
+.lab-header h1{font-size:22px}
+.header-actions{gap:6px}
+.study-settings{margin-top:14px}
+.study-anchor-nav{display:flex;gap:7px;flex-wrap:wrap;margin:14px 0;padding:10px;background:#0c131b;border:1px solid var(--line);border-radius:8px}
+.study-anchor-nav a{padding:5px 9px;border-radius:5px;background:#162331;text-decoration:none;font-size:12px}
+.report-block{margin-top:24px;padding-top:16px;border-top:1px solid var(--line);scroll-margin-top:112px}
+.report-block h3{font-size:17px;margin-bottom:9px}
+.report-block>p{color:var(--muted);margin:7px 0 12px}
+.report-block .metrics{margin-top:12px}
+.report-pager,.report-filters{display:flex;align-items:center;flex-wrap:wrap;gap:9px;margin:12px 0}
+.report-pager span{color:var(--muted);font-size:12px}
+.report-filters label{display:flex;align-items:center;gap:6px;color:var(--muted)}
+.report-filters input,.report-filters select{max-width:220px;background:#0c131b;color:var(--ink);border:1px solid var(--line-strong);border-radius:5px;padding:7px}
+.tree-control-copy{grid-column:span 2;border-left:2px solid var(--accent);padding:5px 12px;color:var(--muted)}
+.tree-control-copy b{color:var(--ink)}
+.tree-control-copy p{font-size:12px;margin-top:5px}
+.tree-card{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+.tree-card .card{width:38px;flex-basis:38px}
+.tree-node-context{padding:14px;margin:12px 0;border:1px solid #3b6075;border-radius:9px;background:#0e202b}
+.tree-node-context h3{margin:4px 0 12px}
+.tree-breadcrumb{display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin:10px 0}
+.tree-breadcrumb button{min-height:28px;font-size:11px;padding:4px 8px}
+.tree-card p,.tree-node-context p{color:var(--muted)}
+#tree-detail .table-scroll button{min-height:28px;padding:4px 8px;font-size:11px}
+#tree-study-results{margin-top:16px}
+#tree-study-results .jackpot-counts{margin-top:13px}
+#tree-study-results .jackpot-counts strong{font-size:17px}
+#tree-study-state,#tree-run-state{color:var(--muted);font-size:12px}
+.jackpot-tier strong{font-size:20px;white-space:nowrap}
+.tab-panel{scroll-margin-top:112px;margin-top:20px}
+.study-chart{width:100%;height:auto;max-height:290px;background:#0b141d;border:1px solid var(--line);border-radius:8px}
+@media(max-width:1000px){.lab-header{position:static;flex-direction:column;align-items:stretch}.header-actions{justify-content:flex-start}.report-block,.tab-panel{scroll-margin-top:16px}.metrics{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:620px){.lab-header{padding:14px}.header-actions button,.header-actions a{flex:1 1 auto;font-size:11px;padding:7px}.tree-control-copy{grid-column:1/-1}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.metrics strong{font-size:23px}.report-filters label{width:100%;justify-content:space-between}.report-filters input,.report-filters select{max-width:60%}.study-anchor-nav a{font-size:11px}.results-heading{flex-wrap:wrap}.tree-card .card{width:31px;flex-basis:31px}.jackpot-tier strong{font-size:19px}}
+
+.report-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.report-heading a{font-size:11px;white-space:nowrap}
+.report-pager input{width:66px;padding:6px;background:#0c131b;color:var(--ink);border:1px solid var(--line);border-radius:5px}
+.tree-cards{display:inline-flex;gap:5px;vertical-align:middle;flex-wrap:wrap}
+.tree-card{display:inline-flex;width:34px;height:44px;justify-content:center;align-items:center;border-radius:5px;background:#f0ede4;color:#13212c;font-weight:800;box-shadow:0 2px 4px #0006}
+.tree-card.red{color:#bd2036}
+.study-rtp-chart{margin:16px 0;padding:8px;border:1px solid var(--line);border-radius:8px;background:#0b141d;color:#afbeca}
+.study-rtp-chart svg{display:block;max-width:100%;height:auto}.study-rtp-chart figcaption{font-size:12px;padding:8px}
+.rtp-chart-base{color:#68c9eb}.rtp-chart-total{color:#f2bf5f}
+
+.jackpot-tier{min-width:0;max-width:100%}.jackpot-tier>div:last-child{min-width:0;flex-wrap:wrap}.jackpot-example{flex-shrink:0}.jackpot-tier strong{margin-left:auto}
+@media(max-width:620px){.jackpot-tier>div:last-child{row-gap:10px}.jackpot-tier strong{flex-basis:100%;text-align:left;margin-left:0}.report-json pre{white-space:pre-wrap;overflow-wrap:anywhere}.report-raw-type{display:block;font-size:10px;color:var(--muted)}}
+
+.boss-profile-grid{display:grid;gap:10px;margin:14px 0}.boss-profile-card{border:1px solid var(--line);border-left:3px solid #d8a250;background:#101b25;border-radius:7px;overflow:hidden}.boss-profile-card[data-profile=maniac]{border-left-color:#f47e58}.boss-profile-card[data-profile=sniper]{border-left-color:#6dbce3}.boss-profile-card[data-profile=trapper]{border-left-color:#d38abe}.boss-profile-card summary{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px;cursor:pointer}.boss-profile-card summary b{font-size:14px}.boss-profile-card summary span{font-size:11px;color:var(--muted)}.boss-profile-card>p{font-size:12px;line-height:1.7;color:var(--muted);margin:0;padding:0 12px 12px}.boss-profile-card .table-scroll{margin:0 10px 10px}.boss-raise-prob{color:#ff9c8a}.boss-band-notes,.player-policy-weights{margin:16px 0;padding:12px;border:1px solid var(--line);border-radius:7px;font-size:12px}.boss-band-notes li{margin:8px 0;line-height:1.7}.report-json pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:360px;overflow:auto}

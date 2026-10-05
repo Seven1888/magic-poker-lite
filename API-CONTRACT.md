@@ -1,4 +1,6 @@
-# Engine API contract · heads-up two blinds + entry + Jackpot + demo opponent refresh · 2026-10-04
+# Engine API contract · v35 four bosses, full action trees and player studies · 2026-10-05
+
+Version v35 uses four published street/strength BOSS tables, uniform non-repeating encounters, full action trees and player-level reports. Real shared-deck poker determines the winner; Hands Up outcome-first construction and its RTP target are not imported.
 
 All modules are dependency-free ESM. Import from `./src/engine.mjs`. All currency values are chip units, rounded internally to six decimals; the UI preserves up to six fractional digits so .03 BB / .015 SB and their payments remain consistent. Card identifiers are `As`, `Kh`, `Td`, `2c` (`s h d c`; ace is `A`, ten is `T`).
 
@@ -12,18 +14,21 @@ All modules are dependency-free ESM. Import from `./src/engine.mjs`. All currenc
   minBuyIn: 200, maxBuyIn: 10000, buyIn: 10000,
   betSize: {preflop:10, flop:20, turn:40, river:40},
   maxRaises: 1, animationMs: 850,
+  boss: {mode:"rotate", profileId:"caller"},
   npc: {fold:0.2, call:0.6, raise:0.2, check:0.65, bet:0.35,
         strengthInfluence:1, priceInfluence:0.6},
   deal: {
-    player:{rerollChance:0.75,maxRerolls:2,targetScore:0.48,manual:[]},
-    npc:{rerollChance:0.75,maxRerolls:2,targetScore:0.48,manual:[]}
+    player:{rerollMode:'unpaired',rerollChance:0.5,maxRerolls:50,manual:[]},
+    npc:{rerollMode:'unpaired',rerollChance:0.25,maxRerolls:50,manual:[]}
   }
 }
 ```
 
 `normalizeConfig` always derives `smallBlind` as half of the normalized `bigBlind`, ignoring any independently saved value, including the previous single-blind value of zero. Small blind is not separately adjustable. Each hand the SB seat automatically posts half a BET and the BB seat posts one BET, each capped by that seat's available stack. At BET 10 the opening payments are 5 and 10. Game and simulations share this engine rule.
 
-Rerolls are initial two-card redraw attempts, accepted on reaching `targetScore` or exhausting the limit; no final board/winner is examined. Manual cards override reroll for that seat. Pair uses a 0..1 heuristic, not equity. `jackpotEnabled` is strictly boolean (strings are rejected), defaults to true, and is shared by game and tool. Target RTP is a *reference symmetric-policy POT target*: settlement net = contested gross × targetRtp. Uncalled refunds are excluded. Player strategy/unequal deal settings change measured base RTP; extra Jackpot changes total RTP. The 4% settlement fee is a prototype modeling choice, not an approved commercial rake model.
+New rerolls use `unpaired`: a pair stops immediately; otherwise another independent `rerollChance` test may replace the candidate until `maxRerolls`. The limit counts redraws after the initial draw (50 means at most 51 candidates). Rejected candidates stay in the available pool; the last candidate is accepted even if weaker. Manual cards override sampling for that seat. `legacy-score` instead tests `holeScore < targetScore`; a saved config with targetScore but no rerollMode is explicitly normalized to legacy-score, preserving old semantics. Missing legacy defaults are .75 / 2 / .48. Neither mode examines the future board, final winner or JP. Each hand exposes `dealAudit[seat]={manual,rerollMode,initialClass,finalClass,initialScore,finalScore,attempts,rerolls,stopReason}`. Stop reasons are manual / pair / score-threshold / limit / probability. Manual attempts are zero.
+
+`jackpotEnabled` is strictly boolean (strings are rejected), defaults to true, and is shared by game and tool. Target RTP controls POT settlement: net = contested gross × targetRtp. Uncalled refunds are excluded. The 96% player-side symmetric reference does not directly apply to the new asymmetric .5/.25 redraw defaults; strategy, unequal dealing and external JP change observed RTP. The 4% settlement fee is a prototype modeling choice, not an approved commercial rake model.
 
 ## Entry and available assets
 
@@ -33,7 +38,7 @@ Import from `./src/entry-model.mjs`. These functions are pure configuration help
 - `minimumAssets(config,bet)` returns `config.minBuyIn/config.bigBlind × bet` (default 20 BB).
 - `tableConfig(config,bet,assets)` validates affordable entry, makes `bigBlind=bet` and `smallBlind=bet/2`, scales all `betSize` values by `bet/config.bigBlind`, and sets `buyIn=assets`. Its `maxBuyIn` becomes at least the actual assets, so it does not silently discard a player's accumulated balance. The result goes through `normalizeConfig`.
 
-Selecting BET and creating the session do not charge chips. `startHand` automatically posts each seat's blind once; subsequent call/bet/raise actions deduct only their actual incremental amounts. At BET 1 the SB is .5; there is no whole-chip rounding. The blind draw UI identifies SMALL BLIND / BIG BLIND, the player's automatic payment and preflop/postflop action order; it uses the one already-determined draw.
+Selecting BET and creating the session do not charge chips. `startHand` automatically posts each seat's blind once; subsequent call/bet/raise actions deduct only their actual incremental amounts. At BET 1 the SB is .5; there is no whole-chip rounding. The blind UI shows opening first/second order and each seat's starting payment, using the one already-determined draw. This opening order is preflop only; the big blind acts first postflop.
 
 The UI initializes its in-page assets once from `config.buyIn` (default 10000). The v30 default `maxBuyIn` is also 10000 so normalization does not cap that starting amount. `loadConfig()` continues to preserve saved custom settings; the update does not overwrite saved buy-ins, an active session or an existing in-page balance. A fresh page without saved settings uses 10000, and Probability Lab's Restore defaults loads that default configuration.
 
@@ -143,7 +148,7 @@ The official Hands Up amounts were checked at BET 500 (100000/25000/10000) and B
 
 ## Distribution and preview
 
-`getActionDistribution(hand, actor=hand.actor, policy='balanced')` -> array of action objects with `probability` in 0..1. The exact displayed distribution sums to one and is used by the draw. Uses actor's own cards + exposed board + public betting state only; never opponent's hole cards/future board. `balanced` applies config npc weights; `call`, `aggressive`, `tight` support simulations.
+`getActionDistribution(hand, actor=hand.actor, policy='balanced')` -> array of action objects with `probability` in 0..1. Uses actor's own cards + exposed board + public betting state only. **balanced, aggressive and tight player policies use config.npc as their base; call is the check/call-only exception. Four-profile NPCs use their fixed street/strength tables, and legacy NPCs use the balanced weight formula.** Display maps check/call to CALL and bet/raise to RAISE without changing type or probability.
 
 `previewResponse(hand, playerActionType)` -> `{distribution,actor,status,street}` after a side-effect-free simulated player action. Distribution is populated only if the NPC must respond *on the same street*. If call completes the street, return an empty distribution; do not reveal a future-board distribution. Actual next-street NPC actions use the updated real hand.
 
@@ -159,7 +164,7 @@ The official Hands Up amounts were checked at BET 500 (100000/25000/10000) and B
 
 Import `getShowdownView({playerHole,visibleBoard,revealedNpcHole=[]})` from `./src/showdown-view.mjs` for progressive showdown disclosure. With fewer than five visible board cards or no revealed NPC cards it returns null; otherwise it returns `{revealedCount,npcEvaluation,npcHandName,npcBest5,equity,wins,ties,losses,outcomes}`. Exactly five board cards and one/two revealed NPC cards are required for a result. `npcEvaluation`/`npcBest5` use only revealed NPC cards plus the board and include all best-five kickers. One revealed card enumerates all 44 uniformly possible second cards, with `equity=(wins+ties/2)/44`; two revealed cards give `outcomes:1` and equity 0/.5/1. This is a pure public-card calculation with no hand/deck/RNG input, no hidden-card access and no redraw correction. It is distinct from the UI's 250-sample unrevealed-opponent estimate. Module verification does not claim the progressive reveal browser flow has passed QA.
 
-`playAutomatedHand(session, policy='balanced')` -> settled hand; NPC uses balanced, player selected policy.
+`playAutomatedHand(session, policy='balanced')` -> settled hand; NPC uses the locked profile table (or balanced in legacy mode), player uses selected policy.
 
 `simulate(config,{hands=10000,seed=123,policy='balanced',onProgress})` returns:
 
@@ -177,9 +182,9 @@ Import `getShowdownView({playerHole,visibleBoard,revealedNpcHole=[]})` from `./s
 
 `netReturns` stays POT-only; `totalReturns=netReturns+jackpotAwards`. `baseRtp=netReturns/wagers`; `totalRtp=totalReturns/wagers`; **`rtp` aliases totalRtp**. With full BET 10 blinds, an immediate opening SB fold contributes matched wager 5, zero player POT return and system fee .4; the BB's uncalled 5 is refunded. If a whole sample has zero wagers, ratios return 0 and SE/CI return null values; this is no measured return ratio. `standardError/ci95` describe total return; `baseStandardError/baseCi95` describe POT return. Tier counts are mutually exclusive player award counts. `jackpotHitRate=hits/hands`, `jackpotShowdownHitRate=hits/showdowns` (zero when no showdowns). RTP/CI are fractions, all scalar economic totals are player-side except `fees` (system fees). `conservationError` includes external JP funding.
 
-The probability tool exports result bundles with `version:4` and `model:'heads-up-two-blinds+base-pot+showdown-jackpot'`; each simulation report carries the `ruleSet` above. This identifies current outputs separately from retained single-blind and earlier dual-blind artifacts.
+The older version:4 bundles describe the previous basic simulate() path. The v35 tool uses the study APIs below; consumers must inspect bundle version, study mode, config and method metadata rather than assuming the same ruleSet implies identical data. `simulate()` remains a legacy independent-hand API.
 
-Independent hands reset equal stacks and alternate positions. Progress callback every completed batch receives `{completed,total}`; worker may run synchronously. Each batch (250 hands or final remainder) contains `{hands,wagers,netReturns,totalReturns,jackpotAwards,tierCounts,baseRtp,totalRtp}`. CI uses independent-hand ratio-estimator variance, not a binomial win-rate approximation. Rare JP with no observed hits is not proven impossible; normal-approximation intervals may underrepresent rare-award uncertainty. Initial-card redraw and strategy-dependent arrival at showdown change JP frequencies; don't substitute natural seven-card frequencies for this game.
+Independent hands reset equal stacks and alternate positions. Progress callback every completed batch receives `{completed,total}`; worker may run synchronously. Each batch (250 hands or final remainder) contains `{hands,wagers,netReturns,totalReturns,jackpotAwards,tierCounts,baseRtp,totalRtp}`. Fixed/legacy CI uses independent-hand ratio-estimator variance, not a binomial win-rate approximation. Rotating bosses form a correlated single sequence here, so simulate() returns null errors and [null,null] intervals; use multi-player simulateStudy() instead. Rare JP with no observed hits is not proven impossible; normal-approximation intervals may underrepresent rare-award uncertainty. Initial-card redraw and strategy-dependent arrival at showdown change JP frequencies; don't substitute natural seven-card frequencies for this game.
 
 ## Exact model formulas for documentation
 
@@ -188,7 +193,7 @@ Starting-hand score (`H` = high rank, `L` = low rank, A = 14):
 - Pair: `0.57 + (H - 2) / 12 × 0.43`.
 - Non-pair: `(H - 2)/12 × 0.44 + (L - 2)/12 × 0.20 + suitedBonus + gapBonus`, clamped to `[0.02, 0.94]`.
 - Same-suit bonus `0.12`; gap 1/2/3 bonus `0.12/0.07/0.03`, otherwise zero.
-- While score below target, attempt count below max, and a new uniform random draw is below rerollChance, replace both hole cards with a fresh candidate from the currently available deck. Final candidate is used even if still below target. Rejected candidates go back into the candidate pool; only final accepted hole cards are removed. Manual cards are reserved before either seat is sampled. The small blind is dealt first, rotating each hand. No future board or winner is inspected.
+- Default unpaired mode redraws only unpaired candidates; legacy-score mode alone uses the score threshold. Each continuation independently tests rerollChance until maxRerolls; final candidates are accepted even if weaker. Rejected candidates remain in the pool; only accepted holes are removed. Manual cards are reserved before either seat is sampled. The small blind is dealt first, rotating each hand. No future board or winner is inspected.
 
 NPC private-card strength `s` is the opening score before flop. Postflop it uses best-five category base `[.18,.40,.57,.67,.76,.82,.89,.96,.995]` for high-card through straight-flush, plus `(highest comparison rank - 8) × .008`, clamped to `[.03,.999]`. This is an action-policy heuristic, not equity.
 
@@ -208,7 +213,93 @@ RTP denominator is `Σ matchedWager_player`, excluding uncalled refunds. Base nu
 
 For independent-hand pairs `(x_i=matchedWager, y_i=netReturn)` for base or `y_i=totalReturn` for total, `R=Σy/Σx`; `SE=sqrt[n/(n-1) × Σ(y_i-R×x_i)²] / Σx`; 95% CI = `R ± 1.96×SE`. The interval is an asymptotic simulation interval, not a certification or an optimized-strategy bound.
 
+## Complete action-tree API
+
+Import `buildActionTree` from `src/action-tree.mjs`:
+
+```js
+buildActionTree(config={}, {
+  seed:123, firstSmallBlind:'player', policy:'balanced', stateLimit:100000
+})
+// firstSmallBlind must be player or npc, never random; stateLimit positive integer.
+// policy: balanced | call | aggressive | tight.
+```
+
+It deals once through the shared engine, fixes holes and remaining deck, then clones/applyAction across **every legal edge**, including probability-zero edges. No action RNG is consumed. A limit overflow throws; no truncated tree is marked complete. The default full-stack tree has 1312 nodes, 562 decisions and 750 terminals; changed stack/bet conditions may alter those counts.
+
+```js
+{
+ version:1, mode:'fixed-deal-full-action-tree', complete:true,
+ meta:{cardModel,scope,description,policyInformation,expectation,
+       holeCardsVisibility,rngStateAfterDeal,rngStateAfterTraversal},
+ config,seed,firstSmallBlind,policy,rootId,
+ cards:{player:[...],npc:[...],boardRunout:[...]},
+ nodes:[{
+   id,parentId,depth,path,actor,street,reachProbability,board,stacks,pot,
+   contributions,streetBets,currentBet,raises,pending,terminal,
+   edges:[{type,amount,to,allIn,probability,childId}],expected,
+   result // terminal nodes only
+ }],
+ summary:{nodes,decisionNodes,terminalNodes,maxDepth,decisionsByStreet,
+   zeroProbabilityEdges,terminalProbabilityMass,conservationError,weighted},
+ rootOptions:[{type,amount,to,allIn,probability,childId,expected}]
+}
+```
+
+`expected` and summary.weighted contain winProbability/tieProbability/lossProbability, matchedWager, totalContribution, refund, grossReturn, baseReturn, jackpotAward, totalReturn, baseProfit, profit, playerFee, systemFee, playerClosingStack and npcClosingStack. Each node expected value is conditional on reaching it and following the selected policy thereafter. Child reach probability is parent reach × edge probability. Sum of terminal mass must be 1. Leaf counts are never win probabilities. Revealed node board remains a visible prefix, while cards.boardRunout is offline-only full-deal disclosure.
+
+## Sampled-deal full-tree study
+
+Import `simulateTreeStudy` from `src/tree-study.mjs`:
+
+```js
+simulateTreeStudy(config={}, {deals:100,seed:20261005,policy:'balanced',onProgress})
+```
+
+deals must be an integer 1..10000 (UI requires at least 2). A fixed master-seed schedule supplies independent deals; firstSmallBlind alternates player/npc. The same schedule supports same-deal strategy comparison. Each sampled deal integrates all legal action paths. This samples card deals; it does **not** enumerate all 52-card permutations.
+
+Output: `{version:1,kind:'tree-study',complete:true,deals,seed,policy,config,dealSeeds,meta,totalNodes,totalDecisionNodes,totalTerminals,zeroProbabilityEdges,maxConservationError,maxMassError,blindCounts,averageTerminalProbabilityMass,weighted,totals,baseRtp,totalRtp,winStandardError,baseStandardError,totalStandardError,winCi95,baseCi95,totalCi95,tierProbabilities,byStreet,progress}`.
+
+weighted contains average tree expectations and showdownProbability, showdownWinProbability (joint), showdownConditionalWinProbability (joint divided by showdown mass), playerFoldProbability, npcFoldProbability, profitableHandProbability. byStreet rows have `{street,actor,type,weightedVisits,weightedAmount,visitsPerDeal,amountPerDeal,conditionalActionProbability}`. The conditional denominator is all weighted action visits for that actor/street; multiple visits in one deal are possible.
+
+CI sample unit is one deal/tree, not one leaf. RTP uses total expected return / total expected wager. For deal-level (X,Y), SE is `sqrt[N/(N-1)*Σ(Y-rX)^2]/ΣX`. Win CI uses sample variance of deal-level winProbability. One deal or no wager yields null uncertainty. Ratios with zero denominator are null in tree-study. Rare JP remains subject to card-sampling uncertainty.
+
+## Player study API
+
+Import `simulateStudy` and `studyPlayerSeed` from `src/simulation-study.mjs`:
+
+```js
+simulateStudy(config={}, {
+ players:1,entries:1000,seed:20261005,policy:'balanced',mode:'independent',
+ sliceSize:250,targetAsset:undefined,maxHandsPerPlayer:10000,onProgress
+})
+```
+
+players/entries/sliceSize/maxHandsPerPlayer must be positive safe integers; policies as above; seed a string or finite number. modes: independent resets equal stacks each hand with player SB then alternating; continuous preserves player balance and randomly draws the first blind once; cashout preserves balance until target (default buyIn×2), insufficient stack (<.01) or safety limit. Entry minimum is not an in-session stop threshold. Initial target attainment permits zero hands. Cashout hitting the limit is censored, not success or failure.
+
+Each player gets a stable derived seed. Increasing player count does not alter earlier players. Ordinary policy simulations may consume different RNG counts; equal starting seed is not a matched card-deal guarantee. Continuous/cashout call syncOpponentBankroll after every settled hand, including the final one; NPC adjustment is excluded from payout and RTP.
+
+Output includes `studyVersion:1,ruleSet,mode,players,entries,seed,policy,config,sliceSize,targetAsset,maxHandsPerPlayer`, economic totals and counts, `playerResults,playerSummary,byBlind,actionStats,dealAudit,streetReach,returnDistribution,batches,conservationError,methodMeta,method,npcRefreshCount,npcRefreshAdjustment,npcRefreshAdded,npcRefreshRemoved`, and base/total RTP with uncertainty. `rtp` aliases totalRtp. `standardError/ci95` apply to total RTP; baseStandardError/baseCi95 to base RTP.
+
+playerResults rows have playerIndex/seed/start/end/endMeaning/status/reachedTarget/insufficient/censored plus per-player counters and money. In independent mode endMeaning is last-independent-hand; never treat end as accumulated wealth. playerSummary counts completed/target/insufficient/censored players. Action rows use count for events and hands for unique hand/street/actor/action combinations; handWins/handLosses/handTies/handNetWins always refer to **the player**, even when actor=npc. Return buckets use totalReturn/matchedWager, excluding refunds.
+
+Fixed/legacy independent RTP CI uses one hand per observation. Rotating BOSS independent mode retains per-player sequences and clusters by player. Continuous/cashout CI clusters X/Y totals by player; fewer than two players yields null CI regardless of hand count. methodMeta.ciUnit and ciSamples identify the actual unit. Zero denominator yields ratio 0 as a sentinel and null uncertainty; UI should show unavailable, not measured 0% return. CIs are normal approximations, not rare-JP certification.
+
+## Worker protocol
+
+`src/simulation-worker.mjs` accepts:
+
+```js
+{type:'run',config,policies:['balanced'],...studySettings}
+{type:'tree',config,...treeSettings}
+{type:'treeStudy',config,...treeStudySettings}
+```
+
+run emits progress (including policyIndex/policyCount), partial `{report}`, then result `{reports}`. tree emits treeResult `{tree}`. treeStudy emits treeProgress and treeStudyResult `{report}`. All failures emit `{type:'error',message}`. The UI stops by terminating its worker; incomplete work is not a complete report. Game presentation remains single apply/sample and independent from these offline workers.
+
 ## Reproducible validation artifacts
+
+v34 checks are recorded in docs/06 and `output/math-v34-validation.json` (seed 2026100527, source hashes, 1000 integrated trees and four policies ×5000 independent hands). They validate structure/accounting and small-sample math, not fixed RTP or high player win-rate calibration. The v35 four-BOSS validation is separately recorded in output/math-v35-validation.json and docs/06; the v34 numbers do not validate it.
 
 The v26 validation record is maintained in [mobile and deployment QA](docs/06-mobile-and-deployment.md). `tests/engine-jackpot.test.mjs` contains controlled card fixtures for board-only royal/SF/quads, losing quads, folds, preview isolation, exact-once payout and separate base/total simulation accounting. The former 90-test single-blind count, 58-test early dual-blind count and v5–v25 browser evidence retain their historical versions; none is a claim about v26 verification or total-RTP calibration.
 
@@ -219,3 +310,15 @@ The v26 validation record is maintained in [mobile and deployment QA](docs/06-mo
 `node tests/validate-math.mjs` uses the current two-blind engine with JP explicitly disabled and writes to `output/heads-up-two-blinds-v1/math-validation.json` and `output/heads-up-two-blinds-v1/example-hands.json`. It does not overwrite the retained historical artifacts. This large run was not executed for v26. Matching the former blind amounts does not turn a historical report into a new run; reproducing that report requires its matching historical engine/configuration.
 
 The retained `output/math-validation.json` and `output/example-hands.json` are **historical SB 5 / BB 10 dual-blind, POT-only artifacts without Jackpot**. The 260k report contains 100k natural symmetric hands, 100k symmetric redraw hands, and 20k each for check/call, aggressive, and tight strategies. It was not rerun for v26 or as a JP-total report. At its recorded seeds, aggressive measured above 100% base RTP; this historical exploitable-policy finding must remain visible but is not a measurement of the revised model. This prototype is not a strategy-proof 96% commercial model; current total RTP is not asserted to be 96%.
+
+## v35 BOSS profile contract
+
+Import BOSS_PROFILES, BOSS_PROFILE_BY_ID, BOSS_PROFILE_IDS, BOSS_BANDS, BOSS_BANDS_BY_STREET and BOSS_PROFILE_VERSION from src/boss-profiles.mjs. Version four-boss-v1. Profile records are immutable {id,name,nickname,description,tables}; tables[street][band] contains percentages {fold,call,raise} summing to 100. The full published values are in docs/04 section 4. Free actions discard FOLD and map CALL to check, RAISE to bet/raise; unavailable actions are removed before normalization. The one-raise-per-street rule still applies.
+
+config.boss.mode is rotate (default), fixed or legacy. profileId is caller (default), maniac, sniper or trapper. Missing boss uses the new rotating model; reproduce old RNG/golden fixtures with explicit legacy mode. startHand makes the only profile draw: first eligible four each 1/4, following eligible three each 1/3. Fixed/legacy consume no encounter RNG. session.lastBossProfileId stores continuity, hand.bossProfile the immutable record, hand.bossSelection={mode,probability,previousId,eligibleIds}. clone and action-tree traversal retain the chosen profile. No private strength band is exposed in the live game UI.
+
+New profiles use their own tables; config.npc weights continue to control balanced/aggressive/tight player policies and legacy BOSS only. Never alter player strategy from the private BOSS cards.
+
+simulateStudy adds byBoss[id] aggregate ledgers/wins/showdowns, bossEncounterAudit={mode,counts,firstSelections,checkedTransitions,consecutiveRepeats,unexpectedRepeats,selectionProbabilityCounts}, and per-player bossProfileSequence/bossEncounterCounts/bossConsecutiveRepeats. Even independent bankroll-reset mode retains the per-player profile sequence. rotate CI clusters whole players because adjacent hands are dependent; fixed/legacy independent studies retain hand-level CI.
+
+buildActionTree adds bossProfileId, bossProfile and bossSelection. simulateTreeStudy adds byBoss, bossProfileIds and meta.bossSampling. Each sampled tree starts an independent table, therefore rotate draws each of four with 1/4 and adjacent sampled trees may match; this is not the gameplay encounter sequence. CI remains at the independent-deal level.

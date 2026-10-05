@@ -1,0 +1,26 @@
+/* Actual BOSS actions rise from the character, separate from decision odds. */
+.game .boss-action-layer { position:absolute; inset:0; z-index:42; pointer-events:none; }
+.game .boss-action-layer[hidden] { display:none; }
+.game .boss-action-pop {
+ position:absolute; width:192px; display:flex; flex-direction:column; align-items:center;
+ transform:translate(-50%,-100%); transform-origin:50% 100%; isolation:isolate;
+ color:#fff2cd; text-align:center; filter:drop-shadow(0 5px 3px #17070799);
+}
+.game .boss-action-owner {
+ padding:1px 9px 2px; border-radius:8px; color:#ffe6a1; background:#211522d9;
+ font-size:10px; font-weight:900; line-height:12px; letter-spacing:2px;
+ box-shadow:0 1px 0 #f8dda36b; text-shadow:0 1px 1px #000;
+}
+.game .boss-action-word {
+ font-size:48px; line-height:51px; font-weight:1000; letter-spacing:1px;
+ -webkit-text-stroke:1.6px #392019; paint-order:stroke fill;
+ text-shadow:0 2px 0 #fff0cb,0 4px 0 #482314,0 6px 0 #210e09,0 8px 8px #120713b3;
+}
+.game .boss-action-pop[data-action='raise'] .boss-action-word {
+ color:#ff3639; -webkit-text-stroke-color:#fff0d2;
+ text-shadow:0 3px 0 #7b0a1d,0 5px 0 #330616,0 7px 8px #2e001acf;
+}
+.game .boss-action-pop[data-action='fold'] .boss-action-word {
+ color:#e9eaf0; -webkit-text-stroke-color:#2b2638;
+ text-shadow:0 2px 0 #fff,0 4px 0 #525263,0 6px 0 #1b172b,0 8px 8px #10091dc2;
+}

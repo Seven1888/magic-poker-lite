@@ -1,12 +1,15 @@
-import {previewResponse} from './engine.mjs';
-import {pct,esc} from './shared.mjs';
-import {icon} from './ui-icons.mjs';
+import {previewResponse} from './engine.mjs?v=35';
+import {pct,esc} from './shared.mjs?v=35';
+import {icon} from './ui-icons.mjs?v=35';
 
-/** Project only the two requested outcomes, retaining each original probability. */
+/** Table-facing vocabulary only; the underlying action type stays unchanged. */
+export const responseActionLabel = type => ({fold:'FOLD',check:'CALL',call:'CALL',bet:'RAISE',raise:'RAISE'}[type] || String(type).toUpperCase());
+
+/** Project fold/aggressive outcomes, retaining each original type and probability. */
 export function responseBadges(distribution = []) {
   const positive = distribution.filter(outcome => Number.isFinite(outcome.probability) && outcome.probability > 0);
   if (positive.length < 2) return [];
-  return ['fold', 'raise'].flatMap(type => {
+  return ['fold', 'raise', 'bet'].flatMap(type => {
     const outcome = positive.find(item => item.type === type);
     return outcome ? [{type, probability: outcome.probability,
       label: outcome.probability < .001 ? '<0.1%' : pct(outcome.probability)}] : [];
@@ -18,8 +21,8 @@ export function responseBadgeView(distribution, {phase = 'preview', selected = n
   if (!badges.length) return {markup: '', description: ''};
   const state = ['preview', 'drawing', 'result'].includes(phase) ? phase : 'preview';
   return {
-    markup: `<span class="action-response-badges" data-phase="${state}" aria-hidden="true">${badges.map(badge => `<span class="action-response-badge${state === 'result' && selected === badge.type ? ' is-selected' : ''}" data-response="${badge.type}" data-probability="${badge.probability}"><span class="response-badge-label">${icon(badge.type)}${badge.type.toUpperCase()}</span><b class="response-badge-percent">${esc(badge.label)}</b></span>`).join('')}</span>`,
-    description: badges.map(badge => `opponent ${badge.type.toUpperCase()} ${badge.label === '<0.1%' ? 'less than 0.1%' : badge.label}`).join(', ')
+    markup: `<span class="action-response-badges" data-phase="${state}" aria-hidden="true">${badges.map(badge => `<span class="action-response-badge${state === 'result' && selected === badge.type ? ' is-selected' : ''}" data-response="${badge.type}" data-probability="${badge.probability}"><span class="response-badge-label">${icon(badge.type==='bet'?'raise':badge.type)}${responseActionLabel(badge.type)}</span><b class="response-badge-percent">${esc(badge.label)}</b></span>`).join('')}</span>`,
+    description: badges.map(badge => `opponent ${responseActionLabel(badge.type)} ${badge.label === '<0.1%' ? 'less than 0.1%' : badge.label}`).join(', ')
   };
 }
 

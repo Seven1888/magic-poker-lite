@@ -1,4 +1,4 @@
-import {normalizeConfig} from './engine.mjs';
+import {normalizeConfig} from './engine.mjs?v=35';
 const round=n=>Math.round((n+Number.EPSILON)*1e6)/1e6;
 export function betOptions(config){return [...new Set([.1,.2,.5,1,2,5].map(x=>round(Math.max(.02,config.bigBlind*x))))];}
 export function minimumAssets(config,bet){return round(config.minBuyIn/config.bigBlind*bet);}

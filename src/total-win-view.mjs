@@ -1,4 +1,4 @@
-import {atGameSpeed} from './presentation-timing.mjs';
+import {atGameSpeed} from './presentation-timing.mjs?v=35';
 
 const money = value => value.toLocaleString('en-US', {maximumFractionDigits: 6});
 
@@ -53,10 +53,10 @@ export function createTotalWin({root = globalThis.document, effects, reducedMoti
       const coin = doc.createElement('i'), face = doc.createElement('span');
       coin.className = 'win-money-coin'; face.className = 'win-money-face';
       const side = i % 2 ? 1 : -1, lane = Math.floor(i / 2);
-      const x = 200 + side * (48 + lane % 4 * 13);
-      const end = 200 + side * (40 + lane * 12);
-      const apex = 240 + (lane * 47 % 180);
-      const size = 19 + (lane * 7 % 20);
+      const x = 200 + side * (24 + lane % 4 * 10);
+      const end = 200 + side * (28 + lane * 8);
+      const apex = 400 + (lane * 17 % 65);
+      const size = 17 + (lane * 7 % 17);
       const duration = atGameSpeed(1320 + lane % 4 * 70);
       const delay = atGameSpeed(Math.floor(lane / 4) * 65);
       for (const [key, value] of Object.entries({

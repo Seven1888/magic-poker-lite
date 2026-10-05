@@ -1,5 +1,5 @@
-import {evaluateBest,RANKS} from './poker.mjs';
-import {handName} from './game-text.mjs';
+import {evaluateBest,RANKS} from './poker.mjs?v=35';
+import {handName} from './game-text.mjs?v=35';
 
 /** Reads only the player's cards and already-revealed board. Never accesses the deck or NPC. */
 export function getCurrentHandView(holes=[],board=[]){

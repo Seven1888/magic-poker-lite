@@ -1,0 +1,68 @@
+.game{--duel-art:url('../assets/duel-scene-v34-table-neutral.png')}
+.game[data-winner='player']{--duel-art:url('../assets/duel-scene-v34-table-frown.png')}
+.game[data-winner='npc']{--duel-art:url('../assets/duel-scene-v34-table-smile.png')}
+body:before{background-image:linear-gradient(#030818bb,#030818e8),url('../assets/duel-scene-v34-table-neutral.png')}
+.feature-boss{background-image:url('../assets/duel-scene-v34-table-neutral.png')}
+/* The boss's two cards rest on the table in front of the character. */
+.game .npc-grip { display:none; }
+.game #npc-cards { top:262px; gap:14px; }
+.game #npc-cards .card { width:66px; height:auto; aspect-ratio:220/283; }
+.game #showdown-preview { top:342px; width:170px; height:25px; padding:0 10px; }
+.game #showdown-preview .showdown-caption > strong { font-size:14px; line-height:21px; }
+
+/* Both players have substantial physical chip sources above their own labels. */
+.game #npc-asset-panel {
+ top:276px; left:auto; right:10px; width:104px; height:86px; transform:none;
+}
+.game #npc-asset-panel #npc-bankroll-chips {
+ left:4px; top:12px; bottom:auto; width:74px; height:36px;
+ transform:scale(1.28); transform-origin:0 0;
+}
+.game #npc-asset-panel > #npc-stack {
+ top:auto; bottom:0; left:0; right:0; width:104px; min-height:22px;
+ height:22px; padding:1px 3px; font-size:13px; line-height:19px;
+}
+.game #npc-asset-panel .bankroll-change { top:-8px; left:0; right:0; width:104px; font-size:12px; }
+.game .table-bankroll-player { top:620px; left:8px; width:102px; height:70px; }
+.game .table-bankroll-player #player-bankroll-chips {
+ left:3px; top:0; bottom:auto; width:74px; height:36px;
+ transform:scale(1.28); transform-origin:0 0;
+}
+.game .table-bankroll-player > strong {
+ top:auto; bottom:0; left:0; right:0; min-height:22px; padding:1px 3px;
+ font-size:13px; line-height:19px;
+}
+.game .table-bankroll-player .bankroll-change { top:70px; left:0; right:auto; width:74px; font-size:11px; line-height:15px; }
+
+/* The prize lives at the pot. Leave its actual outgoing source stack visible. */
+.game .table-total-win {
+ top:474px; left:50%; width:280px; height:62px; padding:5px 10px 6px; gap:1px;
+ --total-win-scale:1;
+ transition:left calc(.36s / var(--game-speed,1.2)) ease-out,
+  width calc(.36s / var(--game-speed,1.2)) ease-out,
+  top calc(.36s / var(--game-speed,1.2)) ease-out;
+}
+.game[data-total-win]:has(#pot-chips .casino-chip) .table-total-win {
+ top:474px; left:calc(50% + 125px); width:130px; height:62px;
+ padding:5px 5px 6px; --total-win-scale:.55;
+}
+.game .table-total-win .total-win-label { font-size:10px; line-height:12px; letter-spacing:1.8px; }
+.game .table-total-win .total-win-amount { font-size:calc(min(var(--total-win-font,46px),40px) * var(--total-win-scale)); line-height:34px; }
+.game .table-total-win:is([data-outcome='split'],[data-outcome='returned']) .total-win-amount { font-size:calc(min(var(--total-win-font,46px),34px) * var(--total-win-scale)); }
+.game[data-total-win]:has(#pot-chips .casino-chip) .table-total-win .total-win-label { font-size:9px; letter-spacing:.8px; }
+.game .table-total-win[data-outcome='loss'] .total-win-amount { font-size:calc(24px * var(--total-win-scale)); }
+.game[data-total-win] #action-flow { visibility:visible; }
+
+/* Decorative coins spring from the pot and fall back around the same area. */
+.game .win-money-layer:before { left:30px; right:30px; top:400px; height:165px; }
+.game .win-money-coin { animation-name:win-money-pot-arc; }
+@keyframes win-money-pot-arc {
+ 0% { opacity:0; transform:translate3d(var(--coin-x),514px,0) rotate(0deg); }
+ 8% { opacity:1; }
+ 25% { transform:translate3d(calc(var(--coin-x) * .6 + var(--coin-end) * .4),calc(var(--coin-apex) + 20px),0) rotate(calc(var(--coin-turn) * .25)); }
+ 45% { transform:translate3d(calc(var(--coin-x) * .4 + var(--coin-end) * .6),var(--coin-apex),0) rotate(calc(var(--coin-turn) * .45)); }
+ 65% { opacity:1; transform:translate3d(calc(var(--coin-x) * .25 + var(--coin-end) * .75),calc(var(--coin-apex) + 30px),0) rotate(calc(var(--coin-turn) * .65)); }
+ 88% { opacity:.9; }
+ 100% { opacity:0; transform:translate3d(var(--coin-end),554px,0) rotate(var(--coin-turn)); }
+}
+@media(prefers-reduced-motion:reduce){.game .table-total-win{transition:none;}}

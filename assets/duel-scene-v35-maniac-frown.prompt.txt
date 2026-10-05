@@ -1,0 +1,6 @@
+Mode: built-in image_gen edit, 2026-10-05 Asia/Taipei.
+Output: assets/duel-scene-v35-maniac-frown.png.
+Image 1 edit target: assets/duel-scene-v35-maniac-neutral.png.
+
+Use case: precise-object-edit. Edit the supplied approved full-scene poker illustration. Keep exact 887 x 1774 opaque portrait canvas. Change only the character's mouth/eyelid facial expression, never the horns, head outline, location, arms, body, chair, camera, table border or background. Keep all features visually aligned to allow an in-game expression crossfade. No text, UI, cards, chips, extra characters or special effects. Do not crop, zoom, reframe, move or resize anything.
+This is the orange-red MANIAC with jagged horns and asymmetrical eyes. For a PLAYER victory change its exuberant grin to a clearly annoyed disappointed scowl: downturned mouth corners, mouth mostly closed with a few of its same chunky teeth visible, tongue no longer hanging out, lowered angry eyebrows. Preserve horn and eye positions, skin, silhouette. Keep both hands resting on the rim exactly as they are. Do not add steam or tears.

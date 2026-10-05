@@ -1,0 +1,10 @@
+Mode: built-in image_gen edit, 2026-10-05 Asia/Taipei.
+Output: assets/duel-scene-v35-sniper-neutral.png.
+Image 1 edit target: assets/duel-scene-v34-table-neutral.png.
+Image 2 user character reference: codex-clipboard-412b3ca8-b26c-4973-be24-293a1967dc9a.png.
+
+Use case: compositing / precise-object-edit.
+Asset type: mobile poker full-scene background, opaque PNG, exactly 887 x 1774 portrait.
+Input image 1 is the EDIT TARGET and must preserve its exact casino background, perspective, chair, red table felt and gold/wood border coordinates. Input image 2 is a CHARACTER IDENTITY REFERENCE ONLY; never copy its white background or any chips.
+Replace only the central monster in image 1 with the character from image 2, seated behind the same far table rim at the same scale, close low tabletop viewpoint. Preserve target's canvas, layout, lighting, materials, color of the red felt table, background details, and table geometry. Keep the table clear: no playing cards, no chips, no text, no numbers, no UI, no extra characters or extra limbs. Do not zoom, crop, reframe or move the table.
+Character: the exact ice-blue cyclops from image 2, ONE large central half-lidded eye with golden iris and black pupil, very wide crescent-shaped curved blue horns, short frowning mouth with a single tiny fang, chunky compact blue body and painterly texture. Cool, unimpressed, calculating expression. Preserve these unique shapes and single-eye identity; do not give it two eyes. Fit complete curved horn tips in original portrait area; head center near source x445,y230 and body behind far table rim. Forearms may be crossed low on the body as in the reference, elbows near the table rim, never holding or pinching cards. Keep central table entirely clear so live DOM cards can be placed on the felt in front of it. No tongue and no wild grin in this neutral version.

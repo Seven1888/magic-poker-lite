@@ -22,12 +22,12 @@ test('central draw includes the missing CALL probability and only highlights the
  assert.equal(JSON.stringify(distribution),before);
 });
 
-test('central draw retains raw probabilities, tiny positive outcomes and genuine CHECK/BET labels',()=>{
+test('central draw maps CHECK/BET names to CALL/RAISE while preserving raw types, widths and selection',()=>{
  const view=responseDistributionView([{type:'check',probability:.0004},{type:'bet',probability:.3996},
   {type:'fold',probability:0},{type:'call',probability:-.1},{type:'raise',probability:NaN}],{phase:'result',selected:'bet'});
  assert.equal(view.count,2);
- assert.match(view.markup,/>CHECK<\/span>/);
- assert.match(view.markup,/>BET<\/span>/);
+ assert.match(view.markup,/>CALL<\/span>/);
+ assert.match(view.markup,/>RAISE<\/span>/);
  assert.match(view.markup,/data-probability="0.0004"/);
  assert.match(view.markup,/&lt;0.1%/);
  assert.match(view.markup,/>40.0%<\/b>/,'the raw .3996 is formatted, never rescaled to the positive sum');
@@ -37,7 +37,7 @@ test('central draw retains raw probabilities, tiny positive outcomes and genuine
  const caption=view.markup.split('response-track-legend')[1];
  assert.match(caption,/data-response="check"/);
  assert.doesNotMatch(caption,/data-response="bet"/,'readable outcomes remain inside the bar without duplicate external labels');
- assert.doesNotMatch(view.markup,/>CALL<|>RAISE</);
+ assert.doesNotMatch(view.markup,/>CHECK<|>BET</);
  assert.deepEqual(responseDistributionView([]),{count:0,markup:''});
 });
 
@@ -60,15 +60,17 @@ function fixture(){
  return {root,stage,nodes,source,effects,animations};
 }
 
-test('three central outcomes grow from the two original badge bounds and await flight before readiness',async()=>{
+test('three central outcomes grow from the full floating BOSS preview and await flight before readiness',async()=>{
  const f=fixture(),flight=createResponseFlight(f);
+ f.source.matches=selector=>selector==='.action-response-preview';
+ f.source.getBoundingClientRect=()=>({left:30,right:120,top:689,bottom:727});
  const pending=flight.launch(f.source,distribution),panel=f.nodes[1];
  assert.equal(f.stage.dataset.responseFlight,'flying');
  assert.equal(panel.style.width,'360px');
  assert.equal(panel.dataset.outcomeCount,'3');
  assert.match(panel.innerHTML,/data-response="call"/);
- assert.match(f.animations[0].frames[0].transform,/translate\(-125px,361.5px\)/);
- assert.ok(f.animations[0].frames[0].transform.includes(`scale(${90/360},${27/64})`));
+ assert.match(f.animations[0].frames[0].transform,/translate\(-125px,356px\)/);
+ assert.ok(f.animations[0].frames[0].transform.includes(`scale(${90/360},${38/64})`),'the source bounds include its BOSS heading');
  f.animations[0].resolve();assert.equal(await pending,true);
  assert.equal(f.stage.dataset.responseFlight,'ready');
  flight.update(distribution,{phase:'drawing'});
@@ -116,7 +118,7 @@ test('a direct new-street decision replaces an in-flight preview without its old
  const panel=flight.target();
  assert.equal(oldLayer.removed,true);
  assert.equal(f.stage.dataset.responseFlight,'drawing');
- assert.match(panel.innerHTML,/>CHECK<\/span>/);
+ assert.match(panel.innerHTML,/>CALL<\/span>/);
  assert.doesNotMatch(panel.innerHTML,/data-response="call"/);
  f.animations[0].resolve();
  assert.equal(await pending,false);

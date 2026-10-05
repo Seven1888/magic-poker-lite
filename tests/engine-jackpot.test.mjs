@@ -148,7 +148,7 @@ test('JP credit consumes no RNG, and subsequent hands carry the bonus and cumula
 });
 
 test('simulation reports base and total returns separately with correct JP counts, batches and uncertainty', () => {
-  const config = {deal: {player: {manual: ['As', 'Ah']}, npc: {manual: ['2c', '3d']}},
+  const config = {boss: {mode: 'legacy'}, deal: {player: {manual: ['As', 'Ah']}, npc: {manual: ['2c', '3d']}},
     npc: {fold: 0, call: 1, raise: 0, check: 1, bet: 0, strengthInfluence: 0, priceInfluence: 0}};
   const options = {hands: 5000, seed: 19, policy: 'call'};
   const report = simulate(config, options), base = simulate({...config, jackpotEnabled: false}, options);

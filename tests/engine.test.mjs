@@ -167,7 +167,7 @@ test('common board tie splits contested gross and applies symmetric fee', () => 
   near(hand.stacks.player + hand.stacks.npc + hand.result.fee, 2000);
 });
 
-test('redraws only choose starting cards, respect limit, improve aggregate quality, and preserve deck integrity', () => {
+test('legacy score redraw imports respect the limit, improve aggregate quality, and preserve deck integrity', () => {
   let natural = 0, enhanced = 0;
   const low = {rerollChance: 0, maxRerolls: 0};
   const high = {rerollChance: 1, maxRerolls: 6, targetScore: 0.75};
@@ -194,7 +194,7 @@ test('NPC action distribution ignores player hole cards and future cards', () =>
 });
 
 test('all-zero action weights fall back to a legal passive action', () => {
-  const hand = startHand(createSession({npc: {fold: 0, call: 0, raise: 0, check: 0, bet: 0}}, 123));
+  const hand = startHand(createSession({boss: {mode: 'legacy'}, npc: {fold: 0, call: 0, raise: 0, check: 0, bet: 0}}, 123));
   applyAction(hand, 'raise');
   assert.equal(getActionDistribution(hand).find(a => a.type === 'call').probability, 1);
 });
@@ -259,7 +259,7 @@ test('2,000 varied strategy hands preserve wallets, cards, contribution accounti
 });
 
 test('symmetric reference simulation brackets 96%; fees and refunds use correct denominator; reproducible CI', () => {
-  const result = simulate({jackpotEnabled: false}, {hands: 30000, seed: 1984});
+  const result = simulate({boss: {mode: 'legacy'}, jackpotEnabled: false, deal: {npc: {rerollChance: 0.5}}}, {hands: 30000, seed: 1984});
   assert.ok(result.ci95[0] < 0.96 && result.ci95[1] > 0.96);
   near(result.netReturns / result.wagers, result.rtp, 1e-10);
   near(result.netReturns / result.grossReturns, 0.96, 1e-10);

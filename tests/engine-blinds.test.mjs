@@ -8,10 +8,12 @@ import {
 const other = seat => seat === 'player' ? 'npc' : 'player';
 const types = hand => legalActions(hand).map(action => action.type);
 
-test('default and fixed opening blinds do not consume RNG; the existing seed-20 deal is unchanged', () => {
-  const defaultSession = createSession({}, 20);
-  const fixedPlayer = createSession({}, 20, {firstSmallBlind: 'player'});
-  const fixedNpc = createSession({}, 20, {firstSmallBlind: 'npc'});
+test('default and fixed opening blinds do not consume RNG; legacy score imports preserve the seed-20 deal', () => {
+  const legacy = {boss: {mode: 'legacy'}, deal: {player: {targetScore: 0.48}, npc: {targetScore: 0.48}}};
+  const defaultSession = createSession(legacy, 20);
+  const fixedPlayer = createSession(legacy, 20, {firstSmallBlind: 'player'});
+  const fixedNpc = createSession(legacy, 20, {firstSmallBlind: 'npc'});
+  assert.equal(createSession({}, 20).rng.state(), createRng(20).state());
   for (const session of [defaultSession, fixedPlayer, fixedNpc]) {
     assert.equal(session.rng.state(), createRng(20).state());
     assert.equal(session.blindDraw, null);

@@ -1,5 +1,6 @@
-import {pct,esc} from './shared.mjs';
-import {icon} from './ui-icons.mjs';
+import {pct,esc} from './shared.mjs?v=35';
+import {icon} from './ui-icons.mjs?v=35';
+import {responseActionLabel} from './action-response-view.mjs?v=35';
 
 /** The central draw shows every real outcome; button previews stay FOLD/RAISE only. */
 export function responseDistributionView(distribution=[],{phase='preview',selected=null,roll=null}={}){
@@ -10,7 +11,8 @@ export function responseDistributionView(distribution=[],{phase='preview',select
  const labels=outcomes.map(outcome=>{
   const type=esc(outcome.type),label=outcome.probability<.001?'<0.1%':pct(outcome.probability);
   const midpoint=cursor+outcome.probability/2;cursor+=outcome.probability;
-  return {outcome,type,midpoint,copy:`<span class="response-badge-label">${icon(outcome.type==='call'?'chip':outcome.type)}${type.toUpperCase()}</span><b class="response-badge-percent">${esc(label)}</b>`};
+  const name=responseActionLabel(outcome.type),visual=name==='CALL'?'chip':name.toLowerCase();
+  return {outcome,type,midpoint,copy:`<span class="response-badge-label">${icon(visual)}${esc(name)}</span><b class="response-badge-percent">${esc(label)}</b>`};
  });
  const smallLabels=labels.filter(({outcome})=>outcome.probability<.1);
  const captionCenter=smallLabels.reduce((sum,item)=>sum+item.midpoint,0)/smallLabels.length;
@@ -54,7 +56,7 @@ export function createResponseFlight({root=globalThis.document,effects,reducedMo
   const cards=[...source.querySelectorAll('.action-response-badge')];
   if(!cards.length)return false;
   const rects=cards.map(card=>card.getBoundingClientRect());
-  const from={left:Math.min(...rects.map(r=>r.left)),top:Math.min(...rects.map(r=>r.top)),right:Math.max(...rects.map(r=>r.right)),bottom:Math.max(...rects.map(r=>r.bottom))};
+  const from=source.matches?.('.action-response-preview')?source.getBoundingClientRect():{left:Math.min(...rects.map(r=>r.left)),top:Math.min(...rects.map(r=>r.top)),right:Math.max(...rects.map(r=>r.right)),bottom:Math.max(...rects.map(r=>r.bottom))};
   const stageRect=stage.getBoundingClientRect(),scale=stageRect.width/stage.offsetWidth;
   if(!(scale>0)||from.right<=from.left||from.bottom<=from.top)return false;
   const current=epoch;
