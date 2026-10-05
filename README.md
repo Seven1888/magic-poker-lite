@@ -2,11 +2,11 @@
 
 手機直版、第一人稱的 1v1 簡化德州原型：兩張底牌、五張公共牌、四街下注、真實對手行動機率。遊戲介面英文，機率工作台與文件繁體中文；預設資產 **10,000**。
 
-- [遊戲 Demo](https://seven1888.github.io/magic-poker-lite/)
-- [機率工作台：完整行動樹與玩家統計](https://seven1888.github.io/magic-poker-lite/probability.html)
-- [模型文件：公式、分母與帳務案例](https://seven1888.github.io/magic-poker-lite/docs/04-game-flow-and-math.html)
+- [遊戲 Demo](https://seven1888.github.io/magic-poker-lite/?v=36)
+- [機率工作台：完整行動樹與玩家統計](https://seven1888.github.io/magic-poker-lite/probability.html?v=36)
+- [模型文件：公式、分母與帳務案例](https://seven1888.github.io/magic-poker-lite/docs/04-game-flow-and-math.html?v=36)
 
-目前為 v35：四種 BOSS、完整機率工作台和桌前演出已整合。最新測試與發布狀態見 [docs/06](docs/06-mobile-and-deployment.md)。
+目前整理 v36 介面：隱藏 BOSS 名稱、上移角色與底牌，依序安排角色牌／行動資訊／公共牌／POT／玩家手牌；加強雙方最佳五張對比，NEXT HAND 即時換角並補上慢圖轉場。牌型等正面展開後更新，按鈕上方機率改為左側 BOSS、右側數值的單一區塊。本輪驗證與發布狀態以 [docs/06](docs/06-mobile-and-deployment.md) 為準，交接見 [v36 交接](docs/08-v36-handoff.md)。
 
 ## 目前機率工具
 
@@ -23,7 +23,7 @@
 
 小盲自動投入半 BET、大盲一 BET；翻牌前小盲先動，後三街大盲先動，逐手換位。每街最多一次加注。雙方畫面固定 FOLD／CALL／RAISE，底層仍區分 check／call／bet／raise；付費列本次新增支付，免費 CALL 與 FOLD 不列金額。
 
-開局只說先後及雙方初始投入。對手機率獨立浮在按鈕上方並標 BOSS；玩家籌碼先抵達 POT，再飛標籤、演 BOSS 決策。對手牌放桌前，雙手搭桌緣；雙方籌碼放大、玩家籌碼上移。TOTAL WIN 在 POT 區跑分與噴金幣，金額取底池返還＋JP，排除退款；動畫不重抽或重複入帳。
+開局只說先後及雙方初始投入。對手機率獨立浮在按鈕上方，每組只保留一個 BOSS，標題與數值異色；玩家籌碼先抵達 POT，再飛標籤、演 BOSS 決策。對手底牌與行動底板都在公共牌上方，玩家手牌上方直接是 POT。玩家最佳五張用實色金框，BOSS 已揭最佳五張用紅框，共用牌金內紅外，完整揭牌後調暗未入選牌。TOTAL WIN 在 POT 區跑分與噴金幣，金額取底池返還＋JP，排除退款；動畫不重抽或重複入帳。
 
 ## JP 與數學範圍
 
@@ -32,6 +32,8 @@ JP 牌型／倍數：皇家同花順 **200×BET**、同花順 **50×BET**、四�
 **0.96 是匹配底池返還係數，不是玩家勝率或含 JP 總 RTP 保證。** 目前仍依真實牌組比較勝負；未採用 Hands Up 先定輸贏／配牌流程，也沒有導入 99% RTP 或固定高勝率。後續模型選擇需同步改共用引擎與重新驗證。
 
 舊 `output/math-validation.json` 的 260,000 手不含 JP，是歷史資料，不代表本版 50%／25% 重抽、完整樹或多玩家模型。現行 [v35 驗證資料](output/math-v35-validation.json) 包含四型固定＋輪替各 5,000 手，以及 1,000 副完整樹；僅為小樣本結構／帳務驗證。v34 舊權重模型的本機檔不代表新版。
+
+v36 僅調整呈現，沿用 v35 共用引擎、固定 BOSS 表、輪替、起手重抽及帳務。以上數學檔仍是 **v35 證據**，並非 v36 新跑的 RTP 或機率校準；介面回歸與部署紀錄另列。
 
 ## 本機啟動與驗證
 

@@ -246,13 +246,18 @@ export function createGameEffects({root = globalThis.document, reducedMotion = f
     }
   }
 
-  /** Turn through the edge; optional staggering overlaps motion, never face commits. */
-  async function reveal(targets = [], {onReveal, holdMs = 170, staggerMs = 0} = {}) {
+  /** Swap faces at the edge; publish visible-card information only after opening. */
+  async function reveal(targets = [], {onReveal, onVisible, holdMs = 170, staggerMs = 0} = {}) {
     if (destroyed) return;
     const cards = uniqueCards(targets), sequence = beginSequence();
     const properties = ['scale', 'rotate', 'translate', 'backfaceVisibility', 'willChange'];
     const originals = cards.map(card => Object.fromEntries(properties.map(key => [key, card.style[key] || ''])));
     const commits = cards.map(() => {
+      let release;
+      const ready = new Promise(resolve => { release = resolve; });
+      return {ready, release};
+    });
+    const visibleCommits = cards.map(() => {
       let release;
       const ready = new Promise(resolve => { release = resolve; });
       return {ready, release};
@@ -296,9 +301,16 @@ export function createGameEffects({root = globalThis.document, reducedMotion = f
           ], {duration: 250, easing: 'cubic-bezier(.2,.55,.3,1)', fill: 'both'}))) return;
         }
         restore(card, index);
+        // Rank labels and public-card counters must wait for the front to finish
+        // opening. Keep these callbacks ordered even if animations finish early.
+        if (index && !await sequence.wait(visibleCommits[index - 1].ready)) return;
+        if (!sequence.alive()) return;
+        if (onVisible && !await sequence.wait(onVisible(card, index))) return;
+        visibleCommits[index].release();
         await sequence.wait(pause(hold));
       } finally {
         commits[index].release();
+        visibleCommits[index].release();
         restore(card, index);
       }
     }

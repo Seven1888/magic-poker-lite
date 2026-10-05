@@ -4,7 +4,7 @@ import {GAME_LABELS as LABELS,GAME_STREETS as STREETS,handName,translateError} f
 import {createPotView} from './pot-view.mjs?v=35';
 import {fitStage} from './stage-fit.mjs?v=35';
 import {getHudSnapshot} from './hud-state.mjs?v=35';
-import {createGameEffects} from './game-effects.mjs?v=35';
+import {createGameEffects} from './game-effects.mjs?v=36';
 import {renderBetPresets,updateBetSelection,setupEntryFeatures} from './entry-view.mjs?v=35';
 import {betOptions,minimumAssets,tableConfig} from './entry-model.mjs?v=35';
 import {icon} from './ui-icons.mjs?v=35';
@@ -23,7 +23,7 @@ import {createActionFlow} from './action-flow-view.mjs?v=35';
 import {createBlindDraw} from './blind-draw-view.mjs?v=35';
 import {createTotalWin} from './total-win-view.mjs?v=35';
 import {createBossActionView} from './boss-action-view.mjs?v=35';
-import {renderBossIdentity} from './boss-scene-view.mjs?v=35';
+import {renderBossIdentity,preloadBossScenes,waitForBossScene} from './boss-scene-view.mjs?v=36';
 document.documentElement.style.setProperty('--game-speed',String(GAME_SPEED));
 const $=id=>document.getElementById(id);
 // Stable player controls; engine actions and opponent response types stay unchanged.
@@ -38,6 +38,7 @@ const actionFlow=createActionFlow({root:document});
 const blindDraw=createBlindDraw({root:document,effects,reducedMotion:reduceMotion});
 const totalWin=createTotalWin({root:document,effects,reducedMotion:reduceMotion});
 const bossAction=createBossActionView({root:document,reducedMotion:reduceMotion});
+preloadBossScenes(document);
 const bankrollView=createBankrollView({root:document});
 let soundOn=true;
 try{soundOn=localStorage.getItem('magic-poker-lite:sound')!=='off';}catch{}
@@ -208,7 +209,9 @@ function updateShowdownView(){
   const panel=$('showdown-preview');
   $('game').dataset.revealed=String(shownReveal);
   if(!hand||hand.result?.reason!=='showdown'||shownReveal===0||shownBoard!==5){
-    panel.hidden=true;document.querySelectorAll('.card.npc-best').forEach(el=>el.classList.remove('npc-best'));showdownViewCache={key:'',value:null};return null;
+    panel.hidden=true;panel.style.backgroundImage='';panel.setAttribute('aria-label','Opponent best five revealed cards');
+    $('npc-hand-type').textContent='';$('npc-reveal-count').textContent='';
+    document.querySelectorAll('.card.npc-best').forEach(el=>el.classList.remove('npc-best'));showdownViewCache={key:'',value:null};return null;
   }
   const playerHole=hand.holes.player.slice(0,dealt.player),visibleBoard=hand.board.slice(0,shownBoard),revealedNpcHole=hand.holes.npc.slice(0,shownReveal);
   const key=[...playerHole,...visibleBoard,'|',...revealedNpcHole].join('');
@@ -239,9 +242,12 @@ function updateVisibleCards(){
   const holes=hand?.holes.player.slice(0,dealt.player)||[],board=hand?.board.slice(0,shownBoard)||[];
   const view=getCurrentHandView(holes,board),best=view.highlighted;
   for(const [id,cards] of [['player-cards',holes],['board',board]])[...$(id).children].forEach((el,i)=>el.classList.toggle('best',!!cards[i]&&best.includes(cards[i])));
-  $('hand-type').textContent=view.name;$('table-hand-type').textContent=view.name;
-  $('table-rank-button').style.backgroundImage=`url('assets/legacy/type${view.royal?10:view.category+1}-base.png')`;
-  $('table-rank-button').setAttribute('aria-label',`Current hand: ${view.name}. View hand rankings.`);
+  // A hidden/edge-on hole card is not ready for a visible hand-rank label.
+  const ready=!!hand&&dealt.player===2,rankButton=$('table-rank-button');
+  $('hand-type').textContent=ready?view.name:'No cards dealt';$('table-hand-type').textContent=ready?view.name:'';
+  rankButton.hidden=!ready;
+  rankButton.style.backgroundImage=ready?`url('assets/legacy/type${view.royal?10:view.category+1}-base.png')`:'';
+  rankButton.setAttribute('aria-label',ready?`Current hand: ${view.name}. View hand rankings.`:'View hand rankings');
   const remaining=visibleDeck().deckRemaining;
   $('deck-count').textContent=remaining;
   $('deck-button').setAttribute('aria-label',`Deck: ${remaining} of 52 cards remaining. View deck details`);
@@ -253,7 +259,11 @@ function updateVisibleCards(){
 }
 /** Play only changes already committed by the engine, in visible table order. */
 async function presentHand({releaseResponse=false}={}){
-  render();await potView.whenIdle();
+  render();
+  // NEXT HAND commits its new neutral portrait synchronously in render. Cached
+  // portraits need no transition; cold loads cannot deal over the previous boss.
+  if(dealt.player===0&&dealt.npc===0)await waitForBossScene(hand,document);
+  await potView.whenIdle();
   // The reply badge belongs to the completed action, not the next visible street.
   if(releaseResponse){clearResponseSource();renderActions();}
   if(dealt.player<2||dealt.npc<2){
@@ -262,7 +272,9 @@ async function presentHand({releaseResponse=false}={}){
     for(let i=0;i<2;i++)for(const seat of [hand.bigBlind,hand.smallBlind])order.push({seat,index:i,element:$(seat+'-cards').children[i]});
     await effects.deal(order.map(x=>x.element),{onLand:async(element,index)=>{
       const item=order[index];
-      if(item.seat==='player')await effects.reveal([element],{holdMs:35,onReveal:()=>{replaceCardFace(element,hand.holes.player[item.index]);dealt.player=item.index+1;updateVisibleCards();}});
+      if(item.seat==='player')await effects.reveal([element],{holdMs:35,
+        onReveal:()=>replaceCardFace(element,hand.holes.player[item.index]),
+        onVisible:()=>{dealt.player=item.index+1;updateVisibleCards();}});
       else{dealt.npc=item.index+1;updateVisibleCards();}
     }});
     render();await delay(reduceMotion?0:350);
@@ -280,19 +292,18 @@ async function presentHand({releaseResponse=false}={}){
     const {start,end,street}=nextBoardReveal(shownBoard,hand.board.length);
     setTableCue('board-deal',street.toUpperCase(),{detail:street==='flop'?'REVEAL 3 SHARED CARDS':'REVEAL 1 SHARED CARD'});
     const cards=[...$('board').children].slice(start,end);
-    await effects.reveal(cards,{holdMs:35,staggerMs:105,onReveal:(element,index)=>{
-      const i=start+index;replaceCardFace(element,hand.board[i]);shownBoard=i+1;updateVisibleCards();
-    }});
+    await effects.reveal(cards,{holdMs:35,staggerMs:105,
+      onReveal:(element,index)=>replaceCardFace(element,hand.board[start+index]),
+      onVisible:(element,index)=>{shownBoard=start+index+1;updateVisibleCards();}});
     render();await delay(reduceMotion?0:700);
   }
   if(hand.result?.reason==='showdown'&&shownReveal<2){
     setTableCue('showdown','SHOWDOWN');
     await delay(reduceMotion?0:450);
     const start=shownReveal;
-    await effects.reveal([...$('npc-cards').children].slice(start),{holdMs:900,onReveal:(element,index)=>{
-      replaceCardFace(element,hand.holes.npc[start+index]);shownReveal=start+index+1;
-      updateShowdownView();
-    }});
+    await effects.reveal([...$('npc-cards').children].slice(start),{holdMs:900,
+      onReveal:(element,index)=>replaceCardFace(element,hand.holes.npc[start+index]),
+      onVisible:(element,index)=>{shownReveal=start+index+1;updateShowdownView();}});
     await delay(reduceMotion?0:700);
   }
   if(hand.status==='playing')setTableCue();
@@ -304,7 +315,6 @@ function render(){
   if(hand)blindDraw.renderSeat({isSmall:hand.smallBlind==='player'});else if(!session)blindDraw.clear();
   const h=hud();$('game').dataset.busy=String(busy);
   $('game').dataset.state=hand?.result&&!settlementReleased?'playing':hand?.status||'idle';$('game').dataset.actor=busy?'':hand?.actor||'';$('game').dataset.street=hand?visibleStreet():'';updateExpression(settlementReleased?hand?.result?.winner||'':'');
-  renderBossIdentity(hand,document);
   renderBankrolls();
  $('balance-label').textContent='BALANCE';
   $('total-bet').textContent=money(h.playerCommitted);
@@ -326,7 +336,6 @@ function render(){
   const revealedEquity=hand?.result?.reason==='showdown'&&shownReveal>0;
   if(!readyForEquity&&!revealedEquity)renderWinRate(winRate);
   if(hand){
-    $('hand-type').textContent=handView.name;
     const key=`${hand.handNumber}:${hand.street}:${hand.board.join('')}`;
     if(!active&&!revealedEquity){$('equity').textContent=hand.result.reason==='showdown'?'Made-hand cards are highlighted. Kickers still break ties.':'This hand ended before showdown.';$('equity').title='';}
     else if(readyForEquity&&equityCache!==key){equityCache=key;renderWinRate(winRate);const captured=hand,capturedStreet=hand.street,capturedBoard=hand.board.join('');setTimeout(()=>{
@@ -336,9 +345,7 @@ function render(){
       renderWinRate(winRate,e.equity,{description:`${rate} estimated win rate versus a random unknown hand; ties count as half a win.`,title:'Estimated equity versus a random unknown hand. Ties count as half a win; opponent redraws are not included.'});
       $('equity').textContent=`Equity vs. a random hand: ${pct(e.equity)}`;$('equity').title='Ties count as half a win. 250 samples against a uniformly random unknown hand. No hidden opponent cards or redraw adjustment.';
     },0);}
-  }else{$('hand-type').textContent=handView.name;$('equity').textContent='Two cards. Your next move.';}
-  $('table-hand-type').textContent=handView.name;
-  $('table-rank-button').setAttribute('aria-label',`Current hand: ${$('table-hand-type').textContent}. View hand rankings.`);
+  }else{$('equity').textContent='Two cards. Your next move.';}
   renderJackpot();renderActions();paintDistribution();
 }
 function renderActions(){

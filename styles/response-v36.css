@@ -1,0 +1,44 @@
+/* One connected read-only preview: BOSS at left, its response odds at right. */
+.game .controls .action-slot > .action-response-preview {
+ top:-8px; left:0; right:0; height:32px;
+ display:flex; flex-direction:row; align-items:stretch; gap:0;
+ border:1px solid #becdb7; border-radius:7px; overflow:hidden;
+ background:#17222c;
+ box-shadow:inset 0 1px #ffffff24,0 2px 0 #100b16,0 4px 5px #0a07188c;
+}
+.game .controls .action-response-preview > .action-response-owner {
+ flex:0 0 32px; height:auto; min-width:0;
+ display:flex; align-items:center; justify-content:center; padding:0 1px;
+ color:#ffe5a6; background:linear-gradient(#35404c,#1d2633);
+ font-size:10px; line-height:12px; font-weight:900; letter-spacing:.2px;
+ text-shadow:0 1px 1px #080d18;
+}
+.game .controls .action-slot .action-response-preview > .action-response-badges {
+ flex:1 1 0; min-width:0; height:auto; gap:0;
+ display:flex; align-items:stretch; justify-content:stretch;
+ border:0; border-radius:0; background:none; overflow:visible;
+}
+.game .controls .action-slot .action-response-preview .action-response-badge {
+ flex:1 1 0; min-width:0; max-width:none; height:auto; margin:0; padding:2px 1px;
+ grid-template-rows:10px 16px;
+ border:0; border-left:1px solid #dcead552; border-radius:0;
+ background:linear-gradient(#315c47,#1a3e30); color:#f2ffe9;
+ box-shadow:inset 0 1px #e9ffdf24;
+}
+.game .controls .action-slot .action-response-preview .action-response-badge:is([data-response='raise'],[data-response='bet']) {
+ background:linear-gradient(#614b79,#3b2b50); color:#fff1ff;
+}
+.game .controls .action-slot .action-response-preview .response-badge-label {
+ font-size:10px; line-height:10px; letter-spacing:.1px;
+}
+.game .controls .action-slot .action-response-preview .response-badge-label .ui-icon { display:none; }
+.game .controls .action-slot .action-response-preview .response-badge-percent {
+ font-size:14px; line-height:16px; letter-spacing:-.2px;
+}
+/* Two outcomes share the right side, retaining one BOSS cell at every width. */
+.game .controls .action-response-preview:has(.action-response-badge + .action-response-badge) .response-badge-percent {
+ font-size:13px;
+}
+.game .controls .action-slot .action-response-preview .action-response-badge.is-selected {
+ color:#fff3bb; box-shadow:inset 0 0 0 1px #ffe09b,inset 0 0 8px #ffe09b33;
+}

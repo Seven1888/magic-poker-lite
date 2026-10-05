@@ -1,0 +1,71 @@
+/* Keep the encounter above a clear turn → board → pot → player sequence. */
+.game .boss-identity { display:none; }
+.game .scene-closeup { background-position:center -38px; }
+.game #npc-cards { top:236px; }
+.game #showdown-preview { top:326px; }
+.game #npc-asset-panel { top:262px; }
+.game #table-rank-button[hidden] { display:none; }
+.game .action-flow-strip { top:358px; height:68px; }
+.game .action-flow-current { padding-block:5px; }
+.game .action-flow-copy { gap:2px; }
+.game .action-flow-verb { font-size:18px; line-height:22px; }
+.game .response-flyout { top:400px; height:43px; }
+.game .response-flyout .response-probability-track { height:43px; }
+.game .response-flyout .action-response-badge { padding:2px 0; grid-template-rows:15px 22px; }
+.game .response-flyout .response-badge-label { line-height:15px; }
+.game .response-flyout .response-badge-percent { line-height:22px; }
+.game .response-flyout .response-track-legend { top:-23px; }
+.game .felt { top:432px; }
+.game .table-total-win,
+.game[data-total-win]:has(#pot-chips .casino-chip) .table-total-win { top:546px; }
+.game .win-money-layer { translate:0 72px; }
+
+/* Solid saturated rims, separated from the white faces and dark red felt. */
+.game { --best-player:#ffe019; --best-boss:#ff1748; --best-divider:#21101b; }
+.game #player-cards .card.best:not(.covered):not(.blank),
+.game #board .card.best:not(.covered):not(.blank) {
+ outline:4px solid var(--best-player); outline-offset:0;
+ box-shadow:0 0 0 5px var(--best-divider),0 8px 10px #170910b3;
+}
+.game #player-cards .card.best:not(.covered):not(.blank):after,
+.game #board .card.best:not(.covered):not(.blank):after {
+ content:''; position:absolute; inset:0; border:2px solid var(--best-player);
+ border-radius:inherit; box-shadow:inset 0 0 0 1px var(--best-divider);
+ pointer-events:none; z-index:4;
+}
+.game #npc-cards .card.npc-best:not(.covered):not(.blank),
+.game #board .card.npc-best:not(.covered):not(.blank) {
+ outline:4px solid var(--best-boss); outline-offset:0;
+ box-shadow:0 0 0 5px var(--best-divider),0 8px 10px #170910b3;
+}
+.game #npc-cards .card.npc-best:not(.covered):not(.blank):before,
+.game #board .card.npc-best:not(.covered):not(.blank):before {
+ content:''; position:absolute; inset:0; border:2px solid var(--best-boss);
+ border-radius:inherit; box-shadow:inset 0 0 0 1px var(--best-divider);
+ pointer-events:none; z-index:3;
+}
+/* A shared best card carries two complete rims: gold inside, red outside. */
+.game #board .card.best.npc-best:not(.covered):not(.blank):before {
+ border:0; box-shadow:none;
+}
+.game #board .card.best.npc-best:not(.covered):not(.blank):after {
+ inset:1px; border:4px solid var(--best-player);
+ box-shadow:0 0 0 1px var(--best-divider),inset 0 0 0 1px var(--best-divider);
+}
+.game[data-revealed='2'] #board .card:not(.best):not(.npc-best):not(.covered):not(.blank),
+.game[data-revealed='2'] #player-cards .card:not(.best):not(.covered):not(.blank),
+.game[data-revealed='2'] #npc-cards .card:not(.npc-best):not(.covered):not(.blank) {
+ filter:brightness(.65) saturate(.55);
+}
+
+/* A slow image load has its own brief entrance, before any cards are dealt. */
+.game .boss-scene-transition {
+ position:absolute; inset:0 0 auto; height:358px; z-index:1; pointer-events:none;
+ display:flex; align-items:center; justify-content:center; padding-top:100px;
+ color:#ffe8b4; font-size:15px; font-weight:800; letter-spacing:3px;
+ background:radial-gradient(ellipse at 50% 45%,#39416a,#10192c 67%,#291725);
+ mask-image:linear-gradient(#000 0,#000 320px,transparent 358px);
+}
+.game .boss-scene-transition[hidden] { display:none; }
+.game:not([data-state='idle']):is([data-boss-scene-state='loading'],[data-boss-scene-state='unavailable']) .scene-closeup { visibility:hidden; }
+html[data-entry-open='true'] .game > .boss-scene-transition { visibility:visible !important; }

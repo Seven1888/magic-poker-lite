@@ -119,6 +119,87 @@ test('reveal swaps each back only at the edge and finishes the first card before
   assert.ok(cards.every(card => card.style.scale === '' && card.dataset.motion === undefined));
 });
 
+test('visible-card information waits until the face is fully open, before the reading hold', async () => {
+  const f = fixture(), effects = createGameEffects({root: f.doc}), card = f.card('player'), events = [];
+  const pending = effects.reveal([card], {
+    holdMs: 900,
+    onReveal(target) { target.face = 'front'; events.push('face'); },
+    onVisible(target) {
+      assert.equal(target.face, 'front');
+      assert.equal(target.style.scale, ''); assert.equal(target.style.rotate, '');
+      assert.equal(target.dataset.motion, undefined);
+      events.push('visible');
+    }
+  });
+  assert.deepEqual(events, []);
+  f.animations[0].finish(); await flush();
+  assert.deepEqual(events, ['face'], 'edge-on face swap must not publish a rank');
+  assert.equal(f.animations[1].cancelled, false);
+  f.animations[1].finish(); await flush();
+  assert.deepEqual(events, ['face', 'visible']);
+  assert.equal(f.timers.size, 1, 'the visible callback precedes the reading hold');
+  await f.tick(atGameSpeed(900)); await pending;
+  assert.equal(f.timers.size, 0);
+});
+
+test('staggered visible callbacks preserve board order and await earlier publication', async () => {
+  const f = fixture(), effects = createGameEffects({root: f.doc}), cards = ['flop1', 'flop2', 'flop3'].map(f.card), visible = [];
+  let releaseFirst;
+  const pending = effects.reveal(cards, {
+    holdMs: 0, staggerMs: 105,
+    onReveal(card) { card.face = 'front'; },
+    async onVisible(card, index) {
+      visible.push(index);
+      if (index === 0) await new Promise(resolve => { releaseFirst = resolve; });
+    }
+  });
+  await f.tick(atGameSpeed(105)); await f.tick(atGameSpeed(105));
+  f.animations.slice(0, 3).forEach(animation => animation.finish()); await flush();
+  assert.equal(f.animations.length, 6);
+  f.animations[5].finish(); f.animations[4].finish(); await flush();
+  assert.deepEqual(visible, [], 'later cards cannot advance a contiguous public-card count');
+  f.animations[3].finish(); await flush();
+  assert.deepEqual(visible, [0]);
+  releaseFirst(); await pending;
+  assert.deepEqual(visible, [0, 1, 2]);
+  assert.equal(f.timers.size, 0);
+});
+
+test('destroyed turns never publish pending visible-card information', async () => {
+  for (const blockedVisible of [false, true]) {
+    const f = fixture(), effects = createGameEffects({root: f.doc}), cards = [f.card('first'), f.card('second')], visible = [];
+    const pending = effects.reveal(cards, {
+      holdMs: 0, staggerMs: 105,
+      onReveal(card) { card.face = 'front'; },
+      onVisible(card, index) { visible.push(index); return new Promise(() => {}); }
+    });
+    await f.tick(atGameSpeed(105));
+    f.animations[0].finish(); await flush();
+    f.animations[1].finish(); await flush();
+    if (blockedVisible) { f.animations[2].finish(); await flush(); }
+    effects.destroy(); await pending;
+    assert.deepEqual(visible, blockedVisible ? [0] : []);
+    assert.equal(f.timers.size, 0);
+    assert.ok(cards.every(card => card.dataset.motion === undefined && card.style.scale === '' && card.style.rotate === ''));
+  }
+});
+
+test('watchdogs, reduced motion and missing animation support publish only after the face callback', async () => {
+  for (const mode of ['watchdog', 'reduced', 'unsupported']) {
+    const f = fixture(), effects = createGameEffects({root: f.doc, reducedMotion: mode === 'reduced'}), cards = [f.card('first'), f.card('second')], events = [];
+    if (mode === 'unsupported') cards.forEach(card => { delete card.animate; });
+    const pending = effects.reveal(cards, {
+      holdMs: 0,
+      onReveal(card, index) { card.face = 'front'; events.push(`face${index}`); },
+      onVisible(card, index) { assert.equal(card.face, 'front'); events.push(`visible${index}`); }
+    });
+    if (mode === 'watchdog') for (let step = 0; step < 4; step++) await f.tick(1000);
+    await pending;
+    assert.deepEqual(events, ['face0', 'visible0', 'face1', 'visible1']);
+    assert.equal(f.timers.size, 0);
+  }
+});
+
 test('a hidden stock uses the scaled table launch point instead of cancelling the deal', async () => {
   const f = fixture(), effects = createGameEffects({root: f.doc}), card = f.card('player');
   f.nodes.set('deck-button', {getBoundingClientRect: () => ({left: 0, top: 0, width: 0, height: 0})});

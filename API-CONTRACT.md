@@ -1,6 +1,16 @@
-# Engine API contract · v35 four bosses, full action trees and player studies · 2026-10-05
+# Engine API contract · v36 presentation / v35 four-BOSS math · 2026-10-05
 
-Version v35 uses four published street/strength BOSS tables, uniform non-repeating encounters, full action trees and player-level reports. Real shared-deck poker determines the winner; Hands Up outcome-first construction and its RTP target are not imported.
+Version v36 changes presentation while retaining the v35 model: four published street/strength BOSS tables, uniform non-repeating encounters, full action trees and player-level reports. Real shared-deck poker determines the winner; Hands Up outcome-first construction and its RTP target are not imported. `output/math-v35-validation.json` remains v35 evidence, not a new v36 RTP run.
+
+## v36 呈現契約（不改引擎介面）
+
+BOSS 名稱／副標不再生成於牌桌；`hand.bossProfile`、固定表及型別稽核欄位不變。角色與桌前底牌上移，畫面順序為角色牌→當前行動→公共牌→POT→玩家手牌；行動底板位於公共牌上方，TOTAL WIN 沿用 POT 區及原本來源籌碼到達才清空的契約。
+
+每顆玩家按鈕的 preview 為左側單一 BOSS／右側原機率的異色合併塊；同手同街有效來源、玩家籌碼先抵達 POT 再飛標籤、中央完整真比例及單次 `sampleDistribution`／`applyAction` 維持。實色 4px 金／紅框標玩家／已揭 BOSS 最佳五張（含 kicker），深色分隔，共用牌金內紅外，完整揭牌後才調暗未入選牌。
+
+`createGameEffects().reveal(targets,{onReveal,onVisible,holdMs,staggerMs})` 中，`onReveal` 在側邊換牌面，`onVisible` 在正面展開完成後執行；可見張數、牌型、亮框與公開資料估算只由後者推進。玩家兩張底牌可見後才顯示牌型，BOSS 依真正揭開的底牌逐張更新；換手清空舊牌型。減少動態仍保持換面→可見通知順序，取消不送出過期通知。
+
+`preloadBossScenes(root)` 只預載四型 neutral，不選下一型。NEXT HAND 仍由 `startHand` 做唯一抽型，`renderBossIdentity(hand,root)` 同步套用其公開型別、清掉前手表情並使用 neutral。`waitForBossScene(hand,root,{timeoutMs=4000})` 只在首次發牌前等圖片解碼；已快取直接完成，慢圖顯示角色區轉場，超時／失敗使用無型名替身並解除等待。晚到圖片不可覆蓋別手角色，所有呈現均不讀暗牌或追加 RNG。以上契約優先於下方歷史版展示描述；本輪驗證與發布狀態以 [docs/06](docs/06-mobile-and-deployment.md) 為準。
 
 All modules are dependency-free ESM. Import from `./src/engine.mjs`. All currency values are chip units, rounded internally to six decimals; the UI preserves up to six fractional digits so .03 BB / .015 SB and their payments remain consistent. Card identifiers are `As`, `Kh`, `Td`, `2c` (`s h d c`; ace is `A`, ten is `T`).
 
