@@ -1,7 +1,7 @@
-import {createSession,startHand,legalActions,applyAction,getActionDistribution,sampleDistribution,previewResponse,holeScore,syncOpponentBankroll} from './engine.mjs?v=46';
-import {loadConfig,CONFIG_KEY,money,pct,esc,cardMarkup,cardText} from './shared.mjs?v=46';
+import {createSession,startHand,legalActions,applyAction,getActionDistribution,sampleDistribution,previewResponse,holeScore,syncOpponentBankroll} from './engine.mjs?v=51';
+import {loadConfig,CONFIG_KEY,money,pct,esc,cardMarkup,cardText} from './shared.mjs?v=51';
 import {GAME_LABELS as LABELS,GAME_STREETS as STREETS,handName,translateError} from './game-text.mjs?v=46';
-import {createPotView} from './pot-view.mjs?v=35';
+import {createPotView} from './pot-view.mjs?v=51';
 import {fitStage} from './stage-fit.mjs?v=35';
 import {getHudSnapshot} from './hud-state.mjs?v=46';
 import {createGameEffects} from './game-effects.mjs?v=44';
@@ -10,11 +10,11 @@ import {betOptions,minimumAssets,tableConfig} from './entry-model.mjs?v=46';
 import {nextHandBetConfig} from './next-hand-bet.mjs?v=46';
 import {handEntryStatus} from './hand-entry.mjs?v=46';
 import {loadPlayerProfile,savePlayerProfile} from './outcome-profile.mjs?v=46';
-import {createOutcomePools,normalizeOutcomePools} from './outcome-pools.mjs?v=46';
+import {createOutcomePools,normalizeOutcomePools} from './outcome-pools.mjs?v=51';
 import {createEntryEncounter,previewNextEncounter} from './entry-encounter.mjs?v=46';
 import {icon} from './ui-icons.mjs?v=35';
 import {JACKPOT_MULTIPLIERS,quoteJackpot} from './jackpot.mjs?v=35';
-import {renderJackpotWin} from './jackpot-view.mjs?v=46';
+import {renderJackpotWin} from './jackpot-view.mjs?v=51';
 import {getCurrentHandView} from './hand-view.mjs?v=46';
 import {decisionMotion} from './decision-motion.mjs?v=35';
 import {getShowdownView} from './showdown-view.mjs?v=46';
@@ -151,7 +151,7 @@ function decorateMenu(){
  $('menu-dialog').append(reset);
  const rules=document.querySelector('#help-dialog .rules');
  rules.innerHTML=`<li>${icon('chip')}<b>Choose BET · Draw your blind</b><span>SMALL BLIND posts ½ BET; BIG BLIND posts 1 BET. Your blind position is redrawn 50/50 before every hand. Small blind acts first preflop; big blind acts first after the flop.</span></li><li>${icon('cards')}<b>2 hole cards + 5 board cards</b><div class="rule-card-flow"><span>2</span><i>＋</i><span>3</span><i>→</i><span>1</span><i>→</i><span>1</span></div><span>PREFLOP → FLOP → TURN → RIVER</span></li><li>${icon('call')}<b>Your move · Their response</b><span>CALL matches the current bet, or checks for free when nothing is due. RAISE opens betting or increases an existing bet. The amount is what you add now. One raise per street.</span></li><li>${icon('crown')}<b>Best 5 of 7</b><span>A fold ends the hand. Otherwise, compare at showdown. Win at showdown with a qualifying special hand to earn a Jackpot bonus.</span></li>`;
- const fees=document.createElement('details');fees.className='rules-details';fees.innerHTML='<summary>Hand highlights, turn order & pot fee ⓘ</summary><p>Gold edges mark your complete best five, including kickers. Before five cards are visible, all your visible cards glow. Blue edges mark the opponent’s best five using only their revealed hole cards and the board. Shared cards can carry both gold and blue edges.</p><p>Your controls and BOSS responses always read FOLD, CALL and RAISE. A free CALL performs a check; RAISE opens betting when no bet exists yet. These are simplified display names for both seats. If the opponent has not acted, they may still check or bet in the same street. Two checks close the street; the next shared cards are then revealed for the new street.</p><p>Both seats post before cards are dealt: SMALL BLIND pays ½ BET and BIG BLIND pays 1 BET. Small blind acts first preflop and can fold, call the remaining ½ BET, or raise. Big blind acts first after the flop. Folding forfeits chips already committed, except any uncalled excess. Choosing a BET level does not charge chips. Both seats follow the same rule. The floating BOSS badges above your buttons show opponent responses, not your win chance. A certain same-street response is shown as 100%, including CALL. Mixed responses show FOLD and RAISE only, so their percentages need not total 100%. Actions that end the hand or move to the next street have no same-street response badge.</p><p>After every hand, including folds, the opponent’s demo chips reset to match your remaining chips. Your own balance keeps the actual winnings and losses. After settlement, use BET to set the next hand’s amount, then NEXT HAND to deal. Changing BET costs no chips; closing the picker cancels unsaved changes.</p><p id="help-fee"></p>';
+ const fees=document.createElement('details');fees.className='rules-details';fees.innerHTML='<summary>Hand highlights, turn order & payouts ⓘ</summary><p>Gold edges mark your complete best five, including kickers. Before five cards are visible, all your visible cards glow. Blue edges mark the opponent’s best five using only their revealed hole cards and the board. Shared cards can carry both gold and blue edges.</p><p>Your controls and BOSS responses always read FOLD, CALL and RAISE. A free CALL performs a check; RAISE opens betting when no bet exists yet. These are simplified display names for both seats. If the opponent has not acted, they may still check or bet in the same street. Two checks close the street; the next shared cards are then revealed for the new street.</p><p>Both seats post before cards are dealt: SMALL BLIND pays ½ BET and BIG BLIND pays 1 BET. Small blind acts first preflop and can fold, call the remaining ½ BET, or raise. Big blind acts first after the flop. Folding forfeits chips already committed, except any uncalled excess. Choosing a BET level does not charge chips. Both seats follow the same rule. The floating BOSS badges above your buttons show opponent responses, not your win chance. A certain same-street response is shown as 100%, including CALL. Mixed responses show FOLD and RAISE only, so their percentages need not total 100%. Actions that end the hand or move to the next street have no same-street response badge.</p><p>After every hand, including folds, the opponent’s demo chips reset to match your remaining chips. Your own balance keeps the actual winnings and losses. After settlement, use BET to set the next hand’s amount, then NEXT HAND to deal. Changing BET costs no chips; closing the picker cancels unsaved changes.</p><p id="help-fee"></p>';
  rules.after(fees);
  document.querySelector('#help-dialog>p.muted').textContent='Standard 52-card deck, no jokers. Paid CALL and RAISE can improve your showdown result. Free CALL keeps the current result; a fold still ends the hand. Boss action chances depend on the current street and the available actions. Your settled chips and bonus progress are saved on this device. Reloading an unfinished demo hand restores the previous completed hand.';
  const ledger=$('settlement'),details=document.createElement('details');details.className='result-accounting';details.innerHTML=`<summary>${icon('wallet')}Chip details <span>⌄</span></summary>`;ledger.replaceWith(details);details.append(ledger);
@@ -160,7 +160,7 @@ function decorateMenu(){
 decorateMenu();
 setupEntryFeatures();
 document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>$(b.dataset.close).close()));
-const openHelp=()=>{const c=hand?.config||session?.config||config;$('help-fee').textContent=`A ${pct(1-c.targetRtp)} fee is taken from the matched pot before payout, including ties. Uncalled chips are returned in full, with no fee.`;show('help-dialog');};
+const openHelp=()=>{$('help-fee').textContent='The matched pot is paid in full. Uncalled chips are returned in full. Special bonuses are paid from your personal special pool.';show('help-dialog');};
 const openHistory=()=>{renderHistory();show('history-dialog');};
 $('menu-button').onclick=()=>show('menu-dialog');
 $('sound-toggle').onchange=e=>{soundOn=e.target.checked;updateAudioSettings({save:true});if(soundOn)effects.unlock().then(ready=>{if(ready)effects.play('click');});};
@@ -207,7 +207,7 @@ function updateEntry(){
  document.querySelector('.feature-jp-tiers').hidden=!jackpotOn;
  $('bet-minus').disabled=index<=0;$('bet-plus').disabled=index===betValues.length-1;
  $('entry-start').disabled=available<minimum||busy;$('buyin-error').textContent=available<minimum?'Not enough chips. Choose a lower BET.':'';
- $('fee-notice').textContent=`Choosing BET does not charge chips. Minimum balance before each hand: ${money(minimum)}. If your balance falls below the minimum, choose a lower BET. Once a hand starts, you can still go all-in. Each hand, SMALL BLIND automatically posts ${blindAmount(selectedBet/2)} and BIG BLIND posts ${blindAmount(selectedBet)}. Your blind position is redrawn 50/50 before every hand. Small blind acts first preflop; big blind acts first after the flop. The opponent matches your balance after every hand, including folds. Pot fee: ${pct(1-entryBase.targetRtp)}. Uncalled bets are refunded in full. Demo chips only.`;
+ $('fee-notice').textContent=`Choosing BET does not charge chips. Minimum balance before each hand: ${money(minimum)}. If your balance falls below the minimum, choose a lower BET. Once a hand starts, you can still go all-in. Each hand, SMALL BLIND automatically posts ${blindAmount(selectedBet/2)} and BIG BLIND posts ${blindAmount(selectedBet)}. Your blind position is redrawn 50/50 before every hand. Small blind acts first preflop; big blind acts first after the flop. The opponent matches your balance after every hand, including folds. Uncalled bets are refunded in full. Demo chips only.`;
 }
 $('bet-minus').onclick=()=>{selectedBet=betValues[Math.max(0,betValues.indexOf(selectedBet)-1)];updateEntry();};
 $('bet-plus').onclick=()=>{selectedBet=betValues[Math.min(betValues.length-1,betValues.indexOf(selectedBet)+1)];updateEntry();};
@@ -640,7 +640,7 @@ function showResult(){
   document.querySelector('.result-accounting').open=false;
   document.querySelector('.result-hand-details').open=false;
   $('result-hands').innerHTML=['player','npc'].map(seat=>{const evaluation=r.evaluations[seat],concealed=seat==='npc'&&r.reason==='fold';return `<div><span>${seat==='player'?'You':'Opponent'}</span><div class="result-best5">${(evaluation?.best5||hand.holes[seat]).map(c=>cardMarkup(c,{back:concealed})).join('')}</div><b>${concealed?'Not shown':evaluation?handName(evaluation):'No showdown'}</b><small>${evaluation?'BEST FIVE':r.reason==='fold'?'FOLD':''}</small></div>`;}).join('');
-  const rows=[['Total bet','totalContribution'],['Uncalled refund','refund'],['Matched wager','matchedWager'],['Gross pot share','gross'],[`Pot fee ${pct(1-hand.config.targetRtp)}`,'fee'],['Pot return','netReturn'],['Jackpot bonus','jackpotAward'],['Total return','totalReturn'],['Net profit','profit'],['Closing balance','stackAfter']];
+  const rows=[['Total bet','totalContribution'],['Uncalled refund','refund'],['Matched wager','matchedWager'],['Gross pot share','gross'],['Pot return','netReturn'],['Jackpot bonus','jackpotAward'],['Total return','totalReturn'],['Net profit','profit'],['Closing balance','stackAfter']];
   $('settlement').innerHTML=(r.jackpot?`<div class="result-jp">${icon('crown')}${tierNames[r.jackpot.tier]} <b>+${money(r.jackpot.award)}</b></div>`:'')+'<div class="ledger-head"><span>Chip details</span><span>You</span><span>Opponent</span></div>'+rows.map(([label,key])=>`<div class="ledger-row ${key==='profit'?'total':''}"><span>${label}</span><span>${money(r.player[key])}</span><span>${money(r.npc[key])}</span></div>`).join('');
   $('result-note').textContent=`Opponent chips now match yours: ${money(session.stacks.player)}. This demo refresh is separate from the payout.`;
   $('next-hand').innerHTML=`${icon('play')}NEXT HAND`;show('result-dialog');

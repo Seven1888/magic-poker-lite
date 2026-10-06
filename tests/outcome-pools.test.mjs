@@ -26,7 +26,7 @@ const settle = (pools, selected, extra = {}) => settleOutcomePools({pools, decis
   matchedWager: 1, reason: 'showdown', winner: selected.target === 'win' ? 'player' : 'npc',
   actualTier: null, handId: String(pools.handSequence + 1), ...extra});
 
-test('the current Hands Up constants and three exact stake buckets are retained separately from pot fees', () => {
+test('the current Hands Up constants and three exact stake buckets are retained with a single RTP score coefficient', () => {
   assert.equal(OUTCOME_POOL_SCALE, 1_000_000);
   assert.deepEqual(DEFAULT_OUTCOME_POOL_CONFIG, {conversionRate: 0.99, paidActionBudgetShare: 0.8,
     paidActionCooldownMin: 0, paidActionCooldownMax: 0, specialUseChance: 0.2});
@@ -65,7 +65,7 @@ test('million-ticket draw boundaries exactly match the original inclusive ticket
 test('root uses matched blinds and an independent .99 score; it never earns either pool', () => {
   const quote = quoteRootPoolOutcome({hand: moneyHand()});
   assert.equal(quote.matchedWager, 0.5); assert.equal(quote.score, 0.495);
-  assert.equal(quote.denominator, 0.96); assert.equal(quote.probability, 0.515625);
+  assert.equal(quote.denominator, 1); assert.equal(quote.probability, 0.495);
   const alternateFactor = quoteRootPoolOutcome({hand: moneyHand({config: {bigBlind: 1, targetRtp: 1}})});
   assert.equal(alternateFactor.probability, 0.495);
   const pools = createOutcomePools(), root = drawRootPoolOutcome({hand: moneyHand(), pools, rng: sequence(0)});
@@ -76,33 +76,33 @@ test('root uses matched blinds and an independent .99 score; it never earns eith
   assert.equal(final.pools.handSequence, 1);
 });
 
-test('paid quote uses net matchable pot after the action, independent of whether Boss has already matched', () => {
+test('paid quote uses full matchable pot after the action, independent of whether Boss has already matched', () => {
   const branch = createOutcomePoolBranch(createOutcomePools(), 1);
   const raised = {type: 'raise', amount: 4.5};
   const quote = quotePaidPoolOutcome({hand: moneyHand(), action: raised, previousTarget: 'nonWin', branch});
-  assert.equal(quote.matchedAfterAction, 5); assert.equal(quote.denominator, 9.6);
+  assert.equal(quote.matchedAfterAction, 5); assert.equal(quote.denominator, 10);
   const alreadyMatched = quotePaidPoolOutcome({hand: moneyHand({contributions: {player: 0.5, npc: 5}}),
     action: raised, previousTarget: 'nonWin', branch});
   assert.equal(alreadyMatched.probability, quote.probability);
   const shortBoss = quotePaidPoolOutcome({hand: moneyHand({stacksBefore: {player: 100, npc: 3}}),
     action: raised, previousTarget: 'nonWin', branch});
-  assert.equal(shortBoss.denominator, 5.76);
+  assert.equal(shortBoss.denominator, 6);
 });
 
 test('a nonWin paid action can consume only enough pool to reach 100%, then earns deferred 80/20 credits', () => {
   const pools = createOutcomePools({paidAction: [2, 0, 0]}), before = JSON.stringify(pools);
   const paid = drawPaidPoolOutcome({hand: moneyHand(), action: call, previousDecision: decision(pools), rng: sequence(0.999)});
-  assert.equal(paid.target, 'win'); assert.equal(paid.denominator, 1.92);
-  assert.equal(paid.paidActionBudgetUsed, 1.425);
-  assert.equal(paid.poolBranch.paidAction, 0.575);
+  assert.equal(paid.target, 'win'); assert.equal(paid.denominator, 2);
+  assert.equal(paid.paidActionBudgetUsed, 1.505);
+  assert.equal(paid.poolBranch.paidAction, 0.495);
   assert.equal(paid.poolBranch.special, 0);
   assert.equal(paid.poolBranch.pendingWinPaidCredits.length, 1);
   const live = applyBranchPools({pools, decision: paid, handId: '1'});
-  assert.equal(live.buckets[0].paidAction, 0.575);
+  assert.equal(live.buckets[0].paidAction, 0.495);
   assert.equal(live.buckets[0].special, 0); assert.equal(live.handSequence, 0);
   const final = settle(pools, paid);
   assert.equal(final.audit.paidActionAdded, 0.396); assert.equal(final.audit.specialAdded, 0.099);
-  assert.equal(final.pools.buckets[0].paidAction, 0.971); assert.equal(final.pools.buckets[0].special, 0.099);
+  assert.equal(final.pools.buckets[0].paidAction, 0.891); assert.equal(final.pools.buckets[0].special, 0.099);
   assert.equal(JSON.stringify(pools), before);
 });
 
@@ -244,6 +244,6 @@ test('counterfactual branches retain transaction identity and money but never du
   assert.equal(JSON.stringify(paid).includes('previous-hand-only'), false);
   const final = settle(pools, paid);
   assert.equal(final.pools.handSequence, 13);
-  assert.equal(final.pools.buckets[0].paidAction, 0.971);
+  assert.equal(final.pools.buckets[0].paidAction, 0.891);
   assert.equal(pools.lastSettlement.audit.oldDetails.length, 100);
 });

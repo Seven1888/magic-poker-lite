@@ -1,5 +1,5 @@
-import {createRng,normalizeConfig,STREETS} from './engine.mjs?v=46';
-import {buildActionTree} from './action-tree.mjs?v=46';
+import {createRng,normalizeConfig,STREETS} from './engine.mjs?v=51';
+import {buildActionTree} from './action-tree.mjs?v=51';
 import {BOSS_PROFILE_IDS,BOSS_PROFILE_VERSION} from './boss-profiles.mjs?v=46';
 import {combinePoolStudySummaries} from './probability-pools.mjs?v=46';
 
@@ -100,7 +100,7 @@ export function simulateTreeStudy(config={}, {deals=100,seed=20261005,policy='ba
   return {
     version:2,kind:'tree-study',complete:true,deals,seed,policy,config:normalized,dealSeeds,
     outcomePoolSummary:combinePoolStudySummaries(poolSummaries,{unit:'deals'}),
-    meta:{modelVersion:`${pooled?'prebuilt-pools-v1':'legacy-deck-v1'}+${BOSS_PROFILE_VERSION}+tree-study-v2`,cardModel:pooled?'shared-engine-prebuilt-pools':'shared-engine-fixed-deck',bossProfileVersion:BOSS_PROFILE_VERSION,
+    meta:{modelVersion:`${pooled?'prebuilt-pools-v2-full-pot':'legacy-deck-v1'}+${BOSS_PROFILE_VERSION}+tree-study-v2`,cardModel:pooled?'shared-engine-prebuilt-pools':'shared-engine-fixed-deck',bossProfileVersion:BOSS_PROFILE_VERSION,
       sampling:pooled?'cold-start-prebuilt-layouts-full-action-integration':'sampled-deals-full-action-integration',
       firstSmallBlind:'alternating-player-npc',sampleUnit:'one-deal-one-full-action-tree',
       bossSampling:normalized.boss.mode==='rotate'?'每副取樣是獨立新牌桌，四型各 1/4；副與副之間不是同桌連續牌局，因此允許相同。遊戲及玩家序列研究則同桌不連續重複。':normalized.boss.mode==='fixed'?'全部獨立牌序固定同一 BOSS，刻意允許重複。':'全部牌序採舊版對手權重模型。',

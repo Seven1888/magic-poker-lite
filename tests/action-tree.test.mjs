@@ -64,7 +64,7 @@ test('weighted outcomes equal the probability-weighted leaves and root action va
 });
 
 test('all-in trees shrink through the shared engine and retain real JP, fee and refund accounting',()=>{
-  const manualConfig={outcome:{mode:'legacy-deck'},minBuyIn:10,maxBuyIn:20,buyIn:20,deal:{player:{manual:['As','Ah']},npc:{manual:['Ks','Kh']}}};
+  const manualConfig={outcome:{mode:'legacy-deck'},targetRtp:.96,minBuyIn:10,maxBuyIn:20,buyIn:20,deal:{player:{manual:['As','Ah']},npc:{manual:['Ks','Kh']}}};
   let seed=1;
   for(;seed<5000;seed++){
     const hand=startHand(createSession(manualConfig,seed));

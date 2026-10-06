@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {DEFAULT_CONFIG, createSession, startHand, legalActions, applyAction, previewResponse,
+import {DEFAULT_CONFIG, normalizeConfig, createSession, startHand, legalActions, applyAction, previewResponse,
   cloneHand, stepNpc, getActionDistribution, compareHands, syncOpponentBankroll} from '../src/engine.mjs';
 import {classifyJackpot} from '../src/jackpot.mjs';
 
@@ -12,7 +12,26 @@ function poolState(pools) {
   return state;
 }
 const quick = (config = {}, seed = 2, options) => createSession({buyIn: 50, ...config}, seed, options);
-const winningConfig = (extra = {}) => ({targetRtp: 0.5, outcome: {conversionRate: 1, ...extra}});
+const winningConfig = (extra = {}) => ({outcome: {conversionRate: 1, ...extra}});
+
+test('current settings migrate old pot discounts and pay the full matched pot with one RTP score coefficient', () => {
+  assert.equal(DEFAULT_CONFIG.targetRtp, 1);
+  for (const targetRtp of [.5, .96, .97, 1]) {
+    const config = normalizeConfig({targetRtp});
+    assert.equal(config.targetRtp, 1);
+    assert.equal(config.outcome.conversionRate, .99);
+    const hand = startHand(createSession(config, 0));
+    const root = hand.outcomeDecision;
+    assert.equal(root.score, 4.95);assert.equal(root.denominator, 10);
+    assert.equal(root.probability, .495);
+    applyAction(hand, 'raise');applyAction(hand, 'fold');
+    assert.equal(hand.result.player.refund, 10);
+    assert.equal(hand.result.player.netReturn, 20);
+    assert.equal(hand.result.player.fee, 0);
+    assert.equal(hand.result.npc.fee, 0);
+    near(hand.result.player.profit, 10);
+  }
+});
 function passive(hand) {
   let steps = 0;
   while (hand.status === 'playing') {
@@ -46,6 +65,7 @@ test('the official default builds all 1,312 nodes before publishing and every st
     assert.equal(state.outcomePlanning, undefined);
     if (!node.terminal) continue;
     const r = state.result;
+    assert.equal(r.fee,0);assert.equal(r.player.netReturn,r.player.gross);assert.equal(r.npc.netReturn,r.npc.gross);
     near(r.player.stackAfter + r.npc.stackAfter + r.fee, r.player.stackBefore + r.npc.stackBefore + r.player.jackpotAward);
     if (node.forcedWinner) assert.equal(r.winner, node.forcedWinner);
     else {
@@ -111,14 +131,14 @@ test('the BOSS samples exactly one action draw while player and stored-node acti
 });
 
 test('a tree limit or contradictory manual Boss layout rejects without charging, reserving pools or changing the session', () => {
-  for (const [config, code] of [
+  for (const [config, code, seed = 0] of [
     [{outcome: {stateLimit: 1}}, 'STATE_LIMIT'],
     [{outcome: {conversionRate: 0, initialPaidActionPools: [1000, 0, 0]},
       deal: {npc: {manual: ['As', 'Ah']}}}, 'MANUAL_BOSS_TARGET_CONFLICT'],
     [{...winningConfig({initialSpecialPools: [2000, 0, 0], specialUseChance: 1, maxLayoutAttempts: 2}),
-      deal: {player: {manual: ['2c', '3d']}}}, 'LAYOUT_LIMIT']
+      deal: {player: {manual: ['2c', '3d']}}}, 'LAYOUT_LIMIT', 1]
   ]) {
-    const session = quick(config, 4, {firstSmallBlind: 'random'}), before = snapshot(session);
+    const session = quick(config, seed), before = snapshot(session);
     const stacks = session.stacks, pools = session.outcomePools, rng = session.rng;
     assert.throws(() => startHand(session), error => error.code === code);
     assert.deepEqual(snapshot(session), before); assert.equal(session.stacks, stacks);

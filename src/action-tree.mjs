@@ -1,4 +1,4 @@
-import {createSession,startHand,cloneHand,legalActions,applyAction,getActionDistribution} from './engine.mjs?v=46';
+import {createSession,startHand,cloneHand,legalActions,applyAction,getActionDistribution} from './engine.mjs?v=51';
 import {BOSS_PROFILE_VERSION} from './boss-profiles.mjs?v=46';
 import {createPoolStudySummary, collectPoolStudyAudit, finishPoolStudySummary} from './probability-pools.mjs?v=46';
 
@@ -100,7 +100,7 @@ export function buildActionTree(config = {}, {
   const byId=new Map(nodes.map(node=>[node.id,node]));
   return {
     version:2,mode:pooled?'prebuilt-outcome-full-action-tree':'fixed-deal-full-action-tree',complete:true,
-    meta:{modelVersion:`${pooled?'prebuilt-pools-v1':'legacy-deck-v1'}+${BOSS_PROFILE_VERSION}+action-tree-v2`,cardModel:pooled?'shared-engine-prebuilt-pools':'shared-engine-fixed-deck',
+    meta:{modelVersion:`${pooled?'prebuilt-pools-v2-full-pot':'legacy-deck-v1'}+${BOSS_PROFILE_VERSION}+action-tree-v2`,cardModel:pooled?'shared-engine-prebuilt-pools':'shared-engine-fixed-deck',
       bossProfileVersion:BOSS_PROFILE_VERSION,scope:pooled?'one-prebuilt-layout-all-stored-actions':'one-fixed-deck-all-legal-actions',
       description:pooled?'開局已預建全部目標與合法操作分支；玩家底牌及公牌布局固定，BOSS 暗牌由各節點預存目標決定。分析僅讀已建分支，不抽新目標或新牌。':'歷史牌庫模式：發牌後固定牌序，展開雙方所有合法動作；不是枚舉全部發牌組合。',
       policyInformation:'玩家策略只使用自己的底牌、已揭公共牌及下注狀態；對手依該手鎖定的 BOSS 機率表；legacy 模式才使用原權重模型。',

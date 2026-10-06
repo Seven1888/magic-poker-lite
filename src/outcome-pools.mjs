@@ -143,19 +143,11 @@ function checkedBranch(branch) {
   return result;
 }
 
-function potFactor(hand) {
-  const factor = hand?.config?.targetRtp;
-  if (typeof factor !== 'number' || !Number.isFinite(factor) || factor <= 0 || factor > 1) {
-    throw new RangeError('牌局須明確提供有效底池返還係數。');
-  }
-  return factor;
-}
-
 /** Root score uses matched blind money, not a wallet debit or special-pool balance. */
 export function quoteRootPoolOutcome({hand, config = {}} = {}) {
   const settings = normalizeOutcomePoolConfig(config);
   const matchedWager = Math.min(amount(hand?.contributions?.player), amount(hand?.contributions?.npc));
-  const denominator = amount(2 * matchedWager * potFactor(hand));
+  const denominator = amount(2 * matchedWager);
   if (!(denominator > 0)) throw new RangeError('Root 必須已有正數匹配盲注。');
   const score = amount(matchedWager * settings.conversionRate);
   const rawProbability = clampChance(score / denominator);
@@ -215,8 +207,8 @@ function paidQuoteWithState(hand, action, previousTarget, current, settings) {
   if (units(paidPrice) > units(hand.stacks.player)) throw new RangeError('實付額超過玩家可用資產。');
   const contributionAfter = plus(contributionBefore, paidPrice);
   const matchedAfterAction = Math.min(contributionAfter, amount(hand.stacksBefore.npc));
-  const denominator = amount(2 * matchedAfterAction * potFactor(hand));
-  if (!(denominator > 0)) throw new RangeError('付費轉贏分母必須為正数匹配淨 POT。');
+  const denominator = amount(2 * matchedAfterAction);
+  if (!(denominator > 0)) throw new RangeError('付費轉贏分母必須為正數匹配 POT。');
   const score = amount(paidPrice * settings.conversionRate);
   const paidActionBudgetUsed = previousTarget === 'nonWin' && current.paidActionCooldown === 0
     ? Math.min(current.paidAction, amount(Math.max(0, denominator - score))) : 0;

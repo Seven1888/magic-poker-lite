@@ -1,4 +1,4 @@
-import {normalizeOutcomePools} from './outcome-pools.mjs?v=46';
+import {normalizeOutcomePools} from './outcome-pools.mjs?v=51';
 
 export const OUTCOME_PROFILE_KEY = 'magic-poker-lite.player.v1';
 

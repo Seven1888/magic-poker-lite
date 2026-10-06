@@ -313,7 +313,7 @@ export function createPotView({root = globalThis.document, reducedMotion = false
     const payoutText = recipients.map(seat => english
       ? `${seat === 'player' ? 'You receive' : 'Opponent receives'} ${money(result[seat].netReturn)}`
       : `${name(seat)}領回 ${money(result[seat].netReturn)}`).join(' · ');
-    write('pot-event', `${result.winner === 'tie' ? copy.split : ''}${payoutText || copy.ended}${copy.divider}${copy.fee} ${money(result.fee)}`);
+    write('pot-event', `${result.winner === 'tie' ? copy.split : ''}${payoutText || copy.ended}${result.fee > 0 ? `${copy.divider}${copy.fee} ${money(result.fee)}` : ''}`);
     settled = true;
     let finish;
     const done = new Promise(resolve => {finish = resolve;});

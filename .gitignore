@@ -24,6 +24,8 @@ Thumbs.db
 !/output/math-v43-holdem-validation.json
 !/output/entry-budget-v46.json
 !/output/math-v46-pooled-validation.json
+# Version 51 rulebook/build dependency; all other generated QA stays local.
+!/output/entry-budget-local51.json
 
 # Historical research and unused presentation files
 /docs/01-existing-games.md

@@ -1,4 +1,4 @@
-import {pct,esc} from './shared.mjs?v=46';
+import {pct,esc} from './shared.mjs?v=51';
 import {icon} from './ui-icons.mjs?v=35';
 import {responseActionLabel} from './action-response-view.mjs?v=46';
 

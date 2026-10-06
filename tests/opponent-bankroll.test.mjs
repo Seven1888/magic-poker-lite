@@ -4,7 +4,7 @@ import {createSession, startHand, legalActions, applyAction, syncOpponentBankrol
 
 const near = (actual, expected) => assert.ok(Math.abs(actual - expected) < 1e-6, `${actual} != ${expected}`);
 function fixture({player = ['As', 'Ah'], npc = ['Ks', 'Kh'], board = ['2s', '3h', '7d', '9c', 'Jd'], config = {}} = {}) {
-  const session = createSession({buyIn: 1000, ...config, outcome:{mode:'legacy-deck'}, deal: {player: {manual: player}, npc: {manual: npc}}}, 73);
+  const session = createSession({buyIn: 1000, targetRtp:.96, ...config, outcome:{mode:'legacy-deck'}, deal: {player: {manual: player}, npc: {manual: npc}}}, 73);
   const hand = startHand(session);
   assert.equal(new Set([...player, ...npc, ...board]).size, 9);
   hand.deck = [...board, ...hand.deck.filter(card => !board.includes(card))];

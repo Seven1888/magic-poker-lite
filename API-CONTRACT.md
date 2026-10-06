@@ -1,6 +1,6 @@
-# Engine API contract · v46 · 2026-10-05
+# Magic Poker Lite API 契約 · 現行 v51 模型 · 2026-10-06
 
-本機 v46 完整預建結果樹與個人雙水池已完成整合驗證，平均門檻校準亦已完成；正式部署仍待 Pages 成功與公開資源核對。測試與發布證據見 [docs/06](docs/06-mobile-and-deployment.md)，本機工作記錄見 [docs/16](docs/16-v46-work-in-progress.md)。遊戲英文，工具與文件繁中，原三款永久唯讀。
+本輪為 v51 發布準備，使用者已授權提交並推送 main；既有 GitHub Actions 負責建置與 Pages 部署，實際結果以 Actions 為準。實際驗證見 [docs/06](docs/06-mobile-and-deployment.md)。遊戲英文，工具與文件繁體中文；原三款永久唯讀。
 
 ## Config 與模型識別
 
@@ -8,7 +8,7 @@
 
 ```js
 {
-  targetRtp: 0.96, jackpotEnabled: true,
+  targetRtp: 1, jackpotEnabled: true,
   bigBlind: 10, smallBlind: 5,
   minBuyIn: 50, maxBuyIn: 10000, buyIn: 10000,
   betSize: {preflop:10, flop:20, turn:40, river:40},
@@ -29,11 +29,11 @@
 }
 ```
 
-上列 `minBuyIn=50`、`bigBlind=10` 對應已採用的 **5×BET** 門檻。新模型 1,000 棵完整樹平均原始投入為 4.46954846265677 BET，95% CI [4.380062691021308, 4.559034234292232]；平均向上取整為 5，預設設定不需變更。
+上列 `minBuyIn=50`、`bigBlind=10` 對應已採用的 **5×BET** 門檻。新模型 1,000 棵完整樹平均原始投入為 4.5021886189627605 BET，95% CI [4.412775222367272,4.591602015558248]；平均向上取整為 5，預設設定不需變更。
 
-`outcome.mode` 為 `prebuilt-pools` 或明確選擇的 `legacy-deck`。前者是正式新模型，後者供歷史對照且保留自然 JP。BOSS 表版本為 `four-boss-fixed-street-v2`。報告同時保存結果模式、表版本、設定、seed、來源雜湊與統計模式；只看 `ruleSet` 不足以判斷同一模型。
+現行 `outcome.mode` 為 `prebuilt-pools`，BOSS 表版本 `four-boss-fixed-street-v2`。一般研究與樹的模型 metadata 為 `prebuilt-pools-v2-full-pot`；報告保存設定、seed、結果模型與統計模式，不能只以 ruleSet 判斷。
 
-`targetRtp` 仍是匹配底池返還係數；`outcome.conversionRate` 是獨立結果分數係數。0.96、0.99 均不是玩家整體 RTP 或固定勝率。水池金額保存至六位小數，抽票尺度為 1,000,000。預設新玩家池為零；續桌須傳入既有池，不能用初始設定覆蓋。
+`outcome.conversionRate` 是唯一 RTP 計分係數，預設 .99，開局與付費抽籤共用。現行模型正規化 `targetRtp` 為 1，即使載入 .96 等先前參數也不恢復底池費；此鍵保留供資料相容，工具不提供第二係數。匹配底池全額派彩。池金額保存六位小數，抽票尺度 1,000,000；個人雙池跨手保存。
 
 設定鍵為 `magic-poker-lite.config.v2`。無 v2 時才遷移舊設定；舊預設 20 BET 比例遷至本輪預設，自訂比例保留。設定與個人餘額／池資料分開。
 
@@ -83,7 +83,7 @@ prebuilt-pools 的 startHand 先在隔離 session／RNG 完成全部目標、水
 
 `legalActions(hand,actor=hand.actor)` 回傳 `{type,label,amount,to,allIn}`。type 為 fold／check／call／bet／raise，amount 是本次實付，to 是本街累計投入。最多一次 raise；stack 不足時依匹配上限合法全下。
 
-`applyAction(hand,type)` 在新模型只讀已存 edge／node，採用該節點牌面、帳務與池狀態，不臨時抽 target、配牌或重新結算。allin 別名選合法 allIn 分支。`applyActionRaw` 是建樹與歷史模式的下注／結算核心，不能自行產生結果 RNG。
+`applyAction(hand,type)` 在新模型只讀已存 edge／node，採用該節點牌面、帳務與池狀態，不臨時抽 target、配牌或重新結算。allin 別名選合法 allIn 分支。`applyActionRaw` 是建樹的下注／結算核心，不能自行產生結果 RNG。
 
 `getActionDistribution(hand,actor,policy)` 提供合法分布；正式 BOSS 只讀 profile.streetWeights[street]，不讀私牌牌力。check／call 合併 CALL，bet／raise 合併 RAISE；先剔除非法動作再正規化，免費狀態不給 BOSS fold。全零合法權重以 check／call 保底。原牌力列保留作固定表來源，不代表正式仍按牌力選表。
 
@@ -144,7 +144,7 @@ settleOutcomePools({
 
 中途及結算都由手前快照推導，不能把已套用過的中途池再當手前池。只有選中終局提交；反事實節點只存自己的結果。每次成功結算 handSequence 加 1；同一已結算池再交相同 handId 時 alreadySettled=true、specialAward=0，不重複入池或派獎。
 
-付費 nonWin 分母為 `D=round6(2×min(玩家本次付費後累計投入,BOSS本手起始資產)×targetRtp)`；s=round6(實付×.99)，CD=0 時 U=min(付費池,max(0,D-s))，p=clamp((s+U)/D)。結果票按百萬尺度量化。win 繼承不抽結果、不用池、不扣 CD，但記待入池區間。
+付費 nonWin 分母為 `D=round6(2×min(玩家本次付費後累計投入,BOSS本手起始資產))`；s=round6(實付×.99)，CD=0 時 U=min(付費池,max(0,D-s))，p=clamp((s+U)/D)。結果票按百萬尺度量化。win 繼承不抽結果、不用池、不扣 CD，但記待入池區間。
 
 pendingWinPaidCredits 的 from／to 是玩家累計投入區間。結算 effectivePaid=max(0,min(to,matchedWager)-from)，只對此部分按 α 計分並分 80%／20%，退款部分不入池。初始盲注不入池。
 
@@ -156,11 +156,11 @@ reserveSpecialQualification 只在 root win、JP 啟用且本桶特殊池足額�
 
 isSpecialPoolLayout 要求精確 tier、玩家底牌參與特殊牌、公牌本身非特殊牌。無資格時要求玩家非 JP 牌型。正常下注不關閉資格；showdown 且 winner='player'、actualTier 完全相同才扣池派一次。fold 不扣池、不派 JP；這次資格不跨手延用。當手新增特殊池不能補足開局資格。
 
-`classifyJackpot(evaluation)`、`quoteJackpot(tier,baseBet)` 為純分類／報價；新模型派獎權限來自 settleOutcomePools，不可直接用自然牌型 getJackpotAward 自動派。只有 legacy-deck 保留舊自然 JP 規則。
+`classifyJackpot(evaluation)`、`quoteJackpot(tier,baseBet)` 為純分類／報價；新模型派獎權限來自 settleOutcomePools，不可直接用自然牌型 getJackpotAward 自動派。
 
 ## 單手帳務與結果欄位
 
-m=min(雙方 contributions)，refund_i=C_i-m，匹配 POT=2m。勝方 gross=2m，平手各 m，負方 0；netReturn=round6(gross×targetRtp)，fee=gross-netReturn。JP 不扣底池費；totalReturn=netReturn+jackpotAward；profit=totalReturn-m。餘額更新為 stackBefore-C_i+refund+totalReturn。
+m=min(雙方 contributions)，refund_i=C_i-m，匹配 POT=2m。勝方 gross=2m，平手各 m，負方 0；netReturn=gross，fee=0。特殊獎由個人特殊池支付；totalReturn=netReturn+jackpotAward；profit=totalReturn-m。餘額更新為 stackBefore-C_i+refund+totalReturn。
 
 result 保存 reason、winner、folded、pot、gross、fee、net、totalReturn、jackpot、outcomePoolAudit、board、evaluations，以及 player／npc 的 totalContribution、matchedWager、refund、gross、fee、netReturn、jackpotAward、totalReturn、baseProfit、profit、stackBefore／After。
 
@@ -195,31 +195,35 @@ buildActionTree(config, {
 simulateTreeStudy(config, {deals:100, seed:20261005, policy:'balanced', onProgress});
 simulateStudy(config, {
   players:1, entries:1000, seed:20261005, policy:'balanced',
-  mode:'independent', sliceSize:250, targetAsset:undefined,
-  maxHandsPerPlayer:10000, onProgress
+  mode:'continuous', unlimitedBankroll:true, sliceSize:250,
+  onProgress
 });
 ```
 
-玩家策略為 balanced／call／aggressive／tight。樹分析只接受受控 player／npc 首盲；完整樹保留零機率合法 edge，條件期望按路徑機率積分，不按葉子數計率。prebuilt 模式標記 `prebuilt-outcome-full-action-tree`、cardModel=`shared-engine-prebuilt-pools`；歷史固定牌庫另標 mode／cardModel。不足上限不能以截斷結果標 complete。
+玩家策略為 balanced／call／aggressive／tight。樹分析只接受受控 player／npc 首盲；完整樹保留零機率合法 edge，條件期望按路徑機率積分，不按葉子數計率。prebuilt 模式標記 `prebuilt-outcome-full-action-tree`、cardModel=`shared-engine-prebuilt-pools`。不足上限不能以截斷結果標 complete。
 
-單手樹及 treeStudy 每副從設定初始三桶冷啟動，沒有跨手累積；只能代表冷啟動單手期望。玩家研究三模式都保存同一玩家跨手水池；independent 僅重設資產，continuous／cashout 保留玩家資產並採每手隨機盲位。cashout 先判斷達標；不足門檻停止，上限記截尾。對手刷新另列，不算 RTP。
+單手樹及 treeStudy 每副從設定初始三桶冷啟動，沒有跨手累積；只能代表冷啟動單手期望。一般工具研究固定無限資產連續遊玩，保留同一玩家跨手水池、CD、BOSS 與逐手隨機盲位，完成指定 entries。退幣使用有限起始資產，直到達標或不足開手門檻。對手刷新另列，不算 RTP。
 
 `simulateRefundStudy(config,{players,initialAsset,targetAsset,seed,policy,onProgress})` 為退幣研究。v49 按「開始統計」即與一般統計一併執行，不再提供獨立退幣啟動按鈕；三項專用參數與分開展示、匯出的退幣報表維持。專用初始資產不經 `buyIn` 正規化補高，允許零；每人以獨立種子及個人初始池開始，逐手保留資產、雙池及 CD，沿用 `playAutomatedHand`／`syncOpponentBankroll`。先判餘額達標，再判 `handEntryStatus`，不設手數上限；不讀一般研究的 `entries` 或 `maxHandsPerPlayer`。全部玩家結束才回傳 `refundRate=targetPlayers/players`，另列 `insufficientPlayers`、手數與逐玩家最終餘額。剩餘資產不沒收，池額不直接算作錢包。這個比例不等於 RTP。
 
 Worker 任務 `type:'run'` 新增 `refund` 專用參數（players／initialAsset／targetAsset），兩階段沿用同次 config、seed、policies。先完成全部一般策略，沿用 `progress`／`partial` 顯示一般進度與已完成策略；再完成全部退幣策略，發出 `refundProgress`（completedPlayers／totalPlayers／completedHands／currentPlayerHands）。兩階段全數完成後才發出最終 `result:{reports,refundReports}`，主按鈕此時才顯示完成。每個退幣策略完成後仍須等待全部退幣策略完成；不發出部分退幣報表或比例。主執行緒停止會 terminate Worker；停止或失敗保留本輪已完成的一般策略，取消本輪退幣結果。
 
-`type:'refund'` 與其 `refundProgress`／`refundResult` 保留為既有介面相容，頁面不再單獨啟動此任務。退幣 JSON 匯出仍保存 `run.config`、`run.refund`（包含 seed／policies）及 reports，JSON／CSV／複製與一般報表分開。專用三項參數另存 `magic-poker-lite.refund-settings.v1`，不寫入遊戲的個人資產 profile。v48 的獨立啟動流程僅為歷史，現行以 v49 的單一「開始統計」流程為準。
+`type:'refund'` 與其 `refundProgress`／`refundResult` 保留為既有介面相容，頁面不再單獨啟動此任務。退幣 JSON 匯出仍保存 `run.config`、`run.refund`（包含 seed／policies）及 reports，JSON／CSV／複製與一般報表分開。專用三項參數另存 `magic-poker-lite.refund-settings.v1`，不寫入遊戲的個人資產 profile。頁面只有單一「開始統計」流程。
 
-baseRtp=ΣnetReturn/ΣmatchedWager，totalRtp=ΣtotalReturn/ΣmatchedWager，rtp 為 totalRtp 別名。池未派餘額不是回收；退款排除。新水池跨手相關，因此玩家研究按玩家聚類 CI，即使固定 BOSS independent 亦如此；樹研究按副樹。少於兩個獨立單位或零分母不可估 CI，罕見 JP 小樣本不作長期保證。
+baseRtp=ΣnetReturn/ΣmatchedWager，totalRtp=ΣtotalReturn/ΣmatchedWager，rtp 為 totalRtp 別名。池未派餘額不是回收；退款排除。新水池跨手相關，因此玩家研究按玩家聚類 CI，固定 BOSS 研究亦如此；樹研究按副樹。少於兩個獨立單位或零分母不可估 CI，罕見 JP 小樣本不作長期保證。
 
-報告新增 outcomePoolSummary，分列開始／結束、使用、80%／20% 增加、特殊派出與 CD，並按三桶拆分；每玩家及每手的真實 audit 只算被選分支。歷史報告按自身 metadata 解讀，不套用新池或門檻。完整欄位及實際版本以程式輸出為準。
+報告新增 outcomePoolSummary，分列開始／結束、使用、80%／20% 增加、特殊派出與 CD，並按三桶拆分；每玩家及每手的真實 audit 只算被選分支。完整欄位及實際版本以程式輸出為準。
 
 simulation-worker 接受 type='run'／'refund'／'tree'／'treeStudy'；run 回 progress、partial、refundProgress、result，refund 回 refundProgress／refundResult，tree 回 treeResult，treeStudy 回 treeProgress／treeStudyResult，失敗回 error。停止以終止 Worker 實現；未完成樣本不能包裝為完整研究。
 
-一般統計的 JSON／複製資料為 version 8，保留 `reports` 並新增 `refundReports`，`run` 同時包含 `simulation` 與 `refund` 設定。退幣尚未完整完成、停止或失敗時 `refundReports` 為空；不將部分玩家包裝為退幣報表。既有退幣專用 JSON 格式維持 version 1。
+v51 一般工具固定 `mode:'continuous',unlimitedBankroll:true`，每位玩家完成指定 `entries`，沒有資產達標、資產不足或額外安全手數停止條件。無限資產選項只接受 continuous。其有限單手額度大於全部街道的最大合法累計投入，避免全下截斷及 Infinity 帳務；session、亂數、雙池與 CD 保留，額度不計入 RTP。報表 `unlimitedBankroll:true`、玩家 `start/end:null`、`endMeaning:'unlimited-bankroll'`、`maxHandsPerPlayer:null`。退幣研究仍使用有限初始資產及目標資產。
 
-## 驗證界線
+種子欄位空白時，主執行緒每次開始產生一個隨機 uint32，所有策略與兩種研究共用，執行快照及報表保存實際值；明確填入 0 仍為固定種子。設定匯出空白種子為 null，結果匯入還原實際種子。完整樹亦套用相同規則。
 
-[新模型門檻報告](output/entry-budget-v46.json) 使用主 seed 2026100546、四組獨立 seed cohort 各 250 副、balanced 策略、每副資產 10,000 與零初始池。共 1,000 棵完整樹、1,312,000 節點、750,000 終端；平均原始投入 4.46954846265677 BET，95% CI [4.380062691021308, 4.559034234292232]，向上取整採 5×BET。最大機率質量誤差 3.11×10⁻¹⁵，帳務及池對帳誤差均為 0，計算來源雜湊全程一致。這是冷啟動平均投入校準，不是長期 RTP 或水池穩態。v35 遊戲報告、v43 參考算法報告及早期 v46 fixed-deck 資料只屬歷史，不能冒充新模型證據。
+v51 一般統計的 JSON／複製資料為 version 9，包含 `reports` 與 `refundReports`，`run` 同時包含 `simulation` 與 `refund` 設定。參數匯出 version 6。退幣尚未完整完成、停止或失敗時 `refundReports` 為空；不將部分玩家包裝為退幣報表。既有退幣專用 JSON 格式維持 version 1。
 
-完整測試 420／420、門檻校準及 102 手跨手池驗證已完成；規則、雙池、原子失敗、退款剪裁、保存交易、特殊牌、preview 隔離與工具分母的驗證範圍見 docs/06。桌面瀏覽器窄 viewport 不等於實體手機驗收；正式 Pages 部署狀態由 docs/06 及最後完成訊息記錄。
+## 本輪驗證
+
+[門檻報告](output/entry-budget-local51.json) 完整運算 1,000 棵冷啟動樹，1,312,000 節點、750,000 終端。平均原始投入 4.5021886189627605 BET，95% CI [4.412775222367272,4.591602015558248]，向上取整維持 5 BET。機率質量、錢包守恆與池對帳均通過，來源雜湊在運算期間一致。
+
+自動測試與瀏覽器檢查見 [docs/06](docs/06-mobile-and-deployment.md)。單手冷啟動校準不等於跨手池穩態或長期 RTP 認證；公開站是否已更新 v51，以本輪 Actions 部署結果為準。

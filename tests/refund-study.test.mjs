@@ -88,7 +88,7 @@ test('退幣研究沿用逐手隨機盲位、四型輪替及跨手雙池和冷�
     betSize: {preflop: 1, flop: 1, turn: 1, river: 1},
     outcome: {conversionRate: 0, initialPaidActionPools: [.5, 20, 30],
       initialSpecialPools: [0, 4, 5], initialPaidActionCooldown: 2}};
-  const report = simulateRefundStudy(config, {players: 1, initialAsset: 8, targetAsset: 20,
+  const report = simulateRefundStudy(config, {players: 1, initialAsset: 40, targetAsset: 80,
     seed: 46021, policy: 'call'});
   assert.equal(report.completedPlayers, 1); assert.equal(report.outcomeModel, 'prebuilt-pools');
   const row = report.playerResults[0];

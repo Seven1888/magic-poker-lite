@@ -32,7 +32,7 @@ for(const mode of ['independent','continuous','cashout'])test(`default pooled ${
   const options={mode,players:2,entries:3,maxHandsPerPlayer:3,targetAsset:1e6,seed:46021,policy:'call'};
   const report=simulateStudy(config,options);
   assert.equal(report.hands,6);assert.equal(report.outcomeModel,'prebuilt-pools');
-  assert.match(report.modelVersion,/prebuilt-pools-v1/);assert.equal(report.methodMeta.ciUnit,'player');assert.equal(report.methodMeta.ciSamples,2);
+  assert.match(report.modelVersion,/prebuilt-pools-v2-full-pot/);assert.equal(report.methodMeta.ciUnit,'player');assert.equal(report.methodMeta.ciSamples,2);
   assert.equal(report.outcomePoolSummary.players,2);assert.equal(report.outcomePoolSummary.hands,6);
   near(report.outcomePoolSummary.maxLedgerError,0,1e-6);
   for(const player of report.playerResults){

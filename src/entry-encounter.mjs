@@ -1,4 +1,4 @@
-import {createSession} from './engine.mjs?v=46';
+import {createSession} from './engine.mjs?v=51';
 import {selectBossProfile} from './boss-profiles.mjs?v=46';
 
 /** Reserve the entry seed and public identity without dealing or charging chips.

@@ -3,7 +3,7 @@ import {getJackpotAward, classifyJackpot, quoteJackpot} from './jackpot.mjs?v=35
 import {normalizeBossConfig, selectBossProfile, getBossProfileDistribution} from './boss-profiles.mjs?v=46';
 import {assertHandEntryAssets} from './hand-entry.mjs?v=46';
 import {DEFAULT_OUTCOME_POOL_CONFIG, normalizeOutcomePoolConfig, createOutcomePools, normalizeOutcomePools, compactOutcomePools,
-  drawRootPoolOutcome, drawPaidPoolOutcome, applyBranchPools, settleOutcomePools, isSpecialPoolLayout} from './outcome-pools.mjs?v=46';
+  drawRootPoolOutcome, drawPaidPoolOutcome, applyBranchPools, settleOutcomePools, isSpecialPoolLayout} from './outcome-pools.mjs?v=51';
 import {buildPrebuiltOutcomeTree, lookupPrebuiltOutcomeTransition} from './prebuilt-outcome-tree.mjs?v=46';
 import {createOutcomeLayout} from './outcome-layout.mjs?v=46';
 export {makeDeck, createRng, shuffle, evaluateBest, compareHands, holeScore, normalizeCard} from './poker.mjs?v=35';
@@ -16,8 +16,8 @@ const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
 const number = (n, fallback) => Number.isFinite(Number(n)) ? Number(n) : fallback;
 const epsilon = 1e-7;
 export const DEFAULT_CONFIG = Object.freeze({
-  targetRtp: 0.96, jackpotEnabled: true, smallBlind: 5, bigBlind: 10,
-  // Rounded-up offline balanced-policy mean contribution (entry-budget-v46.json).
+  targetRtp: 1, jackpotEnabled: true, smallBlind: 5, bigBlind: 10,
+  // Rounded-up offline balanced-policy mean contribution (entry-budget-local51.json).
   // Recalibrate whenever the outcome or action model changes.
   minBuyIn: 50, maxBuyIn: 10000, buyIn: 10000,
   betSize: Object.freeze({preflop: 10, flop: 20, turn: 40, river: 40}),
@@ -74,6 +74,9 @@ export function normalizeConfig(source = {}) {
   const outcome = source.outcome ?? {};
   const mode = outcome.mode ?? d.outcome.mode;
   if (!['prebuilt-pools', 'legacy-deck'].includes(mode)) throw new TypeError('未知結果模型。');
+  // Current pooled outcomes use one score coefficient and pay the full pot.
+  // A saved prototype pot fee must not reappear when old settings are loaded.
+  if (mode === 'prebuilt-pools') config.targetRtp = 1;
   const initial = createOutcomePools({paidAction: outcome.initialPaidActionPools,
     special: outcome.initialSpecialPools, paidActionCooldown: outcome.initialPaidActionCooldown});
   config.outcome = {mode, ...normalizeOutcomePoolConfig(outcome),
@@ -553,11 +556,11 @@ export function simulate(config = {}, {hands = 10000, seed = 123, policy = 'bala
   const session = createSession(normalized, seed);
   const emptyTiers = () => ({royal: 0, straightFlush: 0, quads: 0});
   const newBatch = () => ({hands: 0, wagers: 0, netReturns: 0, totalReturns: 0, jackpotAwards: 0, tierCounts: emptyTiers()});
-  const result = {ruleSet: normalized.outcome.mode === 'prebuilt-pools' ? 'hands-up-pooled-pot-v46' : 'heads-up-two-blinds-v1', hands, seed, policy, config: normalized, wagers: 0, refunds: 0, grossReturns: 0, netReturns: 0,
+  const result = {ruleSet: normalized.outcome.mode === 'prebuilt-pools' ? 'hands-up-pooled-pot-v51' : 'heads-up-two-blinds-v1', hands, seed, policy, config: normalized, wagers: 0, refunds: 0, grossReturns: 0, netReturns: 0,
     totalReturns: 0, jackpotAwards: 0, tierCounts: emptyTiers(),
     fees: 0, playerFees: 0, wins: 0, losses: 0, ties: 0, folds: 0, npcFolds: 0, showdowns: 0, totalActions: 0,
     conservationError: 0, batches: [],
-    method: `每手雙方重設相同帶入、輪替大小盲；小盲自動投入0.5 BET、大盲自動投入1 BET。BOSS 採 ${normalized.boss.mode === 'legacy' ? '舊版權重' : normalized.boss.mode === 'fixed' ? '固定類型' : '不連續重複的四型輪替'}，玩家使用選定策略。有效投入排除退款，JP另加，不把96%結算係數當成勝率。${(normalized.outcome.mode === 'prebuilt-pools' || normalized.boss.mode === 'rotate') ? '本函式僅有一條玩家序列，水池或輪替BOSS跨手相關，因此不報CI；請使用simulateStudy的多玩家聚類估計。' : '95% CI為獨立牌局比值的常態近似。'}稀有JP零命中不代表機率為零。`};
+    method: `每手雙方重設相同帶入、輪替大小盲；小盲自動投入0.5 BET、大盲自動投入1 BET。BOSS 採 ${normalized.boss.mode === 'legacy' ? '舊版權重' : normalized.boss.mode === 'fixed' ? '固定類型' : '不連續重複的四型輪替'}，玩家使用選定策略。有效投入排除退款，JP另加，RTP 計分係數用於預建抽籤，底池全額派彩。${(normalized.outcome.mode === 'prebuilt-pools' || normalized.boss.mode === 'rotate') ? '本函式僅有一條玩家序列，水池或輪替BOSS跨手相關，因此不報CI；請使用simulateStudy的多玩家聚類估計。' : '95% CI為獨立牌局比值的常態近似。'}稀有JP零命中不代表機率為零。`};
   let sumX2 = 0, sumBaseY2 = 0, sumBaseXY = 0, sumTotalY2 = 0, sumTotalXY = 0;
   let batch = newBatch();
   for (let i = 0; i < hands; i++) {

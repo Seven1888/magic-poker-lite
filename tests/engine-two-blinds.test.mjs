@@ -33,9 +33,9 @@ test('either small blind loses its posted half-BET on folding; only the unmatche
     applyAction(hand,'fold');
     assert.equal(hand.result[bb].refund,5); assert.equal(hand.result[bb].matchedWager,5);
     assert.equal(hand.result[firstSmallBlind].profit,-5);
-    assert.equal(hand.result.pot,10); assert.equal(hand.result.fee,.4); assert.equal(hand.result.net,9.6);
+    assert.equal(hand.result.pot,10); assert.equal(hand.result.fee,0); assert.equal(hand.result.net,10);
     assert.equal(hand.result.jackpot,null);
-    assert.equal(session.stacks[firstSmallBlind],995); assert.equal(session.stacks[bb],1004.6);
+    assert.equal(session.stacks[firstSmallBlind],995); assert.equal(session.stacks[bb],1005);
     near(session.stacks.player+session.stacks.npc+session.fees,2000);
   }
 });
@@ -48,8 +48,8 @@ test('a small-blind raise pays fifteen once to reach twenty; opponent fold refun
   applyAction(hand,'fold'); const r=hand.result;
   assert.equal(r.player.totalContribution,20); assert.equal(r.player.refund,10);
   assert.equal(r.player.matchedWager,10); assert.equal(r.npc.matchedWager,10);
-  assert.equal(r.pot,20); assert.equal(r.fee,.8); assert.equal(r.player.netReturn,19.2);
-  assert.deepEqual(session.stacks,{player:1009.2,npc:990});
+  assert.equal(r.pot,20); assert.equal(r.fee,0); assert.equal(r.player.netReturn,20);
+  assert.deepEqual(session.stacks,{player:1010,npc:990});
   near(session.stacks.player+session.stacks.npc+session.fees,2000);
 });
 
@@ -115,7 +115,7 @@ test('a seat admitted at the minimum may raise all-in later, with matched calls 
 
 test('fractional BET keeps its exact half-blind, call and refund amounts without rounding to cents', () => {
   for(const sb of ['player','npc']) {
-    const session=createSession({outcome:{mode:'legacy-deck'},buyIn:1000,bigBlind:.03,smallBlind:0,jackpotEnabled:false},42,{firstSmallBlind:sb});
+    const session=createSession({outcome:{mode:'legacy-deck'},targetRtp:.96,buyIn:1000,bigBlind:.03,smallBlind:0,jackpotEnabled:false},42,{firstSmallBlind:sb});
     const hand=startHand(session),bb=other(sb);
     assert.equal(hand.config.smallBlind,.015); assert.equal(hand.pot,.045);
     assert.equal(hand.contributions[sb],.015); assert.equal(hand.contributions[bb],.03);
@@ -128,7 +128,7 @@ test('fractional BET keeps its exact half-blind, call and refund amounts without
 });
 
 test('opening folds produce matched half-blind wagers and preserve simulated refunds, fees and RTP denominator', () => {
-  const result=simulate({outcome:{mode:'legacy-deck'},boss:{mode:'legacy'},jackpotEnabled:false,npc:{fold:1,call:0,raise:0,check:1,bet:0,strengthInfluence:0,priceInfluence:0}},
+  const result=simulate({outcome:{mode:'legacy-deck'},targetRtp:.96,boss:{mode:'legacy'},jackpotEnabled:false,npc:{fold:1,call:0,raise:0,check:1,bet:0,strengthInfluence:0,priceInfluence:0}},
     {hands:100,seed:20260930,policy:'balanced'});
   assert.equal(result.ruleSet,'heads-up-two-blinds-v1');
   assert.equal(result.wagers,500); assert.equal(result.fees,40); assert.equal(result.netReturns,480);

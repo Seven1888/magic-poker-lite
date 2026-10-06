@@ -59,10 +59,10 @@ test('fractional blind HUD and money labels agree with opening commitments, call
   applyAction(hand, 'fold');
   const settled = getHudSnapshot({session, hand});
   assert.equal(money(settled.playerBalance), '999.985');
-  assert.equal(money(settled.npcBalance), '1,000.0138');
+  assert.equal(money(settled.npcBalance), '1,000.015');
   assert.equal(money(hand.result.npc.refund), '0.015');
-  assert.equal(money(hand.result.npc.netReturn), '0.0288');
-  assert.equal(money(hand.result.fee), '0.0012');
+  assert.equal(money(hand.result.npc.netReturn), '0.03');
+  assert.equal(money(hand.result.fee), '0');
   assert.equal(money(settled.settledTableProfit), '-0.015');
 });
 
@@ -72,24 +72,24 @@ test('refund settlement and the following hand retain genuine cumulative table p
   const hud = getHudSnapshot({session, hand});
   assert.equal(hand.result.player.refund, 10);
   assert.equal(hud.playerCommitted, 20); assert.equal(hud.npcCommitted, 10);
-  assert.equal(hud.playerBalance, 1009.2); assert.equal(hud.npcBalance, 990);
-  assert.equal(hud.settledTableProfit, 9.2); assert.equal(hud.npcSettledTableProfit, -10);
+  assert.equal(hud.playerBalance, 1010); assert.equal(hud.npcBalance, 990);
+  assert.equal(hud.settledTableProfit, 10); assert.equal(hud.npcSettledTableProfit, -10);
   assert.equal(hud.balanceLabel, '桌上可用'); assert.equal(hud.turnLabel, '本手已結算');
   assert.equal(hud.maxStreetTotal, 0); assert.deepEqual(hud.actions, []);
   const next = startHand(session), nextHud = getHudSnapshot({session, hand: next});
-  assert.equal(nextHud.playerBalance, 999.2); assert.equal(nextHud.npcBalance, 985);
-  assert.equal(nextHud.settledTableProfit, 9.2); assert.equal(nextHud.npcSettledTableProfit, -10);
+  assert.equal(nextHud.playerBalance, 1000); assert.equal(nextHud.npcBalance, 985);
+  assert.equal(nextHud.settledTableProfit, 10); assert.equal(nextHud.npcSettledTableProfit, -10);
   assert.equal(nextHud.dealerSeat, 'npc'); assert.equal(nextHud.playerSeat, 'BB');
   assert.equal(nextHud.buyIn, 1000); assert.equal(nextHud.deckRemaining, 48);
 });
 
 test('closed-table snapshot preserves carried-out balances and its original buy-in', () => {
-  const closedTable = {playerBalance: 1009.2, npcBalance: 990, buyIn: 1000, settledTableProfit: 9.2};
+  const closedTable = {playerBalance: 1010, npcBalance: 990, buyIn: 1000, settledTableProfit: 10};
   const before = structuredClone(closedTable);
   const hud = getHudSnapshot({config: {buyIn: 2000}, closedTable});
   assert.equal(hud.balanceLabel, '上桌帶出'); assert.equal(hud.buyInLabel, '上桌帶入');
-  assert.equal(hud.playerBalance, 1009.2); assert.equal(hud.npcBalance, 990);
-  assert.equal(hud.buyIn, 1000); assert.equal(hud.settledTableProfit, 9.2);
+  assert.equal(hud.playerBalance, 1010); assert.equal(hud.npcBalance, 990);
+  assert.equal(hud.buyIn, 1000); assert.equal(hud.settledTableProfit, 10);
   assert.equal(hud.npcSettledTableProfit, -10); assert.equal(hud.playerCommitted, 0);
   assert.equal(hud.deckRemaining, 52); assert.equal(hud.dealtCards, 0);
   assert.deepEqual(hud.actions, []); assert.deepEqual(closedTable, before);

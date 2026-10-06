@@ -138,8 +138,8 @@ test('fractional blinds show the exact pot, posted chips, uncalled refund and ne
   assert.match(text(doc, 'pot-detail'), /Matched: 0\.015 each/);
   assert.match(text(doc, 'pot-detail'), /Opponent: refund 0\.015/);
   assert.equal(flights(doc).find(flight => flight.dataset.flow === 'refund').children[1].textContent, 'Refund 0.015');
-  assert.equal(flights(doc).find(flight => flight.dataset.flow === 'payout').children[1].textContent, '+0.0288');
-  assert.equal(text(doc, 'pot-event'), 'Opponent receives 0.0288 | Fee 0.0012');
+  assert.equal(flights(doc).find(flight => flight.dataset.flow === 'payout').children[1].textContent, '+0.03');
+  assert.equal(text(doc, 'pot-event'), 'Opponent receives 0.03');
   assert.equal(JSON.stringify(hand), snapshot);
 });
 
@@ -192,11 +192,11 @@ test('fold settlement separates refund from net award and shows matched contribu
   assert.equal(hand.result.pot, 20, 'the historical pot stays available to accounting');
   assert.equal(text(doc, 'contribution-player'), '10'); assert.equal(text(doc, 'contribution-npc'), '10');
   assert.match(text(doc, 'pot-detail'), /你退回 10/);
-  assert.equal(text(doc, 'pot-event'), '你領回 19.2｜費用 0.8');
+  assert.equal(text(doc, 'pot-event'), '你領回 20');
   const refund = flights(doc).filter(flight => flight.dataset.flow === 'refund');
   const payouts = flights(doc).filter(flight => flight.dataset.flow === 'payout');
   assert.equal(refund.length, 1); assert.equal(refund[0].children[1].textContent, '退款 10');
-  assert.equal(payouts.length, 1); assert.equal(payouts[0].children[1].textContent, '+19.2');
+  assert.equal(payouts.length, 1); assert.equal(payouts[0].children[1].textContent, '+20');
   assert.equal(refund[0].animations[0].options.duration, atGameSpeed(1100));
   assert.equal(payouts[0].animations[0].options.duration, atGameSpeed(1100));
   assert.equal(payouts[0].dataset.seat, 'player');
@@ -243,7 +243,7 @@ test('tie settlement splits net awards to both stack endpoints, after final matc
   await finishMotion(doc); await view.whenIdle();
   const payouts = flights(doc).filter(flight => flight.dataset.flow === 'payout');
   assert.equal(payouts.length, 2); assert.deepEqual(payouts.map(p => p.dataset.seat), ['player', 'npc']);
-  assert.ok(payouts.every(p => p.children[1].textContent === '+9.6'));
+  assert.ok(payouts.every(p => p.children[1].textContent === '+10'));
   assert.match(text(doc, 'pot-event'), /^平分/); assert.match(text(doc, 'pot-detail'), /無未跟注退款/);
   assert.deepEqual(payouts.map(p => p.animations[0].options.delay), [0, atGameSpeed(40)]);
   assert.ok(view.settledDelay() <= Math.ceil(atGameSpeed(1000)));
@@ -255,7 +255,7 @@ test('reduced motion renders all accounting immediately without flying chips or 
   view.render(hand); applyAction(hand, 'fold'); view.render(hand);
   assert.equal(flights(doc).length, 0); assert.equal(view.settledDelay(), 0);
   assert.equal(text(doc, 'pot-value'), '0'); assert.match(text(doc, 'pot-detail'), /對手退回 5/);
-  assert.equal(text(doc, 'pot-event'), '對手領回 9.6｜費用 0.4');
+  assert.equal(text(doc, 'pot-event'), '對手領回 10');
 });
 
 test('new hands cancel old flights; leaving the table resets the pot and animation deadline', () => {
@@ -322,7 +322,7 @@ test('nonuniform scale uses separate axes for contributions, refunds and payout 
   }
   await finishMotion(doc); await view.whenIdle();
   assert.equal(text(doc, 'pot-value'), '0');
-  assert.equal(text(doc, 'pot-event'), '你領回 19.2｜費用 0.8');
+  assert.equal(text(doc, 'pot-event'), '你領回 20');
 });
 
 test('deferred final call finishes before payouts; repeated renders never replay or mutate the hand', async () => {
@@ -461,7 +461,7 @@ test('phase notifications follow chip accounting once and reentrant or failing o
   assert.deepEqual(phases.filter(event => event.flow !== 'arrival'), [
     {flow: 'contribution', seats: ['player', 'npc'], amounts: {player: 20, npc: 10}},
     {flow: 'refund', seats: ['player'], amounts: {player: 10}},
-    {flow: 'payout', seats: ['player'], amounts: {player: 19.2}},
+    {flow: 'payout', seats: ['player'], amounts: {player: 20}},
     {flow: 'complete', seats: [], amounts: {}}
   ]);
   assert.equal(idle, true); assert.equal(phaseIdle, true); assert.equal(text(doc, 'pot-value'), '0');
@@ -471,7 +471,7 @@ test('phase notifications follow chip accounting once and reentrant or failing o
     {flow: 'arrival', seats: ['player'], amounts: {player: 20}},
     {flow: 'arrival', seats: ['npc'], amounts: {npc: 10}},
     {flow: 'arrival', seats: ['player'], amounts: {player: 10}},
-    {flow: 'arrival', seats: ['player'], amounts: {player: 19.2}}
+    {flow: 'arrival', seats: ['player'], amounts: {player: 20}}
   ]);
   assert.equal(phases.length, 8); assert.equal(text(doc, 'pot-value'), '0');
   assert.equal(JSON.stringify(hand), snapshot); assert.equal(hand.rng.state(), rng);

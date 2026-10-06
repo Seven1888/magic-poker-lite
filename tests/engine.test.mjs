@@ -108,10 +108,10 @@ test('uncalled raises and blinds are refunded, excluded from wagers, and settlem
   assert.equal(hand.result.npc.totalContribution, 10);
   assert.equal(hand.result.npc.refund, 5);
   assert.equal(hand.result.npc.gross, 10);
-  assert.equal(hand.result.npc.netReturn, 9.6);
-  assert.equal(hand.result.npc.profit, 4.6);
-  assert.equal(hand.result.pot, 10); assert.equal(hand.result.fee, .4);
-  assert.deepEqual(session.stacks, {player: 995, npc: 1004.6});
+  assert.equal(hand.result.npc.netReturn, 10);
+  assert.equal(hand.result.npc.profit, 5);
+  assert.equal(hand.result.pot, 10); assert.equal(hand.result.fee, 0);
+  assert.deepEqual(session.stacks, {player: 995, npc: 1005});
   near(session.stacks.player + session.stacks.npc + session.fees, 2000);
   assert.throws(() => applyAction(hand, 'call'), /不能|合法分支/);
 });
@@ -157,7 +157,7 @@ test('a small blind below the hand minimum cannot post or advance the table', ()
 });
 
 test('common board tie splits contested gross and applies symmetric fee', () => {
-  const hand = startHand(createSession({outcome: {mode: 'legacy-deck'}, buyIn: 1000, jackpotEnabled: false, deal: {player: {manual: ['2c', '3d']}, npc: {manual: ['4c', '5d']}}}, 1));
+  const hand = startHand(createSession({outcome: {mode: 'legacy-deck'}, targetRtp: .96, buyIn: 1000, jackpotEnabled: false, deal: {player: {manual: ['2c', '3d']}, npc: {manual: ['4c', '5d']}}}, 1));
   const board = ['As', 'Ks', 'Qs', 'Js', 'Ts'];
   hand.deck = [...board, ...hand.deck.filter(card => !board.includes(card))];
   passive(hand);
@@ -172,14 +172,14 @@ test('legacy score redraw imports respect the limit, improve aggregate quality, 
   const low = {rerollChance: 0, maxRerolls: 0};
   const high = {rerollChance: 1, maxRerolls: 6, targetScore: 0.75};
   for (let seed = 0; seed < 300; seed++) {
-    const plain = startHand(createSession({outcome: {mode: 'legacy-deck'}, deal: {player: low, npc: low}}, seed));
-    const boosted = startHand(createSession({outcome: {mode: 'legacy-deck'}, deal: {player: high, npc: high}}, seed));
+    const plain = startHand(createSession({outcome: {mode: 'legacy-deck'}, targetRtp: .96, deal: {player: low, npc: low}}, seed));
+    const boosted = startHand(createSession({outcome: {mode: 'legacy-deck'}, targetRtp: .96, deal: {player: high, npc: high}}, seed));
     natural += holeScore(plain.holes.player); enhanced += holeScore(boosted.holes.player);
     for (const seat of ['player', 'npc']) assert.ok(boosted.dealAudit[seat].rerolls <= 6);
     assert.equal(new Set([...boosted.holes.player, ...boosted.holes.npc, ...boosted.board, ...boosted.deck]).size, 52);
   }
   assert.ok(enhanced > natural * 1.10, '有限次弱牌重抽應提高平均起手品質，但不保證每手達標。');
-  const fixed = startHand(createSession({outcome: {mode: 'legacy-deck'}, deal: {player: {...high, manual: ['2c', '7d']}}}, 12));
+  const fixed = startHand(createSession({outcome: {mode: 'legacy-deck'}, targetRtp: .96, deal: {player: {...high, manual: ['2c', '7d']}}}, 12));
   assert.deepEqual(fixed.holes.player, ['2c', '7d']); assert.equal(fixed.dealAudit.player.rerolls, 0);
 });
 
@@ -259,7 +259,7 @@ test('2,000 varied strategy hands preserve wallets, cards, contribution accounti
 });
 
 test('symmetric reference simulation brackets 96%; fees and refunds use correct denominator; reproducible CI', () => {
-  const result = simulate({outcome: {mode: 'legacy-deck'}, boss: {mode: 'legacy'}, jackpotEnabled: false, deal: {npc: {rerollChance: 0.5}}}, {hands: 30000, seed: 1984});
+  const result = simulate({outcome: {mode: 'legacy-deck'}, targetRtp: .96, boss: {mode: 'legacy'}, jackpotEnabled: false, deal: {npc: {rerollChance: 0.5}}}, {hands: 30000, seed: 1984});
   assert.ok(result.ci95[0] < 0.96 && result.ci95[1] > 0.96);
   near(result.netReturns / result.wagers, result.rtp, 1e-10);
   near(result.netReturns / result.grossReturns, 0.96, 1e-10);

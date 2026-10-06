@@ -1,4 +1,4 @@
-import {normalizeConfig} from './engine.mjs?v=46';
+import {normalizeConfig} from './engine.mjs?v=51';
 import {minimumAssetsForBet} from './hand-entry.mjs?v=46';
 export {minimumAssetsForBet as minimumAssets} from './hand-entry.mjs?v=46';
 const round=n=>Math.round((n+Number.EPSILON)*1e6)/1e6;

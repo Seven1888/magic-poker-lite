@@ -44,7 +44,7 @@ test('一次開始統計沿用真實預建引擎，最後同時發布一般及�
   assert.equal(report.outcomeModel, 'prebuilt-pools');
   assert.equal(report.hands, 1);
   assert.equal(report.refundRate, 1);
-  assert.equal(report.playerResults[0].end, 96);
+  assert.equal(report.playerResults[0].end, 100);
   assert.equal(report.outcomePoolSummary.hands, 1);
   const firstRefund = messages.findIndex(message => message.type === 'refundProgress');
   assert.ok(firstRefund > messages.findIndex(message => message.type === 'partial'));

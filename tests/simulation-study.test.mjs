@@ -187,3 +187,51 @@ test('invalid study controls fail clearly instead of silently changing the reque
     assert.throws(() => simulateStudy(passive, options));
   }
 });
+
+test('無限資產連續研究即使持續虧損也完成指定手數，沒有額外安全上限', () => {
+  const config = {...passive, targetRtp: .5};
+  const options = {mode: 'continuous', players: 2, entries: 80, policy: 'call', seed: 20261005};
+  const limited = simulateStudy(config, options), progress = [];
+  const unlimited = simulateStudy(config, {...options, unlimitedBankroll: true, maxHandsPerPlayer: 1,
+    onProgress: value => progress.push(value)});
+  assert.ok(limited.hands < 160);
+  assert.equal(unlimited.hands, 160);
+  assert.deepEqual(unlimited.playerSummary, {completed: 2, target: 0, insufficient: 0, censored: 0});
+  assert.equal(unlimited.maxHandsPerPlayer, null);
+  assert.equal(unlimited.targetAsset, null);
+  assert.equal(unlimited.methodMeta.insufficientThreshold, null);
+  assert.ok(unlimited.playerResults.every(player => player.start === null && player.end === null && player.hands === 80));
+  assert.ok([unlimited.wagers, unlimited.totalReturns, unlimited.profit, unlimited.baseRtp, unlimited.totalRtp].every(Number.isFinite));
+  near(unlimited.profit, unlimited.totalReturns - unlimited.wagers);
+  assert.ok(unlimited.conservationError < 1e-8);
+  assert.equal(progress.at(-1).completed, 160);
+  assert.equal(progress.at(-1).totalIsUpperBound, false);
+  const largerAssets = simulateStudy({...config, minBuyIn: 100000, maxBuyIn: 100000, buyIn: 100000}, {...options, unlimitedBankroll: true});
+  for (const key of ['hands', 'wagers', 'totalReturns', 'wins', 'losses', 'profit']) assert.equal(unlimited[key], largerAssets[key]);
+});
+
+test('無限資產沿用真實連續引擎、隨機盲位、BOSS 輪替及跨手雙池', () => {
+  const options = {mode: 'continuous', unlimitedBankroll: true, entries: 4, policy: 'call', seed: 'unlimited-pools'};
+  const report = simulateStudy({}, options);
+  const session = createSession(report.config, studyPlayerSeed(options.seed, 0), {firstSmallBlind: 'random'});
+  let wagers = 0, returns = 0, small = 0;
+  const bosses = [];
+  for (let index = 0; index < 4; index++) {
+    session.stacks = {player: 10000, npc: 10000};
+    const hand = playAutomatedHand(session, 'call');
+    wagers += hand.result.player.matchedWager; returns += hand.result.player.totalReturn;
+    small += Number(hand.smallBlind === 'player'); bosses.push(hand.bossProfile.id);
+    syncOpponentBankroll(session);
+  }
+  near(report.wagers, wagers); near(report.totalReturns, returns);
+  assert.equal(report.byBlind.small.hands, small);
+  assert.deepEqual(report.playerResults[0].bossProfileSequence, bosses);
+  assert.equal(report.bossEncounterAudit.unexpectedRepeats, 0);
+  assert.deepEqual(report.playerResults[0].outcomePoolSummary.end, session.outcomePools);
+  assert.equal(report.playerResults[0].outcomePoolSummary.end.handSequence, 4);
+  assert.equal(report.methodMeta.blindMode, 'random-each-hand');
+  const target = {id: 'study-reports', innerHTML: '', querySelector() { return {innerHTML: ''}; }};
+  renderStudyDetails(report, null, target);
+  assert.match(target.innerHTML, /研究資產<\/td><td>無限/);
+  assert.doesNotMatch(target.innerHTML, /資產不足率|每人手數上限|玩家資產、達標與截尾/);
+});

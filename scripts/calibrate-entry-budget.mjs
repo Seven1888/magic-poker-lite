@@ -87,7 +87,7 @@ if (!isMainThread) {
   if (!checks.complete || checks.maxProbabilityMassError > 1e-9 || checks.maxConservationError > 1e-5 || checks.maxPoolLedgerError > 1e-5) {
     throw new Error(`Calibration audit failed: ${JSON.stringify(checks)}`);
   }
-  const report = {kind: 'entry-budget-calibration', version: 2, clientDate: '2026-10-05',
+  const report = {kind: 'entry-budget-calibration', version: 3, clientDate: '2026-10-06',
     command: `node scripts/calibrate-entry-budget.mjs${process.argv.slice(2).length ? ` ${process.argv.slice(2).join(' ')}` : ''}`,
     seed, deals, workers, cohortSeeds: seeds, policy: 'balanced', config,
     model: studies[0].meta.cardModel, modelVersion: studies[0].meta.modelVersion,
@@ -113,7 +113,7 @@ if (!isMainThread) {
     sourceHashAlgorithm: 'sha256 UTF-8, BOM removed, LF normalized', sourceHashes: hashes,
     checks, cohorts, elapsedMs: Date.now() - started};
   assertSources(hashes);
-  const output = options.output ?? 'output/entry-budget-v46.json';
+  const output = options.output ?? 'output/entry-budget-local51.json';
   writeFileSync(new URL(`../${output}`, import.meta.url), `${JSON.stringify(report, null, 2)}\n`);
   console.log(JSON.stringify({kind: 'calibration-complete', output, model: report.model, deals,
     meanBetMultiple, betMultipleCi95: report.betMultipleCi95,
