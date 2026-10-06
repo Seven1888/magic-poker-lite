@@ -204,15 +204,19 @@ simulateStudy(config, {
 
 單手樹及 treeStudy 每副從設定初始三桶冷啟動，沒有跨手累積；只能代表冷啟動單手期望。玩家研究三模式都保存同一玩家跨手水池；independent 僅重設資產，continuous／cashout 保留玩家資產並採每手隨機盲位。cashout 先判斷達標；不足門檻停止，上限記截尾。對手刷新另列，不算 RTP。
 
-`simulateRefundStudy(config,{players,initialAsset,targetAsset,seed,policy,onProgress})` 為 v48 獨立退幣研究。專用初始資產不經 `buyIn` 正規化補高，允許零；每人以獨立種子及個人初始池開始，逐手保留資產、雙池及 CD，沿用 `playAutomatedHand`／`syncOpponentBankroll`。先判餘額達標，再判 `handEntryStatus`，不設手數上限；不讀一般研究的 `entries` 或 `maxHandsPerPlayer`。全部玩家結束才回傳 `refundRate=targetPlayers/players`，另列 `insufficientPlayers`、手數與逐玩家最終餘額。剩餘資產不沒收，池額不直接算作錢包。這個比例不等於 RTP。
+`simulateRefundStudy(config,{players,initialAsset,targetAsset,seed,policy,onProgress})` 為退幣研究。v49 按「開始統計」即與一般統計一併執行，不再提供獨立退幣啟動按鈕；三項專用參數與分開展示、匯出的退幣報表維持。專用初始資產不經 `buyIn` 正規化補高，允許零；每人以獨立種子及個人初始池開始，逐手保留資產、雙池及 CD，沿用 `playAutomatedHand`／`syncOpponentBankroll`。先判餘額達標，再判 `handEntryStatus`，不設手數上限；不讀一般研究的 `entries` 或 `maxHandsPerPlayer`。全部玩家結束才回傳 `refundRate=targetPlayers/players`，另列 `insufficientPlayers`、手數與逐玩家最終餘額。剩餘資產不沒收，池額不直接算作錢包。這個比例不等於 RTP。
 
-Worker 任務 `type:'refund'` 接收共用 config、專用資產／玩家數、seed、policies，發出 `refundProgress`（completedPlayers／totalPlayers／completedHands／currentPlayerHands）及最終 `refundResult`。每策略完整完成後仍須等待全部策略完成；主執行緒停止會 terminate Worker 並取消本輪，不發布部分退幣結果。JSON 匯出保存 `run.config`、`run.refund`（包含 seed／policies）及 reports。專用三項參數另存 `magic-poker-lite.refund-settings.v1`，不寫入遊戲的個人資產 profile。
+Worker 任務 `type:'run'` 新增 `refund` 專用參數（players／initialAsset／targetAsset），兩階段沿用同次 config、seed、policies。先完成全部一般策略，沿用 `progress`／`partial` 顯示一般進度與已完成策略；再完成全部退幣策略，發出 `refundProgress`（completedPlayers／totalPlayers／completedHands／currentPlayerHands）。兩階段全數完成後才發出最終 `result:{reports,refundReports}`，主按鈕此時才顯示完成。每個退幣策略完成後仍須等待全部退幣策略完成；不發出部分退幣報表或比例。主執行緒停止會 terminate Worker；停止或失敗保留本輪已完成的一般策略，取消本輪退幣結果。
+
+`type:'refund'` 與其 `refundProgress`／`refundResult` 保留為既有介面相容，頁面不再單獨啟動此任務。退幣 JSON 匯出仍保存 `run.config`、`run.refund`（包含 seed／policies）及 reports，JSON／CSV／複製與一般報表分開。專用三項參數另存 `magic-poker-lite.refund-settings.v1`，不寫入遊戲的個人資產 profile。v48 的獨立啟動流程僅為歷史，現行以 v49 的單一「開始統計」流程為準。
 
 baseRtp=ΣnetReturn/ΣmatchedWager，totalRtp=ΣtotalReturn/ΣmatchedWager，rtp 為 totalRtp 別名。池未派餘額不是回收；退款排除。新水池跨手相關，因此玩家研究按玩家聚類 CI，即使固定 BOSS independent 亦如此；樹研究按副樹。少於兩個獨立單位或零分母不可估 CI，罕見 JP 小樣本不作長期保證。
 
 報告新增 outcomePoolSummary，分列開始／結束、使用、80%／20% 增加、特殊派出與 CD，並按三桶拆分；每玩家及每手的真實 audit 只算被選分支。歷史報告按自身 metadata 解讀，不套用新池或門檻。完整欄位及實際版本以程式輸出為準。
 
-simulation-worker 接受 type='run'／'tree'／'treeStudy'；run 回 progress、partial、result，tree 回 treeResult，treeStudy 回 treeProgress／treeStudyResult，失敗回 error。停止以終止 Worker 實現；未完成樣本不能包裝為完整研究。
+simulation-worker 接受 type='run'／'refund'／'tree'／'treeStudy'；run 回 progress、partial、refundProgress、result，refund 回 refundProgress／refundResult，tree 回 treeResult，treeStudy 回 treeProgress／treeStudyResult，失敗回 error。停止以終止 Worker 實現；未完成樣本不能包裝為完整研究。
+
+一般統計的 JSON／複製資料為 version 8，保留 `reports` 並新增 `refundReports`，`run` 同時包含 `simulation` 與 `refund` 設定。退幣尚未完整完成、停止或失敗時 `refundReports` 為空；不將部分玩家包裝為退幣報表。既有退幣專用 JSON 格式維持 version 1。
 
 ## 驗證界線
 

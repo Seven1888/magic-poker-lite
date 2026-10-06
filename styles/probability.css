@@ -145,7 +145,7 @@ input, select { min-width: 0; color: var(--ink); }
 .control-notes p { padding: 8px 10px; border-left: 2px solid var(--line-strong); background: #0b1016; }
 .run-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
 #run-label, #tree-study-state, #tree-run-state { color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
-#run.is-running, #run-refund.is-running { background-color: #7f8b98; background-image: linear-gradient(var(--accent), var(--accent)); background-size: var(--run-progress, 0%) 100%; background-repeat: no-repeat; opacity: 1; cursor: wait; }
+#run.is-running { background-color: #7f8b98; background-image: linear-gradient(var(--accent), var(--accent)); background-size: var(--run-progress, 0%) 100%; background-repeat: no-repeat; opacity: 1; cursor: wait; }
 #refund-report .report + .report { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); }
 #refund-report .model-summary .table-scroll { max-height: 420px; overflow-y: auto; }
 .status-bar, .progress-box { min-width: 0; border: 1px solid var(--line-strong); border-left: 4px solid var(--accent); border-radius: 8px; padding: 13px 16px; background: #0f1921; }

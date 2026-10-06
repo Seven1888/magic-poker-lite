@@ -86,7 +86,8 @@ stackAfter_i  = stackBefore_i - C_i + refund_i + totalReturn_i</code></pre>
 <p><code>simulateTreeStudy</code> 每副從設定的初始三桶重新開始，對一個已建布局積分全部行動後再跨樣本平均。它是冷啟動單手研究，不是長期池狀態、不是所有牌面枚舉，也不是水池穩態 RTP。CI 樣本單位是一副樹，不是一片葉子。</p>
 <h2 id="section-8">8. 玩家研究與統計分母</h2>
 <p><code>simulateStudy</code> 的 independent／continuous／cashout 都在同一位研究玩家內保存水池、CD 與序號；不同玩家彼此隔離。</p>
-<ul><li>independent 每手重設雙方資產，受控交替盲位；只重設資產，不歸零水池。其最後資產不能當累積財富。</li><li>continuous 保存玩家資產，每手抽盲，資產不足當前 BET 門檻即停止，不自動降 BET。</li><li>cashout 先判斷是否已達目標，再檢查開局門檻與安全手數上限；碰到上限記為截尾，不能當失敗或達標。</li><li>獨立「退幣率統計」另設玩家數、初始資產與目標資產，不受一般手數及安全上限影響。每人直到達標或不足當前 BET 開局門檻才停止；退幣率＝達標玩家數／總玩家數。初始即達標者零手成功，未達標剩餘資產不沒收。雙池與冷卻跨手保留；手動停止取消整輪，不發布部分比例。</li><li>局間 demo BOSS 資產刷新另外列帳，不算玩家返還、POT 或 RTP。</li></ul>
+<ul><li>independent 每手重設雙方資產，受控交替盲位；只重設資產，不歸零水池。其最後資產不能當累積財富。</li><li>continuous 保存玩家資產，每手抽盲，資產不足當前 BET 門檻即停止，不自動降 BET。</li><li>cashout 先判斷是否已達目標，再檢查開局門檻與安全手數上限；碰到上限記為截尾，不能當失敗或達標。</li><li>「退幣率統計」隨「開始統計」一併執行，保留玩家數、初始資產與目標資產三項專用參數及分開展示、匯出的報表，不再設獨立啟動按鈕。它不受一般手數及安全上限影響；每人直到達標或不足當前 BET 開局門檻才停止，退幣率＝達標玩家數／總玩家數。初始即達標者零手成功，未達標的剩餘資產不沒收。沿用共用引擎與跨手雙池、CD，不自動降 BET 或補資。</li><li>局間 demo BOSS 資產刷新另外列帳，不算玩家返還、POT 或 RTP。</li></ul>
+<p>v49 的同次統計共用 config、seed 與策略，先完成全部一般策略，再完成全部退幣策略；兩階段結束後主按鈕才顯示完成。一般策略完成後可先顯示結果；退幣須全部玩家與比較策略完成才發布比例。停止或失敗保留本輪已完成的一般策略，取消本輪退幣結果，不將部分玩家結果當作退幣率。這取代 v48 的獨立啟動流程；有手數上限的 cashout 與無上限退幣研究仍是不同統計。</p>
 <pre><code>baseRtp  = Σ player.netReturn / Σ player.matchedWager
 totalRtp = Σ player.totalReturn / Σ player.matchedWager
 rtp      = totalRtp</code></pre>
