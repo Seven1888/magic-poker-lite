@@ -1,4 +1,16 @@
-# v51 驗證與發布狀態
+# 驗證與發布狀態
+
+## v52 手機 BET 對齊修正（2026-10-06）
+
+v51 已以提交 bc34ea78d8698320e3ecfc2543fc9eeb593ba0c7 發布，[Actions 37434084931](https://github.com/Seven1888/magic-poker-lite/actions/runs/37434084931) 的 439 項測試、建置與部署成功。以下 v51 紀錄保留其發布準備時的驗證範圍。
+
+v52 修正入口 BET 標題與加減控制列的明確 flex 對齊，並更新 entry.css、entry-v28.css 的版本網址。停用基礎 entry.css 能重現使用者截圖的偏左、標題黏合與原生輸入框；不能僅憑截圖判定手機快取或網路失敗的具體原因。新版即使基礎樣式缺失，BET 控制列仍置中。
+
+Chrome 320／360／375／393／412／1440px、BET 1／50／2000 共 18 組檢查通過：數值與加減按鈕中心偏差 0px、標籤對齊、無水平溢出；上下限按鈕及最低資產數值正常。缺少基礎樣式的對照檢查亦通過，console／page error 0。截圖與檢查腳本在 output/playwright/bet-v52-*；此為桌面 Chrome viewport 驗證，非實體 Android 驗收。遊戲數學與研究規則沿用 v51；本次推送後以 Actions 確認部署結果。
+
+公開入口：[遊戲 v52](https://seven1888.github.io/magic-poker-lite/?v=52)。
+
+## v51 驗證與發布準備紀錄
 
 2026-10-06，local51／v51 發布準備。使用者已要求「更新上git，提供全部連結」，授權提交並推送 main；既有 GitHub Actions 會觸發建置與 Pages 部署，實際結果以 Actions 為準。以下保留已完成的本地驗證範圍。現行契約見 [規則與公式](04-game-flow-and-math.md)、[API](../API-CONTRACT.md) 及 [README](../README.md)。
 
