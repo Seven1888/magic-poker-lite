@@ -30,17 +30,25 @@ function updateReportContext(){
 }
 function numberField(path,label,min,max,step='0.01',scale='',help=''){const id=path.replaceAll('.','-');return `<div class="field"><label for="${id}">${label}</label><input id="${id}" data-config="${path}" ${scale?`data-scale="${scale}"`:''} type="number" min="${min}" ${max==null?'':`max="${max}"`} step="${step}">${help?`<small class="field-help">${help}</small>`:''}</div>`;}
 $('street-fields').innerHTML=Object.entries(STREETS).map(([key,label])=>numberField(`betSize.${key}`,`${label}下注增額`,.02,null)).join('');
-$('outcome-fields').innerHTML=numberField('outcome.conversionRate','付費轉贏計分係數 %',0,100,.1,100,'預設 99%；與底池返還係數分開，不保證實測總 RTP。')
- +numberField('outcome.paidActionBudgetShare','投入計分分配至付費池 %',0,100,.1,100,'預設 80%；剩餘部分進特殊牌型池。')
- +numberField('outcome.paidActionCooldownMin','付費池冷卻最小值',0,null,1)
- +numberField('outcome.paidActionCooldownMax','付費池冷卻最大值',0,null,1)
- +numberField('outcome.specialUseChance','特殊牌型池使用機率 %',0,100,.1,100,'預設 20%；實際資格、池額與牌面均須符合。')
- +numberField('outcome.initialPaidActionCooldown','初始付費池冷卻',0,null,1)
- +[0,1,2].map(index=>numberField(`outcome.initialPaidActionPools.${index}`,`第 ${index+1} 桶初始付費池`,0,null,.000001)+numberField(`outcome.initialSpecialPools.${index}`,`第 ${index+1} 桶初始特殊牌型池`,0,null,.000001)).join('');
+const settingGroup=(title,fields)=>`<section class="setting-group"><h3>${title}</h3><div class="setting-rows">${fields}</div></section>`;
+const poolBuckets=['第一桶 · BET 1／2／5／10','第二桶 · BET 20／50／100／200／500','第三桶 · BET 800／1,000／1,200／1,500／1,800／2,000'];
+$('outcome-fields').innerHTML=settingGroup('勝率與預算',
+ numberField('outcome.conversionRate','轉贏計分係數 %',0,100,.1,100)
+ +numberField('outcome.paidActionBudgetShare','付費池分配比例 %',0,100,.1,100)
+ +numberField('outcome.specialUseChance','特殊池資格機率 %',0,100,.1,100))
+ +settingGroup('付費池冷卻',numberField('outcome.paidActionCooldownMin','CD 最小值',0,null,1)
+ +numberField('outcome.paidActionCooldownMax','CD 最大值',0,null,1)
+ +numberField('outcome.initialPaidActionCooldown','初始 CD',0,null,1))
+ +settingGroup('起始個人付費池',poolBuckets.map((label,index)=>numberField(`outcome.initialPaidActionPools.${index}`,label,0,null,.000001)).join(''))
+ +settingGroup('起始個人特殊池',poolBuckets.map((label,index)=>numberField(`outcome.initialSpecialPools.${index}`,label,0,null,.000001)).join(''));
 for(const seat of ['player','npc']){
-  $(seat+'-deal').innerHTML=`<div class="field"><label for="${seat}-reroll-mode">起手重抽規則</label><select id="${seat}-reroll-mode" data-config="deal.${seat}.rerollMode"><option value="unpaired">BOSS DUEL 流程 · 未成對才重抽</option><option value="legacy-score">舊版相容 · 牌力分數門檻</option></select><small class="field-help">兩張牌適配：成對立即停止；未成對包含 AK 同花。</small></div>`+numberField(`deal.${seat}.rerollChance`,'未達停止條件時重抽機率 %',0,100,1,100,`預設${seat==='player'?'玩家 50':'對手 25'}%。每次候選分別判斷。`)+numberField(`deal.${seat}.maxRerolls`,'額外重抽次數上限',0,50,1,'','預設額外 50 次，最多 51 副候選，只保留最後一副。')+numberField(`deal.${seat}.targetScore`,'舊版牌力門檻',0,1,.01,'','僅舊版相容模式使用，不是 BOSS DUEL 重抽條件。')+`<div class="field"><label for="${seat}-manual">指定起手牌</label><input id="${seat}-manual" data-config="deal.${seat}.manual" type="text" placeholder="選填：As Ks" spellcheck="false" autocapitalize="off"><small class="field-help">兩張底牌；指定時跳過該座位的重抽。</small></div><div id="${seat}-preview" class="deal-preview"></div><div class="deal-preset"><button type="button" data-seat="${seat}" data-preset="natural">自然發牌</button><button type="button" data-seat="${seat}" data-preset="boosted">BOSS DUEL 預設</button><button type="button" data-seat="${seat}" data-preset="strong">100% 重抽</button></div><p class="hint">每次重抽整副兩張，落選牌回池，不挑候選中的最好牌。沿用原作的條件與機率流程；歷史牌庫模式依此自然發牌；預建模式先規劃結果，再固定玩家／公牌布局，BOSS 暗牌依預存節點選取，可能重建未公開布局。兩種模式都禁止重複牌。</p>`;
+ $(seat+'-deal').innerHTML=`<div class="field"><label for="${seat}-reroll-mode">重抽規則</label><select id="${seat}-reroll-mode" data-config="deal.${seat}.rerollMode"><option value="unpaired">未成對重抽</option><option value="legacy-score">牌力門檻</option></select></div>`
+ +numberField(`deal.${seat}.rerollChance`,'重抽機率 %',0,100,1,100)
+ +numberField(`deal.${seat}.maxRerolls`,'重抽次數上限',0,50,1)
+ +numberField(`deal.${seat}.targetScore`,'舊版牌力門檻',0,1,.01)
+ +`<div class="field"><label for="${seat}-manual">指定起手牌</label><input id="${seat}-manual" data-config="deal.${seat}.manual" type="text" placeholder="As Ks" spellcheck="false" autocapitalize="off"></div><div id="${seat}-preview" class="deal-preview"></div><div class="deal-preset"><button type="button" data-seat="${seat}" data-preset="natural">自然發牌</button><button type="button" data-seat="${seat}" data-preset="boosted">預設</button><button type="button" data-seat="${seat}" data-preset="strong">100% 重抽</button></div>`;
 }
-$('npc-fields').innerHTML=['fold','call','raise','check','bet'].map(k=>numberField(`npc.${k}`,`${LABELS[k]}基礎權重`,0,1,.01)).join('')+numberField('npc.strengthInfluence','牌力影響係數',0,4,.1)+numberField('npc.priceInfluence','跟注成本影響係數',0,4,.1)+'<p class="hint">平衡、積極、保守的模擬玩家亦以此權重作策略基底；始終跟注除外。權重不是最終機率。引擎依行動者自身牌力與跟注成本調整，再將合法動作正規化；全部權重為零時，預設過牌或跟注。</p>';
+$('npc-fields').innerHTML=['fold','call','raise','check','bet'].map(k=>numberField(`npc.${k}`,`${LABELS[k]}基礎權重`,0,1,.01)).join('')+numberField('npc.strengthInfluence','牌力影響係數',0,4,.1)+numberField('npc.priceInfluence','跟注成本影響係數',0,4,.1);
 function fill(config){formConfig=structuredClone(config);for(const el of document.querySelectorAll('[data-config]')){const value=get(config,el.dataset.config);if(el.type==='checkbox'){el.checked=Boolean(value);continue;}if(el.type==='number')el.required=true;el.value=Array.isArray(value)?value.join(' '):el.type==='number'?Number(value??(el.dataset.config.endsWith('targetScore') ? 0.48 : 0))*(Number(el.dataset.scale)||1):value??'';}refreshDerived();}
 function readConfig(){
   const raw=structuredClone(formConfig);for(const el of document.querySelectorAll('[data-config]')){if(el.closest('.field')?.hidden)continue;if(!el.checkValidity()){el.closest('details').open=true;throw new Error(`${el.closest('.field').querySelector('label').textContent}：請輸入允許範圍內的數值。`);}set(raw,el.dataset.config,el.type==='checkbox'?el.checked:el.type==='number'?Number(el.value)/(Number(el.dataset.scale)||1):el.value.trim());}
@@ -63,7 +71,7 @@ function refreshDerived(){
   $('small-blind').value=Number.isFinite(bigBlind)&&bigBlind>=.02?Math.round((bigBlind/2+Number.EPSILON)*1e6)/1e6:'';
   $('jackpot-tiers').classList.toggle('off',!enabled);
   $('jackpot-tiers').innerHTML=jackpotTiers.map(t=>`<div class="jackpot-tier"><div><b>${t.label}</b><span>最高一獎，不累加</span></div><div><span class="jackpot-example">${t.cards.map(c=>cardMarkup(c)).join('')}</span><strong>${t.multiplier}× BET</strong></div></div>`).join('');
-  $('jackpot-config-state').textContent=enabled?($('outcome-mode').value==='prebuilt-pools'?'開啟・特殊池資格，玩家獲勝攤牌才派發':'開啟・歷史自然牌型獎，彩金另行提供'):'關閉・僅計底池返還';
+  $('jackpot-config-state').textContent=enabled?($('outcome-mode').value==='prebuilt-pools'?'特殊池資格＋獲勝攤牌':'歷史自然牌型獎'):'已關閉';
   const n=Number($('players').value)*Number($($('study-mode').value==='cashout'?'player-hand-limit':'entries').value);$('hand-count').textContent=`每種策略最多 ${money(n)} 手${$('policy').value==='compare'?`・合計最多 ${money(n*4)} 手`:''}`;
   $('study-mode-note').textContent=({independent:'每手只重設相同資產；每位玩家的水池與冷卻仍跨手保存，區間按玩家聚類。',continuous:'保留真實餘額，直到手數用完或不足目前 BET 的每手開局門檻；不自動降低 BET。',cashout:'資產達標優先停止；否則不足目前 BET 的每手開局門檻即停止，安全上限列為截尾。'})[$('study-mode').value];
   for(const seat of ['player','npc']){const field=document.querySelector(`[data-config="deal.${seat}.targetScore"]`);field.closest('.field').hidden=$(seat+'-reroll-mode').value!=='legacy-score';}
@@ -79,10 +87,10 @@ $('import').onclick=()=>$('import-file').click();
 $('import-file').onchange=async e=>{try{const file=e.target.files[0];if(!file)return;if(file.size>1000000)throw new Error('設定檔過大，請使用不超過 1 MB 的檔案。');const data=JSON.parse(await file.text());if(!data||typeof data!=='object'||Array.isArray(data))throw new Error('設定檔須包含 JSON 物件。');const input=data.config||data.run?.config||data;if(!['targetRtp','deal','npc','buyIn','jackpotEnabled','outcome'].some(k=>k in input))throw new Error('找不到遊戲設定。');const imported=normalizeConfig(input);fill(imported);const settings=data.simulation||data.run?.simulation;if(settings){$('players').value=settings.players||settings.groups||4;$('entries').value=settings.entries||settings.hands||8;$('seed').value=settings.seed??20260929;$('study-mode').value=settings.mode||'independent';$('slice-size').value=settings.sliceSize||250;$('target-asset').value=settings.targetAsset??20000;$('player-hand-limit').value=settings.maxHandsPerPlayer||8;$('policy').value=settings.policies?.length>1?'compare':settings.policies?.[0]||'balanced';}settingsChanged('設定已匯入・尚未儲存');$('error').textContent='';toast('設定已匯入，包含彩金開關。');}catch(error){showError(`匯入失敗：${translateError(error)}`);}e.target.value='';};
 function setRunning(on){
   $('config-form').querySelectorAll('input,select,button').forEach(el=>el.disabled=on);
-  for(const id of ['save','reset','import','export','header-run','header-tree','run-tree-study','tree-deals','tree-study-policy','copy-config'])$(id).disabled=on;
-  $('header-stop').disabled=!on;
+  for(const id of ['save','reset','import','export','run-tree-study','tree-deals','tree-study-policy','copy-config'])$(id).disabled=on;
+  $('stop').hidden=!on;
   $('run').disabled=on;$('stop').disabled=!on;$('run').classList.toggle('is-running',on);
-  $('run-button-label').textContent=on?'執行中・0%':'執行模擬';
+  $('run-button-label').textContent=on?'執行中・0%':'開始統計';
   $('config-form').setAttribute('aria-busy',String(on));
 }
 function updateProgress(n){$('progress').value=n;$('progress-percent').textContent=`${n.toFixed(1)}%`;$('run').style.setProperty('--run-progress',`${n}%`);if(worker)$('run-button-label').textContent=`執行中・${n.toFixed(1)}%`;}
@@ -137,9 +145,6 @@ try{if(localStorage.getItem(CONFIG_KEY))$('settings-state').textContent='已載�
 catch{$('settings-state').textContent='瀏覽器無法存取儲存空間・已載入預設值';}
 loadReference();
 
-$('header-run').onclick=()=>$('run').click();
-$('header-stop').onclick=()=>$('stop').click();
-$('header-tree').onclick=()=>$('build-tree').click();
 $('copy-config').onclick=async()=>{try{await navigator.clipboard.writeText(JSON.stringify({version:4,config:readConfig(),simulation:simSettings()},null,2));toast('已複製完整參數。');}catch(e){showError(e);}};
 $('build-tree').onclick=()=>runTreeTask('tree');
 $('run-tree-study').onclick=()=>runTreeTask('treeStudy');
