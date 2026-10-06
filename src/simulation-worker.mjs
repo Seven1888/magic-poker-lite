@@ -1,11 +1,17 @@
 import {simulateStudy} from './simulation-study.mjs?v=46';
 import {buildActionTree} from './action-tree.mjs?v=46';
 import {simulateTreeStudy} from './tree-study.mjs?v=46';
+import {simulateRefundStudy} from './refund-study.mjs?v=48';
 self.onmessage=event=>{
   const {type,config,policies,...settings}=event.data||{};
   try{
    if(type==='tree'){self.postMessage({type:'treeResult',tree:buildActionTree(config,settings)});return;}
    if(type==='treeStudy'){self.postMessage({type:'treeStudyResult',report:simulateTreeStudy(config,{...settings,onProgress:p=>self.postMessage({type:'treeProgress',...p})})});return;}
+   if(type==='refund'){
+    if(!Array.isArray(policies)||!policies.length)throw new Error('請選擇玩家策略。');
+    const reports=policies.map((policy,policyIndex)=>simulateRefundStudy(config,{...settings,policy,onProgress:p=>self.postMessage({type:'refundProgress',...p,policy,policyIndex,policyCount:policies.length})}));
+    self.postMessage({type:'refundResult',reports});return;
+   }
    if(type!=='run')return;
    if(!Array.isArray(policies)||!policies.length)throw new Error('請選擇玩家策略。');
    const reports=[];for(let i=0;i<policies.length;i++){

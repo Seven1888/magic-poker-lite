@@ -4,9 +4,29 @@ import {JACKPOT_MULTIPLIERS,quoteJackpot} from './jackpot.mjs?v=35';
 import {CONFIG_KEY,loadConfig,money,pct,esc,cardMarkup,download} from './shared.mjs?v=46';
 import {LAB_LABELS as LABELS,LAB_STREETS as STREETS,LAB_POLICIES as policyNames,LAB_JACKPOTS as jackpotNames,translateLabError as translateError} from './probability-text.mjs?v=46';
 import {renderStudyDetails,renderActionTree,poolSummaryTable} from './probability-report-view.mjs?v=46';
+import {refundReportMarkup} from './refund-report-view.mjs?v=48';
 const $=id=>document.getElementById(id);
 let worker=null,reports=[],selectedIndex=0,startedAt=0,toastTimer,runSnapshot=null,runState='等待模擬',settingsDirty=false;
 let actionTree=null,treeStudy=null,activeTask='simulation',formConfig=structuredClone(DEFAULT_CONFIG);
+let refundReports=[],refundSnapshot=null,refundStartedAt=0;
+const REFUND_SETTINGS_KEY='magic-poker-lite.refund-settings.v1';
+const refundDefaults={players:100,initialAsset:100,targetAsset:200};
+const refundFields={players:'refund-players',initialAsset:'refund-initial-asset',targetAsset:'refund-target-asset'};
+function refundParams(value={}){
+  const result={...refundDefaults,...value};
+  if(!Number.isSafeInteger(result.players)||result.players<1||result.players>1000)throw new Error('退幣率玩家數須為 1 至 1,000。');
+  for(const key of ['initialAsset','targetAsset'])if(!Number.isFinite(result[key])||result[key]<0||result[key]>Number.MAX_SAFE_INTEGER/1e6)throw new Error('退幣資產須為有效的非負金額。');
+  return Object.fromEntries(Object.keys(refundFields).map(key=>[key,result[key]]));
+}
+function fillRefund(value=refundDefaults){const settings=refundParams(value);for(const [key,id]of Object.entries(refundFields))$(id).value=settings[key];}
+function readRefundControls(){
+  for(const id of Object.values(refundFields))if(!$(id).checkValidity()||$(id).value===''){$('refund-config').open=true;throw new Error('請填入有效的退幣率玩家數與資產。');}
+  return refundParams(Object.fromEntries(Object.entries(refundFields).map(([key,id])=>[key,Number($(id).value)])));
+}
+function refundSettings(){
+  if(!$('seed').checkValidity()||$('seed').value==='')throw new Error('請填入有效的固定亂數種子。');
+  return {...readRefundControls(),seed:Number($('seed').value),policies:$('policy').value==='compare'?Object.keys(policyNames):[$('policy').value]};
+}
 const jackpotTiers=[
   {key:'royal',cards:['As','Ks','Qs','Js','Ts']},
   {key:'straightFlush',cards:['9h','8h','7h','6h','5h']},
@@ -21,6 +41,7 @@ function settingsChanged(message='設定已變更・尚未儲存'){
   if(runSnapshot)$('run-label').textContent='設定已變更・報表仍顯示上次結果，請重新執行以更新。';
   if(actionTree)$('tree-context').textContent='參數已變更；下方完整樹仍屬先前參數，請重新建立。';
   if(treeStudy)$('tree-study-state').textContent='參數已變更；下方樹統計仍屬先前參數，請重新執行。';
+  if(refundReports.length)$('refund-state').textContent='設定已變更・顯示上次退幣結果';
   refreshDerived();updateReportContext();
 }
 function updateReportContext(){
@@ -80,17 +101,20 @@ function refreshDerived(){
 $('config-form').onsubmit=e=>e.preventDefault();$('config-form').addEventListener('input',()=>settingsChanged());
 $('policy').addEventListener('change',refreshDerived);
 document.querySelectorAll('[data-preset]').forEach(b=>b.onclick=()=>{const {seat,preset}=b.dataset;const p=preset==='natural'?{rerollMode:'unpaired',rerollChance:0,maxRerolls:0}:preset==='strong'?{rerollMode:'unpaired',rerollChance:1,maxRerolls:50}:DEFAULT_CONFIG.deal[seat];for(const [key,value] of Object.entries(p))if(key!=='manual')document.querySelector(`[data-config="deal.${seat}.${key}"]`).value=typeof value==='number'?value*(key==='rerollChance'?100:1):value;$(seat+'-manual').value='';settingsChanged();});
-$('reset').onclick=()=>{fill(DEFAULT_CONFIG);settingsChanged('已還原預設值・儲存後套用');$('error').textContent='';};
-$('save').onclick=()=>{try{const config=readConfig();localStorage.setItem(CONFIG_KEY,JSON.stringify(config));$('error').textContent='';$('settings-state').textContent='設定已儲存・重新入桌後套用';toast('已儲存，離桌後重新入桌即可套用；目前牌局維持不變。');}catch(e){showError(e);}};
-$('export').onclick=()=>{try{download('magic-poker-lite-config.json',{version:4,config:readConfig(),simulation:simSettings()});}catch(e){showError(e);}};
+$('reset').onclick=()=>{fill(DEFAULT_CONFIG);fillRefund();settingsChanged('已還原預設值・儲存後套用');$('error').textContent='';};
+$('save').onclick=()=>{try{const config=readConfig(),refund=readRefundControls();localStorage.setItem(CONFIG_KEY,JSON.stringify(config));localStorage.setItem(REFUND_SETTINGS_KEY,JSON.stringify(refund));$('error').textContent='';$('settings-state').textContent='設定已儲存・重新入桌後套用';toast('已儲存參數，包含退幣率設定。');}catch(e){showError(e);}};
+$('export').onclick=()=>{try{download('magic-poker-lite-config.json',{version:5,config:readConfig(),simulation:simSettings(),refund:readRefundControls()});}catch(e){showError(e);}};
 $('import').onclick=()=>$('import-file').click();
-$('import-file').onchange=async e=>{try{const file=e.target.files[0];if(!file)return;if(file.size>1000000)throw new Error('設定檔過大，請使用不超過 1 MB 的檔案。');const data=JSON.parse(await file.text());if(!data||typeof data!=='object'||Array.isArray(data))throw new Error('設定檔須包含 JSON 物件。');const input=data.config||data.run?.config||data;if(!['targetRtp','deal','npc','buyIn','jackpotEnabled','outcome'].some(k=>k in input))throw new Error('找不到遊戲設定。');const imported=normalizeConfig(input);fill(imported);const settings=data.simulation||data.run?.simulation;if(settings){$('players').value=settings.players||settings.groups||4;$('entries').value=settings.entries||settings.hands||8;$('seed').value=settings.seed??20260929;$('study-mode').value=settings.mode||'independent';$('slice-size').value=settings.sliceSize||250;$('target-asset').value=settings.targetAsset??20000;$('player-hand-limit').value=settings.maxHandsPerPlayer||8;$('policy').value=settings.policies?.length>1?'compare':settings.policies?.[0]||'balanced';}settingsChanged('設定已匯入・尚未儲存');$('error').textContent='';toast('設定已匯入，包含彩金開關。');}catch(error){showError(`匯入失敗：${translateError(error)}`);}e.target.value='';};
+$('import-file').onchange=async e=>{try{const file=e.target.files[0];if(!file)return;if(file.size>1000000)throw new Error('設定檔過大，請使用不超過 1 MB 的檔案。');const data=JSON.parse(await file.text());if(!data||typeof data!=='object'||Array.isArray(data))throw new Error('設定檔須包含 JSON 物件。');const input=data.config||data.run?.config||data;if(!['targetRtp','deal','npc','buyIn','jackpotEnabled','outcome'].some(k=>k in input))throw new Error('找不到遊戲設定。');const imported=normalizeConfig(input);fill(imported);if(data.refund||data.run?.refund)fillRefund(data.refund||data.run.refund);const settings=data.simulation||data.run?.simulation;if(!settings){const refund=data.refund||data.run?.refund;if(refund?.seed!==undefined)$('seed').value=refund.seed;if(refund?.policies?.length)$('policy').value=refund.policies.length>1?'compare':refund.policies[0];}if(settings){$('players').value=settings.players||settings.groups||4;$('entries').value=settings.entries||settings.hands||8;$('seed').value=settings.seed??20260929;$('study-mode').value=settings.mode||'independent';$('slice-size').value=settings.sliceSize||250;$('target-asset').value=settings.targetAsset??20000;$('player-hand-limit').value=settings.maxHandsPerPlayer||8;$('policy').value=settings.policies?.length>1?'compare':settings.policies?.[0]||'balanced';}settingsChanged('設定已匯入・尚未儲存');$('error').textContent='';toast('設定已匯入，包含彩金開關。');}catch(error){showError(`匯入失敗：${translateError(error)}`);}e.target.value='';};
 function setRunning(on){
   $('config-form').querySelectorAll('input,select,button').forEach(el=>el.disabled=on);
   for(const id of ['save','reset','import','export','run-tree-study','tree-deals','tree-study-policy','copy-config'])$(id).disabled=on;
   $('stop').hidden=!on;
-  $('run').disabled=on;$('stop').disabled=!on;$('run').classList.toggle('is-running',on);
-  $('run-button-label').textContent=on?'執行中・0%':'開始統計';
+  $('run').disabled=on;$('run-refund').disabled=on;$('stop').disabled=!on;
+  $('run').classList.toggle('is-running',on&&activeTask==='simulation');
+  $('run-refund').classList.toggle('is-running',on&&activeTask==='refund');
+  $('run-button-label').textContent=on&&activeTask==='simulation'?'執行中・0%':'開始統計';
+  $('refund-run-label').textContent=on&&activeTask==='refund'?'退幣統計中':'退幣率統計';
   $('config-form').setAttribute('aria-busy',String(on));
 }
 function updateProgress(n){$('progress').value=n;$('progress-percent').textContent=`${n.toFixed(1)}%`;$('run').style.setProperty('--run-progress',`${n}%`);if(worker)$('run-button-label').textContent=`執行中・${n.toFixed(1)}%`;}
@@ -100,12 +124,12 @@ $('run').onclick=()=>{
   try{
     const config=readConfig(),settings=simSettings();activeTask='simulation';reports=[];selectedIndex=0;settingsDirty=false;runState='模擬執行中';
     runSnapshot={config,simulation:settings,startedAt:new Date().toISOString()};startedAt=performance.now();$('error').textContent='';updateProgress(0);$('progress-text').textContent='正在啟動模擬程序…';$('run-label').textContent=`種子 ${settings.seed}・每種策略 ${money(settings.hands)} 手`;
-    launching=true;setRunning(true);renderResults();worker=new Worker(new URL('./simulation-worker.mjs?v=46',import.meta.url),{type:'module'});
+    launching=true;setRunning(true);renderResults();worker=new Worker(new URL('./simulation-worker.mjs?v=48',import.meta.url),{type:'module'});
     worker.onmessage=event=>{const m=event.data;if(m.type==='progress'){updateProgress((m.policyIndex+Math.min(1,m.completed/m.total))/m.policyCount*100);$('progress-text').textContent=`${policyNames[m.policy]}・已完成 ${money(m.completed)} 手（上限 ${money(m.total)}）`;}else if(m.type==='partial'){reports.push(m.report);renderResults();}else if(m.type==='result'){reports=m.reports;finish(false);}else if(m.type==='error'){finish(true,m.message);}};
     worker.onerror=e=>finish(true,e.message||'模擬程序啟動失敗。');worker.postMessage({type:'run',config,...settings});
   }catch(e){if(launching)finish(true,e);else showError(e);}
 };
-$('stop').onclick=()=>{if(!worker)return;worker.terminate();worker=null;setRunning(false);if(activeTask==='simulation'){runState='已手動停止';$('progress-text').textContent=`已停止・保留 ${reports.length} 種已完成策略的結果，未完成策略不計入。`;$('run-label').textContent='已手動停止';renderResults();}else{const id=activeTask==='tree'?'tree-run-state':'tree-study-state';$(id).textContent='已停止；未完成的樹不作結果。';}};
+$('stop').onclick=()=>{if(!worker)return;if(activeTask==='refund'){finishRefund({stopped:true});return;}worker.terminate();worker=null;setRunning(false);if(activeTask==='simulation'){runState='已手動停止';$('progress-text').textContent=`已停止・保留 ${reports.length} 種已完成策略的結果，未完成策略不計入。`;$('run-label').textContent='已手動停止';renderResults();}else{const id=activeTask==='tree'?'tree-run-state':'tree-study-state';$(id).textContent='已停止；未完成的樹不作結果。';}};
 function finish(failed=false,message=''){worker?.terminate();worker=null;setRunning(false);if(failed){runState='執行失敗';showError(message);$('progress-text').textContent='執行失敗，模擬已停止。';}else{runState=`已完成・${reports.length} 種策略`;updateProgress(100);$('progress-text').textContent=`已完成 ${money(reports.reduce((n,r)=>n+r.hands,0))} 手・${((performance.now()-startedAt)/1000).toFixed(1)} 秒`;$('run-label').textContent=`已完成・種子 ${runSnapshot.simulation.seed}`;}renderResults();}
 const ci=(r,key='ci95')=>!r[key]?.every(Number.isFinite)?'樣本不足':`${pct(r[key][0])}–${pct(r[key][1])}`;
 const ratio=(numerator,denominator)=>denominator>0?pct(numerator/denominator):'—';
@@ -141,11 +165,12 @@ $('copy-results').onclick=async()=>{try{await navigator.clipboard.writeText(JSON
 $('export-csv').onclick=()=>{const lines=['ruleSet,outcomeModel,bossProfileVersion,paidActionBudgetUsed,paidActionAdded,specialAdded,specialAward,bossMode,bossProfile,callerHands,maniacHands,sniperHands,trapperHands,mode,players,ciUnit,blindMode,netWinningHands,showdownWins,smallBlind,bigBlind,policy,hands,seed,jackpotEnabled,baseSettlementCoefficient,baseRtp,totalRtp,baseStandardError,totalStandardError,baseCi95Low,baseCi95High,totalCi95Low,totalCi95High,wagers,jackpotWagers,refunds,grossReturns,netReturns,jackpotAwards,totalReturns,baseProfit,totalProfit,playerFees,systemFees,royalCount,straightFlushCount,quadsCount,wins,losses,ties'];for(const r of reports)lines.push([r.ruleSet,r.outcomeModel,r.bossProfileVersion,r.outcomePoolSummary?.paidActionBudgetUsed??0,r.outcomePoolSummary?.paidActionAdded??0,r.outcomePoolSummary?.specialAdded??0,r.outcomePoolSummary?.specialAward??0,r.config.boss.mode,r.config.boss.profileId,r.byBoss?.caller?.hands??0,r.byBoss?.maniac?.hands??0,r.byBoss?.sniper?.hands??0,r.byBoss?.trapper?.hands??0,r.mode,r.players,r.methodMeta.ciUnit,r.methodMeta.blindMode??'historical',r.netWinningHands,r.showdownWins,r.config.smallBlind,r.config.bigBlind,r.policy,r.hands,r.seed,r.config.jackpotEnabled,r.config.targetRtp,r.baseRtp,r.totalRtp,r.baseStandardError,r.standardError,...r.baseCi95,...r.ci95,r.wagers,0,r.refunds,r.grossReturns,r.netReturns,r.jackpotAwards,r.totalReturns,r.netReturns-r.wagers,r.totalReturns-r.wagers,r.playerFees,r.fees,r.tierCounts.royal,r.tierCounts.straightFlush,r.tierCounts.quads,r.wins,r.losses,r.ties].join(','));download('magic-poker-lite-results.csv','\uFEFF'+lines.join('\r\n'),'text/csv;charset=utf-8');};
 async function loadReference(){try{const response=await fetch('output/math-validation.json');if(!response.ok)throw new Error('目前無法取得歷史驗證檔');const data=await response.json();const names={'natural-balanced':'自然發牌・平衡','boosted-balanced':'雙方對稱重抽・平衡'};$('reference-table').innerHTML=data.runs.map(r=>`<tr><td>${names[r.id]||`${r.id.includes('natural')?'自然發牌':'重抽'}・${policyNames[r.policy]}`}</td><td>${money(r.hands)}</td><td>${pct(r.rtp)}</td><td>${ci(r)}</td></tr>`).join('');}catch(e){$('reference-table').innerHTML=`<tr><td colspan="4">${esc(translateError(e))}</td></tr>`;}}
 renderBossProbabilityTables();fill(loadConfig());renderResults();
+try{const saved=localStorage.getItem(REFUND_SETTINGS_KEY);if(saved)fillRefund(JSON.parse(saved));}catch{fillRefund();}
 try{if(localStorage.getItem(CONFIG_KEY))$('settings-state').textContent='已載入儲存的設定';}
 catch{$('settings-state').textContent='瀏覽器無法存取儲存空間・已載入預設值';}
 loadReference();
 
-$('copy-config').onclick=async()=>{try{await navigator.clipboard.writeText(JSON.stringify({version:4,config:readConfig(),simulation:simSettings()},null,2));toast('已複製完整參數。');}catch(e){showError(e);}};
+$('copy-config').onclick=async()=>{try{await navigator.clipboard.writeText(JSON.stringify({version:5,config:readConfig(),simulation:simSettings(),refund:readRefundControls()},null,2));toast('已複製完整參數。');}catch(e){showError(e);}};
 $('build-tree').onclick=()=>runTreeTask('tree');
 $('run-tree-study').onclick=()=>runTreeTask('treeStudy');
 $('export-tree').onclick=()=>download('magic-poker-complete-action-tree.json',actionTree);
@@ -159,7 +184,7 @@ function runTreeTask(task){
   if(task==='treeStudy'&&!$('tree-deals').checkValidity())throw new Error('牌序樣本數須為 2 至 10,000。');
   const options=task==='tree'?{seed,policy:$('tree-policy').value,firstSmallBlind:$('tree-first').value}:{seed,policy:$('tree-study-policy').value,deals:Number($('tree-deals').value)};
   activeTask=task;setRunning(true);$('error').textContent='';status.textContent=task==='tree'?'正在建立每一條合法分支…':'正在逐副牌建立完整樹…';
-  worker=new Worker(new URL('./simulation-worker.mjs?v=46',import.meta.url),{type:'module'});
+  worker=new Worker(new URL('./simulation-worker.mjs?v=48',import.meta.url),{type:'module'});
   const finishTree=()=>{worker?.terminate();worker=null;setRunning(false);};
   worker.onmessage=({data:m})=>{
    if(m.type==='treeProgress'){status.textContent=`已完成 ${money(m.completed)} / ${money(m.total)} 副完整樹`;return;}
@@ -183,4 +208,53 @@ function renderTreeStudy(){
  if(r.outcomePoolSummary)for(const [label,key]of [['付費池使用','paidActionBudgetUsed'],['付費池增加','paidActionAdded'],['特殊池增加','specialAdded'],['特殊池支出（已含於 JP）','specialAward']])rows.push([`${label}／每副`,money(r.outcomePoolSummary[key]/r.deals)]);
  $('tree-study-results').innerHTML=poolSummaryTable(r.outcomePoolSummary)+`<p class="hint">種子 ${r.seed}・${policyNames[r.policy]}。每副牌以完整操作樹積分；其他牌序仍是抽樣。單副牌贏葉數不作勝率分母。</p><div class="metrics">${metrics.map(([title,value,note])=>`<article><small>${title}</small><strong>${value}</strong><span>${note}</span></article>`).join('')}</div><div class="table-scroll"><table><thead><tr><th>模型檢查</th><th>數值</th></tr></thead><tbody>${rows.map(row=>`<tr>${row.map(x=>`<td>${esc(x)}</td>`).join('')}</tr>`).join('')}</tbody></table></div><div class="jackpot-counts">${jackpotTiers.map(t=>`<article><span class="jackpot-count-title">${t.label} · ${t.multiplier}× BET</span><strong>${frequency(r.tierProbabilities[t.key],1)}</strong><small>每副牌 JP 命中機率的加權平均</small></article>`).join('')}</div>`;
 }
+
+function refundExports(enabled){for(const id of ['copy-refund','export-refund','export-refund-csv'])$(id).disabled=!enabled;}
+function refundProgress(percent,text){
+  $('refund-progress').value=percent;$('refund-progress-percent').textContent=`${percent.toFixed(1)}%`;
+  $('run-refund').style.setProperty('--run-progress',`${percent}%`);$('refund-progress-text').textContent=text;
+}
+function finishRefund({stopped=false,message=''}={}){
+  worker?.terminate();worker=null;setRunning(false);
+  if(stopped||message){
+    refundReports=[];refundExports(false);$('refund-content').innerHTML='';
+    $('refund-state').textContent=stopped?'已停止':'執行失敗';
+    $('refund-progress-text').textContent=stopped?'本輪已取消，未產生退幣率結果。':'本輪失敗，未產生退幣率結果。';
+    if(message)showError(message);return;
+  }
+  const finishedAt=new Date().toISOString();
+  refundReports=refundReports.map(report=>({...report,finishedAt}));
+  $('refund-content').innerHTML=refundReportMarkup(refundReports);refundExports(true);
+  $('refund-state').textContent='已完成';
+  refundProgress(100,`已完成 ${money(refundReports.reduce((sum,r)=>sum+r.completedPlayers,0))} 位玩家・${money(refundReports.reduce((sum,r)=>sum+r.hands,0))} 手・${((performance.now()-refundStartedAt)/1000).toFixed(1)} 秒`);
+}
+$('run-refund').onclick=()=>{
+  if(worker)return;
+  let launching=false;
+  try{
+    const config=readConfig(),settings=refundSettings();activeTask='refund';
+    refundReports=[];refundSnapshot={config,refund:settings,startedAt:new Date().toISOString()};refundStartedAt=performance.now();
+    $('error').textContent='';$('refund-report').hidden=false;$('refund-state').textContent='退幣統計中';
+    $('refund-content').innerHTML='';refundExports(false);refundProgress(0,'正在啟動退幣率統計…');
+    launching=true;setRunning(true);$('refund-report').scrollIntoView({behavior:'smooth',block:'start'});
+    worker=new Worker(new URL('./simulation-worker.mjs?v=48',import.meta.url),{type:'module'});
+    worker.onmessage=({data:m})=>{
+      if(m.type==='refundProgress'){
+        const percent=(m.policyIndex+m.completedPlayers/m.totalPlayers)/m.policyCount*100;
+        refundProgress(percent,`${policyNames[m.policy]}・已完成 ${money(m.completedPlayers)} / ${money(m.totalPlayers)} 位・累計 ${money(m.completedHands)} 手${m.completedPlayers<m.totalPlayers?`・目前玩家 ${money(m.currentPlayerHands)} 手`:''}`);
+      }else if(m.type==='refundResult'){refundReports=m.reports;finishRefund();}
+      else if(m.type==='error')finishRefund({message:m.message});
+    };
+    worker.onerror=event=>finishRefund({message:event.message||'退幣統計程序啟動失敗。'});
+    worker.postMessage({type:'refund',config,...settings});
+  }catch(error){if(launching)finishRefund({message:error});else showError(error);}
+};
+const refundBundle=()=>({version:1,kind:'magic-poker-lite-refund-study',run:refundSnapshot,reports:refundReports});
+$('export-refund').onclick=()=>download('magic-poker-lite-refund-results.json',refundBundle());
+$('copy-refund').onclick=async()=>{try{await navigator.clipboard.writeText(JSON.stringify(refundBundle(),null,2));toast('已複製退幣率統計。');}catch{toast('無法使用剪貼簿，請改用 JSON 匯出。');}};
+$('export-refund-csv').onclick=()=>{
+  const headers=['policy','seed','players','initialAsset','targetAsset','targetPlayers','insufficientPlayers','refundRate','hands','averageHands','minHands','maxHands'];
+  const rows=refundReports.map(report=>headers.map(key=>report[key]).join(','));
+  download('magic-poker-lite-refund-results.csv','\uFEFF'+[headers.join(','),...rows].join('\r\n'),'text/csv;charset=utf-8');
+};
 
