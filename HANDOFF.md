@@ -1,6 +1,6 @@
 # Magic Poker Lite v57 接手紀錄
 
-更新：2026-10-07。**v57 本地驗證完成，Git／公開發布待完成。** 最新 [v57 規格](docs/20-v57-response-readability-spec.md) 修訂 BOSS 決策比例、配色與可讀性；v56 的抽盲與實際下注壓力機率保持。下方 v56 及更早記錄僅保留歷史，不能當作 v57 驗收。
+更新：2026-10-07。**v57 全部完成，本地驗證、Git 推送、Pages 部署與公開驗收通過。** 最新 [v57 規格](docs/20-v57-response-readability-spec.md) 修訂 BOSS 決策比例、配色與可讀性；v56 的抽盲與實際下注壓力機率保持。下方 v56 及更早記錄僅保留歷史，不能當作 v57 驗收。
 
 ## v57 授權與接手方式
 
@@ -14,6 +14,7 @@
 2. FOLD 綠、CALL／CHECK 紅、RAISE／BET 紫；尺寸選單與其他 BOSS 回應呈現一致。
 3. 尺寸選單使用可用寬度，放大行為名稱與百分比；5% 等小機率以精確色帶搭配獨立可讀文字，不將名稱及數字擠在窄色塊。換街／結算提示沿用原行為。
 4. 主預覽利用 FOLD 按鈕上方空間，左卡 `BOSS · CALL／CHECK`、右側較寬卡 `BOSS · RAISE／BET`；名稱 15 CSS px、百分比 20 CSS px，卡片不遮玩家底牌。
+5. 階段提示保留 `AFTER CALL／CHECK` 操作關聯，後接 DEAL FLOP／TURN／RIVER 或 SHOWDOWN，不冠 BOSS。320／393／1440 px × 4 情境共 12 組檢查通過，腳本 `output/playwright/qa-v57-phase.js`。
 
 v57 僅改呈現。v56 的半池／全池／大額回應、每街強弱鎖定、NPC 自己尺寸 50／35／15、兩段 RNG、預覽隔離與既有帳務皆不變。`profile.balance` 仍只存桌外錢包；`TOTAL BALANCE` 不能重複存入。美術沿用 v54 資料夾，本輪未重新生成圖片。
 
@@ -23,11 +24,12 @@ v57 僅改呈現。v56 的半池／全池／大額回應、每街強弱鎖定、
 - `npm run build`：成功，236 個公開檔案，含 v57 規格。
 - 隔離桌面 Chrome：320×900、375×900、393×900、412×900、1440×1000、320×640 六組，尺寸選單 54 組 fixture 與主預覽 36 組檢查通過。完整機率與實際色帶寬度的比例誤差 ≤ 0.001，CALL／CHECK 紅色、文字不裁切；尺寸選單名稱實際 ≥ 14 px、百分比 ≥ 20 px。主預覽卡片不遮玩家底牌。
 - 連續兩次重整的 `profile.table` 均為 null、balance 均 9,996，未重複兌回；工具／規則 320／393／1440 無水平溢出。腳本／紀錄 `output/playwright/qa-v57.js`、`qa-v57.log`；截圖 `v57-{weak,strong,short}-393.png`、`v57-main-{320,393}.png` 及適用尺寸 `v57-live-*`，詳見發布紀錄。
-- 最後一次 `qa-v57` 執行 errors 0、warnings 0、HTTP failures 0；同一 session 較早有 2 筆既有圖片預載提示，不能將最後一次 warnings 0 擴大為整個 session。以上為本地證據，公開驗收仍待完成。
-- 公開驗收：待填核心檔案 HTTP／內容比對、公開頁實際布局及瀏覽器錯誤／提示。不得把未使用圖片預載 warning 說成 0。
-- 功能提交與 Actions：待填完整 SHA、可點提交連結、run URL 與實際 build／deploy 結果。
-- 發布紀錄提交與最終 Actions：待填完整 SHA、可點提交連結、run URL 與實際結果；文件提交的自指 SHA 可由原聊天室交付訊息補充。
-- 工作樹：待填交付時實際狀態。桌面 Chrome viewport 不是實體 Android；本輪呈現驗證不是長期 RTP 證據。
+- 最後一次 `qa-v57` 執行 errors 0、warnings 0、HTTP failures 0；同一 session 較早有 2 筆既有圖片預載提示，不能將最後一次 warnings 0 擴大為整個 session。
+- 公開驗收：14 個核心檔 HTTP 200，正規化換行後與 dist 相同，`output/public-v57-files.json`。公開 Chrome 393×852 實際入場，AGGRESSIVE 不強的 ALL IN／全池／半池 FOLD／CALL 為 70／30、55／45、45／55，色帶比例精確。CALL `rgb(141, 48, 46)`，名稱實際 17.685 px、百分比 23.58 px；中央抽取 CALL 漸層由 `rgb(163, 68, 61)` 至 `rgb(106, 33, 31)`。工具 12 列、v57 規則正常，無水平溢出。
+- 公開腳本／紀錄 `output/playwright/public-v57.js`、`public-v57.log`，截圖 `public-v57-main-393.png`、`public-v57-menu-393.png`。最後一次執行 errors 0、warnings 0、HTTP failed 0；同一 session 最初 2 筆既有圖片預載提示，不宣稱整個 session 沒有 warning。
+- 功能提交 [2b5e0fd2da7ccad88d3311ae08507d881b9c88e4](https://github.com/Seven1888/magic-poker-lite/commit/2b5e0fd2da7ccad88d3311ae08507d881b9c88e4) 已推送 main；[Actions 37610897593](https://github.com/Seven1888/magic-poker-lite/actions/runs/37610897593) 的 build／deploy 均 completed／success。
+- 後續純文件提交回填以上已完成證據，最終 SHA／run 由原聊天室交付訊息補充；原聊天室確認後才交接，新聊天室毋須重做或追蹤。
+- 工作樹在功能提交後乾淨；後續證據文件提交後由原聊天室核對。桌面 Chrome viewport 不是實體 Android；本輪呈現驗證不是長期 RTP 證據。
 
 ## 新聊天室必須直接提供的完整連結
 
