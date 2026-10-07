@@ -1,4 +1,4 @@
-import {DEFAULT_CONFIG,normalizeConfig} from './engine.mjs?v=51';
+import {DEFAULT_CONFIG,normalizeConfig} from './engine.mjs?v=53';
 export const CONFIG_KEY='magic-poker-lite.config.v2';
 const LEGACY_CONFIG_KEY='magic-poker-lite.config.v1';
 export const LABELS={fold:'棄牌',check:'過牌',call:'跟注',bet:'下注',raise:'加注',smallBlind:'小盲',bigBlind:'大盲'};
@@ -6,22 +6,18 @@ export const STREETS={preflop:'翻牌前',flop:'翻牌',turn:'轉牌',river:'河
 export const money=n=>Number(n||0).toLocaleString('en-US',{maximumFractionDigits:6});
 export const pct=n=>`${(100*n).toFixed(1)}%`;
 export const esc=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const currentConfig=source=>normalizeConfig({...source,outcome:{...source.outcome,mode:'prebuilt-pools'},boss:source.boss?.mode==='legacy'?{...source.boss,mode:'rotate'}:source.boss});
+const currentConfig=source=>normalizeConfig({...source,outcome:{...source.outcome,mode:'pooled-holdem'},boss:source.boss?.mode==='legacy'?{...source.boss,mode:'rotate'}:source.boss});
 export function loadConfig(){
  try{
   const saved=localStorage.getItem(CONFIG_KEY);
   if(saved)return currentConfig(JSON.parse(saved)||DEFAULT_CONFIG);
   const legacy=JSON.parse(localStorage.getItem(LEGACY_CONFIG_KEY)||'null');
-  // Migrate the old default ratio once; explicit v2/imported custom limits stay exact.
-  if(legacy&&legacy.minBuyIn/(legacy.bigBlind||10)===20){
-   legacy.minBuyIn=(legacy.bigBlind||10)*DEFAULT_CONFIG.minBuyIn/DEFAULT_CONFIG.bigBlind;
-  }
   return currentConfig(legacy||DEFAULT_CONFIG);
- }catch{return normalizeConfig(DEFAULT_CONFIG);}
+ }catch{return currentConfig(DEFAULT_CONFIG);}
 }
 export function cardText(card){return card?`${({s:'♠',h:'♥',d:'♦',c:'♣'})[card[1]]}${card[0]==='T'?'10':card[0]}`:'暗牌';}
 export function cardMarkup(card,{back=false,best=false}={}){
-  if(!card&&!back)return '<div class="card blank" aria-label="Unrevealed community card">♠</div>';
+  if(!card&&!back)return '<div class="card blank" aria-label="Unrevealed community card"></div>';
   const rank=card?({A:1,T:10,J:11,Q:12,K:13}[card[0]]||Number(card[0])):null;
   const file=back?'back-blue':`${card[1]==='c'?'f':card[1]}${rank}`;
   return `<div class="card original-card${best?' best':''}${back?' covered':''}" aria-label="${back?'Face-down card':cardText(card)}"><img src="assets/cards/${file}.png" alt="${back?'Face-down card':cardText(card)}" draggable="false"></div>`;

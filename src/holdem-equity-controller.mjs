@@ -1,5 +1,5 @@
 /** Each calculation sees only visible cards; superseded work is cancelled. */
-export function createHoldemEquityController({render,workerFactory=()=>new Worker(new URL('./holdem-equity-worker.mjs?v=43',import.meta.url),{type:'module'})}) {
+export function createHoldemEquityController({render,workerFactory=()=>new Worker(new URL('./holdem-equity-worker.mjs?v=53',import.meta.url),{type:'module'})}) {
  let request=0,key='',worker=null,result=null,pending=false,error=null;
  const paint=()=>render({visible:!!key,calculating:pending,result,error});
  function reset(){request++;key='';worker?.terminate();worker=null;result=null;pending=false;error=null;paint();}

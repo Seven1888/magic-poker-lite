@@ -1,5 +1,5 @@
-import {evaluateBest, normalizeCard, RANKS} from './poker.mjs?v=35';
-import {classifyJackpot, JACKPOT_MULTIPLIERS} from './jackpot.mjs?v=35';
+import {evaluateBest, normalizeCard, RANKS} from './poker.mjs?v=53';
+import {classifyJackpot, JACKPOT_MULTIPLIERS} from './jackpot.mjs?v=53';
 
 export const OUTCOME_POOL_SCALE = 1_000_000;
 export const OUTCOME_BET_BUCKETS = Object.freeze([
@@ -71,6 +71,13 @@ export function outcomeBetBucketIndex(bet) {
   return index;
 }
 
+/** New small-blind choices can produce BB values between historical stake levels. */
+export function outcomeBlindBucketIndex(bigBlind) {
+  const blind = amount(bigBlind, '大盲');
+  if (!(blind > 0)) throw new RangeError('大盲必須大於 0。');
+  return blind <= 10 ? 0 : blind <= 500 ? 1 : 2;
+}
+
 export function createOutcomePools({paidAction = [0, 0, 0], special = [0, 0, 0],
   paidActionCooldown = 0, qualificationSequence = 0, handSequence = 0} = {}) {
   if (!Array.isArray(paidAction) || paidAction.length !== 3 || !Array.isArray(special) || special.length !== 3) {
@@ -117,17 +124,19 @@ export function drawOutcomeTicket(probability, rng) {
     probability: winningNumbers / OUTCOME_POOL_SCALE, random};
 }
 
-export function createOutcomePoolBranch(pools, bet) {
-  const basePools = compactOutcomePools(pools), bucketIndex = outcomeBetBucketIndex(bet);
+export function createOutcomePoolBranch(pools, bet, {bucketMode = 'exact-stakes'} = {}) {
+  if (!['exact-stakes', 'blind-ranges'].includes(bucketMode)) throw new TypeError('未知水池分桶方式。');
+  const basePools = compactOutcomePools(pools), bucketIndex = bucketMode === 'blind-ranges' ? outcomeBlindBucketIndex(bet) : outcomeBetBucketIndex(bet);
   const bucket = basePools.buckets[bucketIndex];
-  return {version: 1, bet, bucketIndex, basePools, handId: String(basePools.handSequence + 1),
+  return {version: 1, bet, bucketIndex, ...(bucketMode === 'blind-ranges' ? {bucketMode} : {}), basePools, handId: String(basePools.handSequence + 1),
     paidAction: bucket.paidAction, special: bucket.special,
     paidActionCooldown: basePools.paidActionCooldown, qualificationSequence: basePools.qualificationSequence,
     paidActionBudgetUsed: 0, pendingWinPaidCredits: [], paidEvents: [], qualification: null};
 }
 
 function checkedBranch(branch) {
-  if (!branch || branch.version !== 1 || branch.bucketIndex !== outcomeBetBucketIndex(branch.bet)) {
+  if (!branch || branch.version !== 1 || ![undefined, 'exact-stakes', 'blind-ranges'].includes(branch.bucketMode)
+    || branch.bucketIndex !== (branch.bucketMode === 'blind-ranges' ? outcomeBlindBucketIndex(branch.bet) : outcomeBetBucketIndex(branch.bet))) {
     throw new TypeError('水池分支資料無效。');
   }
   if (!Array.isArray(branch.pendingWinPaidCredits) || !Array.isArray(branch.paidEvents)) {
@@ -181,7 +190,8 @@ export function reserveSpecialQualification({branch, rootTarget, rng, config = {
 export function drawRootPoolOutcome({hand, rng, pools, config = {}} = {}) {
   const quote = quoteRootPoolOutcome({hand, config}), draw = drawOutcomeTicket(quote.probability, rng);
   const target = draw.hit ? 'win' : 'nonWin';
-  const selection = reserveSpecialQualification({branch: createOutcomePoolBranch(pools, hand.config.bigBlind),
+  const selection = reserveSpecialQualification({branch: createOutcomePoolBranch(pools, hand.config.bigBlind,
+    {bucketMode: hand.config.outcome?.mode === 'pooled-holdem' ? 'blind-ranges' : 'exact-stakes'}),
     rootTarget: target, rng, config, enabled: hand.config.jackpotEnabled !== false});
   if (hand.outcomeHandId !== undefined && hand.outcomeHandId !== selection.branch.handId) {
     throw new Error('牌局水池交易序號與持續保存序號不一致。');

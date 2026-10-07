@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {buildActionTree} from '../src/action-tree.mjs';
-import {createSession,startHand,legalActions,applyAction,getActionDistribution,evaluateBest} from '../src/engine.mjs';
+import {createSession,startHand,legalActions,applyAction,getActionDistribution,evaluateBest} from './legacy-engine.mjs';
 
 const near=(actual,expected,tolerance=1e-8)=>assert.ok(Math.abs(actual-expected)<=tolerance,`${actual} != ${expected}`);
 const natural={rerollMode:'unpaired',rerollChance:0,maxRerolls:0,manual:[]};

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createSession, startHand, legalActions, applyAction, normalizeConfig, evaluateBest, previewResponse, simulate} from '../src/engine.mjs';
+import {createSession, startHand, legalActions, applyAction, normalizeConfig, evaluateBest, previewResponse, simulate} from './legacy-engine.mjs';
 import {classifyJackpot, quoteJackpot, getJackpotAward} from '../src/jackpot.mjs';
 
 const near = (a, b, tolerance = 1e-6) => assert.ok(Math.abs(a - b) <= tolerance, `${a} != ${b}`);

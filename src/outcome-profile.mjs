@@ -1,16 +1,29 @@
-import {normalizeOutcomePools} from './outcome-pools.mjs?v=51';
+import {normalizeOutcomePools} from './outcome-pools.mjs?v=53';
 
 export const OUTCOME_PROFILE_KEY = 'magic-poker-lite.player.v1';
 
 export function normalizePlayerProfile(value) {
-  if (!value || value.version !== 1 || !Number.isFinite(value.balance) || value.balance < 0
+  if (!value || ![1, 2].includes(value.version) || !Number.isFinite(value.balance) || value.balance < 0
     || !Number.isSafeInteger(Math.round(value.balance * 1e6)) || !value.outcomePools) throw new TypeError('Invalid player profile.');
-  return {version: 1, balance: Math.round(value.balance * 1e6) / 1e6,
+  const profile = {version: value.version, balance: Math.round(value.balance * 1e6) / 1e6,
     outcomePools: normalizeOutcomePools(value.outcomePools)};
+  if (value.version === 2) {
+    if (value.table !== null && value.table !== undefined
+      && (value.table.version !== 1 || !Number.isInteger(value.table.rngState)
+        || !value.table.session || !['fixed-holdem', 'pooled-holdem'].includes(value.table.session.config?.outcome?.mode))) {
+      throw new TypeError('Invalid saved table.');
+    }
+    profile.table = value.table ? structuredClone(value.table) : null;
+    if (value.lastBossProfileId !== undefined) {
+      if (value.lastBossProfileId !== null && !['caller', 'maniac'].includes(value.lastBossProfileId)) throw new TypeError('Invalid previous opponent.');
+      profile.lastBossProfileId = value.lastBossProfileId;
+    }
+  }
+  return profile;
 }
 
-// A whole hand is one saved transaction. Refreshing an unfinished demo hand
-// restores the preceding settled wallet and pools together, never half a payment.
+// Wallet, pools and the optional active table form one saved transaction.
+// Version-one records restore settled assets; version two resumes committed actions.
 export function loadPlayerProfile(storage) {
   try {
     if(storage === undefined)storage = globalThis.localStorage;

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createBlindDraw} from '../src/blind-draw-view.mjs';
-import {createSession} from '../src/engine.mjs';
+import {createSession} from './legacy-engine.mjs';
 import {atGameSpeed} from '../src/presentation-timing.mjs';
 
 const flush = async () => { for (let i = 0; i < 16; i++) await Promise.resolve(); };

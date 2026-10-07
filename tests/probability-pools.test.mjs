@@ -10,7 +10,7 @@ import {renderStudyDetails,renderActionTree} from '../src/probability-report-vie
 
 const near=(a,b,tolerance=1e-7)=>assert.ok(Math.abs(a-b)<=tolerance,`${a} != ${b}`);
 const fields=['paidActionBudgetUsed','paidActionAdded','specialAdded','specialAward'];
-const config={boss:{mode:'fixed',profileId:'caller'},outcome:{initialPaidActionPools:[100,20,30],initialSpecialPools:[0,4,5],initialPaidActionCooldown:2}};
+const config={boss:{mode:'fixed',profileId:'caller'},outcome:{mode:'prebuilt-pools',initialPaidActionPools:[100,20,30],initialSpecialPools:[0,4,5],initialPaidActionCooldown:2}};
 function fakeTarget(id){const children=new Map();return {id,innerHTML:'',children,querySelector(selector){if(!children.has(selector))children.set(selector,{innerHTML:''});return children.get(selector);}};}
 
 test('pool summaries retain full probability precision and reject missing or invalid audits',()=>{
@@ -62,7 +62,7 @@ for(const mode of ['independent','continuous','cashout'])test(`default pooled ${
 });
 
 test('default prebuilt action tree follows stored targets and cards without new RNG, and weighted pool payouts equal JP',()=>{
-  const funded={outcome:{initialPaidActionPools:[200,0,0],initialSpecialPools:[200,0,0],specialUseChance:1}};
+  const funded={outcome:{mode:'prebuilt-pools',initialPaidActionPools:[200,0,0],initialSpecialPools:[200,0,0],specialUseChance:1}};
   const tree=buildActionTree(funded,{seed:46022,policy:'aggressive'});
   assert.equal(tree.mode,'prebuilt-outcome-full-action-tree');assert.equal(tree.meta.rngStateAfterDeal,tree.meta.rngStateAfterTraversal);
   const byId=new Map(tree.nodes.map(node=>[node.id,node]));

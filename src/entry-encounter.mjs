@@ -1,13 +1,13 @@
-import {createSession} from './engine.mjs?v=51';
-import {selectBossProfile} from './boss-profiles.mjs?v=46';
+import {createSession} from './engine.mjs?v=53';
+import {selectBossProfile} from './boss-profiles.mjs?v=53';
 
 /** Reserve the entry seed and public identity without dealing or charging chips.
  * This isolated session mirrors the opening blind draw before the boss draw.
  * FIGHT uses the same seed in the real session; its RNG stream is untouched.
  */
-export function createEntryEncounter(config, seed) {
- const preview = createSession(config, seed, {firstSmallBlind:'random'});
- const {profile} = selectBossProfile(preview.rng, null, preview.config.boss);
+export function createEntryEncounter(config, seed, {lastBossProfileId = null} = {}) {
+ const preview = createSession(config, seed, {firstSmallBlind:'random', lastBossProfileId});
+ const {profile} = selectBossProfile(preview.rng, preview.lastBossProfileId, preview.config.boss);
  return Object.freeze({seed, bossProfile:profile});
 }
 

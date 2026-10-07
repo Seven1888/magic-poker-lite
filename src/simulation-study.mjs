@@ -1,8 +1,8 @@
-import {normalizeConfig, createSession, playAutomatedHand, syncOpponentBankroll} from './engine.mjs?v=51';
-import {BOSS_PROFILE_IDS} from './boss-profiles.mjs?v=46';
-import {handEntryStatus} from './hand-entry.mjs?v=46';
-import {BOSS_PROFILE_VERSION} from './boss-profiles.mjs?v=46';
-import {createPoolStudySummary, collectPoolStudyAudit, finishPoolStudySummary, combinePoolStudySummaries} from './probability-pools.mjs?v=46';
+import {normalizeConfig, createSession, playAutomatedHand, syncOpponentBankroll, beginNewTable} from './engine.mjs?v=53';
+import {BOSS_PROFILE_IDS} from './boss-profiles.mjs?v=53';
+import {handEntryStatus} from './hand-entry.mjs?v=53';
+import {BOSS_PROFILE_VERSION} from './boss-profiles.mjs?v=53';
+import {createPoolStudySummary, collectPoolStudyAudit, finishPoolStudySummary, combinePoolStudySummaries} from './probability-pools.mjs?v=53';
 
 const SEATS = ['player', 'npc'];
 const STREETS = ['preflop', 'flop', 'turn', 'river'];
@@ -137,9 +137,10 @@ export function simulateStudy(config = {}, {
   if (!['balanced', 'call', 'aggressive', 'tight'].includes(policy)) throw new TypeError('未知玩家策略。');
   if (!(typeof seed === 'string' || typeof seed === 'number' && Number.isFinite(seed))) throw new TypeError('種子須為文字或有限數字。');
   const normalized = normalizeConfig(config), handLimit = mode === 'cashout' ? maxHandsPerPlayer : entries;
-  // 每街最多開注及加注各一次；提供足額單手額度，避免 Infinity 破壞帳務。
-  // 只更新研究的下注額度，session／亂數／個人雙池／CD 仍跨手繼承。
-  const handBankroll = unlimitedBankroll
+  const holdem = ['fixed-holdem','pooled-holdem'].includes(normalized.outcome?.mode);
+  // 歷史限次模型仍以有限單手額度代替 Infinity；現行德州只在入桌時
+  // 帶入 100 小盲，續手保留真實桌籌碼，不藉無限外部錢包抹平 ALL IN。
+  const handBankroll = holdem ? round(normalized.smallBlind * 100) : unlimitedBankroll
     ? round(Math.max(normalized.minBuyIn, normalized.bigBlind + 2 * Object.values(normalized.betSize).reduce((sum, value) => sum + value, 0)) + normalized.bigBlind)
     : normalized.buyIn;
   if (unlimitedBankroll && !Number.isSafeInteger(Math.round(handBankroll * 1e6))) throw new RangeError('單手下注額度超過可精確計算範圍。');
@@ -148,40 +149,42 @@ export function simulateStudy(config = {}, {
   const target = targetAsset === undefined ? round(normalized.buyIn * 2) : targetAsset;
   if (mode === 'cashout' && (!Number.isFinite(target) || target <= 0)) throw new RangeError('目標資產必須是有限正數。');
   const independent = mode === 'independent';
-  const pooled = normalized.outcome?.mode === 'prebuilt-pools';
+  const pooled = ['prebuilt-pools','pooled-holdem'].includes(normalized.outcome?.mode);
   const clustered = pooled || !independent || normalized.boss.mode === 'rotate';
   const encounterCounts = () => Object.fromEntries([...BOSS_PROFILE_IDS, 'legacy'].map(id => [id, 0]));
-  const result = {...summary(), ruleSet: 'heads-up-two-blinds-v1', studyVersion: 3,
-    modelVersion: `${pooled?'prebuilt-pools-v2-full-pot':'legacy-deck-v1'}+${BOSS_PROFILE_VERSION}+study-v3`,
-    outcomeModel: pooled ? 'prebuilt-pools' : 'legacy-deck', bossProfileVersion: BOSS_PROFILE_VERSION, mode, players, entries,
+  const result = {...summary(), ruleSet: holdem ? 'heads-up-no-limit-v1' : 'heads-up-two-blinds-v1', studyVersion: 4,
+    modelVersion: `${normalized.outcome.mode==='pooled-holdem'?'pooled-holdem-v1':holdem?'fixed-holdem-v1':pooled?'prebuilt-pools-v2-full-pot':'legacy-deck-v1'}+${BOSS_PROFILE_VERSION}+study-v4`,
+    outcomeModel: normalized.outcome.mode, bossProfileVersion: BOSS_PROFILE_VERSION, mode, players, entries,
     seed, policy, config: normalized, sliceSize, unlimitedBankroll,
     targetAsset: mode === 'cashout' ? target : null, maxHandsPerPlayer: unlimitedBankroll ? null : maxHandsPerPlayer,
     playerResults: [], playerSummary: {completed: 0, target: 0, insufficient: 0, censored: 0},
-    byBlind: {small: summary(), big: summary()}, actionStats: newActionStats(), dealAudit: newDealAudit(),
+    byBlind: {small: summary(), big: summary()}, actionStats: newActionStats(), actionSizeStats: [], bossStrengthStats: [], dealAudit: newDealAudit(),
     byBoss: Object.fromEntries([...BOSS_PROFILE_IDS, 'legacy'].map(id => [id, summary()])),
     bossEncounterAudit: {mode: normalized.boss.mode, counts: encounterCounts(), firstSelections: 0, checkedTransitions: 0,
       consecutiveRepeats: 0, unexpectedRepeats: 0, selectionProbabilityCounts: {}},
     streetReach: Object.fromEntries(STREETS.map(street => [street, {hands: 0, wins: 0, losses: 0, ties: 0, netWinningHands: 0}])),
     returnDistribution: returnBuckets(), batches: [], conservationError: 0, npcRefreshCount: 0,
     npcRefreshAdjustment: 0, npcRefreshAdded: 0, npcRefreshRemoved: 0,
+    tableEntries: 0, tableBuyIns: 0,
     methodMeta: {mode, ciUnit: clustered ? 'player' : 'hand', ciSamples: 0,
-      bossSelection: normalized.boss.mode === 'rotate' ? '每位玩家首手四型各 1/4，之後排除上一型、其餘各 1/3；重設資產也不重設對手序列。' : normalized.boss.mode === 'fixed' ? '研究固定指定 BOSS，刻意允許連續相同。' : '採用舊版對手權重模型。',
+      bossSelection: normalized.boss.mode === 'rotate' ? `每位玩家首手 ${BOSS_PROFILE_IDS.length} 型等機率，之後排除上一型；換桌不重設對手序列。` : normalized.boss.mode === 'fixed' ? '研究固定指定 BOSS，刻意允許連續相同。' : '採用歷史對手權重模型。',
       seedDerivation: '每位玩家由主種子及零起算索引固定派生獨立亂數流；增加玩家數不改變既有玩家。',
-      blindMode: independent ? 'alternating' : 'random-each-hand',
-      initialBlind: independent ? '每位玩家首手固定小盲，之後逐手輪替。' : '每位玩家入桌首手及每次下一手均以 50/50 重新抽盲位，允許連續同盲位。',
-      bankroll: unlimitedBankroll ? '連續遊玩，雙方研究資產無限；保留同一玩家的亂數流、BOSS 輪替、雙池與 CD，淨利按實際投入及返還累計。' : independent ? '每手只重設雙方相同帶入；同一玩家的水池與冷卻跨手保留。end 僅為最後一手結束餘額，不能當作連續資產。' : '同桌連續保留玩家餘額、水池與冷卻；每手結束包含最後一手，對手資產匹配玩家，調整另列且不計派彩。',
-      outcomeModel: pooled ? 'prebuilt-pools' : 'legacy-deck',
-      poolContinuity: pooled ? '每位玩家開始時建立自己的初始三桶，之後所有研究模式均跨手保留；independent 只重設資產。玩家之間不共用水池。' : '歷史牌庫模式，沒有跨手結果水池。',
-      insufficientThreshold: unlimitedBankroll ? null : normalized.minBuyIn, minimumEntryOnly: false,
+      blindMode: holdem || independent ? 'alternating' : 'random-each-hand',
+      initialBlind: independent ? '每位玩家首手固定小盲，之後逐手輪替。' : holdem ? '每桌首手隨機抽小盲／大盲，同桌之後交替盲位；桌籌碼歸零再帶入時重新抽新桌首盲，保留原亂數流、水池及 CD。' : '每位玩家入桌首手及每次下一手均以 50/50 重新抽盲位，允許連續同盲位。',
+      bankroll: holdem && unlimitedBankroll ? '外部研究錢包無限，每次入桌帶入 100 小盲（50 大盲）。桌籌碼逐手真實增減，歸零才重新帶入；每手對手匹配目前桌籌碼。帶入不是賭注，不計入 RTP。' : unlimitedBankroll ? '連續遊玩，雙方研究資產無限；保留同一玩家的亂數流、BOSS 輪替、雙池與 CD，淨利按實際投入及返還累計。' : independent ? '每手只重設雙方相同帶入；同一玩家的水池與冷卻跨手保留。end 僅為最後一手結束餘額，不能當作連續資產。' : '同桌連續保留玩家餘額、水池與冷卻；每手結束包含最後一手，對手資產匹配玩家，調整另列且不計派彩。',
+      outcomeModel: normalized.outcome.mode,
+      outcomeSampling: normalized.outcome.mode === 'pooled-holdem' ? '開局鎖定玩家牌、公牌序及對手兩組候選暗牌；玩家實際付費時依 99% 計分、雙池與 CD 決定目標，可切換對手暗牌。BOSS 本街強弱分類沿用該街鎖定結果。' : pooled ? '開局預建全部目標及合法分支，操作讀取已存結果。' : '本手自然牌序固定，依實際牌型結算。',
+      poolContinuity: pooled ? '每位玩家開始時建立自己的初始三桶，之後所有研究模式均跨手保留；independent 只重設資產。玩家之間不共用水池。' : holdem ? '固定手牌與公共牌序依真實牌型結算，沒有結果水池。' : '歷史牌庫模式，沒有跨手結果水池。',
+      insufficientThreshold: unlimitedBankroll ? null : holdem ? 0 : normalized.minBuyIn, minimumEntryOnly: false,
       entryMinimumMultiplier: normalized.minBuyIn / normalized.bigBlind,
-      stopRule: unlimitedBankroll ? '每位玩家完成指定手數，沒有資產達標、資產不足或額外安全手數停止條件。' : mode === 'cashout' ? '達到目標優先停止；否則任一方資產不足目前 BET 的每手開局門檻即停止，不自動降低 BET。安全手數上限列為截尾。' : independent ? '每位玩家完成指定獨立手數；每手重設資產並符合目前 BET 的開局門檻。' : '完成指定手數或任一方資產不足目前 BET 的每手開局門檻即停止，不自動降低 BET；已開始的牌局正常完成。',
+      stopRule: unlimitedBankroll ? '每位玩家完成指定手數，沒有資產達標、資產不足或額外安全手數停止條件。' : holdem && !independent ? '完成指定手數或玩家桌籌碼歸零才停止；低於初次帶入仍可續手，對手於每手開始匹配玩家桌籌碼。' : mode === 'cashout' ? '達到目標優先停止；否則任一方資產不足目前 BET 的每手開局門檻即停止，不自動降低 BET。安全手數上限列為截尾。' : independent ? '每位玩家完成指定獨立手數；每手重設資產並符合目前 BET 的開局門檻。' : '完成指定手數或任一方資產不足目前 BET 的每手開局門檻即停止，不自動降低 BET；已開始的牌局正常完成。',
       actionOutcomeUnit: 'count 是動作次數；hands 與結果欄是含該街／座位／動作的手數，同手只計一次，勝負均指玩家。',
       returnDenominator: '單手倍數＝含 JP 總返還／有效投入；退款不進分子或分母。',
       uncertainty: !clustered ? '以獨立牌局充分統計量計算比值的 95% 常態近似區間。' : `以每位玩家整段分子／分母聚類，計算比值的 95% 常態近似區間；少於兩位玩家不報區間。${pooled ? '水池與冷卻跨手相依，即使 independent 或固定 BOSS 也不能按單手當獨立樣本。' : independent ? '雖然每手重設資產，BOSS 不連續重複會產生跨手相關，因此仍須按玩家聚類。' : ''}`,
       limitation: '不是後端玩家帳本或 RTP 認證；零次稀有 JP 不代表機率為零，少量樣本不能證明尾部已收斂。'},
   };
   result.method = [result.methodMeta.bankroll, result.methodMeta.stopRule, result.methodMeta.uncertainty, result.methodMeta.limitation].join(' ');
-  const stats = moments();
+  const stats = moments(), actionSizes = new Map(), bossStrengths = new Map();
   let batch = summary(), completedPlayers = 0;
   const progress = () => onProgress?.({completed: result.hands, total: totalBudget, completedHands: result.hands,
     totalHands: totalBudget, completedPlayers, totalPlayers: players, totalIsUpperBound: !unlimitedBankroll && mode !== 'independent', mode});
@@ -198,11 +201,17 @@ export function simulateStudy(config = {}, {
     const playerSeed = studyPlayerSeed(seed, playerIndex);
     const session = createSession(normalized, playerSeed, {firstSmallBlind: independent ? 'player' : 'random'});
     const player = {...summary(), playerIndex, seed: playerSeed, start: unlimitedBankroll ? null : normalized.buyIn, end: unlimitedBankroll ? null : normalized.buyIn,
-      outcomePoolSummary: pooled ? createPoolStudySummary(session.outcomePools) : null,
+      outcomePoolSummary: pooled ? createPoolStudySummary(session.outcomePools, {bucketPolicy:normalized.outcome.mode==='pooled-holdem'?'blind-ranges':'exact-stakes'}) : null,
       endMeaning: unlimitedBankroll ? 'unlimited-bankroll' : independent ? 'last-independent-hand' : 'continuous-balance', status: 'completed',
       reachedTarget: false, insufficient: false, censored: false, npcRefreshCount: 0,
       bossProfileSequence: [], bossEncounterCounts: encounterCounts(), bossConsecutiveRepeats: 0,
       npcRefreshAdjustment: 0, npcRefreshAdded: 0, npcRefreshRemoved: 0};
+    player.tableEntries = 0; player.tableBuyIns = 0;
+    if (holdem && unlimitedBankroll) session.stacks = {player: 0, npc: 0};
+    else if (holdem && !independent) {
+      player.tableEntries = 1; player.tableBuyIns = session.stacks.player;
+      result.tableEntries++; result.tableBuyIns += session.stacks.player;
+    }
     const terminal = () => {
       if (unlimitedBankroll) return null;
       if (mode === 'cashout' && session.stacks.player >= target) return 'target';
@@ -211,7 +220,14 @@ export function simulateStudy(config = {}, {
     };
     let status = terminal();
     while (!status && player.hands < handLimit) {
-      if (independent || unlimitedBankroll) session.stacks = {player: handBankroll, npc: handBankroll};
+      if (independent || unlimitedBankroll && !holdem || holdem && unlimitedBankroll && session.stacks.player <= 0) {
+        if (holdem && unlimitedBankroll && player.tableEntries > 0) beginNewTable(session, {buyIn: handBankroll});
+        else session.stacks = {player: handBankroll, npc: handBankroll};
+        if (holdem) {
+          player.tableEntries++; player.tableBuyIns += handBankroll;
+          result.tableEntries++; result.tableBuyIns += handBankroll;
+        }
+      }
       const hand = playAutomatedHand(session, policy), settled = hand.result, p = settled.player;
       if (pooled) collectPoolStudyAudit(player.outcomePoolSummary, settled.outcomePoolAudit);
       const bossId = hand.bossProfile?.id ?? 'legacy';
@@ -226,6 +242,18 @@ export function simulateStudy(config = {}, {
       encounters.selectionProbabilityCounts[probabilityKey] = (encounters.selectionProbabilityCounts[probabilityKey] || 0) + 1;
       for (const targetSummary of [result, player, batch, result.byBlind[hand.smallBlind === 'player' ? 'small' : 'big'], result.byBoss[bossId]]) collect(targetSummary, hand);
       collectActions(result.actionStats, hand); collectAudit(result.dealAudit, hand); collectReturn(result.returnDistribution, p);
+      for (const event of hand.history) {
+        if (!event.sizeKeys?.length) continue;
+        const key = `${event.street}/${event.actor}/${event.type}/${event.sizeKeys.join('+')}`;
+        if (!actionSizes.has(key)) actionSizes.set(key, {street: event.street, actor: event.actor, type: event.type,
+          sizeKey: event.sizeKey, sizeKeys: [...event.sizeKeys], count: 0, amount: 0, allIns: 0});
+        const row = actionSizes.get(key); row.count++; row.amount += event.amount; row.allIns += Number(event.allIn);
+      }
+      for (const [street, state] of Object.entries(hand.bossStreetStates || {})) {
+        const key = `${bossId}/${street}/${state.band}`;
+        if (!bossStrengths.has(key)) bossStrengths.set(key, {bossProfileId: bossId, street, band: state.band, hands: 0});
+        bossStrengths.get(key).hands++;
+      }
       for (const street of STREETS.slice(0, STREETS.indexOf(hand.street) + 1)) {
         const reached = result.streetReach[street]; reached.hands++;
         reached.wins += Number(settled.winner === 'player'); reached.losses += Number(settled.winner === 'npc');
@@ -236,7 +264,7 @@ export function simulateStudy(config = {}, {
       if (!clustered) observe(stats, p.matchedWager, p.netReturn, p.totalReturn);
       if (!independent) {
         const refresh = syncOpponentBankroll(session);
-        for (const targetSummary of [result, player]) {
+        for (const targetSummary of refresh ? [result, player] : []) {
           targetSummary.npcRefreshCount++; targetSummary.npcRefreshAdjustment += refresh.adjustment;
           targetSummary.npcRefreshAdded += Math.max(0, refresh.adjustment);
           targetSummary.npcRefreshRemoved += Math.max(0, -refresh.adjustment);
@@ -250,6 +278,7 @@ export function simulateStudy(config = {}, {
     player.status = status || (mode === 'cashout' ? 'censored' : 'completed');
     player.reachedTarget = player.status === 'target'; player.insufficient = player.status === 'insufficient';
     player.censored = player.status === 'censored';
+    player.tableClosingChips = session.stacks.player;
     result.playerSummary[player.status]++;
     if (clustered) observe(stats, player.wagers, player.netReturns, player.totalReturns);
     for (const key of ['npcRefreshAdjustment', 'npcRefreshAdded', 'npcRefreshRemoved']) player[key] = round(player[key]);
@@ -258,6 +287,8 @@ export function simulateStudy(config = {}, {
   }
   flushBatch();
   result.methodMeta.ciSamples = stats.n;
+  result.actionSizeStats = [...actionSizes.values()].map(row => ({...row, amount: round(row.amount)}));
+  result.bossStrengthStats = [...bossStrengths.values()];
   result.outcomePoolSummary = combinePoolStudySummaries(result.playerResults.map(player => player.outcomePoolSummary));
   const baseEstimate = ratio(result.netReturns, result.wagers), totalEstimate = ratio(result.totalReturns, result.wagers);
   const base = uncertainty(stats, baseEstimate, result.wagers, 'base'), total = uncertainty(stats, totalEstimate, result.wagers, 'total');

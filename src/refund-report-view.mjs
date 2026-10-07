@@ -1,6 +1,6 @@
-import {esc} from './shared.mjs?v=51';
-import {LAB_POLICIES} from './probability-text.mjs?v=35';
-import {poolSummaryTable} from './probability-report-view.mjs?v=51';
+import {esc} from './shared.mjs?v=53';
+import {LAB_POLICIES} from './probability-text.mjs?v=53';
+import {poolSummaryTable} from './probability-report-view.mjs?v=53';
 
 const finite = value => typeof value === 'number' && Number.isFinite(value);
 const number = (value, digits = 6) => finite(value)
@@ -20,8 +20,9 @@ function completionDate(report) {
 }
 
 function playerTable(players) {
-  const rows = players.map(({player, index}) => `<tr><td>${number(index + 1, 0)}</td><td>${number(player.hands, 0)}</td><td>${number(player.start)}</td><td>${number(player.end)}</td><td>${player.status === 'target' ? '達標' : '資產不足'}</td></tr>`).join('');
-  return `<details class="model-summary"><summary>每位玩家明細（${number(players.length, 0)} 位）</summary><div class="table-scroll"><table><thead><tr><th scope="col">玩家</th><th scope="col">手數</th><th scope="col">初始資產</th><th scope="col">最終資產</th><th scope="col">結果</th></tr></thead><tbody>${rows || '<tr><td colspan="5" class="table-empty">尚無已完成玩家。</td></tr>'}</tbody></table></div></details>`;
+  const walletModel = players.some(({player}) => finite(player.wallet));
+  const rows = players.map(({player, index}) => `<tr><td>${number(index + 1, 0)}</td><td>${number(player.hands, 0)}</td><td>${number(player.start)}</td><td>${number(player.end)}</td>${walletModel ? `<td>${number(player.wallet)}</td><td>${number(player.tableClosingChips)}</td><td>${number(player.tableEntries)}</td>` : ''}<td>${player.status === 'target' ? '達標' : '資產不足'}</td></tr>`).join('');
+  return `<details class="model-summary"><summary>每位玩家明細（${number(players.length, 0)} 位）</summary><div class="table-scroll"><table><thead><tr><th scope="col">玩家</th><th scope="col">手數</th><th scope="col">初始資產</th><th scope="col">最終資產</th>${walletModel ? '<th scope="col">外部錢包</th><th scope="col">桌籌碼</th><th scope="col">入桌次數</th>' : ''}<th scope="col">結果</th></tr></thead><tbody>${rows || '<tr><td colspan="5" class="table-empty">尚無已完成玩家。</td></tr>'}</tbody></table></div></details>`;
 }
 
 function reportMarkup(report) {
@@ -43,7 +44,8 @@ function reportMarkup(report) {
     `種子 ${report.seed ?? '—'}`,
     `初始資產 ${number(report.initialAsset)}`,
     `目標資產 ${number(report.targetAsset)}`,
-    `固定 BET ${number(report.config?.bigBlind)}（不自動降低）`,
+    ['fixed-holdem','pooled-holdem'].includes(report.outcomeModel) ? `固定小盲 ${number(report.config?.smallBlind)}（不自動降低）` : `固定 BET ${number(report.config?.bigBlind)}（不自動降低）`,
+    ...(report.assetModel === 'external-wallet-plus-table-chips' ? [`每次帶入 ${number(report.tableBuyIn)}（100 小盲）`, '總資產＝外部錢包＋桌籌碼；歸零才重新帶入'] : []),
     ...(date ? [`時間 ${date}`] : []),
   ];
   const metrics = [

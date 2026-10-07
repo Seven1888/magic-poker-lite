@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {handEntryStatus, assertHandEntryAssets, minimumAssetsForBet} from '../src/hand-entry.mjs';
 import {minimumAssets} from '../src/entry-model.mjs';
-import {createSession, startHand, applyAction, legalActions} from '../src/engine.mjs';
+import {createSession, startHand, applyAction, legalActions} from './legacy-engine.mjs';
 
 function snapshot(session) {
   return {session: JSON.stringify(session), hand: JSON.stringify(session.activeHand), rng: session.rng.state()};

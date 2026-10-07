@@ -1,4 +1,4 @@
-import {atGameSpeed} from './presentation-timing.mjs?v=35';
+import {atGameSpeed} from './presentation-timing.mjs?v=53';
 
 const amount = value => value.toLocaleString('en-US', {maximumFractionDigits: 6});
 const CENTER = {x: 200, y: 427, size: 104};

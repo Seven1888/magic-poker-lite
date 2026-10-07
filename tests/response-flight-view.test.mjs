@@ -22,12 +22,12 @@ test('central draw includes the missing CALL probability and only highlights the
  assert.equal(JSON.stringify(distribution),before);
 });
 
-test('central draw maps CHECK/BET names to CALL/RAISE while preserving raw types, widths and selection',()=>{
+test('central draw displays CHECK/BET using exact names, widths and selection',()=>{
  const view=responseDistributionView([{type:'check',probability:.0004},{type:'bet',probability:.3996},
   {type:'fold',probability:0},{type:'call',probability:-.1},{type:'raise',probability:NaN}],{phase:'result',selected:'bet'});
  assert.equal(view.count,2);
- assert.match(view.markup,/>CALL<\/span>/);
- assert.match(view.markup,/>RAISE<\/span>/);
+ assert.match(view.markup,/>CHECK<\/span>/);
+ assert.match(view.markup,/>BET<\/span>/);
  assert.match(view.markup,/data-probability="0.0004"/);
  assert.match(view.markup,/&lt;0.1%/);
  assert.match(view.markup,/>40.0%<\/b>/,'the raw .3996 is formatted, never rescaled to the positive sum');
@@ -40,8 +40,22 @@ test('central draw maps CHECK/BET names to CALL/RAISE while preserving raw types
  assert.match(narrow.markup,/is-tiny" data-response="raise" data-probability="0.05" style="flex:0 0 5%"/);
  assert.match(narrow.markup,/action-response-badge" data-response="call" data-probability="0.92" style="flex:0 0 92%"/);
  assert.doesNotMatch(narrow.markup,/response-track-legend/);
- assert.doesNotMatch(view.markup,/>CHECK<|>BET</);
+ assert.doesNotMatch(view.markup,/>CALL<|>RAISE</);
  assert.deepEqual(responseDistributionView([]),{count:0,markup:''});
+});
+
+test('three raise sizes animate as one action segment without mutating engine probabilities',()=>{
+ const sized=Object.freeze([{type:'fold',probability:.05},{type:'call',probability:.25},
+  {type:'raise',id:'raise:half',amount:30,probability:.35},
+  {type:'raise',id:'raise:pot',amount:50,probability:.245},
+  {type:'raise',id:'raise:allin',amount:100,probability:.105}].map(Object.freeze));
+ const before=JSON.stringify(sized),view=responseDistributionView(sized,{phase:'result',selected:'raise',roll:.6});
+ assert.equal(view.count,3);
+ assert.equal((view.markup.match(/data-response="raise"/g)||[]).length,1);
+ assert.match(view.markup,/>70.0%<\/b>/);
+ assert.match(view.markup,/response-result-marker" style="left:60%"/);
+ assert.equal((view.markup.match(/is-selected/g)||[]).length,1);
+ assert.equal(JSON.stringify(sized),before);
 });
 
 function fixture(){
@@ -121,7 +135,7 @@ test('a direct new-street decision replaces an in-flight preview without its old
  const panel=flight.target();
  assert.equal(oldLayer.removed,true);
  assert.equal(f.stage.dataset.responseFlight,'drawing');
- assert.match(panel.innerHTML,/>CALL<\/span>/);
+ assert.match(panel.innerHTML,/>CHECK<\/span>/);
  assert.doesNotMatch(panel.innerHTML,/data-response="call"/);
  f.animations[0].resolve();
  assert.equal(await pending,false);

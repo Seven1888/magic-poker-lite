@@ -1,4 +1,4 @@
-import {money} from './shared.mjs?v=51';
+import {money} from './shared.mjs?v=53';
 
 /** Visible chip sources only. Exact balances come from the controller, never a wallet copy. */
 export function createBankrollView({root = globalThis.document} = {}) {
@@ -6,13 +6,13 @@ export function createBankrollView({root = globalThis.document} = {}) {
   const lookup = id => root.getElementById?.(id) || root.querySelector?.(`#${id}`);
   const shown = {player: null, npc: null};
 
-  function render(values, {baseBet = 10, refreshNpc = false} = {}) {
+  function render(values, {baseBet = 10, refreshNpc = false, walletBalance = null} = {}) {
     for (const seat of ['player', 'npc']) {
       const value = Math.max(0, Number(values[seat]) || 0);
       const amount = lookup(`${seat}-stack`), pile = lookup(`${seat}-bankroll-chips`);
       const change = lookup(`${seat}-chip-change`);
       const panel = lookup(seat === 'player' ? 'balance-button' : 'npc-asset-panel');
-      if (amount) amount.textContent = money(value);
+      if (amount) amount.textContent = money(seat === 'player' && walletBalance !== null ? walletBalance : value);
       const tableAmount = lookup(`${seat}-bankroll-value`);
       if (tableAmount) tableAmount.textContent = money(value);
       const delta = shown[seat] === null ? 0 : Math.round((value - shown[seat]) * 1e6) / 1e6;

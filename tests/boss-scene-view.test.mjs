@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {BOSS_SCENE_ASSETS,preloadBossScenes,renderBossIdentity,waitForBossScene} from '../src/boss-scene-view.mjs';
-import {createSession,startHand,applyAction,syncOpponentBankroll} from '../src/engine.mjs';
+import {createSession,startHand,applyAction,syncOpponentBankroll} from './legacy-engine.mjs';
 
 function fixture() {
  const elements = new Map(), images = [], timers = new Map(); let serial = 0;

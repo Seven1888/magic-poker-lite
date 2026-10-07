@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {DEFAULT_CONFIG,createSession,startHand,normalizeConfig} from '../src/engine.mjs';
+import {DEFAULT_CONFIG,createSession,startHand,normalizeConfig} from './legacy-engine.mjs';
 import {betOptions,minimumAssets,tableConfig} from '../src/entry-model.mjs';
 import {renderBetPresets,updateBetSelection} from '../src/entry-view.mjs';
 test('new demo sessions start at 10,000 without changing the deal or overriding configured assets',()=>{

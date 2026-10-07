@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createPotView} from '../src/pot-view.mjs';
-import {createSession, startHand, applyAction, legalActions} from '../src/engine.mjs';
+import {createSession, startHand, applyAction, legalActions} from './legacy-engine.mjs';
 import {atGameSpeed} from '../src/presentation-timing.mjs';
 
 function fakeDocument() {

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createSession, startHand, legalActions, applyAction, syncOpponentBankroll, previewResponse, playAutomatedHand} from '../src/engine.mjs';
+import {createSession, startHand, legalActions, applyAction, syncOpponentBankroll, previewResponse, playAutomatedHand} from './legacy-engine.mjs';
 
 const near = (actual, expected) => assert.ok(Math.abs(actual - expected) < 1e-6, `${actual} != ${expected}`);
 function fixture({player = ['As', 'Ah'], npc = ['Ks', 'Kh'], board = ['2s', '3h', '7d', '9c', 'Jd'], config = {}} = {}) {

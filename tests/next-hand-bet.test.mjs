@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createSession, startHand, legalActions, applyAction, syncOpponentBankroll} from '../src/engine.mjs';
+import {createSession, startHand, legalActions, applyAction, syncOpponentBankroll} from './legacy-engine.mjs';
 import {nextHandBetConfig} from '../src/next-hand-bet.mjs';
 import {minimumAssets, tableConfig} from '../src/entry-model.mjs';
 

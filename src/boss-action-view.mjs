@@ -1,6 +1,6 @@
-import {atGameSpeed} from './presentation-timing.mjs?v=35';
+import {atGameSpeed} from './presentation-timing.mjs?v=53';
 
-const labels = {fold: 'FOLD', check: 'CALL', call: 'CALL', bet: 'RAISE', raise: 'RAISE'};
+const labels = {fold: 'FOLD', check: 'CHECK', call: 'CALL', bet: 'BET', raise: 'RAISE'};
 
 /** Shows committed NPC history events. Paid actions wait for their chip departure. */
 export function createBossActionView({root = globalThis.document, reducedMotion = false} = {}) {

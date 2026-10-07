@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   createSession, startHand, legalActions, applyAction,
   previewResponse, getActionDistribution
-} from '../src/engine.mjs';
+} from './legacy-engine.mjs';
 
 const types = hand => legalActions(hand).map(action => action.type);
 const actionEvents = hand => hand.history.filter(event => ['call', 'check', 'bet', 'raise', 'fold'].includes(event.type));

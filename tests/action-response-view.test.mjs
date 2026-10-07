@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createSession,startHand,legalActions,applyAction,getActionDistribution,stepNpc,previewResponse} from '../src/engine.mjs';
+import {createSession,startHand,legalActions,applyAction,getActionDistribution,stepNpc,previewResponse} from './legacy-engine.mjs';
 import {responseBadges,responseBadgeView,captureResponseSource,responseSourceMatches} from '../src/action-response-view.mjs';
 
 test('badges preserve raw FOLD/RAISE probabilities and tiny positives without displaying CALL or rescaling', () => {
@@ -22,9 +22,9 @@ test('mixed FOLD/CALL and CHECK/BET keep only their raw fold/aggressive outcomes
   assert.deepEqual(responseBadges(betting),[{type:'bet',probability:.4,label:'40.0%'}]);
   const view=responseBadgeView(betting,{phase:'result',selected:'bet'});
   assert.match(view.markup,/is-selected" data-response="bet" data-probability="0.4"/);
-  assert.match(view.markup,/>RAISE<\/span>/);
-  assert.doesNotMatch(view.markup,/>BET<|>CHECK<|>CALL</);
-  assert.equal(view.description,'opponent RAISE 40.0%');
+  assert.match(view.markup,/>BET<\/span>/);
+  assert.doesNotMatch(view.markup,/>RAISE<|>CHECK<|>CALL</);
+  assert.equal(view.description,'opponent BET 40.0%');
   for(const distribution of [[], [{type:'fold',probability:0},{type:'call',probability:NaN}]]) {
     assert.deepEqual(responseBadgeView(distribution),{markup:'',description:''});
   }
@@ -33,7 +33,7 @@ test('mixed FOLD/CALL and CHECK/BET keep only their raw fold/aggressive outcomes
 test('sole responses include passive CALL and retain original types, probability and selection', () => {
   for(const type of ['fold','call','check','bet','raise']) {
     const distribution=Object.freeze([{type,probability:1},{type:'fold',probability:0}].map(Object.freeze));
-    const label=type==='check'?'CALL':type==='bet'?'RAISE':type.toUpperCase();
+    const label=type.toUpperCase();
     assert.deepEqual(responseBadges(distribution),[{type,probability:1,label:'100%'}]);
     const view=responseBadgeView(distribution,{phase:'result',selected:type});
     assert.ok(view.markup.includes(`is-selected" data-response="${type}" data-probability="1"`));
@@ -44,7 +44,28 @@ test('sole responses include passive CALL and retain original types, probability
     'a sole positive value is never silently normalized to 100%');
 });
 
-test('a guaranteed CALL source does not mutate RNG, while free CALL still changes street', () => {
+test('button previews aggregate three raise sizes as one public action without changing individual edges', () => {
+  const distribution=Object.freeze([{type:'fold',probability:.05},{type:'call',probability:.25},
+    {type:'raise',id:'raise:half',probability:.35},{type:'raise',id:'raise:pot',probability:.245},
+    {type:'raise',id:'raise:allin',probability:.105}].map(Object.freeze));
+  const before=JSON.stringify(distribution),badges=responseBadges(distribution);
+  assert.equal(badges.length,2);assert.equal(badges[1].type,'raise');assert.equal(badges[1].label,'70.0%');
+  assert.ok(Math.abs(badges[1].probability-.7)<1e-12);
+  assert.equal(JSON.stringify(distribution),before);
+});
+
+test('sized player action previews retain the selected id and do not substitute the first raise option', () => {
+  const hand=startHand(createSession({outcome:{mode:'fixed-holdem'},smallBlind:10,bigBlind:20,buyIn:1000,
+    boss:{mode:'fixed',profileId:'maniac'}},101));
+  const action=legalActions(hand).find(item=>item.sizeKey==='pot');
+  const before=JSON.stringify(hand),rng=hand.rng.state(),source=captureResponseSource(hand,action);
+  assert.ok(source);assert.equal(source.action.id,action.id);assert.equal(source.action.amount,action.amount);
+  assert.equal(JSON.stringify(hand),before);assert.equal(hand.rng.state(),rng);
+  applyAction(hand,action);
+  assert.equal(responseSourceMatches(source,hand),true);assert.deepEqual(source.distribution,getActionDistribution(hand));
+});
+
+test('a guaranteed CALL source does not mutate RNG, while CHECK still changes street', () => {
   const config={bigBlind:100,betSize:{preflop:100,flop:200,turn:400,river:400},
     boss:{mode:'legacy'},npc:{fold:0,call:1,raise:0,check:1,bet:0,strengthInfluence:0,priceInfluence:0}};
   const make=()=>{const hand=startHand(createSession(config,22,{firstSmallBlind:'random'}));assert.equal(stepNpc(hand).selected.type,'call');return hand;};

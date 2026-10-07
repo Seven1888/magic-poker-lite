@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {DEFAULT_CONFIG, normalizeConfig, createSession, startHand, legalActions, applyAction, previewResponse,
-  cloneHand, stepNpc, getActionDistribution, compareHands, syncOpponentBankroll} from '../src/engine.mjs';
+  cloneHand, stepNpc, getActionDistribution, compareHands, syncOpponentBankroll} from './legacy-engine.mjs';
 import {classifyJackpot} from '../src/jackpot.mjs';
 
 const near = (a, b) => assert.ok(Math.abs(a - b) < 0.000003, `${a} != ${b}`);
@@ -14,7 +14,7 @@ function poolState(pools) {
 const quick = (config = {}, seed = 2, options) => createSession({buyIn: 50, ...config}, seed, options);
 const winningConfig = (extra = {}) => ({outcome: {conversionRate: 1, ...extra}});
 
-test('current settings migrate old pot discounts and pay the full matched pot with one RTP score coefficient', () => {
+test('explicit historical pooled settings discard old pot discounts and pay the full matched pot with one RTP score coefficient', () => {
   assert.equal(DEFAULT_CONFIG.targetRtp, 1);
   for (const targetRtp of [.5, .96, .97, 1]) {
     const config = normalizeConfig({targetRtp});
@@ -48,7 +48,7 @@ function followNode(hand, destination) {
   assert.equal(hand._outcomeNodeId, destination.id);
 }
 
-test('the official default builds all 1,312 nodes before publishing and every stored branch conserves cards and money', () => {
+test('explicit historical pooled defaults build all 1,312 nodes and every stored branch conserves cards and money', () => {
   assert.equal(DEFAULT_CONFIG.outcome.mode, 'prebuilt-pools');
   const session = createSession({}, 0), initialPools = structuredClone(session.outcomePools);
   const hand = startHand(session), tree = hand._outcomeTree;

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createEntryEncounter} from '../src/entry-encounter.mjs';
 import {BOSS_PROFILE_IDS} from '../src/boss-profiles.mjs';
-import {createSession, startHand, applyAction, normalizeConfig} from '../src/engine.mjs';
+import {createSession, startHand, applyAction, normalizeConfig} from './legacy-engine.mjs';
 import {betOptions, tableConfig} from '../src/entry-model.mjs';
 
 const seeds = [0, 1, 2, 22, 30, 72, 188, 246, 7182, 0xffffffff, 'entry-encounter-v39'];
@@ -13,7 +13,7 @@ const modes = [
 ];
 const options = {firstSmallBlind: 'random'};
 
-test('default pooled model commits the reserved identity at both BET bucket extremes', () => {
+test('explicit historical pooled model commits the reserved identity at both BET bucket extremes', () => {
   for (const boss of modes) for (const bet of [1, 2000]) {
     const config = tableConfig(normalizeConfig({boss}), bet, 100000);
     const entry = createEntryEncounter(config, 72);
@@ -73,8 +73,8 @@ for (const boss of modes) {
       startHand(baseline);
       assert.deepEqual(snapshot(session), snapshot(baseline));
       if (boss.mode === 'rotate') {
-        assert.equal(hand.bossSelection.probability, 0.25);
-        assert.equal(next.bossSelection.probability, 1 / 3);
+        assert.equal(hand.bossSelection.probability, 0.5);
+        assert.equal(next.bossSelection.probability, 1);
         assert.notEqual(next.bossProfile.id, entry.bossProfile.id);
       }
     }
@@ -131,5 +131,38 @@ test('repeated entry previews cannot mutate a live session, its hand, bankroll o
     assert.deepEqual(createEntryEncounter(session.config, session.seed), first);
     createEntryEncounter(session.config, seeds[i]);
     assert.deepEqual(snapshot(session), before);
+  }
+});
+
+test('entry previews and real deals agree with a carried opponent identity across table re-entry', () => {
+  for (const mode of ['fixed-holdem', 'legacy-deck']) for (const lastBossProfileId of [null, 'caller', 'maniac']) {
+    for (const seed of seeds) {
+      const config = {outcome: {mode}, boss: {mode: 'rotate'}};
+      const previous = {lastBossProfileId};
+      const entry = createEntryEncounter(config, seed, previous);
+      const session = createSession(config, seed, {...options, ...previous}), opening = snapshot(session);
+      assert.deepEqual(createEntryEncounter(config, seed, previous), entry);
+      assert.deepEqual(snapshot(session), opening, 'preview does not mutate the live entry');
+      assert.equal(session.handNumber, 0); assert.equal(session.activeHand, undefined);
+      const hand = startHand(session);
+      assert.equal(hand.bossProfile.id, entry.bossProfile.id);
+      if (lastBossProfileId) assert.notEqual(hand.bossProfile.id, lastBossProfileId);
+      applyAction(hand, 'fold');
+      const reentry = createEntryEncounter(config, `${seed}:next-table`, {lastBossProfileId: session.lastBossProfileId});
+      const nextSession = createSession(config, reentry.seed, {...options, lastBossProfileId: session.lastBossProfileId});
+      const next = startHand(nextSession);
+      assert.equal(next.bossProfile.id, reentry.bossProfile.id);
+      assert.notEqual(next.bossProfile.id, hand.bossProfile.id);
+    }
+  }
+});
+
+test('entry validates carried identities and omitted history keeps the original first selection', () => {
+  for (const lastBossProfileId of ['sniper', 'trapper', false, 0, '', [], {}]) {
+    assert.throws(() => createEntryEncounter({}, 1, {lastBossProfileId}), /lastBossProfileId/);
+  }
+  for (const seed of seeds) {
+    assert.deepEqual(createEntryEncounter({}, seed), createEntryEncounter({}, seed, {lastBossProfileId: null}));
+    assert.deepEqual(createEntryEncounter({}, seed), createEntryEncounter({}, seed, {lastBossProfileId: undefined}));
   }
 });

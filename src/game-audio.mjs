@@ -1,4 +1,4 @@
-import {atGameSpeed} from './presentation-timing.mjs?v=35';
+import {atGameSpeed} from './presentation-timing.mjs?v=53';
 
 // Original score: a D-minor / extended-chord lounge groove, followed by a
 // faster cinematic showdown arrangement. All synthesis is local and musical

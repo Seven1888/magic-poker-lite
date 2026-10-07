@@ -4,7 +4,7 @@ import {
   createRng, shuffle, makeDeck, evaluateBest, compareHands, holeScore, normalizeConfig,
   createSession, startHand, legalActions, applyAction, getActionDistribution, sampleDistribution,
   previewResponse, stepNpc, equityEstimate, playAutomatedHand, simulate
-} from '../src/engine.mjs';
+} from './legacy-engine.mjs';
 
 const near = (a, b, tolerance = 1e-6) => assert.ok(Math.abs(a - b) <= tolerance, `${a} ≠ ${b}`);
 const types = hand => legalActions(hand).map(action => action.type);

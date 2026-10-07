@@ -4,11 +4,11 @@ export function tableDeckCounts({player = 0, npc = 0, board = 0} = {}) {
   return {dealtCards, deckRemaining: 52 - dealtCards};
 }
 
-/** Expose a card value only after its already-placed back has been flipped. */
+/** Empty slots are not dealt cards. Only this street's cards receive a back before revealing. */
 export function boardCardView(index, {cards = null, dealt = 0, revealed = 0} = {}) {
   const active = cards !== null, onTable = active && index < dealt;
   const faceUp = onTable && index < revealed;
-  return {card: faceUp ? cards[index] : null, back: active && !faceUp, visible: !active || onTable};
+  return {card: faceUp ? cards[index] : null, back: onTable && !faceUp, visible: true};
 }
 
 /** Even a committed all-in runout is presented as three distinct streets. */

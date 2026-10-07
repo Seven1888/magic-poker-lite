@@ -1,72 +1,39 @@
-import {evaluateBest, holeScore, RANKS} from './poker.mjs?v=35';
+import {evaluateBest, normalizeCard, RANKS} from './poker.mjs?v=53';
 
 const freeze = value => {
   if (value && typeof value === 'object') { Object.values(value).forEach(freeze); Object.freeze(value); }
   return value;
 };
 const row = (fold, call, raise) => ({fold, call, raise});
-export const BOSS_PROFILE_VERSION = 'four-boss-fixed-street-v2';
+const STREETS = ['preflop', 'flop', 'turn', 'river'];
+const rankOf = card => RANKS.indexOf(card[0]) + 2;
+export const BOSS_PROFILE_VERSION = 'two-boss-locked-street-v3';
+export const BOSS_RAISE_SIZE_WEIGHTS = freeze({half: .5, pot: .35, allin: .15});
 export const BOSS_BANDS = freeze({
-  weak: {label: '弱起手', description: '翻牌前兩張起手分數低於 0.42。'},
-  playable: {label: '可玩起手', description: '翻牌前起手分數介於 0.42（含）至 0.66。'},
-  premium: {label: '強起手', description: '翻牌前起手分數至少 0.66；分數是策略分類，不是勝率。'},
-  high: {label: '高牌', description: '尚未成對，也沒有四張同花或四張順子聽牌。'},
-  pair: {label: '一對', description: '最佳五張恰好一對，包含公牌形成的一對；沒有聽牌。'},
-  draw: {label: '聽牌', description: '翻牌或轉牌時，最多一對，且可見牌有四張同花或五張順子窗口中的四個不同點數。'},
-  strong: {label: '強成牌', description: '目前最佳五張為兩對或以上，優先於聽牌分類。'}
+  weak: {label: '不強', description: '沒有符合本階段的成牌、聽牌或明確詐唬條件。'},
+  strong: {label: '強', description: '符合本階段的成牌、聽牌或明確詐唬條件；同一街道鎖定分類。'}
 });
-export const BOSS_BANDS_BY_STREET = freeze({preflop: ['weak', 'playable', 'premium'],
-  flop: ['high', 'pair', 'draw', 'strong'], turn: ['high', 'pair', 'draw', 'strong'], river: ['high', 'pair', 'strong']});
-
-function averageStreetRows(tables) {
-  return Object.fromEntries(Object.entries(BOSS_BANDS_BY_STREET).map(([street, bands]) => {
-    const weights = Object.fromEntries(['fold', 'call', 'raise'].map(action => [action,
-      bands.reduce((sum, band) => sum + tables[street][band][action], 0) / bands.length]));
-    // Correct only binary floating-point residue; keep the unrounded equal-weight means.
-    weights.raise += 100 - (weights.fold + weights.call + weights.raise);
-    return [street, weights];
-  }));
-}
-
-/** Keep the v1 tables as the readable historical source; only streetWeights drive v2 actions. */
+export const BOSS_BANDS_BY_STREET = freeze(Object.fromEntries(STREETS.map(street => [street, ['weak', 'strong']])));
 export const BOSS_PROFILES = freeze([
-  {id: 'caller', name: '死跟型', nickname: '不信邪', description: '各街以過牌或跟注為主，較少主動加注。', tables: {
-    preflop: {weak: row(8,88,4), playable: row(3,91,6), premium: row(0,85,15)},
-    flop: {high: row(12,83,5), pair: row(3,92,5), draw: row(3,90,7), strong: row(0,85,15)},
-    turn: {high: row(18,77,5), pair: row(6,88,6), draw: row(8,85,7), strong: row(0,82,18)},
-    river: {high: row(24,71,5), pair: row(8,86,6), strong: row(0,78,22)}
-  }},
-  {id: 'maniac', name: '狂攻型', nickname: '瘋狗', description: '各街都有較高的開注與加注機率，持續施壓。', tables: {
-    preflop: {weak: row(8,22,70), playable: row(4,21,75), premium: row(0,15,85)},
-    flop: {high: row(10,20,70), pair: row(3,22,75), draw: row(2,18,80), strong: row(0,15,85)},
-    turn: {high: row(14,21,65), pair: row(5,20,75), draw: row(5,20,75), strong: row(0,12,88)},
-    river: {high: row(20,20,60), pair: row(8,27,65), strong: row(0,10,90)}
-  }},
-  {id: 'sniper', name: '狙擊型', nickname: '冷面殺手', description: '面對下注時較常棄牌，仍保留固定的跟注與加注機率。', tables: {
-    preflop: {weak: row(70,27,3), playable: row(22,63,15), premium: row(0,20,80)},
-    flop: {high: row(75,23,2), pair: row(28,62,10), draw: row(12,73,15), strong: row(0,20,80)},
-    turn: {high: row(82,17,1), pair: row(42,50,8), draw: row(28,62,10), strong: row(0,15,85)},
-    river: {high: row(92,7,1), pair: row(55,40,5), strong: row(0,10,90)}
-  }},
-  {id: 'trapper', name: '設局型', nickname: '狐狸', description: '前段偏向過牌或跟注，轉牌與河牌再提高加注機率。', tables: {
-    preflop: {weak: row(35,58,7), playable: row(12,75,13), premium: row(0,85,15)},
-    flop: {high: row(45,48,7), pair: row(12,78,10), draw: row(8,82,10), strong: row(0,88,12)},
-    turn: {high: row(55,38,7), pair: row(22,66,12), draw: row(15,73,12), strong: row(0,70,30)},
-    river: {high: row(70,20,10), pair: row(35,50,15), strong: row(0,35,65)}
-  }}
-].map(profile => ({...profile, streetWeights: averageStreetRows(profile.tables)})));
+  {id: 'caller', name: '不激進', nickname: 'PASSIVE', description: '較少主動下注或加注，不強時也比較願意跟注。',
+    weights: {weak: row(25, 75, 0), strong: row(5, 65, 30)}},
+  {id: 'maniac', name: '激進', nickname: 'AGGRESSIVE', description: '符合成牌、聽牌或詐唬條件時，較常主動下注或加注。',
+    weights: {weak: row(45, 55, 0), strong: row(5, 25, 70)}}
+].map(profile => ({...profile, tables: Object.fromEntries(STREETS.map(street => [street, profile.weights]))})));
 export const BOSS_PROFILE_IDS = freeze(BOSS_PROFILES.map(profile => profile.id));
 export const BOSS_PROFILE_BY_ID = freeze(Object.fromEntries(BOSS_PROFILES.map(profile => [profile.id, profile])));
 
 export function normalizeBossConfig(input = {}) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) throw new TypeError('BOSS 設定須為物件。');
-  const mode = input.mode ?? 'rotate', profileId = input.profileId ?? 'caller';
+  const mode = input.mode ?? 'rotate';
+  const importedId = input.profileId ?? 'caller';
+  const profileId = ['sniper', 'trapper'].includes(importedId) ? 'caller' : importedId;
   if (!['rotate', 'fixed', 'legacy'].includes(mode)) throw new TypeError('BOSS 模式須為 rotate、fixed 或 legacy。');
   if (!BOSS_PROFILE_BY_ID[profileId]) throw new TypeError('未知 BOSS 類型。');
   return {mode, profileId};
 }
 
-/** Exactly one uniform draw for a rotating encounter; no rejection loop. */
+/** One uniform draw per rotating encounter. After the first 50/50 draw, the two profiles alternate. */
 export function selectBossProfile(rng, previousId = null, input = {}) {
   const {mode, profileId} = normalizeBossConfig(input);
   if (mode === 'legacy') return {profile: null, selection: {mode, probability: 1, previousId, eligibleIds: []}};
@@ -78,46 +45,129 @@ export function selectBossProfile(rng, previousId = null, input = {}) {
   return {profile: BOSS_PROFILE_BY_ID[id], selection: {mode, probability: 1 / eligibleIds.length, previousId, eligibleIds}};
 }
 
-/** Historical v1 classifier for research only; fixed-street v2 decisions never call it. */
-export function classifyBossStrength(hand) {
-  const hole = hand.holes.npc, board = hand.board;
-  if (board.length < 3) {
-    const score = holeScore(hole);
-    return {band: score < 0.42 ? 'weak' : score < 0.66 ? 'playable' : 'premium', score, category: null, flushDraw: false, straightDraw: false};
-  }
-  const visible = [...hole, ...board], evaluation = evaluateBest(visible);
-  const category = evaluation.category;
-  if (category >= 2) return {band: 'strong', score: null, category, flushDraw: false, straightDraw: false};
-  let flushDraw = false, straightDraw = false;
-  if (board.length < 5) {
-    const suits = visible.reduce((counts, card) => ((counts[card[1]] = (counts[card[1]] || 0) + 1), counts), {});
-    flushDraw = Object.values(suits).some(count => count === 4);
-    const ranks = new Set(visible.map(card => RANKS.indexOf(card[0]) + 2));
-    if (ranks.has(14)) ranks.add(1);
-    for (let low = 1; low <= 10; low++) {
-      if (Array.from({length: 5}, (_, index) => low + index).filter(rank => ranks.has(rank)).length === 4) { straightDraw = true; break; }
+function drawFeatures(hole, board) {
+  const visible = [...hole, ...board];
+  const suits = Object.fromEntries(['s', 'h', 'd', 'c'].map(suit => [suit, visible.filter(card => card[1] === suit).length]));
+  const flushSuits = Object.keys(suits).filter(suit => suits[suit] === 4);
+  const ranks = new Set(visible.map(rankOf)), boardRanks = new Set(board.map(rankOf));
+  if (ranks.has(14)) ranks.add(1);
+  if (boardRanks.has(14)) boardRanks.add(1);
+  const exclusiveHole = rank => ranks.has(rank) && !boardRanks.has(rank);
+  let openEndedStraightDraw = false, holeOpenEndedStraightDraw = false, gutshot = false, holeGutshot = false;
+  // The endpoints must both exist as card ranks: A234 and JQKA have only one out rank.
+  for (let low = 2; low <= 10; low++) {
+    const required = Array.from({length: 4}, (_, index) => low + index);
+    if (required.every(rank => ranks.has(rank))) {
+      openEndedStraightDraw = true;
+      holeOpenEndedStraightDraw ||= required.some(exclusiveHole);
     }
   }
-  return {band: flushDraw || straightDraw ? 'draw' : category === 1 ? 'pair' : 'high', score: null, category, flushDraw, straightDraw};
+  for (let low = 1; low <= 10; low++) {
+    const window = Array.from({length: 5}, (_, index) => low + index);
+    const missing = window.filter(rank => !ranks.has(rank));
+    if (missing.length === 1 && missing[0] !== low && missing[0] !== low + 4) {
+      gutshot = true;
+      holeGutshot ||= window.filter(rank => ranks.has(rank)).some(exclusiveHole);
+    }
+  }
+  return {flushDraw: flushSuits.length > 0, holeFlushDraw: hole.some(card => flushSuits.includes(card[1])),
+    openEndedStraightDraw, holeOpenEndedStraightDraw, gutshot, holeGutshot};
 }
 
-/** Keep raw engine types; only map their table weights, then normalize legal choices. */
-export function getBossProfileDistribution(hand, actions) {
-  if (!actions.length) return [];
+/** Pure classifier: own hole cards, revealed board and completed Turn actions only. No RNG or bet price. */
+export function classifyBossStrength(hand) {
+  const hole = hand.holes.npc.map(normalizeCard);
+  const street = hand.street;
+  if (!STREETS.includes(street)) throw new Error('未知 BOSS 判定階段。');
+  const count = {preflop: 0, flop: 3, turn: 4, river: 5}[street];
+  const board = hand.board.slice(0, count).map(normalizeCard);
+  if (hole.length !== 2 || board.length !== count || new Set([...hole, ...board]).size !== hole.length + board.length) {
+    throw new Error('BOSS 判定需要本階段有效且不重複的底牌與已揭公共牌。');
+  }
+  const reasons = [];
+  if (street === 'preflop') {
+    if (hole[0][0] === hole[1][0]) reasons.push('pocket-pair');
+    if (hole.every(card => rankOf(card) >= 10)) reasons.push('two-broadway');
+    if (hole[0][1] === hole[1][1] && hole.some(card => card[0] === 'A')) reasons.push('suited-ace');
+    return {band: reasons.length ? 'strong' : 'weak', category: null, reasons,
+      flushDraw: false, holeFlushDraw: false, openEndedStraightDraw: false, holeOpenEndedStraightDraw: false,
+      straightDraw: false, gutshot: false, holeGutshot: false};
+  }
+  const category = evaluateBest([...hole, ...board]).category;
+  const features = street === 'river'
+    ? {flushDraw: false, holeFlushDraw: false, openEndedStraightDraw: false, holeOpenEndedStraightDraw: false, gutshot: false, holeGutshot: false}
+    : drawFeatures(hole, board);
+  if (category >= 1) reasons.push('made-pair-plus');
+  if (features.flushDraw) reasons.push('four-flush');
+  if (features.openEndedStraightDraw) reasons.push('open-ended-straight');
+  if (features.holeGutshot && hole.some(card => rankOf(card) > Math.max(...board.map(rankOf)))) reasons.push('gutshot-overcard-bluff');
+  if (street === 'river' && category === 0) {
+    const turnAggression = (hand.history ?? []).some(action => action.street === 'turn' && action.actor === 'npc'
+      && (action.type === 'bet' || action.type === 'raise'));
+    if (turnAggression) {
+      // The Turn snapshot matters even for historical engines with branch-dependent private cards.
+      const turn = hand.bossStreetStates?.turn ?? drawFeatures(hole, board.slice(0, 4));
+      if (turn.holeFlushDraw || turn.holeOpenEndedStraightDraw) reasons.push('missed-turn-draw-bluff');
+      if (hole.some(card => card[0] === 'A' && board.filter(publicCard => publicCard[1] === card[1]).length === 3)) reasons.push('ace-flush-blocker-bluff');
+    }
+  }
+  return {band: reasons.length ? 'strong' : 'weak', category, reasons, ...features,
+    straightDraw: features.openEndedStraightDraw};
+}
+
+/** Call at street entry, before either player acts. Each immutable snapshot is replaced only on a new street. */
+export function lockBossStreetStrength(hand) {
+  if (hand.bossStreetStrength?.street === hand.street) return hand.bossStreetStrength;
+  const snapshot = freeze({street: hand.street, ...classifyBossStrength(hand)});
+  hand.bossStreetStrength = snapshot;
+  hand.bossStreetStates = freeze({...hand.bossStreetStates, [hand.street]: snapshot});
+  return snapshot;
+}
+
+function lockedWeights(hand) {
   const profile = BOSS_PROFILE_BY_ID[hand.bossProfile?.id];
   if (!profile) throw new Error('牌局缺少已鎖定的 BOSS 類型。');
-  const weights = profile.streetWeights[hand.street];
-  if (!weights) throw new Error('BOSS 行為表缺少目前街道。');
+  const state = hand.bossStreetStrength?.street === hand.street ? hand.bossStreetStrength : lockBossStreetStrength(hand);
+  const weights = profile.weights[state.band];
+  if (!weights) throw new Error('BOSS 行為表缺少目前分類。');
+  return weights;
+}
+
+/** Public numeric contract. It deliberately omits classification, reasons and all card data. */
+export function getBossProbabilityScenarios(hand) {
+  const weights = lockedWeights(hand), passive = weights.fold + weights.call;
+  return {facing: {fold: weights.fold / 100, call: weights.call / 100, raise: weights.raise / 100},
+    free: {check: passive / 100, raise: weights.raise / 100},
+    noRaise: {fold: weights.fold / passive, call: weights.call / passive}, sizes: {...BOSS_RAISE_SIZE_WEIGHTS}};
+}
+
+/** Apply public context rules, then distribute aggression over the legal, merged size choices. */
+export function getBossProfileDistribution(hand, actions) {
+  if (!actions.length) return [];
+  const weights = lockedWeights(hand);
   const canCheck = actions.some(action => action.type === 'check');
-  const keys = {fold: 'fold', call: 'call', check: 'call', bet: 'raise', raise: 'raise'};
-  const raw = actions.map(action => action.type === 'fold' && canCheck ? 0 : weights[keys[action.type]] || 0);
+  const aggressive = actions.filter(action => action.type === 'bet' || action.type === 'raise');
+  const sizeMass = action => {
+    const keys = action.sizeKeys ?? (action.sizeKey ? [action.sizeKey] : null);
+    return keys ? [...new Set(keys)].reduce((sum, key) => sum + (BOSS_RAISE_SIZE_WEIGHTS[key] ?? 0), 0) : 1 / aggressive.length;
+  };
+  const aggressionTotal = aggressive.reduce((sum, action) => sum + sizeMass(action), 0);
+  const raw = actions.map(action => {
+    if (action.type === 'fold') return canCheck ? 0 : weights.fold;
+    if (action.type === 'check') return weights.fold + weights.call;
+    if (action.type === 'call') return weights.call;
+    if (action.type === 'bet' || action.type === 'raise') return aggressionTotal ? weights.raise * sizeMass(action) / aggressionTotal : 0;
+    return 0;
+  });
   let total = raw.reduce((sum, value) => sum + value, 0);
   if (!total) {
     const passive = actions.findIndex(action => action.type === 'check' || action.type === 'call');
     if (passive < 0) throw new Error('BOSS 沒有可用的被動動作。');
     raw[passive] = 1; total = 1;
   }
-  const distribution = actions.map((action, index) => ({...action, probability: raw[index] / total}));
+  const twoStageSizing = ['fixed-holdem', 'pooled-holdem'].includes(hand.config?.outcome?.mode);
+  const distribution = actions.map((action, index) => ({...action, probability: raw[index] / total,
+    ...(twoStageSizing ? {bossSizing: true} : {})}));
   const last = raw.findLastIndex(value => value > 0);
   distribution[last].probability = 1 - distribution.reduce((sum, action, index) => sum + (index === last ? 0 : action.probability), 0);
   return distribution;

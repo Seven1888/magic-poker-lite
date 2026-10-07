@@ -1,13 +1,15 @@
-import {previewResponse} from './engine.mjs?v=51';
-import {pct,esc} from './shared.mjs?v=51';
-import {icon} from './ui-icons.mjs?v=35';
+import {previewResponse} from './engine.mjs?v=53';
+import {pct,esc} from './shared.mjs?v=53';
+import {icon} from './ui-icons.mjs?v=53';
 
 /** Table-facing vocabulary only; the underlying action type stays unchanged. */
-export const responseActionLabel = type => ({fold:'FOLD',check:'CALL',call:'CALL',bet:'RAISE',raise:'RAISE'}[type] || String(type).toUpperCase());
+export const responseActionLabel = type => ({fold:'FOLD',check:'CHECK',call:'CALL',bet:'BET',raise:'RAISE'}[type] || String(type).toUpperCase());
 
 /** Show a sole response, or project mixed fold/aggressive outcomes without rescaling. */
 export function responseBadges(distribution = []) {
-  const positive = distribution.filter(outcome => Number.isFinite(outcome.probability) && outcome.probability > 0);
+  const grouped = new Map();
+  for(const outcome of distribution)if(Number.isFinite(outcome.probability)&&outcome.probability>0)grouped.set(outcome.type,(grouped.get(outcome.type)||0)+outcome.probability);
+  const positive = [...grouped].map(([type,probability])=>({type,probability}));
   const visible = positive.length === 1 ? positive
     : ['fold', 'raise', 'bet'].flatMap(type => positive.filter(outcome => outcome.type === type));
   return visible.map(({type, probability}) => ({type, probability,
@@ -27,7 +29,7 @@ export function responseBadgeView(distribution, {phase = 'preview', selected = n
 /** Bind a preview to exactly the next same-street response to this player action. */
 export function captureResponseSource(hand, action) {
   if (!hand || hand.status !== 'playing' || hand.actor !== 'player') return null;
-  const distribution = previewResponse(hand, action.type).distribution;
+  const distribution = previewResponse(hand, action).distribution;
   if (!responseBadges(distribution).length) return null;
   return {hand, street: hand.street, historyLength: hand.history.length + 1,
     action: {...action}, distribution: distribution.map(outcome => ({...outcome}))};

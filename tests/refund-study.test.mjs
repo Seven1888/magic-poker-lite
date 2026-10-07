@@ -39,7 +39,7 @@ function replay(report, row) {
 
 test('退幣研究接受零及不足門檻初資產，不因遊戲帶入下限補資', () => {
   for (const initialAsset of [0, 4.999999]) {
-    const report = simulateRefundStudy({minBuyIn: 5, bigBlind: 1}, {players: 2, initialAsset, targetAsset: 20});
+    const report = simulateRefundStudy({outcome: {mode: 'prebuilt-pools'}, minBuyIn: 5, bigBlind: 1}, {players: 2, initialAsset, targetAsset: 20});
     assert.equal(report.hands, 0); assert.equal(report.insufficientPlayers, 2);
     assert.equal(report.completedPlayers, 2); assert.equal(report.refundRate, 0);
     assert.equal(report.averageHands, 0); assert.equal(report.minHands, 0); assert.equal(report.maxHands, 0);
@@ -86,7 +86,7 @@ test('退幣研究不受一般手數或八手安全上限截尾，且可由共�
 test('退幣研究沿用逐手隨機盲位、四型輪替及跨手雙池和冷卻', () => {
   const config = {bigBlind: 1, minBuyIn: 5, targetRtp: .5,
     betSize: {preflop: 1, flop: 1, turn: 1, river: 1},
-    outcome: {conversionRate: 0, initialPaidActionPools: [.5, 20, 30],
+    outcome: {mode: 'prebuilt-pools', conversionRate: 0, initialPaidActionPools: [.5, 20, 30],
       initialSpecialPools: [0, 4, 5], initialPaidActionCooldown: 2}};
   const report = simulateRefundStudy(config, {players: 1, initialAsset: 40, targetAsset: 80,
     seed: 46021, policy: 'call'});

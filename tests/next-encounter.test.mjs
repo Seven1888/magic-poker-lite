@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {previewNextEncounter} from '../src/entry-encounter.mjs';
 import {BOSS_PROFILE_IDS} from '../src/boss-profiles.mjs';
-import {createSession, startHand, applyAction, syncOpponentBankroll} from '../src/engine.mjs';
+import {createSession, startHand, applyAction, syncOpponentBankroll} from './legacy-engine.mjs';
 import {nextHandBetConfig} from '../src/next-hand-bet.mjs';
 
 const seeds = [0, 1, 2, 22, 30, 72, 188, 246, 7182, 0xffffffff, 'next-encounter-v40'];
@@ -61,8 +61,8 @@ for (const boss of modes) {
         assert.deepEqual(session.blindDraw, baseline.blindDraw);
         if (boss.mode === 'rotate') {
           assert.notEqual(next.bossProfile.id, previous.bossProfile.id);
-          assert.equal(next.bossSelection.probability, 1 / 3);
-          assert.equal(next.bossSelection.eligibleIds.length, 3);
+          assert.equal(next.bossSelection.probability, 1);
+          assert.equal(next.bossSelection.eligibleIds.length, 1);
           assert.ok(!next.bossSelection.eligibleIds.includes(previous.bossProfile.id));
         } else if (boss.mode === 'fixed') {
           assert.equal(next.bossProfile.id, boss.profileId);

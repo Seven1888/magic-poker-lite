@@ -1,4 +1,4 @@
-import {makeDeck, normalizeCard, evaluateBest} from './poker.mjs?v=35';
+import {makeDeck, normalizeCard, evaluateBest} from './poker.mjs?v=53';
 
 export const BOSS_HAND_CATEGORIES = Object.freeze([
   ['high-card', 'High Card'], ['pair', 'Pair'], ['two-pair', 'Two Pair'],

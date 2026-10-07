@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   createRng, createSession as createEngineSession, startHand, legalActions, applyAction,
   previewResponse, getActionDistribution
-} from '../src/engine.mjs';
+} from './legacy-engine.mjs';
 
 // Preserve the exact historical blind/deal RNG reference; current default
 // prebuilt-pool execution and random blinds are covered in outcome-engine.test.

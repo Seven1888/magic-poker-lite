@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {DEFAULT_CONFIG,normalizeConfig,createSession,startHand,legalActions,applyAction,simulate} from '../src/engine.mjs';
+import {DEFAULT_CONFIG,normalizeConfig,createSession,startHand,legalActions,applyAction,simulate} from './legacy-engine.mjs';
 
 const other = seat => seat === 'player' ? 'npc' : 'player';
 const near = (a,b) => assert.ok(Math.abs(a-b)<1e-6,`${a} != ${b}`);

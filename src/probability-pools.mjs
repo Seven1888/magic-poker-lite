@@ -1,13 +1,18 @@
-import {normalizeOutcomePools, OUTCOME_BET_BUCKETS} from './outcome-pools.mjs?v=51';
+import {normalizeOutcomePools, OUTCOME_BET_BUCKETS} from './outcome-pools.mjs?v=53';
 
 const FIELDS = ['paidActionBudgetUsed', 'paidActionAdded', 'specialAdded', 'specialAward'];
 const totals = () => Object.fromEntries(FIELDS.map(key => [key, 0]));
 
-export function createPoolStudySummary(pools) {
+export function createPoolStudySummary(pools, {bucketPolicy = 'exact-stakes'} = {}) {
   if (!pools) throw new Error('預建結果研究缺少初始水池。');
+  if (!['exact-stakes','blind-ranges'].includes(bucketPolicy)) throw new Error('未知研究水池分桶規則。');
   const start = normalizeOutcomePools(pools);
-  return {start, end: null, hands: 0, ...totals(), maxLedgerError: 0,
-    byBucket: start.buckets.map((bucket, bucketIndex) => ({bucketIndex, bets: [...OUTCOME_BET_BUCKETS[bucketIndex]],
+  const ranges = [{minimumExclusive:0,maximumInclusive:10}, {minimumExclusive:10,maximumInclusive:500}, {minimumExclusive:500,maximumInclusive:null}];
+  const labels = ['0 < 大盲 ≤ 10','10 < 大盲 ≤ 500','大盲 > 500'];
+  return {bucketPolicy, baseUnit: 'big-blind', start, end: null, hands: 0, ...totals(), maxLedgerError: 0,
+    byBucket: start.buckets.map((bucket, bucketIndex) => ({bucketIndex,
+      ...(bucketPolicy === 'blind-ranges' ? {label:labels[bucketIndex],range:ranges[bucketIndex],bets:[]}
+        : {bets:[...OUTCOME_BET_BUCKETS[bucketIndex]]}),
       paidActionStart: bucket.paidAction, specialStart: bucket.special, paidActionEnd: null, specialEnd: null,
       hands: 0, ...totals()}))};
 }
@@ -46,8 +51,10 @@ export function finishPoolStudySummary(summary, endPools = null) {
 export function combinePoolStudySummaries(summaries, {unit = 'players'} = {}) {
   const enabled = summaries.filter(Boolean);
   if (!enabled.length) return null;
-  const combined = {[unit]: enabled.length, hands: 0, ...totals(), maxLedgerError: 0,
+  if (enabled.some(summary => summary.bucketPolicy !== enabled[0].bucketPolicy)) throw new Error('不可合併不同分桶規則的水池研究。');
+  const combined = {bucketPolicy:enabled[0].bucketPolicy,baseUnit:'big-blind',[unit]: enabled.length, hands: 0, ...totals(), maxLedgerError: 0,
     byBucket: enabled[0].byBucket.map(bucket => ({bucketIndex: bucket.bucketIndex, bets: [...bucket.bets],
+      ...(bucket.range ? {range:{...bucket.range},label:bucket.label} : {}),
       hands: 0, paidActionStart: 0, specialStart: 0, paidActionEnd: 0, specialEnd: 0, ...totals()}))};
   for (const summary of enabled) {
     combined.hands += summary.hands;

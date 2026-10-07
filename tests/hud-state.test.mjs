@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {getHudSnapshot} from '../src/hud-state.mjs';
-import {createSession, startHand, applyAction, legalActions} from '../src/engine.mjs';
+import {createSession, startHand, applyAction, legalActions} from './legacy-engine.mjs';
 import {money} from '../src/shared.mjs';
 
 function passiveAction(hand) {

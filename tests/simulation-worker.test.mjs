@@ -33,7 +33,7 @@ const terminalResult = messages => {
 };
 
 test('一次開始統計沿用真實預建引擎，最後同時發布一般及退幣報表', () => {
-  const config = {}, refund = {players: 1, initialAsset: 50, targetAsset: 51};
+  const config = {outcome: {mode: 'prebuilt-pools'}}, refund = {players: 1, initialAsset: 50, targetAsset: 51};
   const messages = runWorker({type: 'run', config, ...general, policies: ['call'], refund});
   const result = terminalResult(messages);
   assert.equal(result.reports.length, 1);
@@ -44,7 +44,7 @@ test('一次開始統計沿用真實預建引擎，最後同時發布一般及�
   assert.equal(report.outcomeModel, 'prebuilt-pools');
   assert.equal(report.hands, 1);
   assert.equal(report.refundRate, 1);
-  assert.equal(report.playerResults[0].end, 100);
+  assert.ok(report.playerResults[0].end >= refund.targetAsset);
   assert.equal(report.outcomePoolSummary.hands, 1);
   const firstRefund = messages.findIndex(message => message.type === 'refundProgress');
   assert.ok(firstRefund > messages.findIndex(message => message.type === 'partial'));
@@ -78,6 +78,43 @@ test('四策略共用頂層種子，退幣玩家數獨立且全數完成後才�
   assert.equal(progress.at(-1).policyIndex, policies.length - 1);
   assert.equal(progress.at(-1).completedPlayers, refund.players);
   assert.ok(messages.slice(0, -1).every(message => !('refundReports' in message) && message.type !== 'refundResult'));
+});
+
+test('固定德州 Worker 一般與退幣共用種子，保留有限桌籌碼與外部錢包口徑', () => {
+  const config = {outcome: {mode: 'fixed-holdem'}, smallBlind: 1};
+  const refund = {players: 2, initialAsset: 250, targetAsset: 400};
+  const settings = {...general, entries: 30, mode: 'continuous', unlimitedBankroll: true, seed: 'nl'};
+  const messages = runWorker({type: 'run', config, ...settings, policies: ['aggressive'], refund});
+  const result = terminalResult(messages);
+  assert.deepEqual(result.reports[0], simulateStudy(config, {...settings, policy: 'aggressive'}));
+  assert.deepEqual(result.refundReports[0], simulateRefundStudy(config, {...refund, seed: settings.seed, policy: 'aggressive'}));
+  assert.equal(result.reports[0].hands, 30);
+  assert.ok(result.reports[0].tableEntries > 1);
+  assert.equal(result.refundReports[0].assetModel, 'external-wallet-plus-table-chips');
+  assert.ok(messages.slice(0, -1).every(message => !('refundReports' in message)));
+});
+
+test('正式雙池德州 Worker 保留有限桌籌碼、池帳與退幣結果並可精確重播', () => {
+  const config = {outcome: {mode: 'pooled-holdem'}, smallBlind: 5};
+  const refund = {players: 1, initialAsset: 1000, targetAsset: 1500};
+  const settings = {...general, entries: 12, mode: 'continuous', unlimitedBankroll: true, seed: 53003};
+  const messages = runWorker({type: 'run', config, ...settings, policies: ['aggressive'], refund});
+  const result = terminalResult(messages);
+  assert.deepEqual(result.reports[0], simulateStudy(config, {...settings, policy: 'aggressive'}));
+  assert.deepEqual(result.refundReports[0], simulateRefundStudy(config, {...refund, seed: settings.seed, policy: 'aggressive'}));
+  assert.equal(result.reports[0].outcomeModel, 'pooled-holdem');
+  assert.equal(result.reports[0].hands, 12);
+  assert.equal(result.reports[0].outcomePoolSummary.bucketPolicy, 'blind-ranges');
+  assert.equal(result.refundReports[0].assetModel, 'external-wallet-plus-table-chips');
+  assert.ok(messages.slice(0, -1).every(message => !('refundReports' in message)));
+});
+
+test('結果取樣樹超出上限時 Worker 明確失敗，不發布截斷樹或更改額度重跑', () => {
+  const messages = runWorker({type: 'tree', config: {outcome: {mode: 'pooled-holdem'}, smallBlind: 5},
+    seed: 53002, stateLimit: 1});
+  assert.equal(messages.length, 1);
+  assert.equal(messages[0].type, 'error');
+  assert.match(messages[0].message, /未產生截斷結果/);
 });
 
 test('退幣參數失敗時只保留已完成的一般策略，不發布完成或退幣報表', () => {

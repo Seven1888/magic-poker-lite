@@ -1,15 +1,18 @@
-import {pct,esc} from './shared.mjs?v=51';
-import {icon} from './ui-icons.mjs?v=35';
-import {responseActionLabel} from './action-response-view.mjs?v=46';
+import {pct,esc} from './shared.mjs?v=53';
+import {icon} from './ui-icons.mjs?v=53';
+import {responseActionLabel} from './action-response-view.mjs?v=53';
 
 /** Central decisions show every real outcome; mixed button previews stay FOLD/RAISE only. */
 export function responseDistributionView(distribution=[],{phase='preview',selected=null,roll=null}={}){
- const outcomes=distribution.filter(outcome=>Number.isFinite(outcome.probability)&&outcome.probability>0);
+ // The sizing draw happens after the action draw; animate one segment per public action type.
+ const groups=new Map();
+ for(const outcome of distribution)if(Number.isFinite(outcome.probability)&&outcome.probability>0)groups.set(outcome.type,(groups.get(outcome.type)||0)+outcome.probability);
+ const outcomes=[...groups].map(([type,probability])=>({type,probability}));
  const state=['preview','drawing','result'].includes(phase)?phase:'preview';
  const marker=state==='result'&&Number.isFinite(roll)&&roll>=0&&roll<1?`<span class="action-response-sweep response-result-marker" style="left:${roll*100}%"></span>`:'';
  const labels=outcomes.map(outcome=>{
   const type=esc(outcome.type),label=outcome.probability<.001?'<0.1%':pct(outcome.probability);
-  const name=responseActionLabel(outcome.type),visual=name==='CALL'?'chip':name.toLowerCase();
+  const name=responseActionLabel(outcome.type),visual=outcome.type==='call'?'chip':outcome.type==='bet'?'raise':outcome.type;
   return {outcome,type,copy:`<span class="response-badge-label">${icon(visual)}${esc(name)}</span><b class="response-badge-percent">${esc(label)}</b>`};
  });
  return {count:outcomes.length,markup:outcomes.length?`<span class="action-response-badges response-probability-track" data-phase="${state}" aria-hidden="true">${labels.map(({outcome,type,copy})=>

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {DEFAULT_CONFIG, normalizeConfig, makeDeck, createSession as createEngineSession, startHand, cloneHand, applyAction} from '../src/engine.mjs';
+import {DEFAULT_CONFIG, normalizeConfig, makeDeck, createSession as createEngineSession, startHand, cloneHand, applyAction} from './legacy-engine.mjs';
 
 // These fixtures specify the historical deal RNG and reroll acceptance rules.
 const createSession = (config = {}, seed, options) => createEngineSession(

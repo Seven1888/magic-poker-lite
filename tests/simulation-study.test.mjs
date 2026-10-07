@@ -55,12 +55,19 @@ test('player seeds are reproducible, independent, and stable when the requested 
   assert.notEqual(studyPlayerSeed(1, 0), studyPlayerSeed('1', 0));
 });
 
-test('continuous mode stops below the current BET entry minimum and separates every NPC refresh from payouts', () => {
+test('historical continuous mode keeps its entry minimum and ledger when exported in study schema v4', () => {
   const report = simulateStudy({...passive, targetRtp: .5}, {players: 3, entries: 100, seed: 20261005, policy: 'call', mode: 'continuous'});
   assert.equal(report.methodMeta.blindMode, 'random-each-hand');
   assert.equal(report.playerSummary.insufficient, 3);
   assert.ok(report.hands >= 3 && report.hands < 300);
-  assert.equal(report.studyVersion, 3);
+  // This is a legacy-deck rule regression in the current report format, not a
+  // frozen v3 fixture. The v4 size/buy-in fields do not change its hand ledger.
+  assert.equal(report.studyVersion, 4);
+  assert.equal(report.outcomeModel, 'legacy-deck');
+  assert.match(report.modelVersion, /\+study-v4$/);
+  assert.deepEqual(report.actionSizeStats, []);
+  assert.equal(report.tableEntries, 0);
+  assert.equal(report.tableBuyIns, 0);
   assert.equal(report.methodMeta.insufficientThreshold, 10);
   assert.equal(report.methodMeta.entryMinimumMultiplier, 10);
   assert.equal(report.methodMeta.minimumEntryOnly, false);
@@ -212,7 +219,7 @@ test('無限資產連續研究即使持續虧損也完成指定手數，沒有�
 
 test('無限資產沿用真實連續引擎、隨機盲位、BOSS 輪替及跨手雙池', () => {
   const options = {mode: 'continuous', unlimitedBankroll: true, entries: 4, policy: 'call', seed: 'unlimited-pools'};
-  const report = simulateStudy({}, options);
+  const report = simulateStudy({outcome: {mode: 'prebuilt-pools'}}, options);
   const session = createSession(report.config, studyPlayerSeed(options.seed, 0), {firstSmallBlind: 'random'});
   let wagers = 0, returns = 0, small = 0;
   const bosses = [];

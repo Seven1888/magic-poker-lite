@@ -52,7 +52,7 @@ test('unsaved unfinished-hand changes cannot partially overwrite the last comple
 });
 
 test('missing or corrupted version-one pool state is rejected instead of silently resetting personal pools', () => {
-  const invalid = [null, {}, {...profile(), version: 2}, {...profile(), balance: -1},
+  const invalid = [null, {}, {...profile(), version: 3}, {...profile(), balance: -1},
     {...profile(), balance: '100'}, {...profile(), balance: Number.MAX_SAFE_INTEGER},
     {version: 1, balance: 100}, {...profile(), outcomePools: null},
     {...profile(), outcomePools: {version: 1, buckets: []}}];
@@ -64,6 +64,16 @@ test('missing or corrupted version-one pool state is rejected instead of silentl
   assert.equal(loadPlayerProfile(storageWith()), null);
 });
 
+test('version two retains wallet and an isolated table snapshot without discarding legacy pools', () => {
+  const source=profile({version:2,balance:9000,table:{version:1,rngState:42,session:{config:{outcome:{mode:'fixed-holdem'}},stacks:{player:990,npc:980}},hand:null}});
+  const storage=storageWith();assert.equal(savePlayerProfile(source,storage),true);
+  const saved=loadPlayerProfile(storage);assert.deepEqual(saved,source);
+  source.table.session.stacks.player=0;
+  assert.equal(saved.table.session.stacks.player,990);
+  assert.deepEqual(saved.outcomePools,profile().outcomePools);
+  assert.throws(()=>normalizePlayerProfile(profile({version:2,table:{version:1,rngState:0,session:{config:{outcome:{mode:'prebuilt-pools'}}}}})));
+});
+
 test('unavailable or throwing storage reports failure and preserves the previous saved transaction', () => {
   assert.equal(savePlayerProfile(profile(), null), false);
   assert.equal(savePlayerProfile(profile(), {}), false);
@@ -73,6 +83,16 @@ test('unavailable or throwing storage reports failure and preserves the previous
   storage.setItem = () => { throw new Error('quota'); };
   assert.equal(savePlayerProfile(profile({balance: 999}), storage), false);
   assert.equal(storage.values.get(OUTCOME_PROFILE_KEY), previous);
+});
+
+test('version two keeps the previous opponent across cash-out and reload', () => {
+  const storage=storageWith();
+  for(const lastBossProfileId of [null,'caller','maniac']){
+    const source=profile({version:2,table:null,lastBossProfileId});
+    assert.equal(savePlayerProfile(source,storage),true);
+    assert.deepEqual(loadPlayerProfile(storage),source);
+  }
+  assert.throws(()=>normalizePlayerProfile(profile({version:2,table:null,lastBossProfileId:'other'})));
 });
 
 test('a browser that throws while accessing localStorage does not crash profile load or save', () => {

@@ -18,11 +18,18 @@ test('deck count follows landings, including five unrevealed board backs', () =>
 
 test('pending and face-down board positions never read an unseen card value', () => {
   const unreadable = new Proxy([], {get() { throw new Error('hidden card read'); }});
-  assert.deepEqual(boardCardView(0, {cards: unreadable}), {card: null, back: true, visible: false});
+  assert.deepEqual(boardCardView(0, {cards: unreadable}), {card: null, back: false, visible: true});
   for (let index = 0; index < 5; index++) {
     assert.deepEqual(boardCardView(index, {cards: unreadable, dealt: 5}), {card: null, back: true, visible: true});
   }
   assert.deepEqual(boardCardView(0), {card: null, back: false, visible: true});
+});
+
+test('preflop has five empty slots; the flop does not place turn or river cards', () => {
+  assert.ok(Array.from({length:5},(_,index)=>boardCardView(index,{cards:[]})).every(view=>view.visible&&!view.card&&!view.back));
+  const flop=Array.from({length:5},(_,index)=>boardCardView(index,{cards:['As','Kh','Qd'],dealt:3,revealed:3}));
+  assert.deepEqual(flop.slice(3),[{card:null,back:false,visible:true},{card:null,back:false,visible:true}]);
+  assert.equal(tableDeckCounts({player:2,npc:2,board:3}).deckRemaining,45);
 });
 
 test('only the flipped prefix becomes face-up; a folded hand keeps the rest concealed', () => {

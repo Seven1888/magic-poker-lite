@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createBossActionView} from '../src/boss-action-view.mjs';
 import {createPotView} from '../src/pot-view.mjs';
-import {createSession, startHand, applyAction} from '../src/engine.mjs';
+import {createSession, startHand, applyAction} from './legacy-engine.mjs';
 import {atGameSpeed} from '../src/presentation-timing.mjs';
 
 function fixture({reducedMotion = false, animate = true, scaleX = 1, scaleY = 1} = {}) {
@@ -91,8 +91,8 @@ test('paid NPC actions wait for actual chip departure, then start in the same re
   } finally { Math.random = savedRandom; f.api.destroy(); }
 });
 
-test('committed free checks and folds show CALL/FOLD immediately, retaining their exact engine types', async () => {
-  for (const [type, label] of [['check', 'CALL'], ['fold', 'FOLD']]) {
+test('committed free checks and folds show CHECK/FOLD immediately, retaining their exact engine types', async () => {
+  for (const [type, label] of [['check', 'CHECK'], ['fold', 'FOLD']]) {
     const f = fixture(), hand = startHand(createSession({}, 21));
     applyAction(hand, type === 'fold' ? 'raise' : 'call');
     const event = npcEvent(hand, type), before = JSON.stringify(hand);
@@ -106,8 +106,8 @@ test('committed free checks and folds show CALL/FOLD immediately, retaining thei
   }
 });
 
-test('opening bets display RAISE and paid calls display CALL without replaying the same event', async () => {
-  for (const [type, label] of [['bet', 'RAISE'], ['call', 'CALL']]) {
+test('opening bets display BET and paid calls display CALL without replaying the same event', async () => {
+  for (const [type, label] of [['bet', 'BET'], ['call', 'CALL']]) {
     const f = fixture(), hand = startHand(createSession({}, 21));
     applyAction(hand, type === 'call' ? 'raise' : 'call');
     if (type === 'bet') npcEvent(hand, 'check');
