@@ -23,7 +23,13 @@ export function actionResponseMarkup(preview, {compact = false} = {}) {
   if (!preview) return '';
   const isPhase = preview.outcomes.length === 0;
   const description = preview.outcomes.map(row => `${row.type.toUpperCase()} ${row.label}`).join(', ') || preview.note;
-  return `<span class="button-response${compact?' size-response':''}${isPhase?' phase-response':''}" aria-label="${isPhase?'Next phase':'Opponent response'}: ${esc(description)}">${isPhase?'':'<small class="button-response-title">BOSS</small>'}<span class="button-response-outcomes">${preview.outcomes.map(row => `<span class="button-response-outcome" data-response="${esc(row.type)}"><span>${esc(row.type.toUpperCase())}</span><b>${esc(row.label)}</b></span>`).join('') || `<span class="button-response-note">${esc(preview.note)}</span>`}</span></span>`;
+  const probability = row => Number.isFinite(row.probability) ? Math.max(0, Math.min(1, row.probability)) : 0;
+  // Keep tiny slices proportional; move their text to a separate legend instead of widening them.
+  const needsLegend = preview.outcomes.length > 1;
+  const copy = row => `<span>${esc(row.type.toUpperCase())}</span><b>${esc(row.label)}</b>`;
+  const track = `<span class="button-response-outcomes">${preview.outcomes.map(row => `<span class="button-response-outcome" style="flex:0 0 ${probability(row)*100}%" data-probability="${probability(row)}" data-response="${esc(row.type)}">${copy(row)}</span>`).join('') || `<span class="button-response-note">${esc(preview.note)}</span>`}</span>`;
+  const content = needsLegend ? `<span class="button-response-body">${track}<span class="button-response-legend">${preview.outcomes.map(row => `<span class="button-response-key" data-response="${esc(row.type)}">${copy(row)}</span>`).join('')}</span></span>` : track;
+  return `<span class="button-response${compact?' size-response':''}${isPhase?' phase-response':''}${needsLegend?' has-response-legend':''}" data-outcome-count="${preview.outcomes.length}" aria-label="${isPhase?'Next phase':'Opponent response'}: ${esc(description)}">${isPhase?'':'<small class="button-response-title">BOSS</small>'}${content}</span>`;
 }
 
 /** Visual top-to-bottom order: all-in, full pot, half pot. Never alter engine action identity. */

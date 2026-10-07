@@ -1,6 +1,6 @@
 # Magic Poker Lite
 
-v56：將抽盲硬幣與結果文字整合至行動說明區，並讓對手依半池、全池、大額三種實際下注壓力使用不同回應機率。**本地驗證完成：572／572測試通過，建置235檔；已推送Git、部署Pages並通過公開驗收。** 最新行為以 [v56 規格](docs/19-v56-blind-and-response-spec.md) 為準；其餘呈現沿用 v55，正式 `pooled-holdem` 模型、.99 計分、個人雙池／CD／JP 及每街強弱分類沿用 v53。實際驗證與發布見 [紀錄](docs/06-mobile-and-deployment.md)；歷史版本的測試與公開驗收不當作 v56 結果。
+v57：BOSS 決策色帶依實際機率分配寬度，FOLD 綠、CALL／CHECK 紅、RAISE／BET 紫，並放大尺寸選單的行為名稱及百分比；小機率保留精確色帶，以獨立文字確保可讀。**本地驗證完成：572／572 測試通過、建置 236 檔；Git／公開發布待完成，實際證據見 [發布紀錄](docs/06-mobile-and-deployment.md)。** 最新呈現以 [v57 規格](docs/20-v57-response-readability-spec.md) 為準；[v56](docs/19-v56-blind-and-response-spec.md) 的抽盲與實際下注壓力機率保持，其餘呈現延續 v55。正式方案 B `pooled-holdem`、.99 計分、三桶雙池／CD／JP、RNG 與帳務不變；歷史版本或先前局部修正的驗收不當作 v57 完整結果。
 
 ## 玩法與資產
 
@@ -12,7 +12,7 @@ v56：將抽盲硬幣與結果文字整合至行動說明區，並讓對手依�
 
 首手隨機盲位，後續單挑輪替。抽盲保留桌面，硬幣與文字共同使用行動說明區：左側硬幣翻轉、右側顯示 `DRAWING YOUR BLIND`；揭曉後左側為 `SB／BB`，右側第一行顯示 `YOU · SMALL BLIND` 或 `YOU · BIG BLIND`，第二行顯示 `YOU 50 · BOSS 100` 等實際盲注。結束後硬幣移至玩家盲位標記，說明區回到遊戲階段。移除硬幣下方浮動結果、`STARTING BET` 及 `BLIND POSITION`，避免與 POT、公牌重疊。公共牌先顯示五個虛線空框，再按 Flop 3／Turn 1／River 1 發出。動作依狀態顯示 CHECK／CALL、BET／RAISE；雙方可以合法多次再加注。三個按鈕保持 66 px 高度，主文字縮小，籌碼圖示與花費金額放大；RAISE 向上箭頭加入動畫。
 
-進攻選單由上到下為 ALL IN、1× POT、0.5× POT；同額仍依引擎合併、不重複。對手行為機率放在玩家按鈕上方，各尺寸左側的精確回應框縮窄，以 BOSS 標籤底色形成有厚度的整圈邊框。若 CHECK／CALL 結束本街，改顯示 `DEAL FLOP／DEAL TURN／DEAL RIVER`，結算則顯示 `SHOWDOWN`，不加 BOSS 標題或提前公開下街機率。預覽不推進正式 RNG、牌面或水池。
+進攻選單由上到下為 ALL IN、1× POT、0.5× POT；同額仍依引擎合併、不重複。對手行為機率放在玩家按鈕上方；尺寸選單使用操作區可用寬度，以完整厚外框包住各尺寸對應回應。色帶以完整實際機率分配寬度，FOLD 綠、CALL／CHECK 紅、RAISE／BET 紫；行為名稱與百分比放大，5% 等窄色段搭配獨立可讀標籤，不讓文字撐大色帶比例。主預覽利用 FOLD 上方空間，左卡為 BOSS · CALL／CHECK、右側較寬卡為 BOSS · RAISE／BET，卡片不遮玩家底牌。若 CHECK／CALL 結束本街，改顯示 `DEAL FLOP／DEAL TURN／DEAL RIVER`，結算則顯示 `SHOWDOWN`，不加 BOSS 標題或提前公開下街機率。預覽不推進正式 RNG、牌面或水池。
 
 對手只有激進與不激進，正式遊戲不連續重複。每街開始依 NPC 底牌、已揭公牌及已完成街道歷史鎖定「強／不強」，同街價格與配對切換不重判；回應機率則依 NPC 實際可付 CALL 相對於下注基準底池，分半池（≤ 0.5）、全池（> 0.5 且 ≤ 1）、大額（> 1）三列。三個尺寸的預覽各用其實際合法金額；短碼 ALL IN 按實際壓力選列，再移除 RAISE 並正規化 FOLD／CALL，同額選項同機率。強包括成牌、指定聽牌與明確詐唬條件。每次 NPC 重新抽行為，進攻後再抽尺寸 50%／35%／15%。真正只有一種行為、合計 100% 時直接執行，跳過抽取表演；四捨五入成 100% 不算確定行為，正式抽樣與 RNG 路徑不改。新版完整表格與壓力公式見 [v56 規格](docs/19-v56-blind-and-response-spec.md)。
 
@@ -38,9 +38,9 @@ v56：將抽盲硬幣與結果文字整合至行動說明區，並讓對手依�
 
 需 Node.js 20 以上，無須安裝套件。在本目錄執行 `npm start`；自動測試 `npm test`，靜態建置 `npm run build`。main 推送由既有 GitHub Actions 建置與部署 Pages。
 
-- 本地：[遊戲](http://127.0.0.1:4177/index.html?v=56)／[機率工具](http://127.0.0.1:4177/probability.html?v=56)／[規則與公式](http://127.0.0.1:4177/docs/04-game-flow-and-math.html?v=56)
-- 文件：[v56 抽盲與回應規格](docs/19-v56-blind-and-response-spec.md)／[v55 八項規格](docs/18-v55-feedback-spec.md)／[v54 歷史呈現規格](docs/17-v54-presentation-spec.md)／[v53 歷史遊戲與數學規格](docs/16-v53-holdem-spec.md)／[規則與數學](docs/04-game-flow-and-math.md)／[API](API-CONTRACT.md)／[介面](docs/05-art-and-pot.md)／[驗證](docs/06-mobile-and-deployment.md)／[接手紀錄](HANDOFF.md)
+- 本地：[遊戲](http://127.0.0.1:4177/index.html?v=57)／[機率工具](http://127.0.0.1:4177/probability.html?v=57)／[規則與公式](http://127.0.0.1:4177/docs/04-game-flow-and-math.html?v=57)
+- 文件：[v57 比例與可讀性](docs/20-v57-response-readability-spec.md)／[v56 抽盲與回應規格](docs/19-v56-blind-and-response-spec.md)／[v55 八項規格](docs/18-v55-feedback-spec.md)／[v54 歷史呈現規格](docs/17-v54-presentation-spec.md)／[v53 歷史遊戲與數學規格](docs/16-v53-holdem-spec.md)／[規則與數學](docs/04-game-flow-and-math.md)／[API](API-CONTRACT.md)／[介面](docs/05-art-and-pot.md)／[驗證](docs/06-mobile-and-deployment.md)／[接手紀錄](HANDOFF.md)
 - Git：[Repository](https://github.com/Seven1888/magic-poker-lite)／[Actions](https://github.com/Seven1888/magic-poker-lite/actions)
-- 對外入口：[遊戲](https://seven1888.github.io/magic-poker-lite/?v=56)／[機率工具](https://seven1888.github.io/magic-poker-lite/probability.html?v=56)／[規則與公式](https://seven1888.github.io/magic-poker-lite/docs/04-game-flow-and-math.html?v=56)
+- 對外入口：[遊戲](https://seven1888.github.io/magic-poker-lite/?v=57)／[機率工具](https://seven1888.github.io/magic-poker-lite/probability.html?v=57)／[規則與公式](https://seven1888.github.io/magic-poker-lite/docs/04-game-flow-and-math.html?v=57)
 
-v56 目前本地驗證、Git推送、Pages部署與公開驗收通過；以上是固定入口，部署狀態以發布紀錄為準。完成全部調整、驗證與 Git 推送後，依使用者授權開新聊天室交接；新聊天室先讀文件、直接提供完整相關連結，再等待新需求，不重做已完成實作、推送或部署。遊戲英文，工具、文件及溝通繁體中文；只修改 Magic Poker Lite。
+以上是 v57 固定入口，最終驗證與部署狀態以發布紀錄為準。主聊天室完成全部調整、驗證、Git 推送及公開驗收後，依使用者授權開新聊天室交接；新聊天室先讀文件、直接提供完整相關連結，再等待新需求，不重做已完成實作、推送或部署。遊戲英文，工具、文件及溝通繁體中文；只修改 Magic Poker Lite。

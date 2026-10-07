@@ -29,23 +29,73 @@
 /* The BOSS label and thick outside edge form one continuous frame. */
 .game .controls .button-response{
  --boss-frame:#344454;border:3px solid var(--boss-frame);background:var(--boss-frame);
- border-radius:7px;box-shadow:0 2px 5px #0008;
+ border-radius:7px;box-shadow:0 2px 5px #0008;color:#fff8e8;
 }
 .game .controls .button-response-title{
  flex-basis:23px;background:var(--boss-frame);color:#ffe0a0;font-weight:900;font-size:8px;
 }
 .game .controls .button-response-outcomes{overflow:hidden;border-radius:3px;}
 .game .controls .button-response-outcome:first-child{border-left:0;}
+/* The colored widths use raw odds, including small slices; text never sets a minimum width. */
+.game .controls .button-response-outcome{padding:0;border:0;box-shadow:inset 1px 0 #fff2;}
+.game .controls .button-response-outcome:first-child{box-shadow:none;}
+.game .controls .button-response-outcome>span,.game .controls .button-response-outcome>b{white-space:nowrap;font-weight:800;letter-spacing:0;}
+.game .controls .button-response-outcome:is([data-response='call'],[data-response='check']){background:#8d302e;color:#fff8ef;}
+.game .response-flyout .action-response-badge:is([data-response='call'],[data-response='check']){background:linear-gradient(#a3443d,#6a211f);color:#fff8ef;}
+.game .controls .button-response-body{display:flex;flex:1;min-width:0;flex-direction:column;}
+.game .controls .has-response-legend .button-response-outcomes{flex:0 0 8px;border-radius:2px;}
+.game .controls .has-response-legend .button-response-outcome>*{display:none;}
+.game .controls .button-response-legend{display:flex;flex:1;min-width:0;align-items:center;background:#18222d;}
+.game .controls .button-response-key{display:flex;flex:1;min-width:0;flex-direction:column;align-items:center;justify-content:center;color:#fff8e8;font-weight:800;}
+.game .controls .button-response-key>span{font-size:15px;line-height:19px;letter-spacing:0;white-space:nowrap;}
+.game .controls .button-response-key>b{font-size:20px;line-height:25px;letter-spacing:0;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.game .controls .button-response-key>span:before{content:'';display:inline-block;width:5px;height:5px;margin-right:3px;vertical-align:middle;background:#72b58c;}
+.game .controls .button-response-key:is([data-response='call'],[data-response='check'])>span:before{background:#ff8172;}
+.game .controls .button-response-key:is([data-response='raise'],[data-response='bet'])>span:before{background:#bc91e6;}
 .game .controls .button-response.phase-response{border-color:#a79065;background:#18222dec;}
-.game .controls .phase-response .button-response-note{font-size:10px;font-weight:800;letter-spacing:.2px;color:#ffe4a9;}
+.game .controls .phase-response .button-response-note{font-size:15px;line-height:20px;font-weight:800;letter-spacing:0;color:#ffe4a9;}
 
-/* Keep amount keys aligned to RAISE, with a narrower decision card beside each. */
-.game .controls .raise-options{width:calc(245% + 16px);}
-.game .controls .raise-option-row{grid-template-columns:minmax(0,1fr) calc((100% - 16px)/2.45);gap:6px;}
-.game .controls .raise-options .button-response{min-height:46px;}
-.game .controls .raise-options .button-response-title{flex-basis:26px;font-size:9px;}
-.game .controls .raise-options .button-response-outcome>span{font-size:9px;line-height:12px;letter-spacing:-.2px;}
-.game .controls .raise-options .button-response-outcome>b{font-size:11px;line-height:15px;letter-spacing:-.3px;}
+/* Main previews share the unused FOLD header space and stay below the player's cards.
+   CALL/CHECK uses the left column; BET/RAISE uses the centre and right columns.
+   The small outer labels identify the related action without covering the cards. */
+.game .controls .action-slot>.button-response{top:-44px;height:48px;flex-direction:column;overflow:visible;}
+.game .controls .action-slot:is([data-action-slot='call'],[data-action-slot='check'])>.button-response{left:calc(-100% / 1.08 - 7px);right:auto;width:calc(100% / 1.08);}
+.game .controls .raise-slot>.button-response{left:calc(-108% - 7px);right:0;}
+.game .controls .action-slot>.button-response .button-response-title{position:absolute;bottom:100%;left:-3px;padding:0 5px;border-radius:4px 4px 0 0;font-size:0;line-height:16px;white-space:nowrap;}
+.game .controls .raise-slot>.button-response .button-response-title{left:auto;right:-3px;}
+.game .controls .action-slot>.button-response .button-response-title:after{font-size:12px;content:'BOSS';}
+.game .controls [data-action-slot='call']>.button-response .button-response-title:after{content:'BOSS · CALL';}
+.game .controls [data-action-slot='check']>.button-response .button-response-title:after{content:'BOSS · CHECK';}
+.game .controls [data-action-slot='raise']>.button-response .button-response-title:after{content:'BOSS · RAISE';}
+.game .controls [data-action-slot='bet']>.button-response .button-response-title:after{content:'BOSS · BET';}
+.game .controls .action-slot>.phase-response:before{position:absolute;bottom:100%;left:-3px;padding:0 5px;border-radius:4px 4px 0 0;background:#344454;color:#ffe0a0;font-size:12px;line-height:16px;font-weight:800;white-space:nowrap;}
+.game .controls [data-action-slot='call']>.phase-response:before{content:'AFTER CALL';}
+.game .controls [data-action-slot='check']>.phase-response:before{content:'AFTER CHECK';}
+.game .controls .action-slot>.has-response-legend .button-response-outcomes{position:absolute;top:-3px;left:0;right:0;height:3px;flex:none;border-radius:3px 3px 0 0;}
+.game .controls .action-slot>.button-response .button-response-legend{flex-direction:row;align-items:stretch;border-radius:2px;}
+.game .controls .action-slot>.button-response .button-response-key{flex-direction:column;justify-content:center;padding:0;gap:0;}
+.game .controls .action-slot>.button-response .button-response-key>span{font-size:15px;line-height:18px;}
+.game .controls .action-slot>.button-response .button-response-key>b{font-size:20px;line-height:24px;letter-spacing:0;}
+.game .controls .action-slot>.button-response .button-response-key>span:before{display:none;}
+.game .controls .action-slot>.button-response .button-response-key[data-response='fold']>span{color:#9fe0b6;}
+.game .controls .action-slot>.button-response .button-response-key:is([data-response='call'],[data-response='check'])>span{color:#ff9c91;}
+.game .controls .action-slot>.button-response .button-response-key:is([data-response='raise'],[data-response='bet'])>span{color:#d5b2f7;}
+.game .controls .action-slot>.button-response .button-response-outcome{gap:0;}
+.game .controls .action-slot>.button-response .button-response-outcome>span{font-size:15px;line-height:18px;}
+.game .controls .action-slot>.button-response .button-response-outcome>b{font-size:20px;line-height:24px;}
+
+/* Use the available table width for legible odds while keeping amount keys aligned to RAISE. */
+.game .controls .raise-options{width:calc(300% + 16px);}
+.game .controls .raise-option-row{grid-template-columns:minmax(0,1fr) calc((100% - 16px)/3);gap:6px;}
+.game .controls .raise-options .button-response{min-height:70px;}
+.game .controls .raise-options .button-response-title{flex-basis:35px;font-size:13px;}
+.game .controls .raise-options .button-response-outcome>span,.game .controls .raise-options .button-response-key>span{font-size:max(18px,calc(14px / var(--stage-scale,1)));line-height:1.25;letter-spacing:0;}
+.game .controls .raise-options .button-response-outcome>b,.game .controls .raise-options .button-response-key>b{font-size:max(24px,calc(20px / var(--stage-scale,1)));line-height:1.25;letter-spacing:0;}
+.game .controls .raise-options .has-response-legend .button-response-outcomes{flex-basis:10px;}
+.game .controls .raise-options .button-response-key>span:before{display:none;}
+.game .controls .raise-options .button-response-key[data-response='fold']>span{color:#9fe0b6;}
+.game .controls .raise-options .button-response-key:is([data-response='call'],[data-response='check'])>span{color:#ff9c91;}
+.game .controls .raise-options .button-response-key:is([data-response='raise'],[data-response='bet'])>span{color:#d5b2f7;}
 .game .controls .raise-options strong{font-size:19px;line-height:23px;gap:5px;}
 .game .controls .raise-options .action-cost-chip{width:21px;height:21px;}
 

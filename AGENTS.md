@@ -2,14 +2,22 @@
 
 ## 範圍與授權（2026-10-07）
 
-本輪為 v56 抽盲說明區與尺寸回應機率，最新 [v56 規格](docs/19-v56-blind-and-response-spec.md) 優先修訂 v55 抽盲與 v53 固定行為機率。使用者已授權全部調整、驗證、推送 Git，再開新聊天室交接並由新聊天室提供相關連結。實際驗證與部署狀態見發布紀錄，不能沿用 v55 測試數字。交付後新聊天室先讀文件、提供連結、等待新需求，不重做已完成的實作、提交或部署。沿用現有 checkout，不重設其他修改。只修改 Magic Poker Lite；同層 Boss Duel、Hands Up、Final Table 永久唯讀，不在原目錄執行遊戲、建置、測試或寫入快取。
+本輪為 v57 BOSS 決策比例、配色與可讀性，最新 [v57 規格](docs/20-v57-response-readability-spec.md) 優先修訂 v55 回應框尺寸與原呈現方式；[v56 規格](docs/19-v56-blind-and-response-spec.md) 的抽盲及實際下注壓力機率保持。使用者已授權全部調整、驗證、推送 Git，再開新聊天室交接並由新聊天室直接提供完整相關連結。實際驗證與部署狀態見發布紀錄，不能沿用 v56 測試數字。交付後新聊天室先讀文件、提供連結、等待新需求，不重做已完成的實作、提交或部署。沿用現有 checkout，不重設其他修改。只修改 Magic Poker Lite；同層 Boss Duel、Hands Up、Final Table 永久唯讀，不在原目錄執行遊戲、建置、測試或寫入快取。
 
-遊戲英文；機率工具、文件及溝通繁體中文。最新使用者確認優先於舊文件。當前正式規格見 [v56 抽盲與回應規格](docs/19-v56-blind-and-response-spec.md)、[v55 延續呈現規格](docs/18-v55-feedback-spec.md)、[v53 遊戲與數學](docs/16-v53-holdem-spec.md)、[規則與公式](docs/04-game-flow-and-math.md)、[API](API-CONTRACT.md)；[v54 呈現規格](docs/17-v54-presentation-spec.md) 保留未被 v55 取代的既有行為。[發布紀錄](docs/06-mobile-and-deployment.md) 只記實際證據，本地整合與發布完成須分開標示。
+遊戲英文；機率工具、文件及溝通繁體中文。最新使用者確認優先於舊文件。當前正式規格見 [v57 比例與可讀性規格](docs/20-v57-response-readability-spec.md)、[v56 抽盲與回應規格](docs/19-v56-blind-and-response-spec.md)、[v55 延續呈現規格](docs/18-v55-feedback-spec.md)、[v53 遊戲與數學](docs/16-v53-holdem-spec.md)、[規則與公式](docs/04-game-flow-and-math.md)、[API](API-CONTRACT.md)；[v54 呈現規格](docs/17-v54-presentation-spec.md) 保留未被後續版本取代的既有行為。[發布紀錄](docs/06-mobile-and-deployment.md) 只記實際證據，本地整合與發布完成須分開標示。
+
+## v57 BOSS 決策比例、配色與可讀性
+
+- BOSS 回應的色帶寬度依實際機率分配，不能把不同百分比畫成等寬，也不能以文字最小寬度或間距改變比例。引擎使用的完整機率與畫面四捨五入值須區分。
+- 固定配色：FOLD 綠、CALL／CHECK 紅、RAISE／BET 紫；尺寸選單與其他 BOSS 回應呈現保持一致，不保留 CALL／CHECK 藍色。
+- 放大尺寸選單中的行為名稱與百分比；5% 等小機率使用精確色帶和獨立可讀文字，不把文字擠在極窄色塊內。手機 320／375／393／412 與桌面 1440 viewport 需可讀、無重疊與水平溢出。
+- 主預覽利用 FOLD 按鈕上方空間：左卡 BOSS · CALL／CHECK，右側較寬卡 BOSS · RAISE／BET；名稱 15 CSS px、百分比 20 CSS px，卡片不遮玩家底牌。
+- v57 僅調整呈現；沿用 v56 實際壓力分列、每街強弱鎖定、兩段 RNG、預覽隔離和既有帳務。正式方案 B 不重新詢問。
 
 ## v56 抽盲與 v55 延續呈現邊界
 
 - 抽盲在行動說明區內：左硬幣翻轉、右 DRAWING YOUR BLIND，揭曉後右側兩行盲位與 YOU／BOSS 金額；不再顯示 STARTING BET 或原公牌下浮動文字。結束硬幣飛回玩家座位，保留桌面、公牌與 POT。
-- 三個操作按鈕保持 66 px，主字縮小、籌碼與金額放大、RAISE 箭頭動態；尺寸的 BOSS 回應框縮窄、同色厚邊框。CHECK／CALL 跨街用 DEAL FLOP／TURN／RIVER，結算用 SHOWDOWN，不冠 BOSS 或洩漏下一街資訊。
+- 三個操作按鈕保持 66 px，主字縮小、籌碼與金額放大、RAISE 箭頭動態；尺寸的 BOSS 回應框保留同色厚邊框，寬度、標籤與百分比依 v57 可讀性規格。CHECK／CALL 跨街用 DEAL FLOP／TURN／RIVER，結算用 SHOWDOWN，不冠 BOSS 或洩漏下一街資訊。
 - 真正單一行為 100% 跳過行為抽取表演，正式行為／尺寸 RNG 路徑仍相同，不依四捨五入數字判定。
 - TOTAL WIN／BOSS WIN 一開始收款就出現，文字前景、籌碼持續從後方飛入，完整表演實際 2,000 ms。飛行籌碼在一般資訊上方，只有兩種 WIN 文字在其前方；數字、籌碼與玩家總餘額同步，不重入帳。
 - 買入原位堆高，取消資產飛行；預設 1,400 ms、至少 1,000 ms，發牌前雙方無牌。雙方使用同一 BB 尺度，同額同高；換桌盲注會重新標定，同桌派彩不重設個別座位尺度。

@@ -1,6 +1,6 @@
 # Magic Poker Lite 規則與公式
 
-v56／2026-10-07：本地驗證、Git推送、Pages部署與公開驗收通過。抽盲整合行動說明區、三種實際壓力回應以 [v56規格](19-v56-blind-and-response-spec.md) 為準；其餘呈現沿用 [v55規格](18-v55-feedback-spec.md)。正式模型pooled-holdem、.99結果計分、雙池、CD、JP與每街強弱分類沿用 [v53規格](16-v53-holdem-spec.md)；同街回應機率改依本次實際壓力。驗證與發布證據見 [驗證紀錄](06-mobile-and-deployment.md)，不沿用歷史測試數字作為本輪結果。
+v57／2026-10-07：BOSS 決策色帶按實際機率分配寬度，FOLD 綠、CALL／CHECK 紅、RAISE／BET 紫，放大尺寸選單的行為名稱與百分比，小機率以獨立文字確保可讀；呈現修正見 [v57 規格](20-v57-response-readability-spec.md)。抽盲及三種實際壓力回應沿用 [v56 規格](19-v56-blind-and-response-spec.md)，其餘呈現延續 [v55 規格](18-v55-feedback-spec.md)。正式方案 B pooled-holdem、.99 結果計分、三桶雙池、CD、JP、每街強弱分類、RNG 與帳務不變。實際驗證與發布證據見 [驗證紀錄](06-mobile-and-deployment.md)，不以歷史數字替代本輪結果。
 
 ## 1. 正式模型與一手流程
 
@@ -251,3 +251,5 @@ refundRate = 達標玩家數 / 全部指定玩家數
 歷史完整樹API如保留須標示其模式；pooled-holdem預建的是牌面候選，抽樣控制路徑不是全NL樹，不能用葉子比例當勝率。舊5BET門檻校準不再用於本版固定100SB買入。
 
 發布前核對正式測試、錢包與池對帳、手機viewport和公開內容；先前fixed-holdem候選測試不算新mode驗證。桌面Chrome手機尺寸也不等於實體Android。實際結果見 [驗證與發布](06-mobile-and-deployment.md)。
+
+最新呈現：[v57 BOSS 決策比例、配色與可讀性](20-v57-response-readability-spec.md)。

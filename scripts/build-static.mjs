@@ -12,7 +12,7 @@ await rm(destination, {recursive: true, force: true});
 const files = new Set(['index.html', 'probability.html', 'docs/04-game-flow-and-math.html',
   'assets/audio/table-v44.wav', 'assets/audio/showdown-v44.wav',
   'docs/04-game-flow-and-math.md', 'docs/05-art-and-pot.md', 'docs/06-mobile-and-deployment.md',
-  'docs/16-v53-holdem-spec.md', 'docs/17-v54-presentation-spec.md', 'docs/18-v55-feedback-spec.md', 'docs/19-v56-blind-and-response-spec.md',
+  'docs/16-v53-holdem-spec.md', 'docs/17-v54-presentation-spec.md', 'docs/18-v55-feedback-spec.md', 'docs/19-v56-blind-and-response-spec.md', 'docs/20-v57-response-readability-spec.md',
   'assets/action-buttons-v54/prompts.txt', 'API-CONTRACT.md']);
 for (const directory of ['src', 'styles']) {
   for (const entry of await readdir(path.join(root, directory))) {

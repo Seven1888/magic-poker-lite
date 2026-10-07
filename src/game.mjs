@@ -39,7 +39,7 @@ import {bossProbabilityScenariosHtml} from './boss-probability-view.mjs?v=56';
 import {buyInFromWallet,cashOutToWallet,snapshotTableSession,closeSavedTable} from './table-wallet.mjs?v=56';
 import {playBuyInFlight} from './buyin-flight.mjs?v=56';
 import {totalBalance} from './balance-display.mjs?v=56';
-import {ACTION_ART,chipIcon,actionResponsePreview,actionResponseMarkup,raiseMenuChoices,raiseSizeLabel} from './action-options-view.mjs?v=56';
+import {ACTION_ART,chipIcon,actionResponsePreview,actionResponseMarkup,raiseMenuChoices,raiseSizeLabel} from './action-options-view.mjs?v=57';
 document.documentElement.style.setProperty('--game-speed',String(GAME_SPEED));
 const $=id=>document.getElementById(id);
 // Stable player controls; engine actions and opponent response types stay unchanged.

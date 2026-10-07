@@ -1,4 +1,37 @@
-# v56 驗證與發布狀態
+# v57 驗證與發布狀態
+
+更新：2026-10-07。**v57 本地驗證完成，Git／公開發布待完成。** 本輪 [v57 規格](20-v57-response-readability-spec.md) 包含 BOSS 決策色帶按實際機率分配寬度、FOLD 綠／CALL 與 CHECK 紅／RAISE 與 BET 紫、尺寸選單行為名稱與百分比放大，以及小機率的獨立可讀標籤。正式引擎機率、RNG、方案 B 與帳務不變。下方 v56 及更早資料只作歷史，不代替本輪證據。
+
+## v57 本地驗證（2026-10-07）
+
+- `npm test`：572／572 通過，0 失敗、0 跳過，24,159.5061 ms；紀錄 `output/tests-v57.log`。這是本輪重新執行結果，不沿用 v56 數字。
+- `action-options`／`action-response`／`response-flight` 專項 28／28 通過。
+- `npm run build`：成功，236 個公開檔案，含新增 v57 規格。
+- 隔離桌面 Chrome 六組 viewport：320×900、375×900、393×900、412×900、1440×1000、320×640。尺寸選單 54 組 fixture 檢查、主預覽 36 組檢查通過；完整機率與實際色帶寬度的比例誤差 ≤ 0.001，CALL／CHECK 紅色，文字沒有裁切。尺寸選單實際行為名稱字級 ≥ 14 px、數字 ≥ 20 px。
+- 主預覽利用 FOLD 按鈕上方空間，左卡為 `BOSS · CALL／CHECK`，右側較寬卡為 `BOSS · RAISE／BET`；名稱 15 CSS px、百分比 20 CSS px。卡片不遮玩家底牌，選單與主預覽的比例、配色和小機率文字通過上述檢查。
+- 連續兩次重整後 `profile.table` 均為 null，balance 均為 9,996，沒有重複兌回。工具／規則於 320／393／1440 px 無水平溢出。
+- 腳本／紀錄：`output/playwright/qa-v57.js`、`output/playwright/qa-v57.log`。截圖包含 `v57-{weak,strong,short}-393.png`、`v57-main-{320,393}.png`，以及適用尺寸的 `v57-live-{320,393,1440}-{900,1000,640}.png`，皆位於 `output/playwright/`。
+- 最後一次 `qa-v57` 執行的 errors 0、warnings 0、HTTP failures 0；同一隔離 session 更早曾有 2 筆既有圖片預載未立即使用提示。0 warnings 僅限最後一次執行，不代表整個 session 沒有提示。
+- v57 只調整呈現，沒有修改引擎機率或重新評估長期 RTP；桌面 Chrome 手機 viewport 不是實體 Android。
+
+## v57 Git 與公開發布（由主代理回填）
+
+- 功能提交：待填完整 SHA 與可點連結；推送結果待填。
+- 功能 Actions：待填 run URL、build／deploy 實際狀態。
+- 公開檔案：待填遊戲／工具／規則與核心改動檔案 HTTP 狀態及和 dist 的內容比對結果。
+- 公開瀏覽器：待填本輪實際色帶、配色、可讀性、布局、截圖及錯誤／提示紀錄。
+- 發布紀錄提交及最終 Actions：待填完整 SHA、run URL 與實際結果；文件自指 SHA 可由原聊天室交付訊息補充，不捏造。
+- 交付工作樹狀態：待填。全部收尾後才建立新聊天室，由新聊天室直接提供完整連結，不重做本輪。
+
+## v57 入口
+
+- 公開：[遊戲](https://seven1888.github.io/magic-poker-lite/?v=57)／[工具](https://seven1888.github.io/magic-poker-lite/probability.html?v=57)／[規則](https://seven1888.github.io/magic-poker-lite/docs/04-game-flow-and-math.html?v=57)。
+- 本地：[遊戲](http://127.0.0.1:4177/index.html?v=57)／[工具](http://127.0.0.1:4177/probability.html?v=57)／[規則](http://127.0.0.1:4177/docs/04-game-flow-and-math.html?v=57)。4177 服務若停止，在本專案執行 `npm start`，無需安裝。
+- [GitHub](https://github.com/Seven1888/magic-poker-lite)／[Actions](https://github.com/Seven1888/magic-poker-lite/actions)／[接手文件](../HANDOFF.md)／[v57 規格](20-v57-response-readability-spec.md)。
+
+---
+
+# v56 歷史驗證與發布狀態
 
 更新：2026-10-07。**v56 全部完成，本地驗證、Git推送、Pages部署與公開驗收通過。** 本輪 [v56 規格](19-v56-blind-and-response-spec.md) 包含抽盲移入行動說明區與三種實際下注壓力回應；下方 v55 與更早資料只作歷史。
 
