@@ -1,6 +1,6 @@
 # Magic Poker Lite
 
-v53：單挑德州下注流程、兩型對手、實際桌籌碼，以及保留 99% 計分／個人雙池／JP 的 `pooled-holdem` 結果模型。使用者於 2026-10-07 選定方案 B；目前為本地整合、待發布。正式測試、Git 提交與 Pages 部署結果另記於 [驗證紀錄](docs/06-mobile-and-deployment.md)。
+v53：單挑德州下注流程、兩型對手、實際桌籌碼，以及保留 99% 計分／個人雙池／JP 的 `pooled-holdem` 結果模型。方案 B 已於 2026-10-07 完成並發布；519項測試通過，Pages公開站已驗證。Git 提交與部署證據見 [驗證紀錄](docs/06-mobile-and-deployment.md)。
 
 ## 玩法與資產
 
@@ -33,4 +33,4 @@ v53：單挑德州下注流程、兩型對手、實際桌籌碼，以及保留 9
 - Git：[Repository](https://github.com/Seven1888/magic-poker-lite)／[Actions](https://github.com/Seven1888/magic-poker-lite/actions)
 - 對外入口：[遊戲](https://seven1888.github.io/magic-poker-lite/)／[機率工具](https://seven1888.github.io/magic-poker-lite/probability.html)／[規則與公式](https://seven1888.github.io/magic-poker-lite/docs/04-game-flow-and-math.html)
 
-對外網址是既有站點；本次 v53 是否已更新，須以本輪 Actions 與公開內容檢查為準。遊戲英文，工具、文件及溝通繁體中文；只修改 Magic Poker Lite。
+上述對外網址已提供 v53。遊戲英文，工具、文件及溝通繁體中文；只修改 Magic Poker Lite。

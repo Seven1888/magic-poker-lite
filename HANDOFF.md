@@ -1,6 +1,6 @@
 # Magic Poker Lite v53 接手紀錄
 
-更新：2026-10-07。**使用者已選方案 B；本地整合／待正式驗證與發布。** 本紀錄不代表 Git 或 Pages 已更新。
+更新：2026-10-07。**方案 B 已完成、推送 Git 並部署 Pages；519項測試通過，公開站已驗證。**
 
 ## 目標與授權
 
@@ -37,19 +37,19 @@
 | src/simulation-study.mjs / refund-study.mjs | 有限桌碼／外部錢包研究，正式模型共用 |
 | docs/16-v53-holdem-spec.md | 本次完整需求與正式規格 |
 
-## 驗證與交付待辦
+## 驗證與交付狀態
 
 正式pooled-holdem的`npm test`已519／519通過，`npm run build`成功218檔，diff空白檢查通過。Chrome320／375／393／412／1440px、買入／離桌／重整、五空框、CHECK／BET／再加注及皇家JP實派都已驗證；工具4策略共160手、16位151手退幣流程與JSON匯出完成。詳見 [驗證紀錄](docs/06-mobile-and-deployment.md)。
 
 研究重入使用 `beginNewTable(session,{buyIn})`，首桌不額外呼叫；後續已結算、歸零且外部錢包允許時重入。新桌首盲從同RNG抽一次，其後依桌內手序交替；總手數及累計資料不重設。函式不自行扣外部錢包，不允許未完手或新桌未開手時重複重入。
 
-先前 fixed-holdem 候選的483項測試與其瀏覽器結果只屬歷史候選，不能冒充本次B方案證據。正式結果填入 [驗證紀錄](docs/06-mobile-and-deployment.md) 後再提交、推送、確認Actions/Pages及公開內容，最後建立新聊天室並交付完整連結。
+先前fixed-holdem候選483項結果只屬歷史。本輪功能提交為 [c5d5aca](https://github.com/Seven1888/magic-poker-lite/commit/c5d5aca9f5d67d3e95b07ef4b371b7bd3e1bb457)，[Actions 37556303917](https://github.com/Seven1888/magic-poker-lite/actions/runs/37556303917)測試／建置／部署成功。公開站入場驗證模式、買入、JP表頭及五空框，page／console錯誤0、HTTP失敗0。後續文件提交僅補發布紀錄，核心程式不再改動。
 
-## 連結及最後已知公開基準
+## 連結
 
 - [GitHub](https://github.com/Seven1888/magic-poker-lite)／[Actions](https://github.com/Seven1888/magic-poker-lite/actions)
 - [公開遊戲](https://seven1888.github.io/magic-poker-lite/)／[機率工具](https://seven1888.github.io/magic-poker-lite/probability.html)／[規則](https://seven1888.github.io/magic-poker-lite/docs/04-game-flow-and-math.html)
 - [本地遊戲v53](http://127.0.0.1:4177/index.html?v=53)／[本地機率工具v53](http://127.0.0.1:4177/probability.html?v=53)
-- 最後已知公開修正v52：commit `82a2cc5d19603ed098caec578733b66cfbcd11ca`，成功 [Actions 37435730770](https://github.com/Seven1888/magic-poker-lite/actions/runs/37435730770)。
+- v53公開入口均可加`?v=53`；上一版v52基準為`82a2cc5`，僅供歷史比較。
 
-本輪v53提交、部署及新聊天室尚待實際完成後記錄，不預填SHA或連結。
+本輪實作及發布已完成。新聊天室先讀本紀錄，沒有待重做的實作或再次发布工作；等待使用者後續需求。

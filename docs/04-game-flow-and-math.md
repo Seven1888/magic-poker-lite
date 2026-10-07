@@ -1,6 +1,6 @@
 # Magic Poker Lite 規則與公式
 
-v53／2026-10-07：方案B已確認，正式模型pooled-holdem。本地整合、待發布；本頁是現行規格，不是部署完成公告。測試與發布見 [驗證紀錄](06-mobile-and-deployment.md)，完整需求見 [v53規格](16-v53-holdem-spec.md)。
+v53／2026-10-07：方案B已完成並發布，正式模型pooled-holdem。519項測試通過，公開站已驗證。測試與發布見 [驗證紀錄](06-mobile-and-deployment.md)，完整需求見 [v53規格](16-v53-holdem-spec.md)。
 
 ## 1. 正式模型與一手流程
 

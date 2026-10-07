@@ -1,6 +1,6 @@
 # v53 遊戲介面、卡牌與資產呈現
 
-2026-10-07，本地整合／待發布。數學以 [規則與公式](04-game-flow-and-math.md) 為準；完整需求見 [v53規格](16-v53-holdem-spec.md)，實際驗證另記 [發布紀錄](06-mobile-and-deployment.md)。
+2026-10-07，v53已完成並發布。數學以 [規則與公式](04-game-flow-and-math.md) 為準；完整需求見 [v53規格](16-v53-holdem-spec.md)，實際驗證另記 [發布紀錄](06-mobile-and-deployment.md)。
 
 ## 入口與實際買入
 

@@ -1,6 +1,6 @@
 # Magic Poker Lite v53 API 契約
 
-2026-10-07，使用者已選方案 B。正式模式為 `pooled-holdem`；本地整合／待發布。規格見 [docs/16](docs/16-v53-holdem-spec.md)，數學見 [docs/04](docs/04-game-flow-and-math.md)，測試與部署只以 [docs/06](docs/06-mobile-and-deployment.md) 的實際紀錄為準。
+2026-10-07，方案 B 已完成並發布。正式模式為 `pooled-holdem`。規格見 [docs/16](docs/16-v53-holdem-spec.md)，數學見 [docs/04](docs/04-game-flow-and-math.md)，測試與部署證據見 [docs/06](docs/06-mobile-and-deployment.md)。
 
 ## Config 與 session
 
