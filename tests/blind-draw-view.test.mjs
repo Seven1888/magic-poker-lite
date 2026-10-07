@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createBlindDraw} from '../src/blind-draw-view.mjs';
+import {createActionFlow} from '../src/action-flow-view.mjs';
 import {createSession} from './legacy-engine.mjs';
 import {atGameSpeed} from '../src/presentation-timing.mjs';
 
@@ -17,13 +18,15 @@ function fixture() {
     get textContent() { return this.text + this.children.map(node => node.textContent).join(' '); }
     getAnimations() { return animations.filter(animation => animation.node === this && !animation.done); }
   }
-  const stage = new Node();
+  const stage = new Node(), ribbon = new Node(), announcements = [];
+  ribbon.classList = {add(){}};
+  Object.defineProperty(ribbon, 'innerHTML', {get(){return this.markup || '';},set(value){this.markup=value;announcements.push(this.attrs['aria-label']);}});
   const root = {
     defaultView: {
       setTimeout(fn, ms) { const id = ++serial; timers.set(id, {fn, at: now + ms}); return id; },
       clearTimeout(id) { timers.delete(id); }
     },
-    getElementById: id => id === 'game' ? stage : null,
+    getElementById: id => id === 'game' ? stage : id === 'action-flow' ? ribbon : null,
     createElement: () => new Node()
   };
   const effects = {
@@ -37,7 +40,9 @@ function fixture() {
     }
   };
   const find = (className, node = stage) => node.className === className ? node : node.children.map(child => find(className, child)).find(Boolean);
-  return {root, stage, effects, animations, sounds, timers, find,
+  const actionFlow = createActionFlow({root});
+  actionFlow.render({mode:'hole-deal',label:'DRAWING YOUR BLIND'});
+  return {root, stage, ribbon, actionFlow, announcements, effects, animations, sounds, timers, find,
     async tick(ms) {
       now += ms;
       for (const [id, timer] of [...timers]) if (timer.at <= now) { timers.delete(id); timer.fn(); }
@@ -55,9 +60,11 @@ for (const isSmall of [true, false]) test(`preselected ${isSmall ? 'SB' : 'BB'} 
   const pending = draw.play(result);
   assert.equal(f.stage.dataset.blindDraw, 'revealed');
   assert.equal(f.find('blind-draw-title'), undefined, 'the redundant BLIND POSITION title is removed');
-  assert.equal(f.find('blind-draw-name').textContent, isSmall ? 'YOU · SMALL BLIND' : 'YOU · BIG BLIND');
-  assert.match(f.find('blind-draw-payment').textContent, isSmall ? /YOU 0\.123456 BOSS 0\.246912/ : /YOU 0\.246912 BOSS 0\.123456/);
-  assert.equal(f.find('blind-draw-stakes').textContent, 'STARTING BET');
+  assert.match(f.ribbon.innerHTML, isSmall ? /YOU · SMALL BLIND/ : /YOU · BIG BLIND/);
+  assert.match(f.ribbon.innerHTML, isSmall ? /YOU 0\.123456 · BOSS 0\.246912/ : /YOU 0\.246912 · BOSS 0\.123456/);
+  assert.doesNotMatch(f.ribbon.innerHTML, /STARTING BET/);
+  assert.equal(f.find('blind-draw-copy'), undefined, 'there is no floating text over the board or POT');
+  assert.equal(f.find('blind-coin').attrs['aria-hidden'], 'true', 'only the ribbon announces the revealed result');
   assert.equal(f.animations.length, 0);
   await f.tick(atGameSpeed(1800) - 1);
   assert.equal(f.stage.dataset.blindDraw, 'revealed', 'a reduced-motion user still has time to read');
@@ -66,6 +73,7 @@ for (const isSmall of [true, false]) test(`preselected ${isSmall ? 'SB' : 'BB'} 
   assert.equal(coin.textContent, isSmall ? 'SB' : 'BB');
   assert.equal(coin.attrs['aria-label'], `You: ${isSmall ? 'SMALL BLIND' : 'BIG BLIND'}. Boss: ${isSmall ? 'BIG BLIND' : 'SMALL BLIND'}.`);
   assert.equal(coin.dataset.position, 'seat');
+  assert.equal(coin.attrs['aria-hidden'], 'false');
   assert.equal(f.find('blind-draw-copy'), undefined);
   assert.deepEqual({rng: session.rng.state(), stacks: session.stacks, handNumber: session.handNumber}, before);
   draw.renderSeat({isSmall: !isSmall});
@@ -79,21 +87,27 @@ test('normal draw reveals the known side before flying, then retains a coin at t
   const pending = draw.play({isSmall: true, smallBlind: .5, bigBlind: 1});
   const coin = f.find('blind-coin');
   assert.equal(coin.textContent, '?'); assert.equal(f.stage.dataset.blindDraw, 'drawing');
-  assert.equal(f.find('blind-draw-name').textContent, '', 'the action ribbon owns the drawing announcement');
+  assert.match(f.ribbon.innerHTML, /DRAWING YOUR BLIND/, 'the action ribbon owns the drawing announcement');
   assert.equal(f.find('blind-draw-title'), undefined);
-  assert.equal(coin.style.top, '446px', 'the coin stays below the action ribbon');
+  assert.equal(coin.style.top, '360px', 'the coin stays centered within the action ribbon');
+  assert.equal(coin.style.left, '46px', 'the coin occupies the left icon slot');
+  assert.equal(coin.attrs['aria-hidden'], 'true');
   f.animations[0].finish(); await flush();
   assert.equal(coin.textContent, 'SB'); assert.equal(f.stage.dataset.blindDraw, 'revealed');
   assert.equal(f.animations.length, 2);
   f.animations[1].finish(); await flush();
   await f.tick(atGameSpeed(2400));
-  assert.equal(f.stage.dataset.blindDraw, 'flying'); assert.equal(coin.dataset.position, 'center');
+  assert.equal(f.stage.dataset.blindDraw, 'flying'); assert.equal(coin.dataset.position, 'ribbon');
   const flight = f.animations.at(-1), start = flight.frames[0], destination = flight.frames.at(-1);
   assert.ok(parseFloat(destination.left) > parseFloat(start.left), 'flies toward the player’s right');
   assert.ok(parseFloat(destination.top) > parseFloat(start.top), 'flies down to the player');
   flight.finish(); assert.equal(await pending, true);
   assert.equal(coin.style.left, destination.left); assert.equal(coin.style.top, destination.top);
   assert.equal(coin.dataset.position, 'seat'); assert.equal(f.stage.dataset.blindDraw, 'seated');
+  assert.match(f.announcements.at(-1), /YOU · SMALL BLIND/, 'finishing never re-announces the drawing phase');
+  f.actionFlow.render({mode:'contribution',label:'POST BLINDS'});
+  assert.equal(f.ribbon.dataset.blindDraw, undefined);
+  assert.match(f.ribbon.innerHTML, /POSTING BLINDS/);
   assert.deepEqual(f.sounds, ['chip']); assert.equal(f.timers.size, 0);
 });
 
@@ -103,6 +117,7 @@ test('clearing or replacing a pending draw releases it without a stale coin or t
   draw.clear();
   assert.equal(await pending, false); assert.equal(f.stage.children.length, 0);
   assert.equal(f.animations[0].cancelled, true); assert.equal(f.stage.dataset.blindDraw, undefined);
+  assert.equal(f.ribbon.dataset.blindDraw, undefined);
   f.animations[0].finish(); await flush();
   assert.equal(f.stage.children.length, 0); assert.equal(f.sounds.length, 0);
   const reduced = createBlindDraw({...f, reducedMotion: true});
@@ -113,4 +128,26 @@ test('clearing or replacing a pending draw releases it without a stale coin or t
   await f.tick(10000);
   assert.equal(f.find('blind-coin').textContent, 'BB');
   assert.equal(f.stage.children.length, 1); assert.equal(f.stage.dataset.blindDraw, 'seated');
+  assert.equal(f.ribbon.dataset.blindDraw, undefined);
+});
+
+test('cancelling a flight releases the ribbon and prevents an old run from restoring its result', async () => {
+  const f = fixture(), draw = createBlindDraw(f);
+  const first = draw.play({isSmall:true,smallBlind:50,bigBlind:100});
+  f.animations[0].finish(); await flush();
+  f.animations[1].finish(); await flush();
+  await f.tick(atGameSpeed(2400));
+  const flight=f.animations.at(-1);
+  assert.equal(f.stage.dataset.blindDraw,'flying');
+  draw.clear();
+  assert.equal(await first,false);
+  assert.equal(flight.cancelled,true);
+  assert.equal(f.ribbon.dataset.blindDraw,undefined);
+  const second = draw.play({isSmall:false,smallBlind:50,bigBlind:100});
+  flight.finish(); await flush();
+  assert.equal(f.stage.dataset.blindDraw,'drawing');
+  assert.equal(f.find('blind-coin').textContent,'?');
+  assert.doesNotMatch(f.ribbon.innerHTML,/YOU · SMALL BLIND/);
+  draw.clear(); assert.equal(await second,false);
+  assert.equal(f.stage.children.length,0); assert.equal(f.timers.size,0);
 });

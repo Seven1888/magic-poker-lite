@@ -68,3 +68,44 @@ test('unchanged choices and chip flights do not rewrite the live region or show 
  assert.doesNotMatch(markup,/YOUR TURN/);
  assert.doesNotThrow(()=>createActionFlow({root:{getElementById:()=>null}}).render(input));
 });
+
+test('blind presentation owns one live ribbon, survives re-renders and resumes the latest phase',()=>{
+ let writes=0,markup='';const attrs={},element={dataset:{},classList:{add(){}},setAttribute(name,value){attrs[name]=value;},
+  set innerHTML(value){writes++;markup=value;},get innerHTML(){return markup;}};
+ const panel=createActionFlow({root:{getElementById:()=>element}});
+ panel.render({mode:'hole-deal',label:'DRAWING YOUR BLIND'});
+ panel.setBlindDraw({phase:'drawing'});
+ const drawingWrites=writes;
+ panel.setBlindDraw({phase:'drawing'});
+ panel.render({mode:'hole-deal',label:'DRAWING YOUR BLIND'});
+ assert.equal(writes,drawingWrites,'unchanged drawing is not re-announced');
+ assert.equal(element.dataset.blindDraw,'drawing');
+ assert.doesNotMatch(markup,/<svg/,'the spinning coin replaces the generic icon');
+ panel.setBlindDraw({phase:'revealed',isSmall:false,smallBlind:50,bigBlind:100});
+ assert.match(markup,/YOU · BIG BLIND/);assert.match(markup,/YOU 100 · BOSS 50/);
+ assert.equal(attrs['aria-label'],'YOU · BIG BLIND: YOU 100 · BOSS 50');
+ const revealedWrites=writes;
+ panel.setBlindDraw({phase:'revealed',isSmall:false,smallBlind:50,bigBlind:100});
+ panel.render({mode:'contribution',label:'POST BLINDS'});
+ assert.equal(writes,revealedWrites,'ordinary rendering leaves the revealed result readable');
+ panel.setBlindDraw(null);
+ assert.equal(element.dataset.blindDraw,undefined);assert.match(markup,/POSTING BLINDS/);
+ assert.match(markup,/<svg/,'the next phase restores its normal icon');
+});
+
+test('changing the drawing icon preserves the existing accessible announcement node',()=>{
+ let mounted=false,announcementWrites=0;const visible={innerHTML:''},announcement={set textContent(value){announcementWrites++;this.text=value;}};
+ const element={dataset:{},classList:{add(){}},setAttribute(){},set innerHTML(value){mounted=true;this.markup=value;},
+  querySelector(selector){return mounted?(selector==='.action-flow-current'?visible:announcement):null;}};
+ const panel=createActionFlow({root:{getElementById:()=>element}});
+ panel.render({mode:'hole-deal',label:'DRAWING YOUR BLIND'});
+ panel.setBlindDraw({phase:'drawing'});
+ assert.equal(announcementWrites,0,'moving from the ordinary icon to the coin does not reinsert live text');
+ panel.setBlindDraw({phase:'revealed',isSmall:true,smallBlind:50,bigBlind:100});
+ assert.equal(announcementWrites,1);assert.match(announcement.text,/YOU · SMALL BLIND/);
+ panel.setBlindDraw({phase:'revealed',isSmall:true,smallBlind:50,bigBlind:100});
+ panel.setBlindDraw(null,{restore:false});
+ assert.equal(announcementWrites,1,'unchanged results and the flight endpoint do not repeat the result');
+ panel.render({mode:'contribution',label:'POST BLINDS'});
+ assert.equal(announcementWrites,2);assert.match(announcement.text,/POSTING BLINDS/);
+});

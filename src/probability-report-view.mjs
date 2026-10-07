@@ -1,6 +1,6 @@
-import {esc} from './shared.mjs?v=55';
-import {JACKPOT_MULTIPLIERS} from './jackpot.mjs?v=55';
-import {LAB_STREETS as STREETS, LAB_POLICIES as POLICIES, LAB_JACKPOTS as JACKPOTS} from './probability-text.mjs?v=55';
+import {esc} from './shared.mjs?v=56';
+import {JACKPOT_MULTIPLIERS} from './jackpot.mjs?v=56';
+import {LAB_STREETS as STREETS, LAB_POLICIES as POLICIES, LAB_JACKPOTS as JACKPOTS} from './probability-text.mjs?v=56';
 
 const SEATS = {player: '玩家', npc: 'BOSS'};
 const ACTIONS = {fold: 'FOLD（棄牌）', check: 'CHECK（過牌）', call: 'CALL（跟注）', bet: 'BET（開注）', raise: 'RAISE（加注）'};

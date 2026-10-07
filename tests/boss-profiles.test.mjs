@@ -20,7 +20,7 @@ const simpleActions = types => types.map(type => ({type, amount: type === 'fold'
 const raiseActions = ['half', 'pot', 'allin'].map((sizeKey, index) => ({type: 'raise', id: `raise:${sizeKey}`, sizeKey, sizeKeys:[sizeKey], amount: [20, 30, 100][index]}));
 
 test('the two profiles cover both bands on every street with exact immutable percentages', () => {
-  assert.equal(BOSS_PROFILE_VERSION, 'two-boss-locked-street-v3');
+  assert.equal(BOSS_PROFILE_VERSION, 'two-boss-price-response-v4');
   assert.deepEqual(BOSS_PROFILE_IDS, ['caller', 'maniac']);
   assert.deepEqual(BOSS_PROFILES.map(p => `${p.name}|${p.nickname}`), ['不激進|PASSIVE', '激進|AGGRESSIVE']);
   for (const profile of BOSS_PROFILES) for (const [street, bands] of Object.entries(BOSS_BANDS_BY_STREET)) {
@@ -164,10 +164,10 @@ test('Turn snapshot records own draw for River and keeps completed-street eviden
   assert.equal(hand.bossStreetStates.turn,turn);
 });
 
-test('public scenarios expose all three contexts without secret classification fields', () => {
+test('public scenarios expose price contexts without secret classification fields', () => {
   for(const profileId of BOSS_PROFILE_IDS)for(const band of ['weak','strong']) {
     const hand=classified(profileId,band), s=getBossProbabilityScenarios(hand),w=BOSS_PROFILE_BY_ID[profileId].weights[band];
-    assert.deepEqual(Object.keys(s),['facing','free','noRaise','sizes']);
+    assert.deepEqual(Object.keys(s),['facing','free','noRaise','sizes','byPressure']);
     near(s.facing.fold,w.fold/100);near(s.facing.call,w.call/100);near(s.facing.raise,w.raise/100);
     near(s.free.check,(w.fold+w.call)/100);near(s.free.raise,w.raise/100);
     near(s.noRaise.fold,w.fold/(w.fold+w.call));near(s.noRaise.call,w.call/(w.fold+w.call));
@@ -202,7 +202,7 @@ test('aggression sizes use 50/35/15 and equal legal amounts merge probability ma
   near(allIn[2].probability,.7);
 });
 
-test('distribution does not inspect cards or betting fields after the street lock', () => {
+test('historical distribution does not inspect cards or betting fields after the street lock', () => {
   for(const profileId of BOSS_PROFILE_IDS)for(const band of ['weak','strong']) {
     const hand=classified(profileId,band);
     for(const key of ['holes','board','deck','currentBet','streetBets','stacks','rng','history'])Object.defineProperty(hand,key,{get(){throw Error(`unexpected ${key}`);}});

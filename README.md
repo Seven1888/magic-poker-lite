@@ -1,6 +1,6 @@
 # Magic Poker Lite
 
-v55：依八項回饋調整抽盲、操作資訊、總餘額、原位買入堆疊及兩秒收款表演。**本地驗證完成：560／560 測試通過，建置 233 檔；已推送 Git 並部署 Pages，公開內容驗收通過。** 最新呈現以 [v55 規格](docs/18-v55-feedback-spec.md) 為準，優先於 v54；正式 `pooled-holdem` 模型、.99 計分、個人雙池／CD／JP 與對手機率均沿用 v53。實際驗證與發布見 [紀錄](docs/06-mobile-and-deployment.md)；v54 的 552 項測試與公開驗收保留為歷史證據，不當作 v55 結果。
+v56：將抽盲硬幣與結果文字整合至行動說明區，並讓對手依半池、全池、大額三種實際下注壓力使用不同回應機率。**本地驗證完成：572／572測試通過，建置235檔；Git／公開部署待確認。** 最新行為以 [v56 規格](docs/19-v56-blind-and-response-spec.md) 為準；其餘呈現沿用 v55，正式 `pooled-holdem` 模型、.99 計分、個人雙池／CD／JP 及每街強弱分類沿用 v53。實際驗證與發布見 [紀錄](docs/06-mobile-and-deployment.md)；歷史版本的測試與公開驗收不當作 v56 結果。
 
 ## 玩法與資產
 
@@ -10,17 +10,17 @@ v55：依八項回饋調整抽盲、操作資訊、總餘額、原位買入堆�
 
 桌上只使用實際籌碼，不能補碼；每手對手起始籌碼等於玩家當時籌碼。`TOTAL WIN`／`BOSS WIN` 從收款開始即出現，前景文字與數字、後方持續流向勝方的籌碼，完整表演共用實際 2,000 ms，不除以遊戲速度。勝方桌碼與玩家總餘額依同一呈現進度更新；只有兩種 WIN 文字可以位於飛行籌碼前方，其餘資訊不得遮住下注或收款飛行。退款、POT 派彩與 JP 分別對帳，動畫不再加錢。玩家歸零時先播完結果，隨後自動離桌回入口，重新選 SB 並按 FIGHT 才買入。一般離桌與重整也會結束舊桌帳務並兌回餘碼一次。
 
-首手隨機盲位，後續單挑輪替。抽盲保留桌面資訊，金幣不遮住 `DRAWING YOUR BLIND` 行動階段，移除 `BLIND POSITION` 上排文字。公共牌先顯示五個虛線空框，再按 Flop 3／Turn 1／River 1 發出。動作依狀態顯示 CHECK／CALL、BET／RAISE；雙方可以合法多次再加注。三個按鈕保持 66 px 高度，主文字縮小，籌碼圖示與花費金額放大；RAISE 向上箭頭加入動畫。
+首手隨機盲位，後續單挑輪替。抽盲保留桌面，硬幣與文字共同使用行動說明區：左側硬幣翻轉、右側顯示 `DRAWING YOUR BLIND`；揭曉後左側為 `SB／BB`，右側第一行顯示 `YOU · SMALL BLIND` 或 `YOU · BIG BLIND`，第二行顯示 `YOU 50 · BOSS 100` 等實際盲注。結束後硬幣移至玩家盲位標記，說明區回到遊戲階段。移除硬幣下方浮動結果、`STARTING BET` 及 `BLIND POSITION`，避免與 POT、公牌重疊。公共牌先顯示五個虛線空框，再按 Flop 3／Turn 1／River 1 發出。動作依狀態顯示 CHECK／CALL、BET／RAISE；雙方可以合法多次再加注。三個按鈕保持 66 px 高度，主文字縮小，籌碼圖示與花費金額放大；RAISE 向上箭頭加入動畫。
 
 進攻選單由上到下為 ALL IN、1× POT、0.5× POT；同額仍依引擎合併、不重複。對手行為機率放在玩家按鈕上方，各尺寸左側的精確回應框縮窄，以 BOSS 標籤底色形成有厚度的整圈邊框。若 CHECK／CALL 結束本街，改顯示 `DEAL FLOP／DEAL TURN／DEAL RIVER`，結算則顯示 `SHOWDOWN`，不加 BOSS 標題或提前公開下街機率。預覽不推進正式 RNG、牌面或水池。
 
-對手只有激進與不激進，正式遊戲不連續重複。每街開始依 NPC 底牌、已揭公牌及已完成街道歷史鎖定「強／不強」；玩家行動前可查一般面對下注、免費 CHECK、不能加注三種機率。強包括成牌、指定聽牌與明確詐唬條件。每次 NPC 重新抽行為，進攻後再抽尺寸 50%／35%／15%。真正只有一種行為、合計 100% 時直接執行，跳過抽取表演；四捨五入成 100% 不算確定行為，正式抽樣與 RNG 路徑不改。完整表格見 [v53 規格](docs/16-v53-holdem-spec.md)。
+對手只有激進與不激進，正式遊戲不連續重複。每街開始依 NPC 底牌、已揭公牌及已完成街道歷史鎖定「強／不強」，同街價格與配對切換不重判；回應機率則依 NPC 實際可付 CALL 相對於下注基準底池，分半池（≤ 0.5）、全池（> 0.5 且 ≤ 1）、大額（> 1）三列。三個尺寸的預覽各用其實際合法金額；短碼 ALL IN 按實際壓力選列，再移除 RAISE 並正規化 FOLD／CALL，同額選項同機率。強包括成牌、指定聽牌與明確詐唬條件。每次 NPC 重新抽行為，進攻後再抽尺寸 50%／35%／15%。真正只有一種行為、合計 100% 時直接執行，跳過抽取表演；四捨五入成 100% 不算確定行為，正式抽樣與 RNG 路徑不改。新版完整表格與壓力公式見 [v56 規格](docs/19-v56-blind-and-response-spec.md)。
 
 雙方底牌發完即顯示公開的對手牌型參考：Preflop 排除玩家兩張底牌，精確枚舉其餘 50 張中的 1,225 組未知底牌，顯示當前 Pair／High Card；翻牌後沿用當下最佳五張分布。這不是河牌預測，也不讀 NPC 實際暗牌。
 
 ## 結果計分、雙池與 JP
 
-開手預建固定玩家底牌、公牌序及所需 NPC win／nonWin 配對。玩家實付時，原結果公式決定是否換至已建配對；同街換牌不改已鎖機率，新街才重判。使用精簡結果控制器保存所選路徑，不預先展開全部無限加注分支。
+開手預建固定玩家底牌、公牌序及所需 NPC win／nonWin 配對。玩家實付時，原結果公式決定是否換至已建配對；同街換牌不改已鎖強弱分類，新街才重判。回應機率依該分類及本次實際壓力取值。使用精簡結果控制器保存所選路徑，不預先展開全部無限加注分支。
 
 `conversionRate = .99` 是唯一結果計分係數，匹配 POT 全額派彩、未跟注款全額退回。贏節點有效付費的計分按 80%／20% 入個人付費池／特殊池；盲注、買入與退款不入池。99% 設定不等於實測 RTP，池餘額也不是玩家返還。
 
@@ -38,9 +38,9 @@ v55：依八項回饋調整抽盲、操作資訊、總餘額、原位買入堆�
 
 需 Node.js 20 以上，無須安裝套件。在本目錄執行 `npm start`；自動測試 `npm test`，靜態建置 `npm run build`。main 推送由既有 GitHub Actions 建置與部署 Pages。
 
-- 本地：[遊戲](http://127.0.0.1:4177/index.html?v=55)／[機率工具](http://127.0.0.1:4177/probability.html?v=55)／[規則與公式](http://127.0.0.1:4177/docs/04-game-flow-and-math.html?v=55)
-- 文件：[v55 八項規格](docs/18-v55-feedback-spec.md)／[v54 歷史呈現規格](docs/17-v54-presentation-spec.md)／[v53 遊戲與數學規格](docs/16-v53-holdem-spec.md)／[規則與數學](docs/04-game-flow-and-math.md)／[API](API-CONTRACT.md)／[介面](docs/05-art-and-pot.md)／[驗證](docs/06-mobile-and-deployment.md)／[接手紀錄](HANDOFF.md)
+- 本地：[遊戲](http://127.0.0.1:4177/index.html?v=56)／[機率工具](http://127.0.0.1:4177/probability.html?v=56)／[規則與公式](http://127.0.0.1:4177/docs/04-game-flow-and-math.html?v=56)
+- 文件：[v56 抽盲與回應規格](docs/19-v56-blind-and-response-spec.md)／[v55 八項規格](docs/18-v55-feedback-spec.md)／[v54 歷史呈現規格](docs/17-v54-presentation-spec.md)／[v53 歷史遊戲與數學規格](docs/16-v53-holdem-spec.md)／[規則與數學](docs/04-game-flow-and-math.md)／[API](API-CONTRACT.md)／[介面](docs/05-art-and-pot.md)／[驗證](docs/06-mobile-and-deployment.md)／[接手紀錄](HANDOFF.md)
 - Git：[Repository](https://github.com/Seven1888/magic-poker-lite)／[Actions](https://github.com/Seven1888/magic-poker-lite/actions)
-- 對外入口：[遊戲](https://seven1888.github.io/magic-poker-lite/?v=55)／[機率工具](https://seven1888.github.io/magic-poker-lite/probability.html?v=55)／[規則與公式](https://seven1888.github.io/magic-poker-lite/docs/04-game-flow-and-math.html?v=55)
+- 對外入口：[遊戲](https://seven1888.github.io/magic-poker-lite/?v=56)／[機率工具](https://seven1888.github.io/magic-poker-lite/probability.html?v=56)／[規則與公式](https://seven1888.github.io/magic-poker-lite/docs/04-game-flow-and-math.html?v=56)
 
-v55 目前本地驗證完成，已推送 Git 並部署 Pages，公開內容驗收通過。完成交付後依使用者授權開新聊天室；新聊天室先讀文件、提供相關連結，再等待新需求，不重做已完成實作、推送或部署。遊戲英文，工具、文件及溝通繁體中文；只修改 Magic Poker Lite。
+v56 目前本地驗證完成，發布待確認；以上是固定入口，部署狀態以發布紀錄為準。完成全部調整、驗證與 Git 推送後，依使用者授權開新聊天室交接；新聊天室先讀文件、直接提供完整相關連結，再等待新需求，不重做已完成實作、推送或部署。遊戲英文，工具、文件及溝通繁體中文；只修改 Magic Poker Lite。

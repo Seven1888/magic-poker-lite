@@ -1,0 +1,22 @@
+/* Blind selection shares the action ribbon; its text never enters the board/POT. */
+.game .action-flow-strip[data-blind-draw] .action-flow-current {
+ justify-content:flex-start; padding:6px 18px; gap:14px;
+}
+.game .action-flow-strip[data-blind-draw] .action-flow-icon {
+ width:56px; height:50px; border:0; background:none;
+}
+.game .action-flow-strip[data-blind-draw] .action-flow-copy { flex:1; gap:3px; }
+.game .action-flow-strip[data-blind-draw] .action-flow-name {
+ font-size:18px; line-height:22px; font-weight:750; letter-spacing:.2px; color:#fff1d2;
+}
+.game .action-flow-strip[data-blind-draw] .action-flow-verb {
+ font-size:16px; line-height:21px; letter-spacing:0; white-space:normal;
+ overflow:visible; overflow-wrap:anywhere; font-variant-numeric:tabular-nums;
+}
+.game .action-flow-strip[data-blind-draw='drawing'] .action-flow-verb {
+ font-size:18px; line-height:23px;
+}
+.game .blind-coin[data-position='ribbon'] {
+ width:50px; height:50px; border-width:3px; font-size:22px;
+ box-shadow:inset 0 0 0 1px #ffedbd,inset 0 0 0 3px #7b592c,0 2px 0 #825d32,0 4px 5px #1c090c75;
+}

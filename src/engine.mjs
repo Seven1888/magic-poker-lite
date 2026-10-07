@@ -1,14 +1,14 @@
-import {makeDeck, createRng, shuffle, normalizeCard, evaluateBest, compareRanks, holeScore} from './poker.mjs?v=55';
-import {getJackpotAward, classifyJackpot, quoteJackpot} from './jackpot.mjs?v=55';
-import {normalizeBossConfig, selectBossProfile, getBossProfileDistribution, lockBossStreetStrength} from './boss-profiles.mjs?v=55';
-import {isFixedHoldem, isPooledHoldem, isHoldemBetting, legalHoldemActions, resolveHoldemAction, markHoldemAction, HOLDEM_SIZE_WEIGHTS} from './holdem-betting.mjs?v=55';
-import {initializePooledHoldem, preparePooledHoldemAction} from './pooled-holdem.mjs?v=55';
-import {assertHandEntryAssets} from './hand-entry.mjs?v=55';
+import {makeDeck, createRng, shuffle, normalizeCard, evaluateBest, compareRanks, holeScore} from './poker.mjs?v=56';
+import {getJackpotAward, classifyJackpot, quoteJackpot} from './jackpot.mjs?v=56';
+import {normalizeBossConfig, selectBossProfile, getBossProfileDistribution, lockBossStreetStrength} from './boss-profiles.mjs?v=56';
+import {isFixedHoldem, isPooledHoldem, isHoldemBetting, legalHoldemActions, resolveHoldemAction, markHoldemAction, HOLDEM_SIZE_WEIGHTS} from './holdem-betting.mjs?v=56';
+import {initializePooledHoldem, preparePooledHoldemAction} from './pooled-holdem.mjs?v=56';
+import {assertHandEntryAssets} from './hand-entry.mjs?v=56';
 import {DEFAULT_OUTCOME_POOL_CONFIG, normalizeOutcomePoolConfig, createOutcomePools, normalizeOutcomePools, compactOutcomePools,
-  drawRootPoolOutcome, drawPaidPoolOutcome, applyBranchPools, settleOutcomePools, isSpecialPoolLayout} from './outcome-pools.mjs?v=55';
-import {buildPrebuiltOutcomeTree, lookupPrebuiltOutcomeTransition} from './prebuilt-outcome-tree.mjs?v=55';
-import {createOutcomeLayout} from './outcome-layout.mjs?v=55';
-export {makeDeck, createRng, shuffle, evaluateBest, compareHands, holeScore, normalizeCard} from './poker.mjs?v=55';
+  drawRootPoolOutcome, drawPaidPoolOutcome, applyBranchPools, settleOutcomePools, isSpecialPoolLayout} from './outcome-pools.mjs?v=56';
+import {buildPrebuiltOutcomeTree, lookupPrebuiltOutcomeTransition} from './prebuilt-outcome-tree.mjs?v=56';
+import {createOutcomeLayout} from './outcome-layout.mjs?v=56';
+export {makeDeck, createRng, shuffle, evaluateBest, compareHands, holeScore, normalizeCard} from './poker.mjs?v=56';
 
 const SEATS = ['player', 'npc'];
 export const STREETS = ['preflop', 'flop', 'turn', 'river'];

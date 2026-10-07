@@ -1,4 +1,38 @@
-# Magic Poker Lite v55 接手紀錄
+# Magic Poker Lite v56 接手紀錄
+
+更新：2026-10-07。**v56 本地整合完成，發布驗證進行中。** 最新 [v56 規格](docs/19-v56-blind-and-response-spec.md) 優先於 v55 抽盲與 v53 固定機率；下方 v55 及更早內容僅保留歷史。
+
+## 授權與接手範圍
+
+使用者已確認全部調整、驗證、推送 Git，再開新聊天室交接，並明確要求「讓新聊天室給我相關連結」。新聊天室先唯讀 AGENTS、本文件、docs/19、docs/16、docs/06，直接整理以下完整連結，再等待新需求。不得重做完成的實作、測試、提交、推送或部署；不另開聊天室。
+
+只可修改 C:/Users/User/Desktop/新Magic Poker/Magic Poker Lite。同層 Boss Duel、Hands Up、Final Table 永久唯讀。沿用 checkout；遊戲英文，工具／文件／溝通繁體中文。
+
+## v56 已確認修改
+
+1. 抽盲硬幣在行動說明區左側翻轉，右側 DRAWING YOUR BLIND。揭曉後兩行 YOU · SMALL BLIND／BIG BLIND 與 YOU 金額 · BOSS 金額，移除 STARTING BET 和原浮動文字，POT／公牌不受遮擋。完成飛回玩家盲位；重繪／取消有獨立處理，同一 aria live 節點不重複播報。
+2. 三種 RAISE 回應依實際可跟金額／扣掉未匹配差額的底池分成 half／pot／large。每街只鎖強弱，機率隨價格換列。half／pot／large 的 F/C/R：激進強 5/25/70、10/40/50、20/80/0；不激進強 5/65/30、10/70/20、15/85/0；激進弱 45/55/0、55/45/0、70/30/0；不激進弱 25/75/0、40/60/0、55/45/0。短全下先按壓力選列再正規化 F/C；同額同機率。免費仍 half 基準，NPC 自己尺寸50/35/15及兩段 RNG不变。
+
+公式與六位小數邊界見 docs/19。正式方案B pooled-holdem、.99 結果計分、三桶雙池／CD／JP 與帳務保持。profile.balance 仍只存桌外錢包；TOTAL BALANCE 顯示錢包加呈現桌碼，不能把總額再存回錢包。重整先結束舊桌帳務、只兌回一次。
+
+## 本輪實際驗證
+
+- npm test：572／572 通過，0失敗／跳過，約22.98秒，output/tests-v56.log。
+- npm run build：235檔。抽盲／行動區專項11／11，機率與引擎專項84／84。
+- 桌面Chrome320／375／393／412／1440抽盲逐影格與截圖確認圖示／文字留在說明區、公牌與POT不被遮擋；三個RAISE尺寸機率不同。連續重整不重複兌回，工具與規則320／393／1440無水平溢出、12列壓力表完整。瀏覽器錯誤0、HTTP失敗0，有5筆既有CALL按鈕圖片預載未立即使用提示。詳細見 [發布紀錄](docs/06-mobile-and-deployment.md)。
+- 本轮手機驗證為桌面Chrome viewport，不是實體Android；設計百分比與功能樣本不是長期RTP證據。
+
+## 新聊天室必須直接提供的完整連結
+
+- 公開：[遊戲 v56](https://seven1888.github.io/magic-poker-lite/?v=56)／[機率工具](https://seven1888.github.io/magic-poker-lite/probability.html?v=56)／[規則與公式](https://seven1888.github.io/magic-poker-lite/docs/04-game-flow-and-math.html?v=56)。
+- 本地：[遊戲 v56](http://127.0.0.1:4177/index.html?v=56)／[機率工具](http://127.0.0.1:4177/probability.html?v=56)／[規則](http://127.0.0.1:4177/docs/04-game-flow-and-math.html?v=56)。4177服務需要運行；若停止在本專案 npm start 即可，Node≥20，無需安裝套件。
+- Git：[專案](https://github.com/Seven1888/magic-poker-lite)／[Actions列表](https://github.com/Seven1888/magic-poker-lite/actions)。功能提交、發布紀錄提交與本輪成功run取最新發布紀錄，不沿用v55。
+- 文件：[README](https://github.com/Seven1888/magic-poker-lite/blob/main/README.md)／[AGENTS](https://github.com/Seven1888/magic-poker-lite/blob/main/AGENTS.md)／[HANDOFF](https://github.com/Seven1888/magic-poker-lite/blob/main/HANDOFF.md)／[v56規格](https://github.com/Seven1888/magic-poker-lite/blob/main/docs/19-v56-blind-and-response-spec.md)／[v55規格](https://github.com/Seven1888/magic-poker-lite/blob/main/docs/18-v55-feedback-spec.md)／[v54歷史規格](https://github.com/Seven1888/magic-poker-lite/blob/main/docs/17-v54-presentation-spec.md)／[v53模型與歷史機率](https://github.com/Seven1888/magic-poker-lite/blob/main/docs/16-v53-holdem-spec.md)／[API](https://github.com/Seven1888/magic-poker-lite/blob/main/API-CONTRACT.md)／[驗證與發布](https://github.com/Seven1888/magic-poker-lite/blob/main/docs/06-mobile-and-deployment.md)。
+- 美術：[按鈕資產](https://github.com/Seven1888/magic-poker-lite/tree/main/assets/action-buttons-v54)／[完整生成提示詞](https://github.com/Seven1888/magic-poker-lite/blob/main/assets/action-buttons-v54/prompts.txt)。資料夾名保留v54，本輪無新增圖片。
+
+---
+
+# Magic Poker Lite v55 歷史接手紀錄
 
 更新：2026-10-07。**v55 本地驗證完成，已推送 Git 並部署 Pages，公開內容驗收通過。** 本節與 [v55 八項規格](docs/18-v55-feedback-spec.md) 優先；下方 v54／v53 全文僅保留歷史證據與背景，不代表本次驗證或待辦。
 

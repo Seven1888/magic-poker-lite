@@ -1,4 +1,4 @@
-import {evaluateBest, normalizeCard, RANKS} from './poker.mjs?v=55';
+import {evaluateBest, normalizeCard, RANKS} from './poker.mjs?v=56';
 
 const freeze = value => {
   if (value && typeof value === 'object') { Object.values(value).forEach(freeze); Object.freeze(value); }
@@ -7,8 +7,9 @@ const freeze = value => {
 const row = (fold, call, raise) => ({fold, call, raise});
 const STREETS = ['preflop', 'flop', 'turn', 'river'];
 const rankOf = card => RANKS.indexOf(card[0]) + 2;
-export const BOSS_PROFILE_VERSION = 'two-boss-locked-street-v3';
+export const BOSS_PROFILE_VERSION = 'two-boss-price-response-v4';
 export const BOSS_RAISE_SIZE_WEIGHTS = freeze({half: .5, pot: .35, allin: .15});
+export const BOSS_RESPONSE_PRESSURES = freeze({half: '半池以下', pot: '超過半池至全池', large: '超過全池'});
 export const BOSS_BANDS = freeze({
   weak: {label: '不強', description: '沒有符合本階段的成牌、聽牌或明確詐唬條件。'},
   strong: {label: '強', description: '符合本階段的成牌、聽牌或明確詐唬條件；同一街道鎖定分類。'}
@@ -16,10 +17,15 @@ export const BOSS_BANDS = freeze({
 export const BOSS_BANDS_BY_STREET = freeze(Object.fromEntries(STREETS.map(street => [street, ['weak', 'strong']])));
 export const BOSS_PROFILES = freeze([
   {id: 'caller', name: '不激進', nickname: 'PASSIVE', description: '較少主動下注或加注，不強時也比較願意跟注。',
-    weights: {weak: row(25, 75, 0), strong: row(5, 65, 30)}},
+    weights: {weak: row(25, 75, 0), strong: row(5, 65, 30)},
+    pressureWeights: {pot: {weak: row(40, 60, 0), strong: row(10, 70, 20)},
+      large: {weak: row(55, 45, 0), strong: row(15, 85, 0)}}},
   {id: 'maniac', name: '激進', nickname: 'AGGRESSIVE', description: '符合成牌、聽牌或詐唬條件時，較常主動下注或加注。',
-    weights: {weak: row(45, 55, 0), strong: row(5, 25, 70)}}
-].map(profile => ({...profile, tables: Object.fromEntries(STREETS.map(street => [street, profile.weights]))})));
+    weights: {weak: row(45, 55, 0), strong: row(5, 25, 70)},
+    pressureWeights: {pot: {weak: row(55, 45, 0), strong: row(10, 40, 50)},
+      large: {weak: row(70, 30, 0), strong: row(20, 80, 0)}}}
+].map(profile => ({...profile, pressureWeights: {half: profile.weights, ...profile.pressureWeights},
+  tables: Object.fromEntries(STREETS.map(street => [street, profile.weights]))})));
 export const BOSS_PROFILE_IDS = freeze(BOSS_PROFILES.map(profile => profile.id));
 export const BOSS_PROFILE_BY_ID = freeze(Object.fromEntries(BOSS_PROFILES.map(profile => [profile.id, profile])));
 
@@ -124,28 +130,51 @@ export function lockBossStreetStrength(hand) {
   return snapshot;
 }
 
-function lockedWeights(hand) {
+/** Actual callable price, independent of the selected button label or private cards.
+ * P is the pot after the player's call but before their raise increment. The engine
+ * rounds chip amounts to 1e-6; one chip quantum prevents half/pot rounding drift.
+ * Historical non-Holdem modes retain their original single response table.
+ */
+export function getBossResponsePressure(hand) {
+  if (!['fixed-holdem', 'pooled-holdem'].includes(hand.config?.outcome?.mode)
+    || !Number.isFinite(hand.pot) || !Number.isFinite(hand.currentBet) || !Number.isFinite(hand.streetBets?.npc)) {
+    return {key: 'half', callAmount: 0, basePot: 0};
+  }
+  const owed = Math.max(0, hand.currentBet - hand.streetBets.npc);
+  const callAmount = Math.min(owed, Math.max(0, hand.stacks?.npc ?? owed));
+  const basePot = Math.max(0, hand.pot - owed), tolerance = .000001;
+  const key = callAmount <= basePot * .5 + tolerance ? 'half'
+    : callAmount <= basePot + tolerance ? 'pot' : 'large';
+  return {key, callAmount, basePot};
+}
+
+function lockedWeights(hand, pressure = getBossResponsePressure(hand).key) {
   const profile = BOSS_PROFILE_BY_ID[hand.bossProfile?.id];
   if (!profile) throw new Error('牌局缺少已鎖定的 BOSS 類型。');
   const state = hand.bossStreetStrength?.street === hand.street ? hand.bossStreetStrength : lockBossStreetStrength(hand);
-  const weights = profile.weights[state.band];
+  const weights = profile.pressureWeights[pressure]?.[state.band];
   if (!weights) throw new Error('BOSS 行為表缺少目前分類。');
   return weights;
 }
 
 /** Public numeric contract. It deliberately omits classification, reasons and all card data. */
 export function getBossProbabilityScenarios(hand) {
-  const weights = lockedWeights(hand), passive = weights.fold + weights.call;
-  return {facing: {fold: weights.fold / 100, call: weights.call / 100, raise: weights.raise / 100},
-    free: {check: passive / 100, raise: weights.raise / 100},
-    noRaise: {fold: weights.fold / passive, call: weights.call / passive}, sizes: {...BOSS_RAISE_SIZE_WEIGHTS}};
+  const scenarios = weights => {
+    const passive = weights.fold + weights.call;
+    return {facing: {fold: weights.fold / 100, call: weights.call / 100, raise: weights.raise / 100},
+      noRaise: {fold: weights.fold / passive, call: weights.call / passive}};
+  };
+  const base = lockedWeights(hand, 'half'), current = scenarios(lockedWeights(hand));
+  return {facing: current.facing, free: {check: (base.fold + base.call) / 100, raise: base.raise / 100},
+    noRaise: current.noRaise, sizes: {...BOSS_RAISE_SIZE_WEIGHTS},
+    byPressure: Object.fromEntries(Object.keys(BOSS_RESPONSE_PRESSURES).map(key => [key, scenarios(lockedWeights(hand, key))]))};
 }
 
 /** Apply public context rules, then distribute aggression over the legal, merged size choices. */
 export function getBossProfileDistribution(hand, actions) {
   if (!actions.length) return [];
-  const weights = lockedWeights(hand);
   const canCheck = actions.some(action => action.type === 'check');
+  const weights = canCheck ? lockedWeights(hand, 'half') : lockedWeights(hand);
   const aggressive = actions.filter(action => action.type === 'bet' || action.type === 'raise');
   const sizeMass = action => {
     const keys = action.sizeKeys ?? (action.sizeKey ? [action.sizeKey] : null);

@@ -1,6 +1,6 @@
-import {createSession,startHand,cloneHand,legalActions,applyAction,getActionDistribution} from './engine.mjs?v=55';
-import {BOSS_PROFILE_VERSION} from './boss-profiles.mjs?v=55';
-import {createPoolStudySummary, collectPoolStudyAudit, finishPoolStudySummary} from './probability-pools.mjs?v=55';
+import {createSession,startHand,cloneHand,legalActions,applyAction,getActionDistribution} from './engine.mjs?v=56';
+import {BOSS_PROFILE_VERSION} from './boss-profiles.mjs?v=56';
+import {createPoolStudySummary, collectPoolStudyAudit, finishPoolStudySummary} from './probability-pools.mjs?v=56';
 
 const POLICIES = ['balanced','call','aggressive','tight'];
 const MEASURES = [

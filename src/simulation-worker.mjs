@@ -1,7 +1,7 @@
-import {simulateStudy} from './simulation-study.mjs?v=55';
-import {buildActionTree} from './action-tree.mjs?v=55';
-import {simulateTreeStudy} from './tree-study.mjs?v=55';
-import {simulateRefundStudy} from './refund-study.mjs?v=55';
+import {simulateStudy} from './simulation-study.mjs?v=56';
+import {buildActionTree} from './action-tree.mjs?v=56';
+import {simulateTreeStudy} from './tree-study.mjs?v=56';
+import {simulateRefundStudy} from './refund-study.mjs?v=56';
 self.onmessage=event=>{
   const {type,config,policies,refund,...settings}=event.data||{};
   try{

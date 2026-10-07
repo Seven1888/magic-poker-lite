@@ -1,6 +1,6 @@
-import {pct,esc} from './shared.mjs?v=55';
-import {icon} from './ui-icons.mjs?v=55';
-import {responseActionLabel} from './action-response-view.mjs?v=55';
+import {pct,esc} from './shared.mjs?v=56';
+import {icon} from './ui-icons.mjs?v=56';
+import {responseActionLabel} from './action-response-view.mjs?v=56';
 
 /** Central decisions show every real outcome; mixed button previews stay FOLD/RAISE only. */
 export function responseDistributionView(distribution=[],{phase='preview',selected=null,roll=null}={}){

@@ -1,4 +1,4 @@
-import {DEFAULT_CONFIG, legalActions} from './engine.mjs?v=55';
+import {DEFAULT_CONFIG, legalActions} from './engine.mjs?v=56';
 
 const STREET_NAMES = Object.freeze({preflop: '翻牌前', flop: '翻牌', turn: '轉牌', river: '河牌'});
 const round = value => Math.round((value + Number.EPSILON) * 1e6) / 1e6;

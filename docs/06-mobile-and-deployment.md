@@ -1,4 +1,31 @@
-# v55 驗證與發布狀態
+# v56 驗證與發布狀態
+
+更新：2026-10-07。**v56 本地整合完成，發布驗證進行中。** 本輪 [v56 規格](19-v56-blind-and-response-spec.md) 包含抽盲移入行動說明區與三種實際下注壓力回應；下方 v55 與更早資料只作歷史。
+
+## v56 本地驗證
+
+- npm test：572／572通過，0失敗、0跳過，約22.98秒；紀錄 output/tests-v56.log。涵蓋壓力分列、邊界、再加注、短全下、同額合併、預覽與正式一致及既有池／JP／錢包／Worker。
+- npm run build：235個公開檔案，包含新增v56規格與blind-ribbon-v56.css。
+- 抽盲與行動區專項11／11：SB／BB、減少動態、取消／取代／飛行中斷、無額外RNG與重繪保留。機率專項84／84：含正式引擎與預覽。
+- 隔離桌面Chrome的320／375／393／412／1440：SB50／BB100抽盲全程逐影格核對硬幣留在行動說明區、與文字不交疊；揭曉兩行完整，POT與公牌不被遮擋。旋轉反彈修至-4px、硬幣y360，五尺寸重驗通過；截圖 output/playwright/v56-blind-{width}.png。
+- 五尺寸RAISE選單三列皆不同：本次PASSIVE不強案例，半池25/75、全池40/60、大額全下55/45。截圖 output/playwright/v56-raise-{width}.png。12組完整數值、短碼與實際正式分布一致由自動測試覆蓋。
+- 連續兩次重整返回入口，保存table均null且錢包數值相同，未重複兌回。機率工具與規則頁320／393／1440均無水平溢出，工具包含12列壓力表。腳本及執行紀錄 output/playwright/qa-v56.js、qa-v56.log。
+- 瀏覽器執行錯誤0、HTTP載入失敗0；有5筆CALL圖片預載後未立即使用的Chrome提示，屬既有按鈕預載，不宣稱console warning為0。
+- 桌面Chrome手機viewport不等於實體Android；機率設計值和功能驗證不代表長期實測RTP。
+
+## v56 Git 與公開發布
+
+本節等待實際推送、Actions與公開內容核對後回填。尚不以本地測試代替部署證據。
+
+## v56 入口
+
+- 公開：[遊戲](https://seven1888.github.io/magic-poker-lite/?v=56)／[工具](https://seven1888.github.io/magic-poker-lite/probability.html?v=56)／[規則](https://seven1888.github.io/magic-poker-lite/docs/04-game-flow-and-math.html?v=56)。
+- 本地：[遊戲](http://127.0.0.1:4177/index.html?v=56)／[工具](http://127.0.0.1:4177/probability.html?v=56)／[規則](http://127.0.0.1:4177/docs/04-game-flow-and-math.html?v=56)。
+- [GitHub](https://github.com/Seven1888/magic-poker-lite)／[Actions](https://github.com/Seven1888/magic-poker-lite/actions)／[接手文件](../HANDOFF.md)。
+
+---
+
+# v55 歷史驗證與發布狀態
 
 更新：2026-10-07。**本地驗證完成，已推送 Git 並部署 Pages，公開內容驗收通過。** 本輪 [v55 八項呈現規格](18-v55-feedback-spec.md) 優先於 v54；正式 `pooled-holdem`、.99 計分、三桶雙池／CD／JP、對手表與保存帳務不改。下方歷史證據保留，不當作本輪結果。
 

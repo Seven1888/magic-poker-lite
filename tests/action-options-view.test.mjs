@@ -70,20 +70,20 @@ test('every selected size reports the same legal grouped response as the engine 
   }
 });
 
-test('an all-in response removes raises and normalizes fold/call, while ordinary sizes retain all three choices', () => {
-  for (const [profileId, callWeight, raiseWeight] of [['maniac', 25, 70], ['caller', 65, 30]]) {
+test('each size shows its actual pressure response, with no raise against a large all-in', () => {
+  for (const [profileId, rows] of [['maniac', [[5,25,70],[10,40,50],[20,80,0]]], ['caller', [[5,65,30],[10,70,20],[15,85,0]]]]) {
     const hand = create(profileId);
     assert.equal(hand.bossStreetStrength.band, 'strong');
-    for (const size of ['half', 'pot']) {
+    for (const [index,size] of ['half', 'pot'].entries()) {
       const preview = actionResponsePreview(hand, choose(hand, 'raise', size));
       const actual = Object.fromEntries(preview.outcomes.map(row => [row.type, row.probability]));
-      near(actual.fold, .05); near(actual.call, callWeight / 100); near(actual.raise, raiseWeight / 100);
+      near(actual.fold, rows[index][0]/100); near(actual.call, rows[index][1]/100); near(actual.raise, rows[index][2]/100);
     }
     const allIn = actionResponsePreview(hand, choose(hand, 'raise', 'allin'));
     const actual = Object.fromEntries(allIn.outcomes.map(row => [row.type, row.probability]));
     assert.deepEqual(Object.keys(actual).sort(), ['call', 'fold']);
-    near(actual.fold, 5 / (5 + callWeight));
-    near(actual.call, callWeight / (5 + callWeight));
+    near(actual.fold, rows[2][0]/100);
+    near(actual.call, rows[2][1]/100);
     const markup = actionResponseMarkup(allIn, {compact: true});
     assert.match(markup, /data-response="call"><span>CALL<\/span>/);
     assert.doesNotMatch(markup, /data-response="raise"/);

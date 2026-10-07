@@ -1,6 +1,7 @@
-import {esc} from './shared.mjs?v=55';
+import {esc} from './shared.mjs?v=56';
 
 const clean=value=>String(value??'').replace(/\s+/g,' ').trim();
+const blindAmount=value=>value.toLocaleString('en-US',{maximumFractionDigits:6});
 const actorStep=actor=>actor==='npc'?'boss':'you';
 const actorFromLabel=label=>/^(OPPONENT|BOSS)\b/i.test(label)?'boss':/^YOU\b/i.test(label)?'you':'';
 const actionVerb=label=>{
@@ -58,17 +59,51 @@ export function actionFlowState({mode='',label='',seat='',detail='',actor='',pla
 /** Persistent, read-only turn panel; unchanged renders do not re-announce. */
 export function createActionFlow({root=globalThis.document}={}){
  const element=root.getElementById('action-flow');
- let previous=null,previousKey='';
- function render(input={}){
+ let previous=null,previousKey='',previousMessage='',blind=null;
+ function paint(current){
   if(!element)return;
-  const current=actionFlowState(input,previous),key=JSON.stringify(current);
+  const key=JSON.stringify(current);
   if(key===previousKey)return;
-  previous=current;previousKey=key;
+  previousKey=key;
   element.classList.add('action-flow-strip');
   element.setAttribute('role','status');element.setAttribute('aria-live','polite');element.setAttribute('aria-atomic','true');
-  element.setAttribute('aria-label',current.message);element.setAttribute('title',current.message);
+  const messageChanged=current.message!==previousMessage;
+  if(messageChanged){element.setAttribute('aria-label',current.message);element.setAttribute('title',current.message);}
   element.dataset.step=current.step;
-  element.innerHTML='<span class="action-flow-current" aria-hidden="true"><span class="action-flow-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'+ICONS[current.step]+'</svg></span><span class="action-flow-copy">'+(current.name?'<span class="action-flow-name">'+esc(current.name)+'</span>':'')+'<strong class="action-flow-verb">'+esc(current.verb)+'</strong></span></span><span class="action-flow-announcement">'+esc(current.message)+'</span>';
+  if(current.blindDraw)element.dataset.blindDraw=current.blindDraw;else delete element.dataset.blindDraw;
+  // The animated coin occupies this icon slot from the presentation layer.
+  const icon=current.blindDraw?'':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'+ICONS[current.step]+'</svg>';
+  const copy='<span class="action-flow-icon">'+icon+'</span><span class="action-flow-copy">'+(current.name?'<span class="action-flow-name">'+esc(current.name)+'</span>':'')+'<strong class="action-flow-verb">'+esc(current.verb)+'</strong></span>';
+  const visible=element.querySelector?.('.action-flow-current'),announcement=element.querySelector?.('.action-flow-announcement');
+  if(visible&&announcement){
+   visible.innerHTML=copy;
+   // Icon/layout changes stay inside aria-hidden; keep the live text node so an
+   // already announced DRAWING YOUR BLIND is not inserted and read twice.
+   if(messageChanged)announcement.textContent=current.message;
+  }else element.innerHTML='<span class="action-flow-current" aria-hidden="true">'+copy+'</span><span class="action-flow-announcement">'+esc(current.message)+'</span>';
+  previousMessage=current.message;
  }
- return {render};
+ function render(input={}){
+  previous=actionFlowState(input,previous);
+  if(!blind)paint(previous);
+ }
+ /** Hold the same ribbon through the draw; ordinary re-renders cannot erase it. */
+ function setBlindDraw(result,{restore=true}={}){
+  if(!result){
+   blind=null;
+   // At a successful flight endpoint the next game phase updates the ribbon in
+   // the same task. Do not briefly announce DRAWING YOUR BLIND a second time.
+   if(restore)paint(previous||actionFlowState());
+   return;
+  }
+  if(result.phase==='drawing')blind={...view('deal','','DRAWING YOUR BLIND'),blindDraw:'drawing'};
+  else{
+   const {isSmall,smallBlind,bigBlind}=result;
+   const title=isSmall?'YOU · SMALL BLIND':'YOU · BIG BLIND';
+   const payment=`YOU ${blindAmount(isSmall?smallBlind:bigBlind)} · BOSS ${blindAmount(isSmall?bigBlind:smallBlind)}`;
+   blind={...view('deal',title,payment),blindDraw:'revealed'};
+  }
+  paint(blind);
+ }
+ return {render,setBlindDraw};
 }

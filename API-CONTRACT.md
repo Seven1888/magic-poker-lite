@@ -1,6 +1,6 @@
-# Magic Poker Lite v55 API 契約
+# Magic Poker Lite v56 API 契約
 
-2026-10-07，v55 本地驗證完成，已推送 Git 並部署 Pages，公開內容驗收通過。八項呈現回饋以 [docs/18](docs/18-v55-feedback-spec.md) 優先於 v54；正式模式仍為 `pooled-holdem`，v53 遊戲數學及行為機率契約不改。遊戲規格見 [docs/16](docs/16-v53-holdem-spec.md)，數學見 [docs/04](docs/04-game-flow-and-math.md)，驗證與發布見 [docs/06](docs/06-mobile-and-deployment.md)。
+2026-10-07，v56 本地驗證完成，發布待確認。抽盲整合行動說明區、三種實際壓力回應以 [docs/19](docs/19-v56-blind-and-response-spec.md) 優先；正式模式仍為 `pooled-holdem`，v53 的 .99 結果計分、雙池、CD、JP 及每街強弱分類不改。其餘呈現沿用 [docs/18](docs/18-v55-feedback-spec.md)。現行規則見 [docs/04](docs/04-game-flow-and-math.md)，歷史模型見 [docs/16](docs/16-v53-holdem-spec.md)，實際驗證與發布見 [docs/06](docs/06-mobile-and-deployment.md)。
 
 ## Config 與 session
 
@@ -73,7 +73,7 @@ Preflop SB先，後續BB先；SB補平盲注保留BB選擇權。合法完整加�
 
 ## 兩型與街道鎖定
 
-`BOSS_PROFILE_IDS` 僅caller／maniac，版本 `two-boss-locked-street-v3`。正式rotate首型各0.5，之後排前型；fixed只供研究。sniper／trapper設定明確遷caller，舊自訂權重不恢復。
+`BOSS_PROFILE_IDS` 僅caller／maniac，版本 `two-boss-price-response-v4`。正式rotate首型各0.5，之後排前型；fixed只供研究。sniper／trapper設定明確遷caller，舊自訂權重不恢復。`BOSS_PROFILES` 的 `pressureWeights` 依 `half／pot／large` 再依 `weak／strong` 保存權重；相容的 `weights／tables` 仍指半池基準列。
 
 `classifyBossStrength` 只使用NPC底牌、已揭公牌及已完成街道歷史；完整強規則見docs/16。不得讀玩家暗牌、未來公牌或當前街價格。`lockBossStreetStrength(hand)` 於每街第一個動作前呼叫，同街冪等：
 
@@ -89,6 +89,19 @@ hand.bossStreetStates = {preflop, flop, turn, river};
 
 只有已到達的街存在。快照包含判定證據，深度隔離，禁止公開原因。換NPC配對不改當街快照；新街依目前配對重判。River所需Turn聽牌證據取已存Turn快照及實際Turn進攻歷史。
 
+`getBossResponsePressure(hand)` 回傳 `{key,callAmount,basePot}`，`key` 為 `half／pot／large`。正式 pooled-holdem 與 fixed-holdem 的計算使用 NPC 即將回應時的狀態：
+
+```text
+D = max(currentBet - streetBets.npc, 0)
+callAmount = min(D, max(stacks.npc, 0))
+basePot = max(pot - D, 0)
+half:  callAmount <= 0.5 × basePot + 0.000001
+pot:   callAmount <= basePot + 0.000001（且不屬 half）
+large: 其餘
+```
+
+`basePot` 是玩家行動後底池扣除 NPC 未補差額，相當於玩家進攻前底池加玩家先補的 CALL；用未封頂的 D 扣除底池，以實際可付的 callAmount 判斷壓力。1e-6 容忍支付六位小數產生的邊界誤差。basePot 為 0 時，零價落 half，正價落 large（容忍範圍內的微量仍落 half）。legacy 研究保持 half 基準。
+
 `getBossProbabilityScenarios(hand)` 是公開數字API，不回band、reasons或cards：
 
 ```js
@@ -96,11 +109,25 @@ hand.bossStreetStates = {preflop, flop, turn, river};
   facing: {fold, call, raise},
   free: {check, raise},
   noRaise: {fold, call},
-  sizes: {half: 0.5, pot: 0.35, allin: 0.15}
+  sizes: {half: 0.5, pot: 0.35, allin: 0.15},
+  byPressure: {
+    half: {facing: {fold, call, raise}, noRaise: {fold, call}},
+    pot: {facing: {fold, call, raise}, noRaise: {fold, call}},
+    large: {facing: {fold, call, raise}, noRaise: {fold, call}}
+  }
 }
 ```
 
-所有值為0..1。正常F/C/R依激進強5/25/70、不激進強5/65/30、激進不強45/55/0、不激進不強25/75/0。免費F+C合CHECK；不能加注F/C正規化；僅能CHECK時100%。
+所有機率值為0..1，沿用現有 `facing／free／noRaise／sizes` 字段。`facing／noRaise` 依當前實際壓力；`byPressure` 公開完整三列，方便在行動前查看。每格為 FOLD／CALL／RAISE 百分比：
+
+| 對手及分類 | half | pot | large |
+| --- | --- | --- | --- |
+| maniac strong | 5／25／70 | 10／40／50 | 20／80／0 |
+| caller strong | 5／65／30 | 10／70／20 | 15／85／0 |
+| maniac weak | 45／55／0 | 55／45／0 | 70／30／0 |
+| caller weak | 25／75／0 | 40／60／0 | 55／45／0 |
+
+免費時固定採 half 列，F+C 合 CHECK；不能加注時先依實際壓力選列，再以 F/(F+C)、C/(F+C) 正規化，不能一律套 large。僅能 CHECK 時 100%。ALL IN 標籤不直接選列；短碼及最小額造成的同額候選使用同機率。
 
 `getBossProfileDistribution(hand,legalActions)` 保留完整合法動作、各尺寸joint probability及bossSizing:true。按sizeKeys加總50/35/15，不能每個合法尺寸直接均分。尺寸受最小額／全下合併可能使實際ALL IN超過15%。
 
@@ -148,7 +175,7 @@ v55 POT 收款依每位收款者既有 `netReturn` 呈現持續籌碼流，帳�
 
 `createBankrollView().render(values,{baseBet,walletBalance,counting})` 的 `baseBet` 使用 BB：50 BB 對應 18 顆視覺籌碼、上限 45 顆，雙方共用確定性尺度，層數分布相同；同桌收款或個別座位歸零不重設尺度，換桌 SB／BB 自動重新標定。相鄰金額才是精確資產。相容參數 `walletBalance` 是上方已計算好的顯示總額，不代表此 view 可以提交錢包帳務。
 
-抽盲由 `createBlindDraw` 呈現引擎已選結果，不抽票或下盲。v55 保留桌面元素，移除 BLIND POSITION，DRAWING YOUR BLIND 由持續顯示的行動階段單獨呈現，硬幣避開此區。操作按鈕保持 66 px，縮小主字、放大籌碼及花費，RAISE 箭頭動畫與較窄的 BOSS 同色厚邊框均屬純視覺。
+抽盲由 `createBlindDraw` 呈現引擎已選結果，不抽票或下盲。v56 保留桌面，將表演放入行動說明區：左側硬幣翻轉，右側 `DRAWING YOUR BLIND`；揭曉後左側 `SB／BB`，右側盲位標題及雙方實際盲注兩行。結束後硬幣移至玩家盲位標記，說明區恢復遊戲階段。取消原本硬幣下方浮動文字、`STARTING BET` 與 `BLIND POSITION`，不得與 POT 或公牌資訊重疊。操作按鈕保持 66 px，縮小主字、放大籌碼及花費，RAISE 箭頭動畫與較窄的 BOSS 同色厚邊框均屬純視覺。
 
 profile key `magic-poker-lite.player.v1`，現用version2：balance、outcomePools、table及lastBossProfileId。接受version1舊餘額／池；不得因研究設定匯入覆寫。load失敗回null；save以一次setItem存整筆，成功true／storage不可用false並由UI提示。正式買入、開手、動作、結算和離桌均保存，table=null代表沒有待兌回舊桌。載入舊桌時先結算並保存包含BALANCE、雙池／CD、上一型及空table的整筆profile，不能只清table而丟失桌籌碼，也不能在保存失敗後繼續新買入。
 
