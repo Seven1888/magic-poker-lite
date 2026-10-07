@@ -1,6 +1,6 @@
-# Magic Poker Lite v54 API 契約
+# Magic Poker Lite v55 API 契約
 
-2026-10-07，v54 已通過驗證並推送 Git／部署 Pages；包含 11 項呈現回饋及重整離桌修正。正式模式仍為 `pooled-holdem`，v53 遊戲數學及行為機率契約不改。呈現規格見 [docs/17](docs/17-v54-presentation-spec.md)，遊戲規格見 [docs/16](docs/16-v53-holdem-spec.md)，數學見 [docs/04](docs/04-game-flow-and-math.md)，驗證與發布見 [docs/06](docs/06-mobile-and-deployment.md)。
+2026-10-07，v55 本地驗證完成，Git／公開發布待確認。八項呈現回饋以 [docs/18](docs/18-v55-feedback-spec.md) 優先於 v54；正式模式仍為 `pooled-holdem`，v53 遊戲數學及行為機率契約不改。遊戲規格見 [docs/16](docs/16-v53-holdem-spec.md)，數學見 [docs/04](docs/04-game-flow-and-math.md)，驗證與發布見 [docs/06](docs/06-mobile-and-deployment.md)。
 
 ## Config 與 session
 
@@ -106,13 +106,17 @@ hand.bossStreetStates = {preflop, flop, turn, river};
 
 `getActionDistribution` 供玩家策略與NPC共用；NPC每回合重抽行為但不重判分類。`sampleDistribution(distribution,rng)` NPC先抽行為roll，選BET/RAISE再抽sizeRoll；單一合併進攻尺寸亦抽第二票。回傳完整動作、joint probability、roll、sizeRoll（若有）和原陣列index。一般玩家策略採自身分布，不套NPC雙段標記。
 
+v55 僅在正機率動作聚合同一行為且實際合計 100% 時略過行為抽取表演；畫面四捨五入為 100% 不算確定。正式 `sampleDistribution` 仍照原有行為／尺寸抽樣路徑執行，不能因 UI 跳過而少抽票、重抽票或改用第一個合法尺寸。
+
 ## Clone、預覽與恢復
 
 `cloneHand(hand,{compactPools})` 隔離RNG、籌碼、牌、history、result、池、outcomeDecision、pooledHoldem、actedSinceFullRaise、bossStreetStrength及bossStreetStates。`previewResponse(hand,action)` 只在clone試動作；回傳同街NPC分布或空陣列，不提交正式RNG、分類、牌面、資產或池。`stepNpc`／`playAutomatedHand` 提交完整抽選動作，不丟尺寸。
 
-`src/action-options-view.mjs` 的 `actionResponsePreview(hand,action)` 接受完整合法動作，依 `previewResponse` 結果聚合同 type 行為百分比供顯示，不能把不同尺寸輸入壓成 type。無同街回應時，跨街顯示 `NEXT STREET`，已結算顯示 `SHOWDOWN`，不提供未公開牌街的機率。`raiseMenuChoices(actions)` 只排序已有合法候選，畫面由上到下 ALL IN／1× POT／0.5× POT；`raiseSizeLabel` 沿用 `allIn`、`sizeKeys`，同額不另造重複動作。展開選單與逐項預覽不提交正式 RNG 或結果票。
+`src/action-options-view.mjs` 的 `actionResponsePreview(hand,action)` 接受完整合法動作，依 `previewResponse` 結果聚合同 type 行為百分比供顯示，不能把不同尺寸輸入壓成 type。無同街回應時，依已知流程顯示 `DEAL FLOP／DEAL TURN／DEAL RIVER`，已結算顯示 `SHOWDOWN`；此種階段提示不帶 BOSS 標題，也不提供未公開牌街的機率。`raiseMenuChoices(actions)` 只排序已有合法候選，畫面由上到下 ALL IN／1× POT／0.5× POT；`raiseSizeLabel` 沿用 `allIn`、`sizeKeys`，同額不另造重複動作。展開選單與逐項預覽不提交正式 RNG 或結果票。
 
 `buyInFromWallet(balance,smallBlind)` 回傳balance、chips、buyIn；檢查有限非負金額及足額100SB。`cashOutToWallet(balance,chips)` 回傳總額，不自行決定可否離桌；一般離桌按鈕只允許非忙碌且非未完手。載入時另以舊桌結束流程處理保存中的牌局。
+
+`src/balance-display.mjs` 的 `totalBalance(walletBalance,tableChips)` 僅計算畫面總餘額，不提交帳務。UI 將桌外錢包與當下呈現玩家桌碼相加；買入堆疊時例外使用完整已買入碼，保持帶入前後總額不變。下注、退款與收款依同一桌碼呈現進度更新總額。`profile.balance` 仍只能是桌外錢包，不能寫入 TOTAL BALANCE，避免離桌或重整重複兌回。
 
 `snapshotTableSession(session)` 接受pooled-holdem／fixed-holdem，輸出 `{version:1,rngState,session,hand}`，移除hand的session/rng指標再深拷貝。plain pooledHoldem及街道快照自然包含其中。`restoreTableSession(snapshot)` 重建rng，重接hand/session/stacks，不重新布局或抽牌。兩者保留為底層帳務／研究API；遊戲UI在重整或重開頁面時結束舊桌並回買入入口，不接續舊牌局。
 
@@ -138,9 +142,13 @@ m=min(Cplayer,Cnpc)，各退款Ci-m；匹配POT=2m，勝方gross=2m、平手各m
 
 result保存reason、winner、folded、pot、gross、fee、net、totalReturn、jackpot、outcomePoolAudit、board、evaluations，及每座位totalContribution、matchedWager、refund、gross、fee、netReturn、jackpotAward、totalReturn、baseProfit、profit、stackBefore/After。
 
-v54 POT 收回表演按每個收款者的 `netReturn` 播放一次整包移動；平手為雙方各自的一包。退款與 JP 保留獨立帳務及呈現階段，不併成另一筆底池收入。玩家籌碼、TOTAL WIN 與 POT 顯示由同一進度對應已提交的結算金額；動畫 callback 不修改引擎資產，不二次派彩。結算表演結束且玩家桌碼為 0 時，UI 自動執行離桌並返回選 SB／FIGHT 入口，不在同桌補碼、不自動扣下次買入。
+v55 POT 收款依每位收款者既有 `netReturn` 呈現持續籌碼流，帳務仍只結算一次；平手各自呈現應得額。`TOTAL WIN`／`BOSS WIN` 從收款起始即出現，數字、桌碼、POT 與玩家總餘額共用進度，完整表演實際 2,000 ms，不除以遊戲速度。WIN 文字在籌碼前景，飛行籌碼在所有一般資訊上方。退款與 JP 保留獨立帳務及呈現階段，不併成另一筆底池收入；動畫 callback 不修改引擎資產，不二次派彩。結算表演結束且玩家桌碼為 0 時，UI 自動執行離桌並返回選 SB／FIGHT 入口，不在同桌補碼、不自動扣下次買入。
 
-`playBuyInFlight({root,reducedMotion,amounts,duration=1400,onProgress})` 僅呈現已提交的買入。實際時長 `max(1000,duration)` ms，不除以遊戲速度；`onProgress` 提供雙方由 0 至買入額的顯示值及完成旗標，目的區籌碼堆與數字一起更新。飛行籌碼抵達後由實體堆接續，不淡出成空桌；完成後才能下盲、發牌。尚未完成買入時雙方手牌區皆為空，包含背牌。
+`playBuyInFlight({root,reducedMotion,amounts,duration=1400,onProgress})` 保留既有函式名，v55 不再建立資產至桌面的飛行節點，只呈現已提交買入的原位堆高。實際時長 `max(1000,duration)` ms，不除以遊戲速度；`onProgress` 提供雙方由 0 至買入額的顯示值及完成旗標，實體堆與數字一起更新，完成後才能下盲、發牌。尚未完成買入時雙方手牌區皆為空，包含背牌。
+
+`createBankrollView().render(values,{baseBet,walletBalance,counting})` 的 `baseBet` 使用 BB：50 BB 對應 18 顆視覺籌碼、上限 45 顆，雙方共用確定性尺度，層數分布相同；同桌收款或個別座位歸零不重設尺度，換桌 SB／BB 自動重新標定。相鄰金額才是精確資產。相容參數 `walletBalance` 是上方已計算好的顯示總額，不代表此 view 可以提交錢包帳務。
+
+抽盲由 `createBlindDraw` 呈現引擎已選結果，不抽票或下盲。v55 保留桌面元素，移除 BLIND POSITION，DRAWING YOUR BLIND 由持續顯示的行動階段單獨呈現，硬幣避開此區。操作按鈕保持 66 px，縮小主字、放大籌碼及花費，RAISE 箭頭動畫與較窄的 BOSS 同色厚邊框均屬純視覺。
 
 profile key `magic-poker-lite.player.v1`，現用version2：balance、outcomePools、table及lastBossProfileId。接受version1舊餘額／池；不得因研究設定匯入覆寫。load失敗回null；save以一次setItem存整筆，成功true／storage不可用false並由UI提示。正式買入、開手、動作、結算和離桌均保存，table=null代表沒有待兌回舊桌。載入舊桌時先結算並保存包含BALANCE、雙池／CD、上一型及空table的整筆profile，不能只清table而丟失桌籌碼，也不能在保存失敗後繼續新買入。
 

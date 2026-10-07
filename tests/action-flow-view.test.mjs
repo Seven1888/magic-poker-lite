@@ -5,6 +5,7 @@ import {actionFlowState,createActionFlow} from '../src/action-flow-view.mjs';
 test('turn panel identifies the current actor and retains actual NPC action names',()=>{
  for(const [input,step,name,verb] of [
   [{mode:'hole-deal'},'deal','DEALING','HOLE CARDS'],
+  [{mode:'hole-deal',label:'DRAWING YOUR BLIND'},'deal','','DRAWING YOUR BLIND'],
   [{mode:'board-deal',label:'FLOP'},'deal','DEALING','FLOP'],
   [{mode:'board-deal',label:'TURN'},'deal','DEALING','TURN'],
   [{mode:'board-deal',label:'RIVER'},'deal','DEALING','RIVER'],

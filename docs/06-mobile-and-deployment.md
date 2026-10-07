@@ -1,4 +1,40 @@
-# v54 驗證與發布狀態
+# v55 驗證與發布狀態
+
+更新：2026-10-07。**本地驗證完成，Git／公開發布待確認。** 本輪 [v55 八項呈現規格](18-v55-feedback-spec.md) 優先於 v54；正式 `pooled-holdem`、.99 計分、三桶雙池／CD／JP、對手表與保存帳務不改。下方歷史證據保留，不當作本輪結果。
+
+## v55 本輪交付範圍
+
+- 抽盲保留桌面、`DRAWING YOUR BLIND` 不被金幣遮擋、移除 `BLIND POSITION`。
+- 操作主字縮小、費用與籌碼圖示放大、RAISE 箭頭動態；BOSS 尺寸回應框縮窄並套同色厚外框。
+- 真正單一 100% 行為直接執行；CHECK／CALL 換街顯示 DEAL FLOP／TURN／RIVER，結算顯示 SHOWDOWN，維持 RNG 與預覽隔離。
+- TOTAL WIN／BOSS WIN 由收款開始即顯示，持續籌碼流與數字共用 2 秒實際進度；飛行籌碼在一般資訊上方，僅 WIN 文字在前景。
+- 買入原位堆高、無資產飛行；雙方共用尺度、同額同高。TOTAL BALANCE 是桌外錢包加呈現桌碼，買入期間包含完整買入碼；profile.balance 仍只保存錢包。
+
+## v55 本地驗證（2026-10-07）
+
+- `npm test`：560／560 通過，0 失敗，完整執行約 20.1 秒；紀錄 `output/tests-v55.log`。`npm run build` 成功，233 個公開檔案。精確 2,000 ms、JP／平手／中斷與不重複入帳由自動測試覆蓋。
+- 主代理透過 Cua 在隔離的本機 4178 服務驗證桌面 Chrome。320／375／393／412／1440 px 均無水平溢出；三按鈕 CSS 高度維持 66 px，窄畫面整桌縮放後的視覺高度較小；尺寸機率框外框 3 px。另有 `output/playwright/actions-v55-393.png`；Cua 畫面與取樣結果保存在本次原聊天室工具紀錄。
+- SB10／買入1,000 期間雙方無底牌或背牌、沒有 `buyin-flight` 元素，TOTAL BALANCE 維持10,000。雙方同額980時皆18顆、碼尺寸相同；下一手同額2,000時皆36顆。另一場買入100共19次取樣，雙方每次金額與顆數一致、無牌／無飛行，TOTAL BALANCE維持16,990。
+- 抽盲57次取樣保留 opponent／felt／player／controls／bankroll／action-flow 可見；`DRAWING YOUR BLIND` 與金幣不重疊。100% CHECK流程64次取樣，抽取表演影格數0；CALL後行動階段顯示 `DEAL FLOP`，下一個CHECK預覽為 `DEAL TURN`。
+- 玩家全下收款4,000：33次取樣跨度2,020 ms，TOTAL WIN與玩家桌碼每次同步，總餘額每次等於9,000加呈現桌碼；24顆視覺籌碼形成連續流。另一場收款8,000：28次取樣跨度1,949 ms，同樣同步。取樣跨度受取樣時點影響，不取代自動測試的精確2,000 ms契約。
+- BOSS WIN以玩家棄牌案例驗證：先退還未匹配10，再呈現20收款；32次取樣跨度1,967 ms，NPC桌碼每次等於7,990加WIN顯示額，玩家TOTAL BALANCE維持16,990，13顆視覺籌碼形成連續流。本輪瀏覽器未以全下輸光案例驗證BOSS勝出，不能據此宣稱該完整流程已重測。
+- 飛行籌碼層級 `z-index:200`，WIN文字 `z-index:210`；截圖確認籌碼在行動資訊前、WIN文字後。連續兩次重整均回入口、TOTAL BALANCE16,990、無保存中的table，未重複兌回。console warning／error皆0。
+
+上述是本輪本地證據，桌面 Chrome 手機 viewport 不等同實體 Android，小樣本也不構成長期 RTP 證據。行動階段 `BUYING IN` 提示已在買入取樣確認；最後行動階段與總餘額專項 7／7 通過。
+
+## v55 Git 與公開發布待確認
+
+Git 提交、Actions 與 Pages 實際內容待原聊天室完成後回填，尚不宣稱推送或公開完成。使用者已授權交付後開新聊天室，該聊天室閱讀交接文件後提供相關連結並等待需求。
+
+## v55 入口
+
+- 本地：[遊戲](http://127.0.0.1:4177/index.html?v=55)／[機率工具](http://127.0.0.1:4177/probability.html?v=55)／[規則](http://127.0.0.1:4177/docs/04-game-flow-and-math.html?v=55)。
+- 公開：[遊戲](https://seven1888.github.io/magic-poker-lite/?v=55)／[機率工具](https://seven1888.github.io/magic-poker-lite/probability.html?v=55)／[規則](https://seven1888.github.io/magic-poker-lite/docs/04-game-flow-and-math.html?v=55)；本輪公開內容待確認。
+- [GitHub](https://github.com/Seven1888/magic-poker-lite)／[Actions](https://github.com/Seven1888/magic-poker-lite/actions)／[接手文件](../HANDOFF.md)。
+
+---
+
+## v54 歷史驗證與發布狀態
 
 更新：2026-10-07。**v54 已通過 552 項測試，推送 Git／部署 Pages，公開流程驗收通過。** 正式模型仍為 pooled-holdem，原 v53 遊戲數學與對手機率不改。本輪包含 11 項呈現回饋及重整返回入口修正。
 

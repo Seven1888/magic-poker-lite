@@ -1,4 +1,4 @@
-import {assertHandEntryAssets, minimumAssetsForBet} from './hand-entry.mjs?v=54';
+import {assertHandEntryAssets, minimumAssetsForBet} from './hand-entry.mjs?v=55';
 
 const STREETS = ['preflop', 'flop', 'turn', 'river'];
 const round = value => Math.round((value + Number.EPSILON) * 1e6) / 1e6;

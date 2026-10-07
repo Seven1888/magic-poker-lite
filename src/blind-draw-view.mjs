@@ -1,7 +1,8 @@
-import {atGameSpeed} from './presentation-timing.mjs?v=54';
+import {atGameSpeed} from './presentation-timing.mjs?v=55';
 
 const amount = value => value.toLocaleString('en-US', {maximumFractionDigits: 6});
-const CENTER = {x: 200, y: 427, size: 104};
+// Keep the spinning coin below the persistent action ribbon (326–394 px).
+const CENTER = {x: 200, y: 446, size: 76};
 const SEAT = {x: 359, y: 667, size: 38};
 
 /** Present the engine's already chosen blind. Never draws or posts chips. */
@@ -61,11 +62,11 @@ export function createBlindDraw({root = globalThis.document, effects, reducedMot
     if (!stage) return false;
     createLayer(); position(CENTER, false);
     coin.textContent = '?'; coin.setAttribute('aria-label', 'Drawing your blind position');
-    const title = element('strong', 'blind-draw-title', 'BLIND POSITION');
     const copy = element('div', 'blind-draw-copy');
     copy.setAttribute('role', 'status'); copy.setAttribute('aria-live', 'polite');
-    const heading = element('strong', 'blind-draw-name', 'DRAWING YOUR BLIND');
-    copy.append(heading); layer.append(title, copy);
+    // The action ribbon announces DRAWING YOUR BLIND; show only the result here.
+    const heading = element('strong', 'blind-draw-name', '');
+    copy.append(heading); layer.append(copy);
     let cancel, stopTimer = null;
     const cancelled = new Promise(resolve => { cancel = () => { stopTimer?.(); resolve(false); }; });
     const run = {cancel}; active = run;
@@ -81,7 +82,7 @@ export function createBlindDraw({root = globalThis.document, effects, reducedMot
       stage.dataset.blindDraw = 'drawing';
       if (!reducedMotion && !await animate([
         {transform: 'translate(-50%,-50%) perspective(550px) rotateY(0deg) translateY(0)'},
-        {transform: 'translate(-50%,-50%) perspective(550px) rotateY(630deg) translateY(-36px)', offset: .52},
+        {transform: 'translate(-50%,-50%) perspective(550px) rotateY(630deg) translateY(-8px)', offset: .52},
         {transform: 'translate(-50%,-50%) perspective(550px) rotateY(1170deg) translateY(0)'}
       ], {duration: 1050, easing: 'cubic-bezier(.2,.65,.3,1)', fill: 'both'})) return false;
       if (!alive()) return false;
@@ -102,7 +103,7 @@ export function createBlindDraw({root = globalThis.document, effects, reducedMot
       ], {duration: 210, easing: 'ease-out', fill: 'both'})) return false;
       // Reduced motion still leaves the result and precise payment readable.
       if (!await hold(reducedMotion ? 1800 : 2400)) return false;
-      title.remove(); copy.remove(); stage.dataset.blindDraw = 'flying';
+      copy.remove(); stage.dataset.blindDraw = 'flying';
       if (!reducedMotion && !await animate([
         {left: `${CENTER.x}px`, top: `${CENTER.y}px`, transform: 'translate(-50%,-50%) scale(1)'},
         {left: `${SEAT.x}px`, top: `${SEAT.y}px`, transform: `translate(-50%,-50%) scale(${SEAT.size / CENTER.size})`}

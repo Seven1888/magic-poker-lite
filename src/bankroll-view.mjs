@@ -1,13 +1,15 @@
-import {money} from './shared.mjs?v=54';
+import {money} from './shared.mjs?v=55';
 
 /** Visible chip sources only. Exact balances come from the controller, never a wallet copy. */
 export function createBankrollView({root = globalThis.document} = {}) {
   const doc = root.ownerDocument || root;
   const lookup = id => root.getElementById?.(id) || root.querySelector?.(`#${id}`);
   const shown = {player: null, npc: null};
-  const pileUnits = {player: null, npc: null};
 
-  function render(values, {baseBet = 10, refreshNpc = false, walletBalance = null, pileTargets = null, counting = false} = {}) {
+  function render(values, {baseBet = 10, refreshNpc = false, walletBalance = null, counting = false} = {}) {
+    // Both seats use the same fixed denomination: a 50 BB buy-in is 18 chips.
+    // It depends only on the table stakes, never a seat's prior stack or payout.
+    const fullBuyIn = Math.max(.01, Number(baseBet) || 10) * 50;
     for (const seat of ['player', 'npc']) {
       const value = Math.max(0, Number(values[seat]) || 0);
       const amount = lookup(`${seat}-stack`), pile = lookup(`${seat}-bankroll-chips`);
@@ -25,13 +27,8 @@ export function createBankrollView({root = globalThis.document} = {}) {
       }
       if (panel) panel.dataset.amount = String(value);
       if (pile) {
-        // The pile is a compact visual source; its adjacent number is the exact balance.
-        // Fix a chip's visual unit at entry. Later credits then add to the
-        // existing pile instead of shrinking it to fit a new payout target.
-        const target = Math.max(value, Number(pileTargets?.[seat]) || value);
-        const capacity = target ? Math.min(18, Math.max(3, Math.ceil(3 * Math.log2(1 + target / Math.max(.01, baseBet))))) : 0;
-        if (target > 0 && (!pileUnits[seat] || (value === 0 && pileTargets?.[seat] > 0))) pileUnits[seat] = target / capacity;
-        const count = value ? Math.min(45, Math.max(1, Math.ceil(value / pileUnits[seat]))) : 0;
+        // The adjacent amount is exact; this compact pile shares one scale.
+        const count = value ? Math.min(45, Math.max(1, Math.ceil(value * 18 / fullBuyIn - 1e-9))) : 0;
         const heights = [Math.ceil(count / 3), Math.ceil(Math.max(0, count - 1) / 3), Math.floor(count / 3)];
         pile.dataset.amount = String(value);
         pile.dataset.counting = String(counting);

@@ -1,7 +1,20 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createSession,startHand,legalActions,applyAction,getActionDistribution,stepNpc,previewResponse} from './legacy-engine.mjs';
-import {responseBadges,responseBadgeView,captureResponseSource,responseSourceMatches} from '../src/action-response-view.mjs';
+import {responseBadges,responseBadgeView,captureResponseSource,responseSourceMatches,isCertainResponse} from '../src/action-response-view.mjs';
+
+test('certainty uses actual complete odds and aggregates only the same behavior, never rounded labels', () => {
+  for (const type of ['fold','check','call','bet','raise']) {
+    assert.equal(isCertainResponse([{type,probability:1},{type:'other',probability:0}]), true);
+  }
+  assert.equal(isCertainResponse([{type:'raise',probability:.5},{type:'raise',probability:.35},{type:'raise',probability:.15}]), true);
+  assert.equal(isCertainResponse([{type:'call',probability:.999999},{type:'fold',probability:.000001}]), false);
+  assert.equal(isCertainResponse([{type:'call',probability:.999999}]), false);
+  assert.equal(isCertainResponse([{type:'call',probability:.4}]), false);
+  assert.equal(isCertainResponse([{type:'call',probability:1},{type:'fold',probability:NaN}]), false);
+  assert.equal(isCertainResponse([{type:'call',probability:1.1},{type:'fold',probability:-.1}]), false);
+  assert.equal(isCertainResponse([]), false);
+});
 
 test('badges preserve raw FOLD/RAISE probabilities and tiny positives without displaying CALL or rescaling', () => {
   const distribution=Object.freeze([{type:'fold',probability:.0004},{type:'call',probability:.7996},{type:'raise',probability:.2}].map(Object.freeze));

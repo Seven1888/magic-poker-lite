@@ -1,4 +1,48 @@
-# Magic Poker Lite v54 接手紀錄
+# Magic Poker Lite v55 接手紀錄
+
+更新：2026-10-07。**v55 本地驗證完成，Git／公開發布待確認。** 本節與 [v55 八項規格](docs/18-v55-feedback-spec.md) 優先；下方 v54／v53 全文僅保留歷史證據與背景，不代表本次驗證或待辦。
+
+## 本輪授權與接手方式
+
+使用者已要求八項全部調整好、一起更新 Git，完成後再開新聊天室交接，並由新聊天室提供相關連結。原聊天室負責完成實作、驗證與發布；新聊天室先讀 `AGENTS.md`、本文件、`docs/18-v55-feedback-spec.md`、`docs/16-v53-holdem-spec.md`、`docs/06-mobile-and-deployment.md`，確認實際發布狀態，直接提供下列相關連結，然後等待新需求。交接本身不授權重做已完成實作、提交、推送或部署，也不需再開另一個聊天室。
+
+唯一可修改專案為 `C:/Users/User/Desktop/新Magic Poker/Magic Poker Lite`。同層 Boss Duel、Hands Up、Final Table 永久唯讀。沿用現有 checkout；遊戲英文，工具、文件與溝通繁體中文。方案 B `pooled-holdem`、.99 計分、三桶雙池／CD／JP、兩型對手、每街鎖定機率及原有買入／兌回帳務已定案，不重新詢問方案。
+
+## v55 八項與帳務邊界
+
+1. 抽盲保留桌面其他資訊，硬幣不遮 `DRAWING YOUR BLIND`；去掉 `BLIND POSITION`。
+2. 三按鈕維持 66 px，主字縮小、籌碼圖示與費用放大、RAISE 箭頭動態；尺寸旁 BOSS 決策框縮窄，以標籤底色作整圈厚邊框。
+3. 真正單一行為 100% 跳過抽取表演，正式行為與尺寸 RNG 不變；四捨五入成 100% 不視為確定。
+4. CHECK／CALL 跨街預覽改為 `DEAL FLOP／DEAL TURN／DEAL RIVER`，結算用 `SHOWDOWN`；不冠 BOSS、不提前洩漏牌面或下街機率。
+5. `TOTAL WIN／BOSS WIN` 自收款開始即在前景，籌碼持續由文字後方飛向勝方，數字和桌碼同步，完整表演實際 2 秒。退款與 JP 仍分別對帳，動畫不重複派款。
+6. 買入取消資產飛行，雙方原位逐步堆高與數字累加；預設 1.4 秒、至少 1 秒，期間雙方無底牌／背牌。上方 `TOTAL BALANCE = 桌外錢包 + 呈現中的玩家桌碼`，買入動畫期間使用完整買入碼；帶入／離桌不改總額，下注減、退款／收款加。`profile.balance` 仍只存桌外錢包，絕不能把總額再次存為錢包。
+7. 雙方共用 BB 尺度：50 BB 對應 18 顆視覺碼、上限 45；同額同層數同高。新桌換盲注重新標定，個別座位歸零或派彩不另改尺度。
+8. 下注至 POT 與 POT 至勝方的飛行籌碼在一般資訊上方；只有 `TOTAL WIN／BOSS WIN` 文字在其前景。
+
+重整沿用 v54：先結束舊桌帳務再回入口，保留錢包／雙池／CD／上一對手；未完手離桌棄牌，全下待 NPC 則用保存 RNG 完成，餘碼只兌回一次。新總餘額呈現不改此持久化契約。
+
+## v55 驗證與發布狀態
+
+本地驗證完成，Git／公開發布待確認。`npm test` 560／560 全過（約20.1秒，`output/tests-v55.log`），靜態建置233檔。詳細本輪證據見 [發布紀錄](docs/06-mobile-and-deployment.md)，不沿用v54數字。
+
+- 隔離本機4178的桌面Chrome：320／375／393／412／1440無水平溢出，三按鈕CSS高66px（縮放後視覺較小），尺寸機率框3px外框。`output/playwright/actions-v55-393.png`及原聊天室Cua工具紀錄保留畫面與取樣證據。
+- 買入期間無牌／無資產飛行、總餘額不減；同額980皆18顆、同額2000皆36顆。抽盲57次取樣桌面元素保留，行動文字與硬幣無重疊。100%CHECK流程64次取樣無抽取影格；CALL後DEAL FLOP、下個CHECK預覽DEAL TURN。
+- 玩家全下4000／8000收款的WIN、桌碼、TOTAL BALANCE同步；BOSS勝出以玩家棄牌、先退10再收20案例驗證，同樣同步。取樣跨度約2秒，精確2000ms與JP／平手／中斷由自動測試覆蓋。籌碼z200、WIN z210，截圖確認資訊遮擋順序。
+- 連續兩次重整回入口，TOTAL BALANCE16990、保存table清空且不重複兌回；console warning/error皆0。另一次100籌碼買入19次取樣，雙方金額與顆數一致、總額16990維持。
+
+這是桌面Chrome手機viewport，不是實體Android。本輪瀏覽器BOSS勝出測的是棄牌，沒有宣稱完整全下輸光流程已重測。BUYING IN提示已通過瀏覽器買入取樣；最後行動階段與總餘額專項7／7通過。Git提交、Actions、Pages及新聊天室連結仍由原聊天室負責完成並回填。
+
+## 新聊天室應提供的相關連結
+
+- 公開：[遊戲 v55](https://seven1888.github.io/magic-poker-lite/?v=55)／[機率工具 v55](https://seven1888.github.io/magic-poker-lite/probability.html?v=55)／[規則與公式](https://seven1888.github.io/magic-poker-lite/docs/04-game-flow-and-math.html?v=55)。本輪公開狀態需依上節紀錄確認。
+- 本地：[遊戲 v55](http://127.0.0.1:4177/index.html?v=55)／[機率工具 v55](http://127.0.0.1:4177/probability.html?v=55)／[規則與公式](http://127.0.0.1:4177/docs/04-game-flow-and-math.html?v=55)。需本機 4177 服務運行；在本專案用 `npm start` 啟動，Node >= 20。
+- Git：[Repository](https://github.com/Seven1888/magic-poker-lite)／[Actions](https://github.com/Seven1888/magic-poker-lite/actions)；本輪實際提交與成功 workflow 連結由發布紀錄取得，不沿用 v54 的 run。
+- 文件：[README](https://github.com/Seven1888/magic-poker-lite/blob/main/README.md)／[AGENTS](https://github.com/Seven1888/magic-poker-lite/blob/main/AGENTS.md)／[HANDOFF](https://github.com/Seven1888/magic-poker-lite/blob/main/HANDOFF.md)／[v55 八項規格](https://github.com/Seven1888/magic-poker-lite/blob/main/docs/18-v55-feedback-spec.md)／[v53 遊戲與數學](https://github.com/Seven1888/magic-poker-lite/blob/main/docs/16-v53-holdem-spec.md)／[v54 歷史規格](https://github.com/Seven1888/magic-poker-lite/blob/main/docs/17-v54-presentation-spec.md)／[API](https://github.com/Seven1888/magic-poker-lite/blob/main/API-CONTRACT.md)／[驗證與發布](https://github.com/Seven1888/magic-poker-lite/blob/main/docs/06-mobile-and-deployment.md)。
+- 美術：[既有按鈕資產](https://github.com/Seven1888/magic-poker-lite/tree/main/assets/action-buttons-v54)／[完整生成提示詞](https://github.com/Seven1888/magic-poker-lite/blob/main/assets/action-buttons-v54/prompts.txt)。資料夾仍為 v54，v55 調整其文字、金額與箭頭呈現。
+
+---
+
+## v54 歷史接手紀錄（已完成，以下保留原文）
 
 更新：2026-10-07。**v54 全部 11 項與重整修正已完成，552 項測試通過，已推送 Git／部署 Pages 並完成公開流程驗收。** 新聊天室由本輪交付訊息提供，接手後先讀文件等待新需求。
 

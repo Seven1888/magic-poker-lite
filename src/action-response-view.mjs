@@ -1,9 +1,20 @@
-import {previewResponse} from './engine.mjs?v=54';
-import {pct,esc} from './shared.mjs?v=54';
-import {icon} from './ui-icons.mjs?v=54';
+import {previewResponse} from './engine.mjs?v=55';
+import {pct,esc} from './shared.mjs?v=55';
+import {icon} from './ui-icons.mjs?v=55';
 
 /** Table-facing vocabulary only; the underlying action type stays unchanged. */
 export const responseActionLabel = type => ({fold:'FOLD',check:'CHECK',call:'CALL',bet:'BET',raise:'RAISE'}[type] || String(type).toUpperCase());
+
+/** Presentation only: certainty is based on raw action odds, never rounded labels.
+ * Multiple legal sizes of the same BET / RAISE are still one certain behavior.
+ * The caller must sample the original distribution as usual to preserve RNG.
+ */
+export function isCertainResponse(distribution = []) {
+  if (!distribution.length || distribution.some(row => !Number.isFinite(row.probability) || row.probability < 0)) return false;
+  const positive = distribution.filter(row => row.probability > 0);
+  return new Set(positive.map(row => row.type)).size === 1
+    && Math.abs(positive.reduce((sum, row) => sum + row.probability, 0) - 1) <= Number.EPSILON * 8;
+}
 
 /** Show a sole response, or project mixed fold/aggressive outcomes without rescaling. */
 export function responseBadges(distribution = []) {

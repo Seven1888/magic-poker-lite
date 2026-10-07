@@ -1,9 +1,14 @@
-import {atGameSpeed} from './presentation-timing.mjs?v=54';
+import {atGameSpeed} from './presentation-timing.mjs?v=55';
 
 const money = value => value.toLocaleString('en-US', {maximumFractionDigits: 6});
 
 /** A return is a win only when the player's settled profit is positive. */
 export function totalWinModel(result) {
+  if (result?.winner === 'npc') {
+    const amount = result.npc?.totalReturn ?? result.npc?.netReturn ?? 0;
+    if (!Number.isFinite(amount) || amount < 0) return null;
+    return {amount, outcome: 'boss', label: 'BOSS WIN', formatted: money(amount)};
+  }
   const amount = result?.player?.totalReturn;
   if (!Number.isFinite(amount) || amount < 0) return null;
   const outcome = result.player.profit > 0 ? 'win' : result.winner === 'tie' ? 'split' : amount > 0 ? 'returned' : 'loss';
@@ -105,8 +110,8 @@ export function createTotalWin({root = globalThis.document, effects, reducedMoti
     if (!model) { clear(); return Promise.resolve(false); }
     cancel(); mount(); lastResult = result;
     label.textContent = '';
-    if (model.outcome === 'win') {
-      for (const word of ['TOTAL', 'WIN']) {
+    if (model.outcome === 'win' || model.outcome === 'boss') {
+      for (const word of [model.outcome === 'boss' ? 'BOSS' : 'TOTAL', 'WIN']) {
         const line = doc.createElement('span'); line.className = 'total-win-label-word'; line.textContent = word; label.append(line);
       }
     } else label.textContent = model.label;
@@ -116,7 +121,7 @@ export function createTotalWin({root = globalThis.document, effects, reducedMoti
     panel.dataset.motion = reducedMotion ? 'reduced' : 'normal';
     stage.dataset.totalWin = model.outcome;
     // Size from the final value so grouped digits and six decimals never jump.
-    panel.style.setProperty('--total-win-font', `${Math.min(48, (model.outcome === 'win' ? 280 : 460) / model.formatted.length)}px`);
+    panel.style.setProperty('--total-win-font', `${Math.min(48, (['win', 'boss'].includes(model.outcome) ? 280 : 460) / model.formatted.length)}px`);
     amount.dataset.amount = String(model.amount);
     let resolve;
     lastDone = new Promise(done => { resolve = done; });
@@ -124,15 +129,16 @@ export function createTotalWin({root = globalThis.document, effects, reducedMoti
     active = record;
     if (followProgress && model.amount > 0) {
       panel.dataset.phase = 'counting'; amount.textContent = '0';
-      if (!reducedMotion && !doc.hidden && model.outcome === 'win') sprayMoney();
+      // The payout route owns the real chip stream. Do not add a second
+      // fountain with a different destination or animation clock.
       return lastDone;
     }
-    if (reducedMotion || doc.hidden || model.outcome !== 'win' || model.amount === 0) {
+    if (reducedMotion || doc.hidden || !['win', 'boss'].includes(model.outcome) || model.amount === 0) {
       finish(record, false); return lastDone;
     }
     panel.dataset.phase = 'counting'; amount.textContent = '0';
-    sprayMoney();
-    const duration = atGameSpeed(1800), ticks = [.1, .24, .41, .61, .81];
+    if (model.outcome === 'win') sprayMoney();
+    const duration = 2000, ticks = [.1, .24, .41, .61, .81];
     const decimals = Math.min(6, (model.amount.toFixed(6).replace(/0+$/, '').split('.')[1] || '').length);
     function update() {
       if (active !== record) return;
@@ -160,6 +166,7 @@ export function createTotalWin({root = globalThis.document, effects, reducedMoti
     if (destroyed || !stage) return;
     if (result !== lastResult) start(result, {followProgress: true});
     const record = active;
+    if (value && typeof value === 'object') value = value[result?.winner === 'npc' ? 'npc' : 'player'];
     if (!record?.followProgress || !Number.isFinite(value)) return;
     const next = Math.min(record.model.amount, Math.max(record.displayed, value, 0));
     record.displayed = next; amount.textContent = money(Math.round(next * 1e6) / 1e6);

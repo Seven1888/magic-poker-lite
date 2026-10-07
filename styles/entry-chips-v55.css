@@ -1,0 +1,16 @@
+/* Draw on the intact table, with the action ribbon always available. */
+.game:is([data-blind-draw='drawing'],[data-blind-draw='revealed'],[data-blind-draw='flying'])
+ :is(.opponent,.felt,.action-flow,.table-bankroll,.controls) { display:block; }
+.game:is([data-blind-draw='drawing'],[data-blind-draw='revealed'],[data-blind-draw='flying'])
+ .player-area { display:flex; }
+.game .blind-coin[data-position='center'] { width:76px; height:76px; border-width:4px; font-size:29px; }
+.game .blind-draw-copy { top:492px; left:48px; right:48px; }
+.game .blind-draw-name { font-size:17px; line-height:23px; }
+.game .blind-draw-copy .blind-draw-stakes { margin-top:3px; line-height:12px; }
+.game .blind-draw-payment { gap:12px; margin-top:3px; }
+.game .blind-draw-amount { font-size:20px; line-height:24px; }
+/* Equal balances have equal geometry; only the position of each seat differs. */
+.game #npc-asset-panel #npc-bankroll-chips,
+.game .table-bankroll-player #player-bankroll-chips {
+ width:74px; height:36px; transform:scale(1.28); transform-origin:0 0;
+}

@@ -41,17 +41,19 @@ function fixture() {
   return {root, nodes, animations, created, advance, tasks, now: () => time};
 }
 
-test('buy-in flies to both seats for at least one real second and ends only after exact counters land', async () => {
+test('buy-in builds both real piles in place for at least one second and ends at the exact values', async () => {
   const f = fixture(), events = [], amounts = Object.freeze({player: 1000, npc: 1000});
   const view = createBankrollView({root: f.root});
   const done = playBuyInFlight({root: f.root, amounts, duration: 100,
-    onProgress: event => { events.push({...event, time: f.now()}); view.render(event.values, {pileTargets: amounts, counting: true}); }});
+    onProgress: event => { events.push({...event, time: f.now()}); view.render(event.values, {baseBet: 20, counting: true}); }});
   let finished = false; done.then(() => { finished = true; });
   assert.deepEqual(events[0].values, {player: 0, npc: 0});
-  assert.equal(f.animations.length, 24);
-  assert.deepEqual(new Set(f.created.filter(node => node.className === 'buyin-flight-chip').map(node => node.dataset.seat)), new Set(['player', 'npc']));
-  assert.ok(f.animations.every(animation => animation.keyframes.at(-1).opacity === 1));
-  f.advance(700); await Promise.resolve();
+  assert.equal(f.animations.length, 0, 'there are no asset-to-table flights');
+  assert.equal(f.created.some(node => /buyin-flight/.test(node.className || '')), false);
+  f.advance(160);
+  assert.equal(events.at(-1).values.player, 160, 'stacking and counting start immediately together');
+  assert.deepEqual(events.at(-1).values, {player: 160, npc: 160});
+  f.advance(540); await Promise.resolve();
   assert.equal(finished, false);
   assert.ok(events.at(-1).values.player > 0 && events.at(-1).values.player < 1000);
   const pile = f.nodes.get('player-bankroll-chips'), oldChips = pile.children.flatMap(stack => stack.children);
@@ -78,8 +80,8 @@ test('reduced buy-in still builds both balances over one second without moving c
   } finally { Math.random = originalRandom; }
 });
 
-test('bankroll increments append physical chips and never refresh the external wallet during count-up', () => {
-  const f = fixture(), view = createBankrollView({root: f.root}), options = {walletBalance: 9000, pileTargets: {player: 1000, npc: 1000}, counting: true};
+test('bankroll increments append physical chips and preserve the supplied balance during count-up', () => {
+  const f = fixture(), view = createBankrollView({root: f.root}), options = {baseBet: 20, walletBalance: 9000, counting: true};
   const pile = f.nodes.get('player-bankroll-chips');
   let previous = [];
   for (const value of [0, 50, 100, 250, 500, 750, 1000]) {
@@ -108,4 +110,22 @@ test('a later payout grows the existing pile without rescaling or losing already
   const landed = pile.children.flatMap(stack => stack.children);
   view.render({player: 2000, npc: 1000});
   assert.deepEqual(pile.children.flatMap(stack => stack.children), landed, 'ending a count cannot collapse its pile');
+});
+
+test('equal stacks keep identical layers after unequal payouts, zero stacks and stake changes', () => {
+  const f = fixture(), view = createBankrollView({root: f.root});
+  const layers = seat => f.nodes.get(`${seat}-bankroll-chips`).children.map(column => column.children.length);
+  view.render({player: 2000, npc: 1000}, {baseBet: 20});
+  assert.notDeepEqual(layers('player'), layers('npc'));
+  view.render({player: 1000, npc: 1000}, {baseBet: 20});
+  assert.deepEqual(layers('player'), [6, 6, 6]);
+  assert.deepEqual(layers('player'), layers('npc'));
+  view.render({player: 0, npc: 2000}, {baseBet: 20, pileTargets: {player: 3000, npc: 2000}, counting: true});
+  view.render({player: 2000, npc: 2000}, {baseBet: 20});
+  assert.deepEqual(layers('player'), [12, 12, 12]);
+  assert.deepEqual(layers('player'), layers('npc'));
+  // A different table may begin while both previous stacks were still positive.
+  view.render({player: 5000, npc: 5000}, {baseBet: 100});
+  assert.deepEqual(layers('player'), [6, 6, 6]);
+  assert.deepEqual(layers('player'), layers('npc'));
 });

@@ -1,5 +1,5 @@
-import {makeDeck,normalizeCard,evaluateBest,compareRanks} from './poker.mjs?v=54';
-import {handName} from './game-text.mjs?v=54';
+import {makeDeck,normalizeCard,evaluateBest,compareRanks} from './poker.mjs?v=55';
+import {handName} from './game-text.mjs?v=55';
 
 /** Public showdown information only. No hand, hidden-card, deck or RNG input. */
 export function getShowdownView({playerHole,visibleBoard,revealedNpcHole=[]}={}) {

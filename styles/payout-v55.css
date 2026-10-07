@@ -1,0 +1,56 @@
+/* Both layers are direct children of the scaled game, outside card/controls
+   stacking contexts. Only the award lettering is above the flying chips. */
+#game > #pot-flight-layer { z-index:200; overflow:visible; }
+#game > #total-win-display { z-index:210; }
+#game > .win-money-layer { z-index:190; }
+
+/* Show the full award from the first payout frame. It stays centred above its
+   chip source; it never waits for an empty pot to expand from a side label. */
+#game #total-win-display {
+  top:514px; left:50%; width:280px; height:62px; padding:6px 12px;
+  --total-win-scale:1; gap:8px; transition:none;
+}
+#game #total-win-display:is([data-outcome='win'],[data-outcome='boss']) {
+  display:flex; flex-direction:row; align-items:center; justify-content:center;
+  border:0; border-radius:0; background:none; box-shadow:none;
+}
+#game #total-win-display:is([data-outcome='win'],[data-outcome='boss'])::before,
+#game #total-win-display:is([data-outcome='win'],[data-outcome='boss'])::after {
+  content:none; display:none;
+}
+#game #total-win-display:is([data-outcome='win'],[data-outcome='boss']) .total-win-label {
+  display:flex; flex:none; flex-direction:column; align-items:center; justify-content:center;
+  width:62px; gap:0; font-family:Georgia,'Times New Roman',serif;
+  font-style:italic; font-weight:900; letter-spacing:-.3px; animation:none;
+}
+#game #total-win-display .total-win-label-word {
+  display:block; font-size:17px; line-height:18px;
+}
+#game #total-win-display .total-win-label-word:last-child {
+  font-size:23px; line-height:24px; letter-spacing:-.7px;
+}
+#game #total-win-display:is([data-outcome='win'],[data-outcome='boss']) .total-win-amount {
+  display:block; flex:0 1 auto; width:auto; min-width:0; max-width:calc(100% - 70px);
+  font-size:var(--total-win-font,48px); line-height:48px; letter-spacing:-.8px;
+  font-style:italic; transition:none; animation:none;
+}
+#game #total-win-display .total-win-label-word,
+#game #total-win-display:is([data-outcome='win'],[data-outcome='boss']) .total-win-amount {
+  color:#ffd75e; background:none; -webkit-text-fill-color:currentColor;
+  -webkit-text-stroke:.45px #9d5c0d; paint-order:stroke fill;
+  text-shadow:0 -1px 0 #fff2a8,0 1px 0 #b87513,0 2px 0 #784006,0 3px 3px #070d19cc;
+}
+
+/* A single route contains staggered chips, while one progress clock credits
+   the exact amount once. Individual chips disappear into the landed pile. */
+#game .flying-chip[data-stream='true'],
+#game .flying-chip[data-stream='true'] .flying-chip-group {
+  position:absolute; left:0; top:0; width:0; height:0; min-height:0;
+  margin:0; padding:0; border:0; background:none; box-shadow:none; filter:none;
+  overflow:visible;
+}
+#game .flying-chip[data-stream='true'] .casino-chip {
+  position:absolute; left:0; top:0; bottom:auto; width:32px; height:22px;
+  opacity:0; will-change:transform,opacity;
+}
+#game .flying-chip[data-stream='true'] > .amount { display:none; }

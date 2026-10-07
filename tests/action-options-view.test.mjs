@@ -112,7 +112,7 @@ test('previews cannot commit paid result draws, changed NPC cards, pools, RNG or
   assert.equal(session.activeHand, hand);
 });
 
-test('a street-closing CHECK says NEXT STREET without exposing the next street NPC distribution', () => {
+test('a street-closing CHECK says DEAL TURN without exposing the next street NPC distribution', () => {
   const hand = create();
   applyAction(hand, 'call'); applyAction(hand, 'check');
   assert.equal(hand.street, 'flop'); assert.equal(hand.actor, 'npc');
@@ -123,11 +123,34 @@ test('a street-closing CHECK says NEXT STREET without exposing the next street N
   assert.equal(draft.street, 'turn'); assert.equal(draft.actor, 'npc');
   assert.ok(getActionDistribution(draft).some(row => row.probability > 0));
   const preview = actionResponsePreview(hand, check);
-  assert.deepEqual(preview, {outcomes: [], note: 'NEXT STREET'});
+  assert.deepEqual(preview, {outcomes: [], note: 'DEAL TURN'});
   const markup = actionResponseMarkup(preview);
-  assert.match(markup, /NEXT STREET/);
+  assert.match(markup, /Next phase: DEAL TURN/);
+  assert.doesNotMatch(markup, />BOSS<|Opponent response/);
   assert.doesNotMatch(markup, /data-response=|%/);
   assert.deepEqual(snapshotTableSession(hand.session), before);
+});
+
+test('a closing CALL or CHECK names the exact next street instead of a BOSS response', () => {
+  const hand = startHand(createSession({smallBlind: 5, outcome: {mode:'fixed-holdem'}}, 42, {firstSmallBlind:'npc'}));
+  applyAction(hand, 'call');
+  for (const [street, label] of [['preflop','DEAL FLOP'], ['flop','DEAL TURN'], ['turn','DEAL RIVER']]) {
+    assert.equal(hand.street, street);
+    if (street !== 'preflop') {
+      applyAction(hand, choose(hand, 'bet', 'half'));
+      // Keep the next closing action on the player's seat to exercise CALL.
+      applyAction(hand, choose(hand, 'raise', 'half'));
+    }
+    assert.equal(hand.actor, 'player');
+    const action = choose(hand, street === 'preflop' ? 'check' : 'call');
+    const before = snapshotTableSession(hand.session);
+    const preview = actionResponsePreview(hand, action);
+    assert.deepEqual(preview, {outcomes:[], note:label});
+    assert.match(actionResponseMarkup(preview), new RegExp(`Next phase: ${label}`));
+    assert.doesNotMatch(actionResponseMarkup(preview), />BOSS<|Opponent response|data-response=/);
+    assert.deepEqual(snapshotTableSession(hand.session), before);
+    applyAction(hand, action);
+  }
 });
 
 test('the final river CHECK says SHOWDOWN and does not settle the real hand', () => {

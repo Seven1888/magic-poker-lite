@@ -54,6 +54,7 @@ for (const isSmall of [true, false]) test(`preselected ${isSmall ? 'SB' : 'BB'} 
   t.mock.method(Math, 'random', () => { throw new Error('Presentation cannot draw another outcome.'); });
   const pending = draw.play(result);
   assert.equal(f.stage.dataset.blindDraw, 'revealed');
+  assert.equal(f.find('blind-draw-title'), undefined, 'the redundant BLIND POSITION title is removed');
   assert.equal(f.find('blind-draw-name').textContent, isSmall ? 'YOU · SMALL BLIND' : 'YOU · BIG BLIND');
   assert.match(f.find('blind-draw-payment').textContent, isSmall ? /YOU 0\.123456 BOSS 0\.246912/ : /YOU 0\.246912 BOSS 0\.123456/);
   assert.equal(f.find('blind-draw-stakes').textContent, 'STARTING BET');
@@ -78,6 +79,9 @@ test('normal draw reveals the known side before flying, then retains a coin at t
   const pending = draw.play({isSmall: true, smallBlind: .5, bigBlind: 1});
   const coin = f.find('blind-coin');
   assert.equal(coin.textContent, '?'); assert.equal(f.stage.dataset.blindDraw, 'drawing');
+  assert.equal(f.find('blind-draw-name').textContent, '', 'the action ribbon owns the drawing announcement');
+  assert.equal(f.find('blind-draw-title'), undefined);
+  assert.equal(coin.style.top, '446px', 'the coin stays below the action ribbon');
   f.animations[0].finish(); await flush();
   assert.equal(coin.textContent, 'SB'); assert.equal(f.stage.dataset.blindDraw, 'revealed');
   assert.equal(f.animations.length, 2);

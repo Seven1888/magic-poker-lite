@@ -97,7 +97,8 @@ function scaleLayout(doc, scaleX, scaleY) {
 }
 
 function assertFlightPoint(flight, frame, expectedX, expectedY) {
-  const match = /translate3d\(([^,]+)px,([^,]+)px,0\)/.exec(flight.animations[0].keyframes[frame].transform);
+  const animation = flight.dataset.stream === 'true' ? flight.children[0].children[1].animations[0] : flight.animations[0];
+  const match = /translate3d\(([^,]+)px,([^,]+)px,0\)/.exec(animation.keyframes[frame].transform);
   assert.ok(match, 'flight keyframe contains a position');
   assert.ok(Math.abs(Number(match[1]) - expectedX) < 1e-8, `expected x=${expectedX}, got ${match[1]}`);
   assert.ok(Math.abs(Number(match[2]) - expectedY) < 1e-8, `expected y=${expectedY}, got ${match[2]}`);
@@ -198,7 +199,7 @@ test('fold settlement separates refund from net award and shows matched contribu
   assert.equal(refund.length, 1); assert.equal(refund[0].children[1].textContent, '退款 10');
   assert.equal(payouts.length, 1); assert.equal(payouts[0].children[1].textContent, '+20');
   assert.equal(refund[0].animations[0].options.duration, atGameSpeed(1100));
-  assert.equal(payouts[0].animations[0].options.duration, atGameSpeed(2200));
+  assert.equal(payouts[0].animations[0].options.duration, 2000);
   assert.equal(payouts[0].dataset.seat, 'player');
   const count = flights(doc).length, delay = view.settledDelay();
   assert.equal(delay, 0);
@@ -207,7 +208,7 @@ test('fold settlement separates refund from net award and shows matched contribu
   doc.tick(1000); assert.equal(view.settledDelay(), 0);
 });
 
-test('1.2x refunds wait for contribution and arrival, then payouts wait for refunds; watchdogs keep 80ms', async t => {
+test('1.2x refunds wait for contribution and arrival, then two-second payouts wait for refunds; watchdogs keep 80ms', async t => {
   const timers = new Map(); let timerId = 0;
   t.mock.method(globalThis, 'setTimeout', (callback, delay) => {timers.set(++timerId, {callback, delay});return timerId;});
   t.mock.method(globalThis, 'clearTimeout', id => timers.delete(id));
@@ -228,7 +229,7 @@ test('1.2x refunds wait for contribution and arrival, then payouts wait for refu
   near([...timers.values()][0].delay, refund.duration + 80);
   [...timers.values()][0].callback(); await Promise.resolve();
   const payout = flights(doc).find(flight => flight.dataset.flow === 'payout').animations[0].options;
-  near(payout.delay, 0); near(payout.duration, 2200 / 1.2);
+  near(payout.delay, 0); near(payout.duration, 2000);
   near([...timers.values()][0].delay, payout.duration + 80);
   await finishMotion(doc); await view.whenIdle();
   assert.equal(timers.size, 0);
@@ -245,7 +246,7 @@ test('tie settlement splits net awards to both stack endpoints, after final matc
   assert.equal(payouts.length, 2); assert.deepEqual(payouts.map(p => p.dataset.seat), ['player', 'npc']);
   assert.ok(payouts.every(p => p.children[1].textContent === '+10'));
   assert.match(text(doc, 'pot-event'), /^平分/); assert.match(text(doc, 'pot-detail'), /無未跟注退款/);
-  assert.deepEqual(payouts.map(p => p.animations[0].options.delay), [0, atGameSpeed(40)]);
+  assert.deepEqual(payouts.map(p => p.animations[0].options.delay), [0, 0]);
   assert.ok(view.settledDelay() <= Math.ceil(atGameSpeed(1000)));
 });
 
@@ -607,7 +608,7 @@ test('arrival watchdog updates each payment and notifies once even if its animat
   assert.equal(timers.size, 0);
 });
 
-test('one whole pot group per winner feeds continuous credits and finishes with exact immutable accounting', async () => {
+test('one two-second chip stream per winner feeds continuous credits and finishes with exact immutable accounting', async () => {
   const doc = fakeDocument(), frames = new Map(), progress = [];
   let sequence = 0;
   doc.defaultView.requestAnimationFrame = callback => { frames.set(++sequence, callback); return sequence; };
@@ -632,11 +633,22 @@ test('one whole pot group per winner feeds continuous credits and finishes with 
   const payouts = flights(doc).filter(flight => flight.dataset.flow === 'payout');
   assert.equal(payouts.length, 2);
   assert.ok(payouts.every(flight => flight.animations[0].keyframes.at(-1).opacity === 1));
-  advance(1400);
+  for (const flight of payouts) {
+    assert.equal(flight.animations[0].options.duration, 2000);
+    assert.equal(flight.dataset.stream, 'true');
+    const chips = flight.children[0].children;
+    assert.ok(chips.length >= 9);
+    assert.equal(chips[0].animations[0].options.delay, 0);
+    assert.equal(chips.at(-1).animations[0].options.delay + chips.at(-1).animations[0].options.duration, 2000);
+  }
+  advance(400);
   const current = progress.at(-1);
   assert.ok(current.returns.player > 0 && current.returns.player < hand.result.player.netReturn);
   assert.equal(current.credits.player, current.returns.player);
   assert.ok(Number(text(doc, 'pot-value')) > 0 && Number(text(doc, 'pot-value')) < hand.result.pot);
+  assert.ok(current.returns.player <= hand.result.player.netReturn * .21, 'the count follows the same linear payout clock from the first frames');
+  advance(1500);
+  assert.ok(progress.at(-1).returns.player < hand.result.player.netReturn);
   await finishMotion(doc); await view.whenIdle();
   const final = progress.at(-1);
   assert.equal(final.complete, true); assert.equal(final.flow, 'payout');
@@ -660,6 +672,8 @@ test('JP arrives separately from the single pot payout and is included in the sa
   const before = JSON.stringify(hand); view.render(hand); await finishMotion(doc); await view.whenIdle();
   assert.equal(flights(doc).filter(flight => flight.dataset.flow === 'payout').length, 1);
   assert.equal(flights(doc).filter(flight => flight.dataset.flow === 'bonus').length, 1);
+  const awardFlights = flights(doc).filter(flight => ['payout', 'bonus'].includes(flight.dataset.flow));
+  assert.equal(awardFlights.reduce((sum, flight) => sum + flight.animations[0].options.duration, 0), 2000);
   assert.ok(phases.indexOf('bonus') > phases.indexOf('payout'));
   assert.equal(events.at(-1).flow, 'bonus'); assert.equal(events.at(-1).complete, true);
   assert.equal(events.at(-1).returns.player, hand.result.player.totalReturn);

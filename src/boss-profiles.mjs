@@ -1,4 +1,4 @@
-import {evaluateBest, normalizeCard, RANKS} from './poker.mjs?v=54';
+import {evaluateBest, normalizeCard, RANKS} from './poker.mjs?v=55';
 
 const freeze = value => {
   if (value && typeof value === 'object') { Object.values(value).forEach(freeze); Object.freeze(value); }

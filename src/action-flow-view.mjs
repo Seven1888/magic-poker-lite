@@ -1,4 +1,4 @@
-import {esc} from './shared.mjs?v=54';
+import {esc} from './shared.mjs?v=55';
 
 const clean=value=>String(value??'').replace(/\s+/g,' ').trim();
 const actorStep=actor=>actor==='npc'?'boss':'you';
@@ -14,11 +14,13 @@ const ICONS={
  boss:'<path d="m3 7 4 3 5-6 5 6 4-3-2 11H5L3 7Zm3 14h12"/>',
  complete:'<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>'
 };
-const view=(step,name,verb,detail='')=>({step,name,verb,message:name+(verb?': '+verb:'')+(detail?' · '+detail:'')});
+const view=(step,name,verb,detail='')=>({step,name,verb,message:name+(verb?(name?': ':'')+verb:'')+(detail?' · '+detail:'')});
 
 /** Describe the current actor only; chip transfers do not become another turn. */
 export function actionFlowState({mode='',label='',seat='',detail='',actor='',playing=false,settled=false}={},previous=null){
  label=clean(label);detail=clean(detail);
+ if(mode==='buyin')return view('deal','','BUYING IN');
+ if(mode==='hole-deal'&&label==='DRAWING YOUR BLIND')return view('deal','','DRAWING YOUR BLIND');
  if(['hole-deal','board-deal','showdown'].includes(mode)){
   const verb=mode==='hole-deal'?'HOLE CARDS':mode==='showdown'?'SHOWDOWN':/\b(FLOP|TURN|RIVER)\b/i.exec(label)?.[1].toUpperCase()||'SETTING THE BOARD';
   return view('deal','DEALING',verb,detail);
@@ -66,7 +68,7 @@ export function createActionFlow({root=globalThis.document}={}){
   element.setAttribute('role','status');element.setAttribute('aria-live','polite');element.setAttribute('aria-atomic','true');
   element.setAttribute('aria-label',current.message);element.setAttribute('title',current.message);
   element.dataset.step=current.step;
-  element.innerHTML='<span class="action-flow-current" aria-hidden="true"><span class="action-flow-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'+ICONS[current.step]+'</svg></span><span class="action-flow-copy"><span class="action-flow-name">'+esc(current.name)+'</span><strong class="action-flow-verb">'+esc(current.verb)+'</strong></span></span><span class="action-flow-announcement">'+esc(current.message)+'</span>';
+  element.innerHTML='<span class="action-flow-current" aria-hidden="true"><span class="action-flow-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'+ICONS[current.step]+'</svg></span><span class="action-flow-copy">'+(current.name?'<span class="action-flow-name">'+esc(current.name)+'</span>':'')+'<strong class="action-flow-verb">'+esc(current.verb)+'</strong></span></span><span class="action-flow-announcement">'+esc(current.message)+'</span>';
  }
  return {render};
 }

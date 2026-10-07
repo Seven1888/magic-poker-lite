@@ -1,4 +1,4 @@
-import {atGameSpeed} from './presentation-timing.mjs?v=54';
+import {atGameSpeed} from './presentation-timing.mjs?v=55';
 
 /** Read-only pot presentation. It never calls the game RNG or mutates a hand. */
 export function createPotView({root = globalThis.document, reducedMotion = false, locale = 'zh', onPhase, onProgress} = {}) {
@@ -44,7 +44,8 @@ export function createPotView({root = globalThis.document, reducedMotion = false
     let transferred = 0;
     const decimals = (amount.toFixed(6).replace(/0+$/, '').split('.')[1] || '').length;
     return progress => {
-      const value = progress >= 1 ? amount : Number((amount * progress).toFixed(decimals));
+      const unit = 10 ** decimals;
+      const value = progress >= 1 ? amount : Math.floor(amount * progress * unit) / unit;
       const addition = round(Math.max(0, value - transferred)); transferred = value;
       credits[seat] = round(credits[seat] + addition);
       if (flow !== 'refund') returns[seat] = round(returns[seat] + addition);
@@ -126,7 +127,7 @@ export function createPotView({root = globalThis.document, reducedMotion = false
     };
   }
 
-  function trackAnimation(animation, {flow, duration, delay = 0, transfer = null, progress = null, remove = () => {}}) {
+  function trackAnimation(animation, {flow, duration, delay = 0, transfer = null, progress = null, stream = false, remove = () => {}}) {
     const epoch = generation;
     let resolveDone, timer, completed = false;
     const motion = {animation, flow, transfer, end: now() + delay + duration,
@@ -155,8 +156,9 @@ export function createPotView({root = globalThis.document, reducedMotion = false
       const update = () => {
         if (completed || epoch !== generation) return;
         const elapsed = Math.max(0, Math.min(1, (now() - started) / duration));
-        // One intact group travels first, then feeds the growing landed stack.
-        const deposited = Math.max(0, Math.min(1, (elapsed - .56) / .44));
+        // A return stream and both amount displays share this one clock.
+        // A refund remains an intact group which deposits on arrival.
+        const deposited = stream ? elapsed : Math.max(0, Math.min(1, (elapsed - .56) / .44));
         progress(deposited);
         motion.frame = requestFrame(update);
       };
@@ -196,7 +198,7 @@ export function createPotView({root = globalThis.document, reducedMotion = false
     } catch { /* Numeric accounting is already visible when feedback is unavailable. */ }
   }
 
-  function fly(seat, amount, flow, {delay = 0, duration = 1000, announce = false, progress = null} = {}) {
+  function fly(seat, amount, flow, {delay = 0, duration = 1000, announce = false, progress = null, realTime = false} = {}) {
     if (reducedMotion || amount <= 0) return 0;
     const layer = nodes['pot-flight-layer'];
     const rect = layer?.getBoundingClientRect?.();
@@ -211,7 +213,8 @@ export function createPotView({root = globalThis.document, reducedMotion = false
       || center(nodes['pot-value'], rect, scaleX, scaleY);
     if (!stackPoint || !potPoint) return 0;
     const inbound = flow === 'contribution';
-    const from = inbound ? stackPoint : flow === 'bonus' ? center(nodes['jackpot-button'], rect, scaleX, scaleY) || potPoint : potPoint;
+    const winPoint = flow === 'payout' ? center(lookup('total-win-display'), rect, scaleX, scaleY) : null;
+    const from = inbound ? stackPoint : flow === 'bonus' ? center(nodes['jackpot-button'], rect, scaleX, scaleY) || potPoint : winPoint || potPoint;
     const to = inbound ? potPoint : stackPoint;
     const el = doc.createElement('span');
     el.className = 'flying-chip';
@@ -233,7 +236,9 @@ export function createPotView({root = globalThis.document, reducedMotion = false
     if (typeof el.animate !== 'function') { el.remove(); return 0; }
     const transform = (point, scale) => `translate3d(${point.x}px,${point.y}px,0) translate(-50%,-50%) scale(${scale})`;
     const midpoint = {x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 - 32};
-    const actualDuration = atGameSpeed(duration), actualDelay = atGameSpeed(delay);
+    const actualDuration = realTime ? duration : atGameSpeed(duration), actualDelay = realTime ? delay : atGameSpeed(delay);
+    const stream = flow === 'payout' || flow === 'bonus';
+    const streamAnimations = [];
     let animation;
     const frames = inbound ? [
       {transform: transform(from, 0.72), opacity: 0, offset: 0},
@@ -246,10 +251,38 @@ export function createPotView({root = globalThis.document, reducedMotion = false
       {transform: transform(to, 1.04), opacity: 1, offset: .56},
       {transform: transform(to, 1), opacity: 1, offset: 1}
     ];
-    try { animation = el.animate(frames, {duration: actualDuration, delay: actualDelay, easing: 'linear', fill: 'both'}); }
-    catch { el.remove(); return 0; }
+    try {
+      if (stream) {
+        el.dataset.stream = 'true';
+        // One transfer is split visually into staggered chips, without creating
+        // extra transfer notifications, amounts, draws or ledger entries.
+        const travel = Math.min(600, actualDuration * .45);
+        const chipTransform = (point, index, scale = 1) => transform({x: point.x + (index % 3 - 1) * 8, y: point.y}, scale);
+        for (let index = 0; index < group.children.length; index++) {
+          const chip = group.children[index];
+          const chipDelay = actualDelay + index / Math.max(1, group.children.length - 1) * (actualDuration - travel);
+          const chipAnimation = chip.animate([
+            {transform: chipTransform(from, index, .9), opacity: 0, offset: 0},
+            {transform: chipTransform(from, index, 1), opacity: 1, offset: .06},
+            {transform: chipTransform(midpoint, index, 1.12), opacity: 1, offset: .5},
+            {transform: chipTransform(to, index, 1), opacity: 1, offset: 1}
+          ], {duration: travel, delay: chipDelay, easing: 'linear', fill: 'backwards'});
+          // A cancellation is normal on a new hand; decorative completions
+          // never advance accounting or the payout phase.
+          chipAnimation.finished?.catch?.(() => {});
+          streamAnimations.push(chipAnimation);
+        }
+        animation = el.animate([{opacity: 1}, {opacity: 1}], {duration: actualDuration, delay: actualDelay, fill: 'both'});
+      } else animation = el.animate(frames, {duration: actualDuration, delay: actualDelay, easing: 'linear', fill: 'both'});
+    } catch {
+      for (const child of streamAnimations) child.cancel?.();
+      el.remove(); return 0;
+    }
     const motion=trackAnimation(animation, {flow, duration: actualDuration, delay: actualDelay,
-      transfer: {seat, amount}, progress, remove: () => el.remove()});
+      transfer: {seat, amount}, progress, stream, remove: () => {
+        for (const child of streamAnimations) child.cancel?.();
+        el.remove();
+      }});
     if(announce){
       const epoch=generation;let started=false;
       motion.start=()=>{if(started||epoch!==generation)return;started=true;notifyPhase(flow,[{seat,amount}]);};
@@ -290,7 +323,10 @@ export function createPotView({root = globalThis.document, reducedMotion = false
           if (settlementPlan !== plan || plan.generation !== generation) return;
           const immediate = entries.filter(({seat, amount}, index) => {
             const progress = transferProgress(seat, amount, flow);
-            const animated = fly(seat, amount, flow, {duration: flow === 'refund' ? 1100 : 2200, delay: index * 40, progress});
+            // A normal return lasts exactly two real seconds, independent of
+            // game speed. JP keeps its own route within that same two seconds.
+            const duration = flow === 'refund' ? 1100 : flow === 'bonus' ? 400 : plan.bonuses.length ? 1600 : 2000;
+            const animated = fly(seat, amount, flow, {duration, delay: flow === 'refund' ? index * 40 : 0, progress, realTime: flow !== 'refund'});
             if (!animated) progress(1);
             return !animated;
           });
