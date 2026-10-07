@@ -1,6 +1,6 @@
 # Magic Poker Lite v56 API 契約
 
-2026-10-07，v56 本地驗證完成，發布待確認。抽盲整合行動說明區、三種實際壓力回應以 [docs/19](docs/19-v56-blind-and-response-spec.md) 優先；正式模式仍為 `pooled-holdem`，v53 的 .99 結果計分、雙池、CD、JP 及每街強弱分類不改。其餘呈現沿用 [docs/18](docs/18-v55-feedback-spec.md)。現行規則見 [docs/04](docs/04-game-flow-and-math.md)，歷史模型見 [docs/16](docs/16-v53-holdem-spec.md)，實際驗證與發布見 [docs/06](docs/06-mobile-and-deployment.md)。
+2026-10-07，v56 本地驗證、Git推送、Pages部署與公開驗收通過。抽盲整合行動說明區、三種實際壓力回應以 [docs/19](docs/19-v56-blind-and-response-spec.md) 優先；正式模式仍為 `pooled-holdem`，v53 的 .99 結果計分、雙池、CD、JP 及每街強弱分類不改。其餘呈現沿用 [docs/18](docs/18-v55-feedback-spec.md)。現行規則見 [docs/04](docs/04-game-flow-and-math.md)，歷史模型見 [docs/16](docs/16-v53-holdem-spec.md)，實際驗證與發布見 [docs/06](docs/06-mobile-and-deployment.md)。
 
 ## Config 與 session
 

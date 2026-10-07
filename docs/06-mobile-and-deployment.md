@@ -1,6 +1,6 @@
 # v56 驗證與發布狀態
 
-更新：2026-10-07。**v56 本地整合完成，發布驗證進行中。** 本輪 [v56 規格](19-v56-blind-and-response-spec.md) 包含抽盲移入行動說明區與三種實際下注壓力回應；下方 v55 與更早資料只作歷史。
+更新：2026-10-07。**v56 全部完成，本地驗證、Git推送、Pages部署與公開驗收通過。** 本輪 [v56 規格](19-v56-blind-and-response-spec.md) 包含抽盲移入行動說明區與三種實際下注壓力回應；下方 v55 與更早資料只作歷史。
 
 ## v56 本地驗證
 
@@ -15,7 +15,12 @@
 
 ## v56 Git 與公開發布
 
-本節等待實際推送、Actions與公開內容核對後回填。尚不以本地測試代替部署證據。
+- 功能提交 [82027f5b521a9214a79f34f5ba6a95bcc5d01007](https://github.com/Seven1888/magic-poker-lite/commit/82027f5b521a9214a79f34f5ba6a95bcc5d01007) 已非強制快轉推送至main。
+- [Actions 37582922312](https://github.com/Seven1888/magic-poker-lite/actions/runs/37582922312)：build／deploy completed、success；測試與靜態建置步驟成功。
+- 公開遊戲、工具、規則HTML、新v56規格、boss-profiles／boss-probability-view／blind-draw-view／action-flow-view／game／engine／action-options-view／table-wallet／outcome-pools及blind-ribbon-v56.css共14份HTTP200，與本地dist正規化換行後逐字相同；紀錄 output/public-v56-files.json。
+- 公開Chrome393×852實際入場SB50：抽盲YOU · SMALL BLIND與YOU 50 · BOSS 100在說明區內，無舊浮動文字、無水平溢出。三尺寸預覽分別半池25/75、全池40/60、大額全下55/45；工具12列完整、規則標題v56。腳本／紀錄 output/playwright/public-v56.js、public-v56.log，截圖 public-v56-blind-393.png、public-v56-raise-393.png。
+- 公開瀏覽器page／console error 0、HTTP失敗0；2筆既有CALL按鈕圖片預載未立即使用提示。這是桌面Chrome viewport，不是實體Android或長期RTP證據。
+- 後續文件提交只回填本節已完成發布證據，不更改已測功能；其自動部署由本聊天室收尾確認後再完成交接。
 
 ## v56 入口
 

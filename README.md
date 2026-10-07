@@ -1,6 +1,6 @@
 # Magic Poker Lite
 
-v56：將抽盲硬幣與結果文字整合至行動說明區，並讓對手依半池、全池、大額三種實際下注壓力使用不同回應機率。**本地驗證完成：572／572測試通過，建置235檔；Git／公開部署待確認。** 最新行為以 [v56 規格](docs/19-v56-blind-and-response-spec.md) 為準；其餘呈現沿用 v55，正式 `pooled-holdem` 模型、.99 計分、個人雙池／CD／JP 及每街強弱分類沿用 v53。實際驗證與發布見 [紀錄](docs/06-mobile-and-deployment.md)；歷史版本的測試與公開驗收不當作 v56 結果。
+v56：將抽盲硬幣與結果文字整合至行動說明區，並讓對手依半池、全池、大額三種實際下注壓力使用不同回應機率。**本地驗證完成：572／572測試通過，建置235檔；已推送Git、部署Pages並通過公開驗收。** 最新行為以 [v56 規格](docs/19-v56-blind-and-response-spec.md) 為準；其餘呈現沿用 v55，正式 `pooled-holdem` 模型、.99 計分、個人雙池／CD／JP 及每街強弱分類沿用 v53。實際驗證與發布見 [紀錄](docs/06-mobile-and-deployment.md)；歷史版本的測試與公開驗收不當作 v56 結果。
 
 ## 玩法與資產
 
@@ -43,4 +43,4 @@ v56：將抽盲硬幣與結果文字整合至行動說明區，並讓對手依�
 - Git：[Repository](https://github.com/Seven1888/magic-poker-lite)／[Actions](https://github.com/Seven1888/magic-poker-lite/actions)
 - 對外入口：[遊戲](https://seven1888.github.io/magic-poker-lite/?v=56)／[機率工具](https://seven1888.github.io/magic-poker-lite/probability.html?v=56)／[規則與公式](https://seven1888.github.io/magic-poker-lite/docs/04-game-flow-and-math.html?v=56)
 
-v56 目前本地驗證完成，發布待確認；以上是固定入口，部署狀態以發布紀錄為準。完成全部調整、驗證與 Git 推送後，依使用者授權開新聊天室交接；新聊天室先讀文件、直接提供完整相關連結，再等待新需求，不重做已完成實作、推送或部署。遊戲英文，工具、文件及溝通繁體中文；只修改 Magic Poker Lite。
+v56 目前本地驗證、Git推送、Pages部署與公開驗收通過；以上是固定入口，部署狀態以發布紀錄為準。完成全部調整、驗證與 Git 推送後，依使用者授權開新聊天室交接；新聊天室先讀文件、直接提供完整相關連結，再等待新需求，不重做已完成實作、推送或部署。遊戲英文，工具、文件及溝通繁體中文；只修改 Magic Poker Lite。

@@ -1,6 +1,6 @@
 # Magic Poker Lite 規則與公式
 
-v56／2026-10-07：本地驗證完成，發布待確認。抽盲整合行動說明區、三種實際壓力回應以 [v56規格](19-v56-blind-and-response-spec.md) 為準；其餘呈現沿用 [v55規格](18-v55-feedback-spec.md)。正式模型pooled-holdem、.99結果計分、雙池、CD、JP與每街強弱分類沿用 [v53規格](16-v53-holdem-spec.md)；同街回應機率改依本次實際壓力。驗證與發布證據見 [驗證紀錄](06-mobile-and-deployment.md)，不沿用歷史測試數字作為本輪結果。
+v56／2026-10-07：本地驗證、Git推送、Pages部署與公開驗收通過。抽盲整合行動說明區、三種實際壓力回應以 [v56規格](19-v56-blind-and-response-spec.md) 為準；其餘呈現沿用 [v55規格](18-v55-feedback-spec.md)。正式模型pooled-holdem、.99結果計分、雙池、CD、JP與每街強弱分類沿用 [v53規格](16-v53-holdem-spec.md)；同街回應機率改依本次實際壓力。驗證與發布證據見 [驗證紀錄](06-mobile-and-deployment.md)，不沿用歷史測試數字作為本輪結果。
 
 ## 1. 正式模型與一手流程
 
