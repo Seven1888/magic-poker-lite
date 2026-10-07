@@ -2,9 +2,9 @@
 
 ## 範圍與授權（2026-10-07）
 
-使用者現已明確要求完成全部 11 項回饋，一起更新 Git，部署後另開新聊天室交接並提供全部連結。包含先前已在本地完成的重整離桌修正；完成驗證後可提交並推送 main，由既有 Actions 部署 Pages，不需重問授權。沿用現有 checkout，不重設其他修改。只修改 Magic Poker Lite；同層 Boss Duel、Hands Up、Final Table 永久唯讀，不在原目錄執行遊戲、建置、測試或寫入快取。
+使用者本輪要求的全部 11 項回饋與重整離桌修正已完成驗證，推送 Git 並由既有 Actions 部署 Pages；實際提交及公開流程驗收見發布紀錄。新聊天室由本輪交付訊息提供，接手後先讀文件等待新需求，不重做已完成的實作、提交或部署。沿用現有 checkout，不重設其他修改。只修改 Magic Poker Lite；同層 Boss Duel、Hands Up、Final Table 永久唯讀，不在原目錄執行遊戲、建置、測試或寫入快取。
 
-遊戲英文；機率工具、文件及溝通繁體中文。最新使用者確認優先於舊文件。當前正式規格見 [v54 呈現規格](docs/17-v54-presentation-spec.md)、[v53 遊戲與數學](docs/16-v53-holdem-spec.md)、[規則與公式](docs/04-game-flow-and-math.md)、[API](API-CONTRACT.md)；[發布紀錄](docs/06-mobile-and-deployment.md) 只記實際證據。目前 v54 本地驗證完成，待 Git／Pages 發布；本地整合與發布完成須分開標示。
+遊戲英文；機率工具、文件及溝通繁體中文。最新使用者確認優先於舊文件。當前正式規格見 [v54 呈現規格](docs/17-v54-presentation-spec.md)、[v53 遊戲與數學](docs/16-v53-holdem-spec.md)、[規則與公式](docs/04-game-flow-and-math.md)、[API](API-CONTRACT.md)；[發布紀錄](docs/06-mobile-and-deployment.md) 只記實際證據。目前 v54 已通過驗證並推送 Git／部署 Pages；本地整合與發布完成須分開標示。
 
 ## 已選方案 B
 

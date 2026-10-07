@@ -1,12 +1,12 @@
 # Magic Poker Lite v54 接手紀錄
 
-更新：2026-10-07。**v54 本地驗證完成，待 Git／Pages 發布，新聊天室尚未建立。** 使用者已授權完成全部 11 項回饋、連同重整修正更新 Git／Pages，完成後另開新聊天室並提供全部連結。
+更新：2026-10-07。**v54 全部 11 項與重整修正已完成，552 項測試通過，已推送 Git／部署 Pages 並完成公開流程驗收。** 新聊天室由本輪交付訊息提供，接手後先讀文件等待新需求。
 
 ## 本輪優先接手資訊
 
-原本先記錄、等待「調整」的限制已由使用者本輪完整授權取代。現在一次處理 11 項呈現需求；正式 `pooled-holdem`、.99 計分、雙池／CD／JP、對手兩型與每街機率維持。完整需求見 [v54 規格](docs/17-v54-presentation-spec.md)，數學仍以 [v53 規格](docs/16-v53-holdem-spec.md) 為準，不再詢問方案 B 選擇。
+原本先記錄、等待「調整」的限制已由使用者本輪完整授權取代，11 項呈現需求已全部完成。正式 `pooled-holdem`、.99 計分、雙池／CD／JP、對手兩型與每街機率維持。完整需求見 [v54 規格](docs/17-v54-presentation-spec.md)，數學仍以 [v53 規格](docs/16-v53-holdem-spec.md) 為準，不再詢問方案 B 選擇。
 
-新聊天室建立後，先只讀本 HANDOFF、AGENTS、v54 規格與 v53 遊戲規格，簡短確認接手並等待新需求；不要重新實作、提交、推送或部署已完成的工作。下方 v54 發布結果尚未填妥前，不能宣稱本輪已發布。
+接手後先只讀本 HANDOFF、AGENTS、v54 規格與 v53 遊戲規格，簡短確認接手並等待新需求；不要重新實作、提交、推送或部署已完成的工作。下方保留本輪實際測試、提交與公開驗收證據。
 
 ## v54 完整 11 項
 
@@ -31,16 +31,16 @@
 - 引擎 `endHandForTableExit(hand)` 與 table-wallet 純轉換 `closeSavedTable(profile)` 處理帳務；snapshot／restore 底層保留供結束舊桌及研究使用，UI 不再接續舊手。
 - 先前重整單項本地驗證：`npm test` 529／529 通過（含新增 10 項重整帳務測試，紀錄 `output/tests-reload-v53.log`）；`npm run build` 成功 218 檔；`git diff --check` 通過。隔離 Chrome 實際 FIGHT 後重整回買入入口，結算餘額 9,998、table 清空，連續重整資產不變、page error 0；另驗證保存失敗保留原存檔並禁用買入，恢復寫入後兌回未開手的 1,000 籌碼、BALANCE 回 10,000。腳本及截圖在 `output/playwright/check-reload*.js`、`output/playwright/reload-entry-v53.png`。這些是加入 11 項呈現需求之前的結果，不能當成 v54 完整驗證。
 
-## v54 本地驗證完成；發布結果待補
+## v54 驗證與發布完成
 
 - `npm test`：552／552 通過，0 失敗、0 跳過；紀錄 `output/tests-v54.log`。`npm run build`：228 個公開檔案。攤牌標籤上移後亦確認不與行動資訊重疊。
 - 桌面 Chrome 320／375／393／412／1440 px 無水平溢出，三按鈕 computed height 均 66 px；三尺寸由上 ALL IN／1×／0.5×，每項均有籌碼圖示及左側回應機率。
 - `output/playwright/qa-v54.js`：兩場買入各取樣 84 個 rAF frames、1,383 ms，期間雙方 card count 全為 0，籌碼堆／數字單調增加；發牌完成後即顯示 Pair 5.9%／High Card 94.1%（該測試底牌的當前分布）。
 - seed 0 玩家全下獲勝後桌碼 2,000；收款取樣 108 frames、48 個不同數值，TOTAL WIN 與玩家籌碼完全同步，每位收款者一個飛行 group、來源堆隱藏。seed 7 全下輸光後桌碼 0，自動回入口，BALANCE 9,000、`table: null`。page error 0、request failed 0。
 - 截圖：`output/playwright/v54-raise-{320,375,393,412,1440}.png`、`v54-player-win-393.png`、`v54-auto-buyin-393.png`。完整本地證據見 [驗證紀錄](docs/06-mobile-and-deployment.md)；不是實體 Android 或長期 RTP 證據。
-- Git 提交／推送：尚未完成；完成後補真實 SHA 與連結。
-- Actions／Pages：尚未部署；完成後補 run URL、結果及公開站驗證。
-- 新聊天室：尚未建立；發布完成後依使用者授權建立，補真實聊天室連結／ID。
+- 功能提交 [efb8f02af19055a2ce8cb3799e62396c1bf356b7](https://github.com/Seven1888/magic-poker-lite/commit/efb8f02af19055a2ce8cb3799e62396c1bf356b7) 已推送；[Actions 37561736242](https://github.com/Seven1888/magic-poker-lite/actions/runs/37561736242) 的 build／deploy 均 completed／success。
+- `output/playwright/public-v54.js` 公開驗收：遊戲、工具與 HTML 規則均為 v54；SB10／BB20／BUY-IN1000，入口無初始牌，三藝術按鈕、三尺寸預覽與 Preflop 牌型參考正常。補充驗收等待按鈕圖片 `complete && naturalWidth > 0` 及完整 PAIR 文字後再截圖，腳本 exit 0，按鈕資產完整載入已核對。重整返回入口，BALANCE9,990、`table: null`；v54 規格、prompts、action-options 與 chip-motion HTTP200。page／console errors 0、HTTP fail 0。
+- 新聊天室由本輪交付訊息提供，接手後先讀文件等待新需求。
 
 以下保留原 v53 方案 B 發布紀錄；v54 呈現及重整行為以本輪資訊及現行規格為準。
 
@@ -63,7 +63,7 @@
 - 每街在任何行動前鎖強弱；同街換NPC牌、玩家下注或再加注不重判。新街用當時配對重算。強條件、詐唬證據與概率詳見規格表。每NPC回合先抽行為，進攻再抽50/35/15尺寸。
 - 三個公開機率情境不含NPC牌／原因；公共參考勝率不讀秘密資訊。
 - 池桶依BB範圍0<BB≤10、10<BB≤500、BB>500，原存量不動；JP200/50/20BB僅有足額資格且獲勝攤牌才派。
-- version2 profile保存錢包、池、上一型及active table；牌局、布局、結果、鎖街與RNG一起保存。設定匯入不改資產。原發布版重整續局；本輪本地改為結束舊桌帳務後回買入入口。
+- version2 profile保存錢包、池、上一型及active table；牌局、布局、結果、鎖街與RNG一起保存。設定匯入不改資產。原v53發布版重整續局；v54已改為結束舊桌帳務後回買入入口。
 - 一般研究外部資產無限，但有限100SB桌碼；歸零才模擬新入場。退幣以錢包加桌碼計總資產，不把池當資產，不發布部分退幣比例。
 
 ## 主要檔案
@@ -96,8 +96,8 @@
 ## 連結
 
 - [GitHub](https://github.com/Seven1888/magic-poker-lite)／[Actions](https://github.com/Seven1888/magic-poker-lite/actions)
-- [公開遊戲](https://seven1888.github.io/magic-poker-lite/?v=54)／[機率工具](https://seven1888.github.io/magic-poker-lite/probability.html?v=54)／[規則](https://seven1888.github.io/magic-poker-lite/docs/04-game-flow-and-math.html?v=54)；v54 尚未部署，查詢值不是發布證據。
+- [公開遊戲](https://seven1888.github.io/magic-poker-lite/?v=54)／[機率工具](https://seven1888.github.io/magic-poker-lite/probability.html?v=54)／[規則](https://seven1888.github.io/magic-poker-lite/docs/04-game-flow-and-math.html?v=54)；v54 已部署並完成公開內容驗收。
 - [本地遊戲v54](http://127.0.0.1:4177/index.html?v=54)／[本地機率工具v54](http://127.0.0.1:4177/probability.html?v=54)／[本地規則](http://127.0.0.1:4177/docs/04-game-flow-and-math.html?v=54)。
-- [v54 完整規格](https://github.com/Seven1888/magic-poker-lite/blob/main/docs/17-v54-presentation-spec.md)（推送後可用）；v52基準`82a2cc5`與上述v53提交僅供歷史比較。
+- [v54 完整規格](https://github.com/Seven1888/magic-poker-lite/blob/main/docs/17-v54-presentation-spec.md)（已推送且公開 HTTP200）；v52基準`82a2cc5`與上述v53提交僅供歷史比較。
 
-原 v53 方案 B 實作及發布已完成，無須重做。v54 本地驗證已完成，接著按既有授權推送、部署並開新聊天室；實際發布結果補入上方，不能用本地或舊版證據替代。
+v53 方案 B 及 v54 全部需求、驗證與發布均已完成，無須重做。新聊天室由本輪交付訊息提供，接手後先讀文件等待新需求。

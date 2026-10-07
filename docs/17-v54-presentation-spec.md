@@ -1,6 +1,6 @@
 # v54 買入、操作資訊與籌碼表演規格
 
-更新：2026-10-07。**本地驗證完成，待 Git／Pages 發布。** 使用者已授權完成全部 11 項回饋，納入先前的重整離桌修正，驗證後一起更新 Git／Pages，再建立新聊天室交接並提供連結。提交、部署及新聊天室的實際結果須完成後另記，不預填成功。
+更新：2026-10-07。**全部 11 項回饋與重整修正已完成，通過驗證並推送 Git／部署 Pages，公開流程驗收通過。** 新聊天室由本輪交付訊息提供，接手後先讀文件等待新需求。
 
 ## 1. 模型與範圍
 
@@ -66,10 +66,10 @@ SB 是唯一自由選擇的數字；BB 與 BUY-IN 隨 SB 連動，不可各自�
 
 本輪驗收需涵蓋買入時長／無牌／堆疊與數字、入口連動、按鈕高度／文字／圖示、各尺寸預覽與 RNG 不變、Preflop 1,225 組分布、雙方收款／平手／退款／JP、歸零返回入口、重整及保存失敗。桌面瀏覽器手機 viewport 不等於實體 Android 驗證；小樣本不構成長期 RTP 證據。
 
-v54 本地驗證已完成：`npm test` 552／552 通過、0 失敗與跳過；建置 228 檔、59,566,682 位元組。Chrome 320／375／393／412／1440 px、買入無牌與連續堆疊／金額、逐尺寸圖示與回應、Preflop 分布、勝方一次收款與 TOTAL WIN 同步、輸光自動返回入口均已驗證；page error 與 request failed 皆 0。實際取樣與檔案見 [驗證紀錄](06-mobile-and-deployment.md)。Git 提交、Actions／Pages 及新聊天室仍待完成後補入 [HANDOFF](../HANDOFF.md)，不預填發布成功。原 v53 的 519 項與重整單項的 529 項保留為歷史證據。
+v54 驗證已完成：`npm test` 552／552 通過、0 失敗與跳過；建置 228 檔。Chrome 320／375／393／412／1440 px、買入無牌與連續堆疊／金額、逐尺寸圖示與回應、Preflop 分布、勝方一次收款與 TOTAL WIN 同步、輸光自動返回入口均已驗證；page error 與 request failed 皆 0。功能提交 [efb8f02](https://github.com/Seven1888/magic-poker-lite/commit/efb8f02af19055a2ce8cb3799e62396c1bf356b7) 已推送，[Actions 37561736242](https://github.com/Seven1888/magic-poker-lite/actions/runs/37561736242) build／deploy 成功；`public-v54.js` 公開驗收亦通過，page／console errors 與 HTTP fail 均 0。實際取樣、重整帳務及檔案見 [驗證紀錄](06-mobile-and-deployment.md)。原 v53 的 519 項與重整單項的 529 項保留為歷史證據。
 
 ## 9. 交付入口
 
 - 本地：[遊戲](http://127.0.0.1:4177/index.html?v=54)／[機率工具](http://127.0.0.1:4177/probability.html?v=54)／[規則](http://127.0.0.1:4177/docs/04-game-flow-and-math.html?v=54)。
-- 公開：[遊戲](https://seven1888.github.io/magic-poker-lite/?v=54)／[機率工具](https://seven1888.github.io/magic-poker-lite/probability.html?v=54)／[規則](https://seven1888.github.io/magic-poker-lite/docs/04-game-flow-and-math.html?v=54)。v54 尚未部署，連結查詢值不代表已發布。
-- [GitHub](https://github.com/Seven1888/magic-poker-lite)／[Actions](https://github.com/Seven1888/magic-poker-lite/actions)。新聊天室尚未建立，不預填連結。
+- 公開：[遊戲](https://seven1888.github.io/magic-poker-lite/?v=54)／[機率工具](https://seven1888.github.io/magic-poker-lite/probability.html?v=54)／[規則](https://seven1888.github.io/magic-poker-lite/docs/04-game-flow-and-math.html?v=54)。v54 已部署且實際內容驗收通過。
+- [GitHub](https://github.com/Seven1888/magic-poker-lite)／[Actions](https://github.com/Seven1888/magic-poker-lite/actions)。新聊天室由本輪交付訊息提供，接手後先讀文件等待新需求。

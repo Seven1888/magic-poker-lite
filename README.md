@@ -1,6 +1,6 @@
 # Magic Poker Lite
 
-v54：依 11 項回饋調整買入、按鈕美術與機率預覽、籌碼收付及歸零重入，並納入重整返回入口修正。**目前本地驗證完成，待 Git／Pages 發布。** 正式 `pooled-holdem` 模型、99% 計分、個人雙池／CD／JP 與對手機率均沿用 v53。完整變更見 [v54 規格](docs/17-v54-presentation-spec.md)；v53 原發布證據見 [驗證紀錄](docs/06-mobile-and-deployment.md)，不能當作 v54 驗證。
+v54：依 11 項回饋調整買入、按鈕美術與機率預覽、籌碼收付及歸零重入，並納入重整返回入口修正。**552 項測試通過，已推送 Git／部署 Pages 並完成公開流程驗收。** 正式 `pooled-holdem` 模型、99% 計分、個人雙池／CD／JP 與對手機率均沿用 v53。完整變更見 [v54 規格](docs/17-v54-presentation-spec.md)，實際 v54 提交、Actions 與公開檢查見 [驗證紀錄](docs/06-mobile-and-deployment.md)；v53 原發布證據另列為歷史。
 
 ## 玩法與資產
 
@@ -41,4 +41,4 @@ v54：依 11 項回饋調整買入、按鈕美術與機率預覽、籌碼收付�
 - Git：[Repository](https://github.com/Seven1888/magic-poker-lite)／[Actions](https://github.com/Seven1888/magic-poker-lite/actions)
 - 對外入口：[遊戲](https://seven1888.github.io/magic-poker-lite/?v=54)／[機率工具](https://seven1888.github.io/magic-poker-lite/probability.html?v=54)／[規則與公式](https://seven1888.github.io/magic-poker-lite/docs/04-game-flow-and-math.html?v=54)
 
-上述對外網址為 v54 交付入口；v54 目前尚未部署，不能僅憑查詢版本號認定公開站已更新。遊戲英文，工具、文件及溝通繁體中文；只修改 Magic Poker Lite。
+上述對外網址已提供 v54，公開內容與流程已核對。新聊天室由本輪交付訊息提供，接手後先讀文件等待新需求。遊戲英文，工具、文件及溝通繁體中文；只修改 Magic Poker Lite。

@@ -1,6 +1,6 @@
 # Magic Poker Lite v54 API 契約
 
-2026-10-07，v54 本地驗證完成，待 Git／Pages 發布；包含 11 項呈現回饋及重整離桌修正。正式模式仍為 `pooled-holdem`，v53 遊戲數學及行為機率契約不改。呈現規格見 [docs/17](docs/17-v54-presentation-spec.md)，遊戲規格見 [docs/16](docs/16-v53-holdem-spec.md)，數學見 [docs/04](docs/04-game-flow-and-math.md)，歷史驗證見 [docs/06](docs/06-mobile-and-deployment.md)。
+2026-10-07，v54 已通過驗證並推送 Git／部署 Pages；包含 11 項呈現回饋及重整離桌修正。正式模式仍為 `pooled-holdem`，v53 遊戲數學及行為機率契約不改。呈現規格見 [docs/17](docs/17-v54-presentation-spec.md)，遊戲規格見 [docs/16](docs/16-v53-holdem-spec.md)，數學見 [docs/04](docs/04-game-flow-and-math.md)，驗證與發布見 [docs/06](docs/06-mobile-and-deployment.md)。
 
 ## Config 與 session
 
