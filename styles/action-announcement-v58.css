@@ -14,7 +14,6 @@
 .game .action-announcement[data-action='fold'] { background:linear-gradient(100deg,#193c2ef5,#296849f7 50%,#193c2ef5); border-color:#8ecbaa; }
 .game .action-announcement:is([data-action='raise'],[data-action='bet'],[data-action='allin']) { background:linear-gradient(100deg,#312141f5,#664383f7 50%,#312141f5); border-color:#c7a1e5; }
 .game[data-action-announcement] .action-flow-strip { visibility:hidden; }
-.game[data-action-announcement] #response-flight-layer { visibility:hidden; }
 @keyframes action-announcement-enter { from { opacity:0; scale:.94; } to { opacity:1; scale:1; } }
 .game .action-announcement[data-reduced-motion='true'] { animation:none; }
 @media(prefers-reduced-motion:reduce) { .game .action-announcement { animation:none; } }

@@ -1,4 +1,4 @@
-import {atGameSpeed} from './presentation-timing.mjs?v=58';
+import {atGameSpeed} from './presentation-timing.mjs?v=59';
 
 const labels = {fold: 'FOLD', check: 'CHECK', call: 'CALL', bet: 'BET', raise: 'RAISE'};
 

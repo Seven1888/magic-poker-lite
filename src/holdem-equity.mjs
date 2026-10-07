@@ -1,5 +1,5 @@
-import {normalizeCard, RANKS, SUITS} from './poker.mjs?v=58';
-import {rankEncodedHand} from './holdem-rank.mjs?v=58';
+import {normalizeCard, RANKS, SUITS} from './poker.mjs?v=59';
+import {rankEncodedHand} from './holdem-rank.mjs?v=59';
 
 const DEFAULT_PREFLOP_SAMPLES = 100000;
 const encode = card => SUITS.indexOf(card[1]) * 13 + RANKS.indexOf(card[0]);

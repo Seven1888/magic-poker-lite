@@ -1,4 +1,4 @@
-import {normalizeOutcomePools, OUTCOME_BET_BUCKETS} from './outcome-pools.mjs?v=58';
+import {normalizeOutcomePools, OUTCOME_BET_BUCKETS} from './outcome-pools.mjs?v=59';
 
 const FIELDS = ['paidActionBudgetUsed', 'paidActionAdded', 'specialAdded', 'specialAward'];
 const totals = () => Object.fromEntries(FIELDS.map(key => [key, 0]));

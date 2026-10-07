@@ -1,5 +1,5 @@
 /** BET-entry decoration only. No game state, validation, money movement or RNG. */
-import {setupEntryLayout} from './entry-layout.mjs?v=58';
+import {setupEntryLayout} from './entry-layout.mjs?v=59';
 /** Compact introduction, separate BET card, and an independent FIGHT action. */
 export function setupEntryFeatures(root = globalThis.document) {
   const doc = root.ownerDocument || root;

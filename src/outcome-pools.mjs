@@ -1,5 +1,5 @@
-import {evaluateBest, normalizeCard, RANKS} from './poker.mjs?v=58';
-import {classifyJackpot, JACKPOT_MULTIPLIERS} from './jackpot.mjs?v=58';
+import {evaluateBest, normalizeCard, RANKS} from './poker.mjs?v=59';
+import {classifyJackpot, JACKPOT_MULTIPLIERS} from './jackpot.mjs?v=59';
 
 export const OUTCOME_POOL_SCALE = 1_000_000;
 export const OUTCOME_BET_BUCKETS = Object.freeze([

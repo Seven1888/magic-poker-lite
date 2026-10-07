@@ -1,6 +1,6 @@
-import {createRng} from './poker.mjs?v=58';
-import {endHandForTableExit} from './engine.mjs?v=58';
-import {migrateOutcomePoolsWithoutJackpot} from './outcome-pools.mjs?v=58';
+import {createRng} from './poker.mjs?v=59';
+import {endHandForTableExit} from './engine.mjs?v=59';
+import {migrateOutcomePoolsWithoutJackpot} from './outcome-pools.mjs?v=59';
 
 const round = value => Math.round((value + Number.EPSILON) * 1e6) / 1e6;
 const validMoney = value => Number.isFinite(value) && value >= 0 && Number.isSafeInteger(Math.round(value * 1e6));

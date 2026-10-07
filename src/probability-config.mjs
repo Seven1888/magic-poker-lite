@@ -1,4 +1,4 @@
-import {DEFAULT_CONFIG, normalizeConfig} from './engine.mjs?v=58';
+import {DEFAULT_CONFIG, normalizeConfig} from './engine.mjs?v=59';
 
 export const CURRENT_LAB_OUTCOME_MODE = 'pooled-holdem';
 

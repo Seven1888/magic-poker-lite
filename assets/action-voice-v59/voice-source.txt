@@ -1,0 +1,18 @@
+Magic Poker Lite v59 英文行動語音
+
+產製日期：2026-10-07
+工具：Windows System.Speech.Synthesis.SpeechSynthesizer（本機離線）
+重建腳本：scripts/generate-action-voice-v59.ps1
+YOU／player：Microsoft Zira Desktop / en-US（女聲）
+BOSS／boss：Microsoft David Desktop / en-US（男聲）
+Rate：0；Volume：100
+格式：PCM WAV，22,050 Hz，16-bit，mono
+雙方各六句：Check / Call / Bet / Raise / All in / Fold
+
+遊戲依動作方選擇相應本地錄製檔，載入失敗時以瀏覽器英文聲線備援。
+備援優先挑 Zira／David；無指定聲線則挑不同英文聲線；僅一種英文聲線時採不同音高。
+語音是輔助，不阻擋操作、發牌、結算或下一動作，不等播放完成。
+新動作立即接替前句，不堆積語音佇列，也不讓 YOU／BOSS 同時朗讀。
+字卡獨立計時約一秒，若有新動作則立即換成最新字卡。
+遵守 Sound effects 開關、使用者手勢解鎖、背景取消與事件去重。
+生成不使用 API、網路服務、玩家牌局資料或遊戲 RNG。

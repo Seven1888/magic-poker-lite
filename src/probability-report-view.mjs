@@ -1,6 +1,6 @@
-import {esc} from './shared.mjs?v=58';
-import {JACKPOT_MULTIPLIERS} from './jackpot.mjs?v=58';
-import {LAB_STREETS as STREETS, LAB_POLICIES as POLICIES, LAB_JACKPOTS as JACKPOTS} from './probability-text.mjs?v=58';
+import {esc} from './shared.mjs?v=59';
+import {JACKPOT_MULTIPLIERS} from './jackpot.mjs?v=59';
+import {LAB_STREETS as STREETS, LAB_POLICIES as POLICIES, LAB_JACKPOTS as JACKPOTS} from './probability-text.mjs?v=59';
 
 const SEATS = {player: '玩家', npc: 'BOSS'};
 const ACTIONS = {fold: 'FOLD（棄牌）', check: 'CHECK（過牌）', call: 'CALL（跟注）', bet: 'BET（開注）', raise: 'RAISE（加注）'};
@@ -111,7 +111,7 @@ export function renderStudyDetails(report, runSnapshot, root = document) {
   if (pooled) configRows.push(
     ['結果模型', esc(r.outcomeModel), esc(method.outcomeSampling || method.poolContinuity)],
     ['BOSS 行為表版本', esc(r.bossProfileVersion), '激進／不激進依本街鎖定的強／不強分類取表；同街再加注不重判分類。'],
-    ['全系統 RTP／付費池分配', `${percent(c.outcome.conversionRate)} / ${percent(c.outcome.paidActionBudgetShare)}`, current ? '.99 為操作計分係數，並非整體 RTP 保證；有效贏節點付費分數全數進同級付費池。' : '.99 為操作計分係數，並非整體 RTP 保證；餘額分配至特殊池。'],
+    ['結果計分係數／付費池分配', `${percent(c.outcome.conversionRate)} / ${percent(c.outcome.paidActionBudgetShare)}`, current ? '.99 為操作計分係數，並非整體 RTP 保證；有效贏節點付費分數全數進同級付費池。' : '.99 為操作計分係數，並非整體 RTP 保證；餘額分配至特殊池。'],
     ['付費池冷卻範圍／初始冷卻', `${num(c.outcome.paidActionCooldownMin)}–${num(c.outcome.paidActionCooldownMax)} / ${num(c.outcome.initialPaidActionCooldown)}`, '冷卻跨手與大盲分桶共用。'],
     ...(current ? [['三桶初始付費池', c.outcome.initialPaidActionPools.map(value=>num(value)).join('／'), '每位玩家各自建立一次，跨手、跨桌保留。']] : [
       ['特殊池使用機率', percent(c.outcome.specialUseChance), 'root win 時依最高可負擔級別抽取資格，正常獲勝攤牌才支出。'],

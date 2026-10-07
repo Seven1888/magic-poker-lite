@@ -1,4 +1,4 @@
-import {calculateHoldemEquity} from './holdem-equity.mjs?v=58';
+import {calculateHoldemEquity} from './holdem-equity.mjs?v=59';
 
 self.onmessage=({data})=>{
  const {request,playerHole,board}=data;

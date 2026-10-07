@@ -1,10 +1,10 @@
-import {renderBossProbabilityTables,renderBossStudy} from './boss-probability-view.mjs?v=58';
-import {DEFAULT_CONFIG,normalizeConfig,holeScore} from './engine.mjs?v=58';
-import {CONFIG_KEY,loadConfig,money,pct,esc,cardMarkup,download} from './shared.mjs?v=58';
-import {LAB_LABELS as LABELS,LAB_STREETS as STREETS,LAB_POLICIES as policyNames,translateLabError as translateError} from './probability-text.mjs?v=58';
-import {renderStudyDetails} from './probability-report-view.mjs?v=58';
-import {refundReportMarkup} from './refund-report-view.mjs?v=58';
-import {currentLabConfig} from './probability-config.mjs?v=58';
+import {renderBossProbabilityTables,renderBossStudy} from './boss-probability-view.mjs?v=59';
+import {DEFAULT_CONFIG,normalizeConfig,holeScore} from './engine.mjs?v=59';
+import {CONFIG_KEY,loadConfig,money,pct,esc,cardMarkup,download} from './shared.mjs?v=59';
+import {LAB_LABELS as LABELS,LAB_STREETS as STREETS,LAB_POLICIES as policyNames,translateLabError as translateError} from './probability-text.mjs?v=59';
+import {renderStudyDetails} from './probability-report-view.mjs?v=59';
+import {refundReportMarkup} from './refund-report-view.mjs?v=59';
+import {currentLabConfig} from './probability-config.mjs?v=59';
 const $=id=>document.getElementById(id);
 let worker=null,reports=[],selectedIndex=0,startedAt=0,toastTimer,runSnapshot=null,runState='等待模擬',settingsDirty=false;
 let formConfig=structuredClone(DEFAULT_CONFIG);
@@ -51,7 +51,7 @@ $('street-fields').innerHTML=Object.entries(STREETS).map(([key,label])=>numberFi
 const settingGroup=(title,fields)=>`<section class="setting-group"><h3>${title}</h3><div class="setting-rows">${fields}</div></section>`;
 const poolBuckets=['第一桶 · 0 < 大盲 ≤ 10','第二桶 · 10 < 大盲 ≤ 500','第三桶 · 大盲 > 500'];
 $('outcome-fields').innerHTML='<div class="setting-column">'+settingGroup('勝率與預算規則',
- numberField('outcome.conversionRate','全系統 RTP %',0,100,.1,100)
+ numberField('outcome.conversionRate','結果計分係數 %',0,100,.1,100)
  +numberField('outcome.paidActionCooldownMin','付費池 CD 最小值',0,null,1)
  +numberField('outcome.paidActionCooldownMax','付費池 CD 最大值',0,null,1))
  +settingGroup('正式初始值','<div class="field"><label>個人付費池</label><strong>三個大盲分桶皆為 0</strong></div><div class="field"><label>付費池 CD</label><strong>0</strong></div>')+'</div><div class="setting-column">'
@@ -129,7 +129,7 @@ $('run').onclick=()=>{
     runSnapshot={config,simulation:settings,refund,startedAt:new Date().toISOString()};startedAt=performance.now();$('error').textContent='';updateProgress(0);$('progress-text').textContent='正在啟動統計…';$('run-label').textContent=`種子 ${settings.seed}・一般統計＋退幣率`;
     refundReports=[];refundSnapshot={config,refund,startedAt:runSnapshot.startedAt};refundStartedAt=0;
     $('refund-report').hidden=false;$('refund-state').textContent='等待一般統計';$('refund-content').innerHTML='';refundExports(false);refundProgress(0,'一般統計完成後自動計算退幣率。');
-    launching=true;setRunning(true);renderResults();worker=new Worker(new URL('./simulation-worker.mjs?v=58',import.meta.url),{type:'module'});
+    launching=true;setRunning(true);renderResults();worker=new Worker(new URL('./simulation-worker.mjs?v=59',import.meta.url),{type:'module'});
     const runWorker=worker;
     worker.onmessage=event=>{
       if(worker!==runWorker)return;

@@ -1,5 +1,5 @@
-import {previewResponse} from './engine.mjs?v=58';
-import {esc} from './shared.mjs?v=58';
+import {previewResponse} from './engine.mjs?v=59';
+import {esc} from './shared.mjs?v=59';
 
 export const ACTION_ART = Object.freeze({fold:'assets/action-buttons-v54/fold.png',
   check:'assets/action-buttons-v54/check.png',call:'assets/action-buttons-v54/call.png',
@@ -24,12 +24,15 @@ export function actionResponseMarkup(preview, {compact = false} = {}) {
   const isPhase = preview.outcomes.length === 0;
   const description = preview.outcomes.map(row => `${row.type.toUpperCase()} ${row.label}`).join(', ') || preview.note;
   const probability = row => Number.isFinite(row.probability) ? Math.max(0, Math.min(1, row.probability)) : 0;
-  // Keep tiny slices proportional; move their text to a separate legend instead of widening them.
+  // Fill the whole frame with raw odds. Only move labels off individual slices
+  // when their size or precision would make that text unreadable.
   const needsLegend = preview.outcomes.length > 1;
+  const longPercent = preview.outcomes.some(row => String(row.label).length > 4);
+  const labelLayout = preview.outcomes.length > 2 || longPercent || preview.outcomes.some(row => probability(row) < .3) ? 'overlay' : 'segments';
   const copy = row => `<span>${esc(row.type.toUpperCase())}</span><b>${esc(row.label)}</b>`;
   const track = `<span class="button-response-outcomes">${preview.outcomes.map(row => `<span class="button-response-outcome" style="flex:0 0 ${probability(row)*100}%" data-probability="${probability(row)}" data-response="${esc(row.type)}">${copy(row)}</span>`).join('') || `<span class="button-response-note">${esc(preview.note)}</span>`}</span>`;
-  const content = needsLegend ? `<span class="button-response-body">${track}<span class="button-response-legend">${preview.outcomes.map(row => `<span class="button-response-key" data-response="${esc(row.type)}">${copy(row)}</span>`).join('')}</span></span>` : track;
-  return `<span class="button-response${compact?' size-response':''}${isPhase?' phase-response':''}${needsLegend?' has-response-legend':''}" data-outcome-count="${preview.outcomes.length}" aria-label="${isPhase?'Next phase':'Opponent response'}: ${esc(description)}">${isPhase?'':'<small class="button-response-title">BOSS</small>'}${content}</span>`;
+  const content = needsLegend ? `<span class="button-response-body" data-label-layout="${labelLayout}">${track}<span class="button-response-legend" aria-hidden="true">${preview.outcomes.map(row => `<span class="button-response-key" data-response="${esc(row.type)}">${copy(row)}</span>`).join('')}</span></span>` : track;
+  return `<span class="button-response${compact?' size-response':''}${isPhase?' phase-response':''}${needsLegend?' has-response-legend':''}" data-outcome-count="${preview.outcomes.length}" data-long-percent="${longPercent}" aria-label="${isPhase?'Next phase':'Opponent response'}: ${esc(description)}">${isPhase?'':'<small class="button-response-title">BOSS</small>'}${content}</span>`;
 }
 
 /** Keep the largest choice on top without changing the quoted action identity. */

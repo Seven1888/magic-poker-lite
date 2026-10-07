@@ -1,5 +1,5 @@
-import {BOSS_PROFILES, BOSS_BANDS, BOSS_RESPONSE_PRESSURES, getBossProbabilityScenarios} from './boss-profiles.mjs?v=58';
-import {esc,money} from './shared.mjs?v=58';
+import {BOSS_PROFILES, BOSS_BANDS, BOSS_RESPONSE_PRESSURES, getBossProbabilityScenarios} from './boss-profiles.mjs?v=59';
+import {esc,money} from './shared.mjs?v=59';
 const pct=(v,digits=2)=>Number.isFinite(v)?`${(v*100).toFixed(digits)}%`:'—';
 const ratio=(a,b)=>b>0?pct(a/b):'—';
 export function renderBossProbabilityTables(root=document){

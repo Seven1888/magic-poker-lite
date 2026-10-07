@@ -1,6 +1,58 @@
-# Magic Poker Lite v58 接手紀錄
+# Magic Poker Lite v59 介面發布與數學交接
 
-更新：2026-10-07。v58全部完成：本地驗證、Git推送、Pages部署與公開遊戲驗收通過。 本輪 [v58規格](docs/21-v58-actions-and-no-jackpot-spec.md) 優先於被取代的v53–v57；下方歷史不當成本輪證據。
+更新：2026-10-07。使用者最新指示：「開始處理，全部好了上GIT，好了之後請重開聊天室然後讓新聊天室給我相關連結，並接著討論數學模型」。本輪只發布四項非數學修正；正式結果公式、水池規則與 BOSS 機率表保持。數學缺口與原型詳見 [v59 審核](docs/22-v59-feedback-and-rtp-audit.md)，正式數學尚未修正。發布成功後才建立新聊天室，提交與驗收證據將回填本節；下方 v58 紀錄僅為歷史。
+
+## 新聊天室的第一輪
+
+先唯讀 AGENTS、本文件、docs/22、docs/06；不用重跑已完成的介面測試、提交或部署。直接提供以下可點連結及本節回填的實際提交／成功 run，接著以繁體中文討論數學模型，不直接修改正式數學、不再開聊天室、不需回報原聊天室。
+
+- 公開：[遊戲 v59](https://seven1888.github.io/magic-poker-lite/?v=59)／[機率工具](https://seven1888.github.io/magic-poker-lite/probability.html?v=59)／[規則](https://seven1888.github.io/magic-poker-lite/docs/04-game-flow-and-math.html?v=59)。規則內數學仍是尚待修正的既有模型。
+- 本地：[遊戲 v59](http://127.0.0.1:4177/index.html?v=59)／[機率工具](http://127.0.0.1:4177/probability.html?v=59)／[規則](http://127.0.0.1:4177/docs/04-game-flow-and-math.html?v=59)。若4177停止，只在本專案執行 npm start。
+- Git：[專案](https://github.com/Seven1888/magic-poker-lite)／[Actions](https://github.com/Seven1888/magic-poker-lite/actions)／[HANDOFF](https://github.com/Seven1888/magic-poker-lite/blob/main/HANDOFF.md)／[發布紀錄](https://github.com/Seven1888/magic-poker-lite/blob/main/docs/06-mobile-and-deployment.md)。
+- 規格：[v59 回饋與數學審核](https://github.com/Seven1888/magic-poker-lite/blob/main/docs/22-v59-feedback-and-rtp-audit.md)／[v58](https://github.com/Seven1888/magic-poker-lite/blob/main/docs/21-v58-actions-and-no-jackpot-spec.md)／[v56 BOSS 表](https://github.com/Seven1888/magic-poker-lite/blob/main/docs/19-v56-blind-and-response-spec.md)／[v53 模型](https://github.com/Seven1888/magic-poker-lite/blob/main/docs/16-v53-holdem-spec.md)／[API](https://github.com/Seven1888/magic-poker-lite/blob/main/API-CONTRACT.md)。
+- 資產：[雙聲線語音](https://github.com/Seven1888/magic-poker-lite/tree/main/assets/action-voice-v59)／[來源](https://github.com/Seven1888/magic-poker-lite/blob/main/assets/action-voice-v59/voice-source.txt)／[按鈕圖片](https://github.com/Seven1888/magic-poker-lite/tree/main/assets/action-buttons-v54)。
+
+數學討論接續重點：win 永久繼承、成功轉 win 又入池、nonWin 中平手返還、FOLD 與退款成本均需納入同一份條件期望預算。應聯合評估 BOSS 行為與終局派彩，不沿用原百分比換壓力標籤。docs/22 第9節的終局與多步樹只是可枚舉原型；真實牌面、公開資訊下的自適應策略、自然不可輸牌、池長期穩定及舊桌版本仍未完成。不能承諾任意玩家策略都恰好99%。
+
+## 已確認回饋與本地工作（2026-10-07）
+
+使用者起初要求先累積回饋，後來明確確認一起調整；以下保留回饋順序。回饋1／2／3／5已實作，回饋4已進入數學審核，不能再用未經評估的舊百分比換分級。完整測試602／602通過，六種遊戲viewport及12組小比例布局通過，但此結果不代表RTP已修正。
+
+### 回饋 1：對手行為資訊的文字與比例配色
+
+- 使用者要求兩張截圖所示的 BOSS 對手行為資訊恢復上個版本的呈現方式，框內行為名稱與百分比文字盡量放大。
+- 原話「%數要變色」的例子是 FOLD 70%：玩家應直接看見綠色佔資訊框內機率區域的 70% 寬度；若 CALL 30%，其對應紅色區域佔其餘 30%。色塊寬度須反映實際機率。
+- 以使用者此輪附圖為回饋來源；尚未指定要回退的版本號，不自行把「上個版本」解讀為整個遊戲回退。
+- 截圖來源：`C:/Users/User/AppData/Local/Temp/codex-clipboard-ccda2e9e-f8fb-4e45-a8cf-84e19af8e3cf.png`、`C:/Users/User/AppData/Local/Temp/codex-clipboard-08ca9ef2-5e30-411d-970c-f22fd2edaf4c.png`。
+
+### 回饋 2：玩家與對手使用不同語音
+
+- 玩家 YOU 與對手 BOSS 的行動語音須使用不同聲線，讓玩家能從聲音辨識行動方。
+- 使用者尚未指定聲線、性別或口音，不自行加入這些限制；行動用語沿用英文。
+- 已本地實作：YOU 使用 Zira、BOSS 使用 David，各六個離線英文 WAV。
+
+### 回饋 3：語音輔助播放，不停頓遊戲流程
+
+- 使用者明確要求「語音是輔助，不用停頓流程」：行動語音不得阻擋遊戲流程，後續行動與發牌等流程不必等待語音播放結束。
+- 本需求取代 v58 以等待語音結束延長流程的行為；字卡的顯示時長與語音播放須解耦，不因語音尚未結束而拖延流程。
+- 已本地實作：語音與字卡計時獨立，後續行動無須等待語音結束。
+
+### 回饋 4：重新評估 RAISE 機率與整體 RTP
+
+- 使用者詢問「現在 RAISE 的時候，怎麼 BOSS 的行為概率一樣？」目前記為設計疑問，尚未確認新的機率表或修改方式。
+- v58 將玩家尺寸改為 2× POT／4× POT／ALL IN，但沿用 v56 半池／全池／大額三檔壓力表；同街 BOSS 強弱分類固定，同壓力檔使用同一組機率。
+- 壓力依 BOSS 實際可跟金額 C 與基準底池 P 比較：C ≤ 0.5P 為半池、0.5P < C ≤ P 為全池、C > P 為大額。2×、4× 與 ALL IN 若均落大額，同時顯示相同機率；短碼或最小合法額等情況仍以實際金額判定，不按按鈕名稱硬分。
+- 圖中 FOLD 70%／CALL 30% 對應激進且不強的大額壓力列。若希望不同大額有不同回應，須另行確認壓力分級或機率表，預覽與正式決策仍須一致。
+- 最新使用者拒絕沿用原概率／只改分級，要求重新評估數學。空池精確反例：SB1／BB2、補CALL1、對手只跟／過牌且無平手，期望返還比例123.9975%。四種正式策略各32玩家×64手的診斷樣本RTP為194.277%／195.418%／199.535%／183.454%，錢包與籌碼對帳誤差0；這些是有限樣本，不是長期RTP認證。
+- 已定位win永久繼承、轉win付款再次入池、nonWin平手返還未入公式，以及FOLD終局與池預算不一致。數學尚未修正，不能憑機率表任意調整掩蓋。
+- 使用者接著問「知道該怎麼調整嗎」；已驗證單一預算方向的終局求解器與多步小樹，見docs/22第9節及 `output/rtp-repair-v59-*`。終局補盲例可得99%；負機率／win-tie支援不足則明確判不可行；8種抽象策略的預算殘差≤約1.8e-15。這些是設計原型，不是正式數學已修正，未核准新BOSS百分比。完整整合仍要涵蓋真牌、公開資訊、自適應策略、自然不可輸牌與池穩定性。
+
+### 回饋 5：移除對手牌型分布
+
+- 使用者標記 `button#boss-hand-range` 的 STARTING HAND／PAIR／HIGH CARD 分布並要求移除。最新要求取代 v58 保留該分布的舊規定。
+- 已移除遊戲中的分布入口及其 worker 接線；玩家參考勝率仍保留。
+
+## v58 已發布歷史交接
 
 ## 授權與接手方式
 

@@ -16,6 +16,11 @@ const files = new Set(['index.html', 'probability.html', 'docs/04-game-flow-and-
   'assets/action-buttons-v54/prompts.txt', 'API-CONTRACT.md', 'docs/21-v58-actions-and-no-jackpot-spec.md',
   'assets/action-voice-v58/voice-source.txt']);
 for (const word of ['call','check','bet','raise','allin','fold']) files.add(`assets/action-voice-v58/${word}.wav`);
+files.add('assets/action-voice-v59/voice-source.txt');
+files.add('docs/22-v59-feedback-and-rtp-audit.md');
+for (const seat of ['player','boss']) {
+  for (const word of ['call','check','bet','raise','allin','fold']) files.add(`assets/action-voice-v59/${seat}/${word}.wav`);
+}
 for (const directory of ['src', 'styles']) {
   for (const entry of await readdir(path.join(root, directory))) {
     if (/\.(?:mjs|css)$/.test(entry) && entry !== 'fantasy.css') files.add(`${directory}/${entry}`);

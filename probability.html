@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Magic Poker Lite · 機率工具</title><link rel="icon" href="data:,"><link rel="stylesheet" href="styles/probability.css?v=58"></head>
+<html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Magic Poker Lite · 機率工具</title><link rel="icon" href="data:,"><link rel="stylesheet" href="styles/probability.css?v=59"></head>
 <body><div class="shell">
 <header class="lab-header"><h1>Magic Poker Lite</h1><nav class="header-actions" aria-label="統計操作">
 <span id="settings-state" class="settings-state" role="status">目前使用預設參數</span>
@@ -45,7 +45,7 @@
 
     <div class="report-toolbar"><nav class="result-tabs" aria-label="報表分頁"><button class="active" data-tab="overview" aria-pressed="true">總覽</button><button data-tab="comparison" aria-pressed="false">策略比較</button><button data-tab="batches" aria-pressed="false">批次帳務</button></nav><div class="result-exports"><button id="export-results" class="secondary" disabled>匯出 JSON</button><button id="export-csv" class="secondary" disabled>匯出 CSV</button></div></div>
     <nav class="study-anchor-nav" aria-label="詳細分析"><a href="#study-reports">模擬資訊與玩家勝率</a><a href="#action-coverage">玩家行為</a><a href="#player-assets">玩家統計</a><a href="#study-accounting">模型檢查</a></nav><div class="report-context"><label for="result-select">報表策略</label><select id="result-select" aria-label="選擇策略結果"><option>尚無已完成策略</option></select><span id="report-context-note">執行模擬後即可檢視該次設定與結果。</span></div>
-    <div class="metrics"><article><small>全系統 RTP 設定</small><strong id="metric-conversion">99.00<em>%</em></strong><span>抽籤分數係數，實測 RTP 另列</span></article><article class="accent"><small>玩家 RTP</small><strong id="metric-rtp">—</strong><span id="metric-ci">等待計算 95% 信賴區間</span></article><article><small>有效投入</small><strong id="metric-wager">—</strong><span>排除未匹配下注退款</span></article><article><small>總返還</small><strong id="metric-return">—</strong><span>匹配底池全額派彩，退款另計</span></article></div>
+    <div class="metrics"><article><small>結果計分係數</small><strong id="metric-conversion">99.00<em>%</em></strong><span>抽籤分數係數，不代表整體 RTP</span></article><article class="accent"><small>玩家 RTP</small><strong id="metric-rtp">—</strong><span id="metric-ci">等待計算 95% 信賴區間</span></article><article><small>有效投入</small><strong id="metric-wager">—</strong><span>排除未匹配下注退款</span></article><article><small>總返還</small><strong id="metric-return">—</strong><span>匹配底池全額派彩，退款另計</span></article></div>
     <div id="overview-tab" class="tab-panel"><section class="report"><div class="report-heading"><div><h3>返還與牌局結果</h3></div></div><div id="empty-results" class="empty-results"><span>♠</span><h3>尚無已完成模擬</h3><p>設定玩家數、手數與策略，<br>再於上方開始統計。</p></div><div id="result-body" hidden><div class="flow-cards" id="flow-cards"></div><div class="table-scroll"><table><thead><tr><th>統計項目</th><th>數值</th><th>定義</th></tr></thead><tbody id="stats-table"></tbody></table></div><div class="status-note" id="conservation"></div></div></section></div>
     <div id="comparison-tab" class="tab-panel" hidden><section class="report"><div class="report-heading"><div><h3>比較玩家策略</h3></div><span>相同設定 · 相同起始種子</span></div><p class="hint">在模擬設定選擇「比較四種策略」，比較平衡、始終跟注、積極與保守玩法。只執行一種策略時顯示一列。</p><div class="table-scroll"><table><thead><tr><th>玩家策略</th><th>手數</th><th>RTP</th><th>RTP 95% 信賴區間</th><th>總淨損益</th></tr></thead><tbody id="comparison-table"><tr><td colspan="5" class="table-empty">等待策略模擬完成。</td></tr></tbody></table></div></section></div>
     <div id="batches-tab" class="tab-panel" hidden><section class="report"><div class="report-heading"><div><h3>統計切片帳務</h3></div><span>依本次切片設定分組</span></div><div class="table-scroll"><table><thead><tr><th>批次</th><th>手數</th><th>有效投入</th><th>底池返還</th><th>RTP</th><th>累積 RTP</th></tr></thead><tbody id="batch-table"><tr><td colspan="6" class="table-empty">尚無統計資料。</td></tr></tbody></table></div></section></div>
@@ -53,5 +53,5 @@
 
   </section>
 </main></div>
-<input type="file" id="import-file" accept="application/json,.json" hidden><div id="toast" role="status"></div><script type="module" src="src/probability.mjs?v=58"></script>
+<input type="file" id="import-file" accept="application/json,.json" hidden><div id="toast" role="status"></div><script type="module" src="src/probability.mjs?v=59"></script>
 </body></html>

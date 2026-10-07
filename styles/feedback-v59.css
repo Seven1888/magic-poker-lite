@@ -1,0 +1,67 @@
+/* Full-height response colors use raw probabilities; labels never resize a slice. */
+.game .controls .button-response{container-name:boss-response;container-type:inline-size;}
+.game .controls .button-response-body{position:relative;display:flex;flex:1;min-width:0;min-height:0;align-self:stretch;isolation:isolate;}
+.game .controls .button-response-outcomes,
+.game .controls .has-response-legend .button-response-outcomes,
+.game .controls .action-slot>.has-response-legend .button-response-outcomes,
+.game .controls .raise-options .has-response-legend .button-response-outcomes{
+ position:relative;inset:auto;display:flex;flex:1 1 auto;width:100%;height:100%;min-height:0;
+ align-self:stretch;align-items:stretch;justify-content:flex-start;border-radius:3px;
+}
+.game .controls .button-response-outcome{min-width:0;overflow:hidden;gap:0;padding:0;border:0;box-shadow:inset 1px 0 #fff3;color:#fff;}
+.game .controls .button-response-outcome[data-response='fold']{background:#287349;}
+.game .controls .button-response-outcome:is([data-response='call'],[data-response='check']){background:#a63332;}
+.game .controls .button-response-outcome:is([data-response='raise'],[data-response='bet']){background:#70419a;}
+.game .controls .has-response-legend .button-response-outcome>*{display:block;}
+.game .controls .button-response-outcome>span,.game .controls .button-response-outcome>b,
+.game .controls .button-response-key>span,.game .controls .button-response-key>b{
+ color:#fff;font-weight:900;letter-spacing:0;white-space:nowrap;text-shadow:0 1px 2px #0009;
+}
+.game .controls .button-response-legend,
+.game .controls .action-slot>.button-response .button-response-legend{
+ position:absolute;inset:0;display:none;flex-direction:row;align-items:stretch;
+ gap:0;border-radius:3px;background:none;
+}
+.game .controls .button-response-key,
+.game .controls .action-slot>.button-response .button-response-key{
+ position:relative;flex:1 1 0;min-width:0;padding:0;gap:0;
+ background:none;border:0;box-shadow:none;justify-content:center;
+}
+.game .controls .button-response-key>span:before,
+.game .controls .raise-options .button-response-key>span:before,
+.game .controls .action-slot>.button-response .button-response-key>span:before{display:none;}
+.game .controls .button-response-body[data-label-layout='overlay'] .button-response-outcome>*{visibility:hidden;}
+.game .controls .button-response-body[data-label-layout='overlay'] .button-response-legend{display:flex;}
+/* A narrow color keeps its exact width. Its readable label has an action-colored
+   underline, so even a 5% slice can be identified without becoming a wider slice. */
+.game .controls .button-response-key[data-response='fold']{--response-label:#aaffca;}
+.game .controls .button-response-key:is([data-response='call'],[data-response='check']){--response-label:#ffc5bc;}
+.game .controls .button-response-key:is([data-response='raise'],[data-response='bet']){--response-label:#e5c5ff;}
+.game .controls .button-response-key>span{
+ text-decoration:underline;text-decoration-color:var(--response-label);text-decoration-thickness:3px;text-underline-offset:2px;
+ text-shadow:-1px -1px 1px #111b,1px -1px 1px #111b,-1px 1px 1px #111b,1px 1px 1px #111b;
+}
+.game .controls .action-slot>.button-response .button-response-outcome>span,
+.game .controls .action-slot>.button-response .button-response-key>span{font-size:17px;line-height:19px;color:#fff;}
+.game .controls .action-slot>.button-response .button-response-outcome>b,
+.game .controls .action-slot>.button-response .button-response-key>b{font-size:24px;line-height:25px;color:#fff;}
+.game .controls .raise-options .button-response-outcome>span,
+.game .controls .raise-options .button-response-key>span{font-size:max(20px,calc(16px / var(--stage-scale,1)));line-height:1.2;color:#fff;}
+.game .controls .raise-options .button-response-outcome>b,
+.game .controls .raise-options .button-response-key>b{font-size:max(27px,calc(22px / var(--stage-scale,1)));line-height:1.2;color:#fff;}
+
+/* The small CALL/CHECK card can contain two responses. Keep both names readable
+   on the same full-color background without changing the measured proportions. */
+@container boss-response (max-width:160px){
+ .game .controls .has-response-legend .button-response-outcome>*{visibility:hidden;}
+ .game .controls .has-response-legend .button-response-legend,
+ .game .controls .action-slot>.button-response .button-response-legend{display:flex;}
+ .game .controls .action-slot>.button-response .button-response-key>span{font-size:16px;line-height:19px;}
+ .game .controls .action-slot>.button-response .button-response-key>b{font-size:23px;line-height:25px;}
+ /* Six-character values such as 92.86% need their own fit in a half-width cell.
+    The three-outcome rule protects imported/research previews in the same card. */
+ .game .controls .action-slot>.button-response[data-long-percent='true'] .button-response-key>b{font-size:15px;}
+ .game .controls .action-slot>.button-response[data-outcome-count='3'] .button-response-key>span{font-size:12px;}
+ .game .controls .action-slot>.button-response[data-outcome-count='3'] .button-response-key>b{font-size:17px;}
+ .game .controls .action-slot>.button-response[data-outcome-count='3'][data-long-percent='true'] .button-response-key>b{font-size:10px;}
+}

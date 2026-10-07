@@ -1,8 +1,8 @@
-import {normalizeConfig, createSession, playAutomatedHand, syncOpponentBankroll, beginNewTable} from './engine.mjs?v=58';
-import {BOSS_PROFILE_IDS} from './boss-profiles.mjs?v=58';
-import {handEntryStatus} from './hand-entry.mjs?v=58';
-import {BOSS_PROFILE_VERSION} from './boss-profiles.mjs?v=58';
-import {createPoolStudySummary, collectPoolStudyAudit, finishPoolStudySummary, combinePoolStudySummaries} from './probability-pools.mjs?v=58';
+import {normalizeConfig, createSession, playAutomatedHand, syncOpponentBankroll, beginNewTable} from './engine.mjs?v=59';
+import {BOSS_PROFILE_IDS} from './boss-profiles.mjs?v=59';
+import {handEntryStatus} from './hand-entry.mjs?v=59';
+import {BOSS_PROFILE_VERSION} from './boss-profiles.mjs?v=59';
+import {createPoolStudySummary, collectPoolStudyAudit, finishPoolStudySummary, combinePoolStudySummaries} from './probability-pools.mjs?v=59';
 
 const SEATS = ['player', 'npc'];
 const STREETS = ['preflop', 'flop', 'turn', 'river'];

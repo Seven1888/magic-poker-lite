@@ -1,4 +1,10 @@
-# Magic Poker Lite v58
+# Magic Poker Lite — v59 介面與語音修正
+
+2026-10-07：本輪將 BOSS 行為框恢復整高比例配色、放大文字；YOU／BOSS 使用不同聲線，語音不阻塞流程；移除 BOSS 牌型分布並保留玩家勝率。正式數學與 BOSS 機率表未改，既有 RTP 結構性缺口另行討論；`.99` 僅為計分係數，不能視為99%整體RTP。詳見 [審核與重現證據](docs/22-v59-feedback-and-rtp-audit.md)，實際提交及部署狀態見 [發布紀錄](docs/06-mobile-and-deployment.md)。
+
+v59 入口：[公開遊戲](https://seven1888.github.io/magic-poker-lite/?v=59)／[公開機率工具](https://seven1888.github.io/magic-poker-lite/probability.html?v=59)／[本地遊戲](http://127.0.0.1:4177/index.html?v=59)／[本地工具](http://127.0.0.1:4177/probability.html?v=59)／[交接](HANDOFF.md)／[雙聲線資產](assets/action-voice-v59/)。下方保留 v58 歷史說明，被 v59 取代的呈現要求不再適用。
+
+## v58 已發布歷史版本
 
 單挑德州流程遊戲，正式模式為方案 B pooled-holdem。遊戲使用英文；機率工具與文件使用繁體中文。完整規則見 [規則與公式](docs/04-game-flow-and-math.md)，本次修改見 [v58 規格](docs/21-v58-actions-and-no-jackpot-spec.md)，實際測試與部署證據見 [發布紀錄](docs/06-mobile-and-deployment.md)。
 

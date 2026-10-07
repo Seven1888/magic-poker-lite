@@ -1,12 +1,8 @@
 const ACTIONS = Object.freeze({check: 'CHECK', call: 'CALL', bet: 'BET', raise: 'RAISE', allin: 'ALL IN', fold: 'FOLD'});
-const FILES = Object.freeze({
-  check: new URL('../assets/action-voice-v58/check.wav', import.meta.url).href,
-  call: new URL('../assets/action-voice-v58/call.wav', import.meta.url).href,
-  bet: new URL('../assets/action-voice-v58/bet.wav', import.meta.url).href,
-  raise: new URL('../assets/action-voice-v58/raise.wav', import.meta.url).href,
-  allin: new URL('../assets/action-voice-v58/allin.wav', import.meta.url).href,
-  fold: new URL('../assets/action-voice-v58/fold.wav', import.meta.url).href
-});
+const FILES = Object.freeze(Object.fromEntries(['player', 'npc'].map(actor => [actor,
+  Object.freeze(Object.fromEntries(Object.keys(ACTIONS).map(type => [type,
+    new URL(`../assets/action-voice-v59/${actor === 'player' ? 'player' : 'boss'}/${type}.wav`, import.meta.url).href])))
+])));
 
 /** Accept committed voluntary actions only; blinds, board reveals and previews have no announcement. */
 export function actionAnnouncement(event) {
@@ -18,9 +14,10 @@ export function actionAnnouncement(event) {
 }
 
 /**
- * Presentation-only FIFO. Call announce once after applyAction commits history.
+ * Presentation-only feedback. Call announce once after applyAction commits history.
  * Pass a per-table hand/history key, never the reusable legal action event.id.
- * Await announce before dealing the next street or starting the next decision.
+ * announce resolves immediately; neither the card nor speech gates the game.
+ * A new action replaces the preceding card and voice, avoiding a stale backlog.
  * unlock must run in a user gesture; setEnabled follows the sound-effects toggle.
  */
 export function createActionAnnouncements({root = globalThis.document, reducedMotion = false, holdMs = 1000} = {}) {
@@ -30,18 +27,11 @@ export function createActionAnnouncements({root = globalThis.document, reducedMo
   const stage = root.id === 'game' ? root : lookup('game');
   const schedule = view.setTimeout?.bind(view) || globalThis.setTimeout;
   const unschedule = view.clearTimeout?.bind(view) || globalThis.clearTimeout;
-  const buffers = new Map(), queue = [], seenKeys = new Map(), seenEvents = new WeakMap();
+  const buffers = new Map(), seenKeys = new Map();
+  let seenEvents = new WeakMap();
   let context, output, element, active = null, enabled = true, unlocked = false, destroyed = false;
   let played = 0, announced = 0;
-  const canSpeak = record => !destroyed && !record.aborted && enabled && unlocked && !doc.hidden && record.voiceAllowed;
-
-  function wait(record, ms) {
-    return new Promise(resolve => {
-      let timer;
-      const finish = () => { unschedule(timer); record.cleanups.delete(finish); resolve(); };
-      record.cleanups.add(finish); timer = schedule(finish, ms);
-    });
-  }
+  const canSpeak = record => active === record && !destroyed && !record.aborted && enabled && unlocked && !doc.hidden && record.voiceAllowed;
   function show(record) {
     if (!stage || !doc.createElement) return;
     if (!element) {
@@ -63,15 +53,16 @@ export function createActionAnnouncements({root = globalThis.document, reducedMo
     if (element) element.hidden = true;
     if (stage?.dataset) delete stage.dataset.actionAnnouncement;
   }
-  function loadBuffer(type) {
+  function loadBuffer(actor, type) {
     if (!context?.decodeAudioData || !view.fetch) return Promise.resolve(null);
-    if (!buffers.has(type)) {
-      buffers.set(type, Promise.resolve().then(() => view.fetch(FILES[type])).then(response => {
+    const key = `${actor}:${type}`;
+    if (!buffers.has(key)) {
+      buffers.set(key, Promise.resolve().then(() => view.fetch(FILES[actor][type])).then(response => {
         if (!response.ok) throw new Error('Action voice unavailable.');
         return response.arrayBuffer();
       }).then(bytes => context.decodeAudioData(bytes)).catch(() => null));
     }
-    return buffers.get(type);
+    return buffers.get(key);
   }
   function playBuffer(record, buffer) {
     if (!canSpeak(record) || context?.state !== 'running') return Promise.resolve(false);
@@ -104,8 +95,14 @@ export function createActionAnnouncements({root = globalThis.document, reducedMo
         utterance.onend = null; utterance.onerror = null; resolve();
       };
       const stop = () => { if (!finished) { try { speech.cancel(); } catch {} finish(); } };
-      utterance.lang = 'en-US'; utterance.rate = .95; utterance.pitch = 1; utterance.volume = 1;
-      const voice = speech.getVoices?.().find(item => /^en[-_]US$/i.test(item.lang)) || speech.getVoices?.().find(item => /^en\b/i.test(item.lang));
+      const isPlayer = record.action.actor === 'player';
+      utterance.lang = 'en-US'; utterance.rate = isPlayer ? 1 : .94; utterance.pitch = isPlayer ? 1.12 : .78; utterance.volume = 1;
+      const englishVoices = (speech.getVoices?.() || []).filter(item => /^en(?:[-_]|$)/i.test(item.lang));
+      const playerVoice = englishVoices.find(item => /zira/i.test(item.name || '')) || englishVoices[0];
+      const voiceId = item => item?.voiceURI || item?.name;
+      const otherVoices = englishVoices.filter(item => item !== playerVoice && (!voiceId(item) || voiceId(item) !== voiceId(playerVoice)));
+      const bossVoice = otherVoices.find(item => /david/i.test(item.name || '')) || otherVoices[0] || playerVoice;
+      const voice = isPlayer ? playerVoice : bossVoice;
       if (voice) utterance.voice = voice;
       utterance.onend = finish; utterance.onerror = finish;
       record.cleanups.add(stop); record.stopVoice = stop;
@@ -115,47 +112,52 @@ export function createActionAnnouncements({root = globalThis.document, reducedMo
   }
   async function speak(record) {
     if (!canSpeak(record)) return;
-    // Preloaded local recordings are consistent across devices. A failed/slow
-    // download falls back to the browser's English voice without blocking play.
+    // Preloaded seat-specific recordings stay consistent across devices. A slow
+    // download gets a bounded fallback; a replaced action can never speak later.
     let loadingTimer;
-    const loadingTimeout = new Promise(resolve => { loadingTimer = schedule(() => resolve(null), 1200); });
+    const loadingTimeout = new Promise(resolve => { loadingTimer = schedule(() => resolve(null), 350); });
     const stopLoading = () => unschedule(loadingTimer);
     record.cleanups.add(stopLoading);
-    const buffer = await Promise.race([loadBuffer(record.action.type), loadingTimeout, record.cancelled]);
+    const buffer = await Promise.race([loadBuffer(record.action.actor, record.action.type), loadingTimeout, record.cancelled]);
     stopLoading(); record.cleanups.delete(stopLoading);
     if (!canSpeak(record)) return;
     if (buffer && context?.state === 'running' && await playBuffer(record, buffer)) return;
     await speakFallback(record);
   }
-  function pump() {
-    if (destroyed || active || !queue.length) return;
-    const record = queue.shift(); active = record; show(record);
-    Promise.race([Promise.all([wait(record, Math.max(800, Number(holdMs) || 1000)), speak(record)]), record.cancelled])
-      .then(() => {
-        if (active !== record) return;
-        for (const cleanup of [...record.cleanups]) cleanup();
-        active = null; hide(); record.resolve(!record.aborted); pump();
-      }).catch(() => {
-        // Audio support must never strand the game after its action committed.
-        if (active !== record) return;
-        for (const cleanup of [...record.cleanups]) cleanup();
-        active = null; hide(); record.resolve(false); pump();
-      });
+  function releaseIfFinished(record) {
+    if (active === record && record.cardDone && record.voiceDone) active = null;
+  }
+  function present(record) {
+    active = record; show(record);
+    let timer;
+    const clearCardTimer = () => { unschedule(timer); record.cleanups.delete(clearCardTimer); };
+    record.cleanups.add(clearCardTimer);
+    timer = schedule(() => {
+      clearCardTimer(); record.cardDone = true;
+      if (active === record) hide();
+      releaseIfFinished(record);
+    }, Math.max(800, Number(holdMs) || 1000));
+    // This task is detached from the caller: audio failures and durations cannot
+    // retain the game's busy state or delay cards, actions, and settlement.
+    speak(record).catch(() => {}).finally(() => {
+      record.voiceDone = true; releaseIfFinished(record);
+    });
   }
   function announce(event, {key} = {}) {
     const action = actionAnnouncement(event);
     if (!action || destroyed) return Promise.resolve(false);
     if (key !== undefined && seenKeys.has(String(key))) return seenKeys.get(String(key));
     if (seenEvents.has(event)) return seenEvents.get(event);
-    let resolve, abort;
-    const promise = new Promise(done => { resolve = done; });
-    const record = {action, resolve, voiceAllowed: enabled && unlocked, aborted: false, cleanups: new Set(),
-      cancelled: new Promise(done => { abort = done; }), abort: () => abort(null)};
+    const promise = Promise.resolve(!doc.hidden);
     seenEvents.set(event, promise);
     if (key !== undefined) seenKeys.set(String(key), promise);
     // Returning from the background never replays actions performed while hidden.
-    if (doc.hidden) { resolve(false); return promise; }
-    queue.push(record); pump(); return promise;
+    if (doc.hidden) return promise;
+    cancel();
+    let abort;
+    const record = {action, voiceAllowed: enabled && unlocked, aborted: false, cardDone: false, voiceDone: false, cleanups: new Set(),
+      cancelled: new Promise(done => { abort = done; }), abort: () => abort(null)};
+    present(record); return promise;
   }
   async function unlock() {
     if (destroyed || doc.hidden) return false;
@@ -167,7 +169,7 @@ export function createActionAnnouncements({root = globalThis.document, reducedMo
       }
       if (context?.state === 'suspended') await context.resume();
       unlocked = context?.state === 'running' || !!view.speechSynthesis;
-      if (unlocked) for (const type of Object.keys(FILES)) loadBuffer(type);
+      if (unlocked) for (const actor of Object.keys(FILES)) for (const type of Object.keys(ACTIONS)) loadBuffer(actor, type);
     } catch { unlocked = !!view.speechSynthesis; }
     return unlocked;
   }
@@ -175,18 +177,16 @@ export function createActionAnnouncements({root = globalThis.document, reducedMo
     enabled = !!value;
     if (!enabled) {
       if (active) { active.voiceAllowed = false; active.stopVoice?.(); }
-      for (const record of queue) record.voiceAllowed = false;
     }
   }
   function cancel({resetKeys = false} = {}) {
-    const records = active ? [active, ...queue] : [...queue];
-    active = null; queue.length = 0; hide();
+    const records = active ? [active] : [];
+    active = null; hide();
     for (const record of records) {
       record.aborted = true; record.abort();
       for (const cleanup of [...record.cleanups]) cleanup();
-      record.resolve(false);
     }
-    if (resetKeys) seenKeys.clear();
+    if (resetKeys) { seenKeys.clear(); seenEvents = new WeakMap(); }
   }
   function suspend() {
     cancel(); unlocked = false;
@@ -202,5 +202,5 @@ export function createActionAnnouncements({root = globalThis.document, reducedMo
     if (context && context.state !== 'closed') { try { Promise.resolve(context.close()).catch(() => {}); } catch {} }
   }
   return {announce, unlock, setEnabled, cancel, destroy,
-    getState: () => ({enabled, unlocked, active: active?.action || null, queued: queue.length, announced, played, destroyed})};
+    getState: () => ({enabled, unlocked, active: active?.action || null, queued: 0, announced, played, destroyed})};
 }

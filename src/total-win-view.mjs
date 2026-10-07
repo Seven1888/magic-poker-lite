@@ -1,4 +1,4 @@
-import {atGameSpeed} from './presentation-timing.mjs?v=58';
+import {atGameSpeed} from './presentation-timing.mjs?v=59';
 
 const money = value => value.toLocaleString('en-US', {maximumFractionDigits: 6});
 

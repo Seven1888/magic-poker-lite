@@ -1,44 +1,41 @@
-import {createSession,startHand,legalActions,applyAction,getActionDistribution,sampleDistribution} from './engine.mjs?v=58';
-import {loadConfig,CONFIG_KEY,money,pct,esc,cardMarkup,cardText} from './shared.mjs?v=58';
-import {GAME_LABELS as LABELS,GAME_STREETS as STREETS,handName,translateError} from './game-text.mjs?v=58';
-import {createPotView} from './pot-view.mjs?v=58';
-import {fitStage} from './stage-fit.mjs?v=58';
-import {getHudSnapshot} from './hud-state.mjs?v=58';
-import {createGameEffects} from './game-effects.mjs?v=58';
-import {renderBetPresets,updateBetSelection,setupEntryFeatures} from './entry-view.mjs?v=58';
-import {betOptions,tableConfig} from './entry-model.mjs?v=58';
-import {handEntryStatus} from './hand-entry.mjs?v=58';
-import {loadPlayerProfile,savePlayerProfile} from './outcome-profile.mjs?v=58';
-import {createOutcomePools,normalizeOutcomePools} from './outcome-pools.mjs?v=58';
-import {createEntryEncounter} from './entry-encounter.mjs?v=58';
-import {icon} from './ui-icons.mjs?v=58';
-import {getCurrentHandView} from './hand-view.mjs?v=58';
-import {decisionMotion} from './decision-motion.mjs?v=58';
-import {getShowdownView} from './showdown-view.mjs?v=58';
-import {GAME_SPEED,atGameSpeed} from './presentation-timing.mjs?v=58';
-import {createBankrollView} from './bankroll-view.mjs?v=58';
-import {renderWinRate,equityPercent} from './win-rate-view.mjs?v=58';
-import {createHoldemEquityController} from './holdem-equity-controller.mjs?v=58';
-import {responseActionLabel,captureResponseSource,responseSourceMatches,isCertainResponse} from './action-response-view.mjs?v=58';
-import {boardCardView,nextBoardReveal,tableDeckCounts} from './board-presentation.mjs?v=58';
-import {createResponseFlight} from './response-flight-view.mjs?v=58';
-import {createActionFlow} from './action-flow-view.mjs?v=58';
-import {createBlindDraw} from './blind-draw-view.mjs?v=58';
-import {createTotalWin} from './total-win-view.mjs?v=58';
-import {createBossActionView} from './boss-action-view.mjs?v=58';
-import {renderBossIdentity,preloadBossScenes,waitForBossScene} from './boss-scene-view.mjs?v=58';
-import {createBossRangeView} from './boss-range-view.mjs?v=58';
-import {createBossRangeController} from './boss-range-controller.mjs?v=58';
-import {bossRangeContext} from './boss-range-public.mjs?v=58';
-import {createEquityMomentum} from './equity-momentum.mjs?v=58';
-import {renderCardRow} from './card-row-view.mjs?v=58';
-import {getBossProbabilityScenarios} from './boss-profiles.mjs?v=58';
-import {bossProbabilityScenariosHtml} from './boss-probability-view.mjs?v=58';
-import {buyInFromWallet,cashOutToWallet,snapshotTableSession,closeSavedTable} from './table-wallet.mjs?v=58';
-import {playBuyInFlight} from './buyin-flight.mjs?v=58';
-import {createActionAnnouncements} from './action-announcement.mjs?v=58';
-import {totalBalance} from './balance-display.mjs?v=58';
-import {ACTION_ART,chipIcon,actionResponsePreview,actionResponseMarkup,raiseMenuChoices,raiseSizeLabel} from './action-options-view.mjs?v=58';
+import {createSession,startHand,legalActions,applyAction,getActionDistribution,sampleDistribution} from './engine.mjs?v=59';
+import {loadConfig,CONFIG_KEY,money,pct,esc,cardMarkup,cardText} from './shared.mjs?v=59';
+import {GAME_LABELS as LABELS,GAME_STREETS as STREETS,handName,translateError} from './game-text.mjs?v=59';
+import {createPotView} from './pot-view.mjs?v=59';
+import {fitStage} from './stage-fit.mjs?v=59';
+import {getHudSnapshot} from './hud-state.mjs?v=59';
+import {createGameEffects} from './game-effects.mjs?v=59';
+import {renderBetPresets,updateBetSelection,setupEntryFeatures} from './entry-view.mjs?v=59';
+import {betOptions,tableConfig} from './entry-model.mjs?v=59';
+import {handEntryStatus} from './hand-entry.mjs?v=59';
+import {loadPlayerProfile,savePlayerProfile} from './outcome-profile.mjs?v=59';
+import {createOutcomePools,normalizeOutcomePools} from './outcome-pools.mjs?v=59';
+import {createEntryEncounter} from './entry-encounter.mjs?v=59';
+import {icon} from './ui-icons.mjs?v=59';
+import {getCurrentHandView} from './hand-view.mjs?v=59';
+import {decisionMotion} from './decision-motion.mjs?v=59';
+import {getShowdownView} from './showdown-view.mjs?v=59';
+import {GAME_SPEED,atGameSpeed} from './presentation-timing.mjs?v=59';
+import {createBankrollView} from './bankroll-view.mjs?v=59';
+import {renderWinRate,equityPercent} from './win-rate-view.mjs?v=59';
+import {createHoldemEquityController} from './holdem-equity-controller.mjs?v=59';
+import {responseActionLabel,captureResponseSource,responseSourceMatches,isCertainResponse} from './action-response-view.mjs?v=59';
+import {boardCardView,nextBoardReveal,tableDeckCounts} from './board-presentation.mjs?v=59';
+import {createResponseFlight} from './response-flight-view.mjs?v=59';
+import {createActionFlow} from './action-flow-view.mjs?v=59';
+import {createBlindDraw} from './blind-draw-view.mjs?v=59';
+import {createTotalWin} from './total-win-view.mjs?v=59';
+import {createBossActionView} from './boss-action-view.mjs?v=59';
+import {renderBossIdentity,preloadBossScenes,waitForBossScene} from './boss-scene-view.mjs?v=59';
+import {createEquityMomentum} from './equity-momentum.mjs?v=59';
+import {renderCardRow} from './card-row-view.mjs?v=59';
+import {getBossProbabilityScenarios} from './boss-profiles.mjs?v=59';
+import {bossProbabilityScenariosHtml} from './boss-probability-view.mjs?v=59';
+import {buyInFromWallet,cashOutToWallet,snapshotTableSession,closeSavedTable} from './table-wallet.mjs?v=59';
+import {playBuyInFlight} from './buyin-flight.mjs?v=59';
+import {createActionAnnouncements} from './action-announcement.mjs?v=59';
+import {totalBalance} from './balance-display.mjs?v=59';
+import {ACTION_ART,chipIcon,actionResponsePreview,actionResponseMarkup,raiseMenuChoices,raiseSizeLabel} from './action-options-view.mjs?v=59';
 document.documentElement.style.setProperty('--game-speed',String(GAME_SPEED));
 const $=id=>document.getElementById(id);
 // Stable player controls; engine actions and opponent response types stay unchanged.
@@ -75,7 +72,6 @@ const announcements=createActionAnnouncements({root:document,reducedMotion:reduc
 const blindDraw=createBlindDraw({root:document,effects,reducedMotion:reduceMotion,actionFlow});
 const totalWin=createTotalWin({root:document,effects,reducedMotion:reduceMotion});
 const bossAction=createBossActionView({root:document,reducedMotion:reduceMotion});
-const bossRange=createBossRangeController({view:createBossRangeView({root:document})});
 const playerEquity=createHoldemEquityController({render:renderPlayerEquity});
 preloadBossScenes(document);
 const bankrollView=createBankrollView({root:document});
@@ -269,14 +265,6 @@ async function newHand(){
 }
 $('next-hand').onclick=newHand;
 const visibleStreet=()=>shownBoard>=5?'river':shownBoard===4?'turn':shownBoard>0?'flop':'preflop';
-function updateBossRange(){
- const known=!!hand&&dealt.player===2&&dealt.npc===2;
- const board=known?hand.board.slice(0,shownBoard):[];
- const ready=known&&hand.status==='playing'&&shownReveal===0&&shownBoard===hand.board.length;
- bossRange.update({visible:ready,busy,
-  context:known?bossRangeContext({playerHole:hand.holes.player.slice(0,dealt.player)}):null,
-  board});
-}
 function renderPlayerEquity({visible,calculating,result,error}){
  if(shownReveal>0&&hand?.result?.reason==='showdown')return;
  const ring=$('player-win-rate');
@@ -314,7 +302,6 @@ function replaceCardFace(element,card,options={}){
   element.replaceChildren(...face.childNodes);
 }
 function updateShowdownView(){
-  if(shownReveal>0)updateBossRange();
   const panel=$('showdown-preview');
   $('game').dataset.revealed=String(shownReveal);
   if(!hand||hand.result?.reason!=='showdown'||shownReveal===0||shownBoard!==5){
@@ -373,7 +360,6 @@ function updateVisibleCards(){
   document.querySelectorAll('#streets [data-street]').forEach((el,i)=>{el.classList.toggle('current',!!hand&&i===current);el.classList.toggle('past',!!hand&&i<current);});
   document.querySelectorAll('[data-board-group]').forEach(el=>{const i=['preflop','flop','turn','river'].indexOf(el.dataset.boardGroup);el.classList.toggle('current',!!hand&&i===current);el.classList.toggle('past',!!hand&&i<current);});
   updateShowdownView();
-  updateBossRange();
   updatePlayerEquity();
 }
 /** Play only changes already committed by the engine, in visible table order. */
@@ -426,7 +412,7 @@ async function presentHand({releaseResponse=false}={}){
   render();
 }
 function render({beforeBlinds=false}={}){
-  if(hand!==shownHand){equityMomentum.reset();setMusicPhase('table');bossRange.reset();playerEquity.reset();shownHand=hand;shownBoard=0;boardDealt=0;shownReveal=0;dealt={player:0,npc:0};settlementReleased=false;presentedCredits={player:0,npc:0};responseSource=null;responseDecision=null;activeNpcDistribution=null;responseFlight.clear();totalWin.clear();bossAction.clear();delete $('game').dataset.npcFolded;bankrollView.clearChanges();}
+  if(hand!==shownHand){equityMomentum.reset();setMusicPhase('table');playerEquity.reset();shownHand=hand;shownBoard=0;boardDealt=0;shownReveal=0;dealt={player:0,npc:0};settlementReleased=false;presentedCredits={player:0,npc:0};responseSource=null;responseDecision=null;activeNpcDistribution=null;responseFlight.clear();totalWin.clear();bossAction.clear();delete $('game').dataset.npcFolded;bankrollView.clearChanges();}
   const active=hand?.status==='playing';const handView=getCurrentHandView(hand?.holes.player.slice(0,dealt.player)||[],hand?.board.slice(0,shownBoard)||[]);const best=handView.highlighted;
   if(hand)blindDraw.renderSeat({isSmall:hand.smallBlind==='player'});else if(!session)blindDraw.clear();
   const h=hud();$('game').dataset.busy=String(busy);
@@ -471,7 +457,7 @@ function renderActions(){
  root.querySelectorAll('[data-action]').forEach(button=>button.onclick=()=>{if(button.dataset.action==='choose-size'){raiseMenuOpen=!raiseMenuOpen;renderActions();}else playerAct(button.dataset.action);});
  root.querySelectorAll('[data-size-action]').forEach(button=>button.onclick=()=>{const id=button.dataset.sizeAction;raiseMenuOpen=false;playerAct(id);});
  responseFlight.update(activeNpcDistribution||responseSource?.distribution||[],responseDecision||{});
- updateBossRange();renderStreetOdds();
+ renderStreetOdds();
 }
 function renderStreetOdds(){
  const button=$('street-odds-button');
@@ -509,14 +495,14 @@ function actionOddsText(distribution,separator=' · '){
 }
 async function playerAct(requested){
   if(busy||hand?.actor!=='player'||hand.status!=='playing')return;
-  try{busy=true;bossRange.close();phase='YOUR MOVE';lastResponse=null;const chosen=legalActions(hand).find(a=>a.id===requested||a.type===requested);const type=chosen?.type;if(!chosen)throw new Error('This action is not available.');
+  try{busy=true;phase='YOUR MOVE';lastResponse=null;const chosen=legalActions(hand).find(a=>a.id===requested||a.type===requested);const type=chosen?.type;if(!chosen)throw new Error('This action is not available.');
     const before=hand.board.length,historyStart=hand.history.length;
     pendingPlayerAction={...chosen};responseSource=captureResponseSource(hand,chosen);responseDecision=null;$('game').dataset.chosenAction=type;renderActions();paintDistribution();
     setTableCue('action',`YOU ${PLAYER_ACTION_LABELS[type]}`,{seat:'player',detail:chosen.amount?'CHIPS TO THE POT':type==='check'?'NO CHIPS REQUIRED':'END THIS HAND'});
     applyAction(hand,chosen);saveSettledPlayer();phase=hand.board.length===5&&before<4?'ALL-IN · RUNNING THE BOARD':hand.board.length>before?`DEAL ${STREETS[hand.street]}`:hand.status==='settled'?'SETTLING':'CHIPS TO POT';
     paintDistribution();
     const actionEvent=hand.history.slice(historyStart).find(event=>event.actor==='player');
-    await announcements.announce(actionEvent,{key:`${hand.handNumber}:${historyStart}`});
+    announcements.announce(actionEvent,{key:`${hand.handNumber}:${historyStart}`});
     if(chosen.amount)setTableCue('contribution',`YOU ${PLAYER_ACTION_LABELS[type]}`,{seat:'player',detail:'CHIPS TO THE POT'});
     // Commit once, then finish the player's chip arrival before presenting the
     // opponent's decision. Re-rendered chosen-slot badges retain this preview.
@@ -541,7 +527,6 @@ async function continuePlay(){
     responseDecision={phase:hasDraw?'drawing':'result',selected:hasDraw?null:selected.type};
     if(hasDraw&&!source)responseFlight.show(distribution,responseDecision);if(!hasDraw)responseFlight.clear();
     renderActions();paintDistribution();
-    updateBossRange();
     if(hasDraw){
       const target=responseFlight.target();
       const marker=target?document.createElement('span'):null;
@@ -564,7 +549,7 @@ async function continuePlay(){
     // Use only the committed history event. Paid action text starts from the
     // same contribution notification as the actual chips; free actions start now.
     const actionEvent=hand.history.slice(historyStart).find(event=>event.actor==='npc');
-    await announcements.announce(actionEvent,{key:`${hand.handNumber}:${historyStart}`});
+    announcements.announce(actionEvent,{key:`${hand.handNumber}:${historyStart}`});
     const actionPresentation=bossAction.commit(actionEvent);
     $('game').dataset.deciding='false';paintDistribution();
     if(selected.type==='fold'){await effects.discardCards([...$('npc-cards').children]);$('game').dataset.npcFolded='true';}
