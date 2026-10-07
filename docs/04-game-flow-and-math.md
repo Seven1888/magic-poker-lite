@@ -1,6 +1,6 @@
 # Magic Poker Lite 規則與公式
 
-v55／2026-10-07：本地驗證完成，Git／公開發布待確認。八項呈現以 [v55規格](18-v55-feedback-spec.md) 優先於 v54；正式模型pooled-holdem及v53數學／機率規格不改。遊戲與數學見 [v53規格](16-v53-holdem-spec.md)，驗證與發布證據見 [驗證紀錄](06-mobile-and-deployment.md)。
+v55／2026-10-07：本地驗證完成，已推送 Git 並部署 Pages，公開內容驗收通過。八項呈現以 [v55規格](18-v55-feedback-spec.md) 優先於 v54；正式模型pooled-holdem及v53數學／機率規格不改。遊戲與數學見 [v53規格](16-v53-holdem-spec.md)，驗證與發布證據見 [驗證紀錄](06-mobile-and-deployment.md)。
 
 ## 1. 正式模型與一手流程
 

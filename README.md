@@ -1,6 +1,6 @@
 # Magic Poker Lite
 
-v55：依八項回饋調整抽盲、操作資訊、總餘額、原位買入堆疊及兩秒收款表演。**本地驗證完成：560／560 測試通過，建置 233 檔；Git／公開發布待確認。** 最新呈現以 [v55 規格](docs/18-v55-feedback-spec.md) 為準，優先於 v54；正式 `pooled-holdem` 模型、.99 計分、個人雙池／CD／JP 與對手機率均沿用 v53。實際驗證與發布見 [紀錄](docs/06-mobile-and-deployment.md)；v54 的 552 項測試與公開驗收保留為歷史證據，不當作 v55 結果。
+v55：依八項回饋調整抽盲、操作資訊、總餘額、原位買入堆疊及兩秒收款表演。**本地驗證完成：560／560 測試通過，建置 233 檔；已推送 Git 並部署 Pages，公開內容驗收通過。** 最新呈現以 [v55 規格](docs/18-v55-feedback-spec.md) 為準，優先於 v54；正式 `pooled-holdem` 模型、.99 計分、個人雙池／CD／JP 與對手機率均沿用 v53。實際驗證與發布見 [紀錄](docs/06-mobile-and-deployment.md)；v54 的 552 項測試與公開驗收保留為歷史證據，不當作 v55 結果。
 
 ## 玩法與資產
 
@@ -43,4 +43,4 @@ v55：依八項回饋調整抽盲、操作資訊、總餘額、原位買入堆�
 - Git：[Repository](https://github.com/Seven1888/magic-poker-lite)／[Actions](https://github.com/Seven1888/magic-poker-lite/actions)
 - 對外入口：[遊戲](https://seven1888.github.io/magic-poker-lite/?v=55)／[機率工具](https://seven1888.github.io/magic-poker-lite/probability.html?v=55)／[規則與公式](https://seven1888.github.io/magic-poker-lite/docs/04-game-flow-and-math.html?v=55)
 
-v55 目前本地驗證完成，Git／公開發布待確認。完成交付後依使用者授權開新聊天室；新聊天室先讀文件、提供相關連結，再等待新需求，不重做已完成實作、推送或部署。遊戲英文，工具、文件及溝通繁體中文；只修改 Magic Poker Lite。
+v55 目前本地驗證完成，已推送 Git 並部署 Pages，公開內容驗收通過。完成交付後依使用者授權開新聊天室；新聊天室先讀文件、提供相關連結，再等待新需求，不重做已完成實作、推送或部署。遊戲英文，工具、文件及溝通繁體中文；只修改 Magic Poker Lite。

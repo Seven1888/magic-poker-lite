@@ -2,7 +2,7 @@
 
 ## 範圍與授權（2026-10-07）
 
-本輪為 v55 八項呈現回饋，最新 [v55 規格](docs/18-v55-feedback-spec.md) 優先於 v54。使用者已授權全部調整、驗證、推送 Git，再開新聊天室交接並由新聊天室提供相關連結。目前本地驗證完成，Git／公開發布待確認；實際證據見發布紀錄，不沿用 v54 的通過數字。交付後新聊天室先讀文件、提供連結、等待新需求，不重做已完成的實作、提交或部署。沿用現有 checkout，不重設其他修改。只修改 Magic Poker Lite；同層 Boss Duel、Hands Up、Final Table 永久唯讀，不在原目錄執行遊戲、建置、測試或寫入快取。
+本輪為 v55 八項呈現回饋，最新 [v55 規格](docs/18-v55-feedback-spec.md) 優先於 v54。使用者已授權全部調整、驗證、推送 Git，再開新聊天室交接並由新聊天室提供相關連結。目前本地驗證完成，已推送 Git 並部署 Pages，公開內容驗收通過；實際證據見發布紀錄，不沿用 v54 的通過數字。交付後新聊天室先讀文件、提供連結、等待新需求，不重做已完成的實作、提交或部署。沿用現有 checkout，不重設其他修改。只修改 Magic Poker Lite；同層 Boss Duel、Hands Up、Final Table 永久唯讀，不在原目錄執行遊戲、建置、測試或寫入快取。
 
 遊戲英文；機率工具、文件及溝通繁體中文。最新使用者確認優先於舊文件。當前正式規格見 [v55 呈現規格](docs/18-v55-feedback-spec.md)、[v53 遊戲與數學](docs/16-v53-holdem-spec.md)、[規則與公式](docs/04-game-flow-and-math.md)、[API](API-CONTRACT.md)；[v54 呈現規格](docs/17-v54-presentation-spec.md) 保留未被 v55 取代的既有行為。[發布紀錄](docs/06-mobile-and-deployment.md) 只記實際證據，本地整合與發布完成須分開標示。
 
