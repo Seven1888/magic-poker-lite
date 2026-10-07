@@ -1,8 +1,8 @@
-import {atGameSpeed} from './presentation-timing.mjs?v=53';
+import {atGameSpeed} from './presentation-timing.mjs?v=54';
 
 const amount = value => value.toLocaleString('en-US', {maximumFractionDigits: 6});
 const CENTER = {x: 200, y: 427, size: 104};
-const SEAT = {x: 359, y: 699, size: 38};
+const SEAT = {x: 359, y: 667, size: 38};
 
 /** Present the engine's already chosen blind. Never draws or posts chips. */
 export function createBlindDraw({root = globalThis.document, effects, reducedMotion = false} = {}) {

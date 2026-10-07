@@ -177,3 +177,29 @@ test('coins cannot survive cancellation, a hidden page or a switch to a non-winn
   const reduced = fixture({reducedMotion: true}); await reduced.api.start(result());
   assert.equal(reduced.moneyLayer.children.length, 0); assert.equal(reduced.moneyLayer.hidden, true);
 });
+
+test('controlled TOTAL WIN follows credited returns exactly and never runs ahead on a second clock', async () => {
+  const f = fixture(), settled = result(20, 10), before = JSON.stringify(settled);
+  const waiting = f.api.start(settled, {followProgress: true});
+  assert.equal(f.amount.textContent, '0'); assert.equal(f.pending.size, 0);
+  f.advance(5000); assert.equal(f.amount.textContent, '0');
+  for (const value of [1, 2.25, 10, 18]) {
+    f.api.setAmount(settled, value); assert.equal(f.amount.textContent, String(value));
+  }
+  f.api.setAmount(settled, 2); assert.equal(f.amount.textContent, '18', 'late progress cannot roll back an arrived return');
+  f.root.hidden = true; f.events.get('visibilitychange')();
+  assert.equal(f.amount.textContent, '18', 'hidden pages still follow payout progress, including a later JP');
+  f.api.setAmount(settled, 20, {complete: true}); assert.equal(await waiting, true);
+  assert.equal(f.amount.textContent, '20'); assert.equal(f.panel.dataset.phase, 'settled');
+  assert.equal(f.api.start(settled), waiting, 'the controller finishing settlement cannot restart the count');
+  assert.equal(JSON.stringify(settled), before);
+});
+
+test('controlled split returns also count with their bankroll and clear releases pending external work', async () => {
+  const f = fixture({reducedMotion: true}), settled = result(10, 0, 'tie');
+  const waiting = f.api.start(settled, {followProgress: true});
+  f.api.setAmount(settled, 4); assert.equal(f.amount.textContent, '4');
+  assert.equal(f.panel.dataset.outcome, 'split');
+  f.api.setAmount(settled, 10, {complete: true}); assert.equal(await waiting, true);
+  const next = f.api.start(result(200), {followProgress: true}); f.api.clear(); assert.equal(await next, false);
+});

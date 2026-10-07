@@ -1,6 +1,6 @@
-import {esc} from './shared.mjs?v=53';
-import {LAB_POLICIES} from './probability-text.mjs?v=53';
-import {poolSummaryTable} from './probability-report-view.mjs?v=53';
+import {esc} from './shared.mjs?v=54';
+import {LAB_POLICIES} from './probability-text.mjs?v=54';
+import {poolSummaryTable} from './probability-report-view.mjs?v=54';
 
 const finite = value => typeof value === 'number' && Number.isFinite(value);
 const number = (value, digits = 6) => finite(value)

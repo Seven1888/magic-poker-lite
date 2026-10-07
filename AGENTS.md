@@ -2,9 +2,9 @@
 
 ## 範圍與授權（2026-10-07）
 
-使用者要求全部調整完成後一併更新 Git、提供所有對外連結，再開新聊天室。已授權完成後提交並推送 main，由既有 Actions 建置及部署 Pages。沿用現有 checkout，不重設其他修改。只修改 Magic Poker Lite；同層 Boss Duel、Hands Up、Final Table 永久唯讀，不在原目錄執行遊戲、建置、測試或寫入快取。
+使用者現已明確要求完成全部 11 項回饋，一起更新 Git，部署後另開新聊天室交接並提供全部連結。包含先前已在本地完成的重整離桌修正；完成驗證後可提交並推送 main，由既有 Actions 部署 Pages，不需重問授權。沿用現有 checkout，不重設其他修改。只修改 Magic Poker Lite；同層 Boss Duel、Hands Up、Final Table 永久唯讀，不在原目錄執行遊戲、建置、測試或寫入快取。
 
-遊戲英文；機率工具、文件及溝通繁體中文。最新使用者確認優先於舊文件。當前正式規格見 [v53 規格](docs/16-v53-holdem-spec.md)、[規則與公式](docs/04-game-flow-and-math.md)、[API](API-CONTRACT.md)；[發布紀錄](docs/06-mobile-and-deployment.md) 只記實際證據。本地整合與發布完成須分開標示。
+遊戲英文；機率工具、文件及溝通繁體中文。最新使用者確認優先於舊文件。當前正式規格見 [v54 呈現規格](docs/17-v54-presentation-spec.md)、[v53 遊戲與數學](docs/16-v53-holdem-spec.md)、[規則與公式](docs/04-game-flow-and-math.md)、[API](API-CONTRACT.md)；[發布紀錄](docs/06-mobile-and-deployment.md) 只記實際證據。目前 v54 本地驗證完成，待 Git／Pages 發布；本地整合與發布完成須分開標示。
 
 ## 已選方案 B
 
@@ -39,7 +39,9 @@ FOLD／CALL／RAISE：激進強 5/25/70、不激進強 5/65/30；激進不強 45
 
 ## 保存、研究與驗證
 
-profile key 沿用 `magic-poker-lite.player.v1`、資料 version 2：一次保存錢包、三桶雙池、CD、上一對手及 table。table 包含未完手、RNG、街道快照、結果控制器和布局；重整繼續原手，不回退至上手、不重買入。接受舊 version 1 餘額／池。config 與 profile 分開，設定匯入不覆蓋遊戲資產；離桌清空 table 防重複兌回。儲存失敗須提示。
+profile key 沿用 `magic-poker-lite.player.v1`、資料 version 2：一次保存錢包、三桶雙池、CD、上一對手及 table。table 包含未完手、RNG、街道快照、結果控制器和布局，供載入時結束舊桌帳務；重整或重開頁面回買入入口。未完成手即使可免費 CHECK 或正在等 NPC，也按玩家離桌棄牌結算；已全下待 NPC 時用保存 RNG 正常抽回應並完成結算。退還未匹配投入，結算後餘碼兌回 BALANCE 一次；買入動畫尚未開手則全額兌回。保留雙池、CD、上一型和錢包，不重設初始資產。
+
+`endHandForTableExit(hand)` 負責引擎結算；`closeSavedTable(profile)` 是不讀寫 storage 的純 profile 轉換。snapshot／restore 底層 API 保留，但 UI 不接續舊牌局。載入結束舊桌須一次保存全部帳務和 `table: null`，保存失敗保留原存檔、提示並阻止新買入。接受舊 version 1 餘額／池。config 與 profile 分開，設定匯入不覆蓋遊戲資產。
 
 機率工具維持彩色折疊單欄工作台、桌面兩欄表單／手機單欄，退幣位於玩家行為下方。一個開始按鈕先一般再退幣；無獨立全樹統計入口。一般外部研究錢包無限，但每次入桌有限 100 SB、每手延續桌籌碼、歸零後才模擬重入。退幣總資產為錢包加桌籌碼，水池不算資產；達標或無碼且不足下次買入才停止。中止不發布部分退幣比例。種子空白隨機一次、0 有效；記錄實際種子、模式、重入次數及實際投入／返還。CI 按玩家聚類。
 

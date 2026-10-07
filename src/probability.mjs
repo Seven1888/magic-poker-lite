@@ -1,11 +1,11 @@
-import {renderBossProbabilityTables,renderBossStudy} from './boss-probability-view.mjs?v=53';
-import {DEFAULT_CONFIG,normalizeConfig,holeScore} from './engine.mjs?v=53';
-import {JACKPOT_MULTIPLIERS,quoteJackpot} from './jackpot.mjs?v=53';
-import {CONFIG_KEY,loadConfig,money,pct,esc,cardMarkup,download} from './shared.mjs?v=53';
-import {LAB_LABELS as LABELS,LAB_STREETS as STREETS,LAB_POLICIES as policyNames,LAB_JACKPOTS as jackpotNames,translateLabError as translateError} from './probability-text.mjs?v=53';
-import {renderStudyDetails} from './probability-report-view.mjs?v=53';
-import {refundReportMarkup} from './refund-report-view.mjs?v=53';
-import {currentLabConfig} from './probability-config.mjs?v=53';
+import {renderBossProbabilityTables,renderBossStudy} from './boss-probability-view.mjs?v=54';
+import {DEFAULT_CONFIG,normalizeConfig,holeScore} from './engine.mjs?v=54';
+import {JACKPOT_MULTIPLIERS,quoteJackpot} from './jackpot.mjs?v=54';
+import {CONFIG_KEY,loadConfig,money,pct,esc,cardMarkup,download} from './shared.mjs?v=54';
+import {LAB_LABELS as LABELS,LAB_STREETS as STREETS,LAB_POLICIES as policyNames,LAB_JACKPOTS as jackpotNames,translateLabError as translateError} from './probability-text.mjs?v=54';
+import {renderStudyDetails} from './probability-report-view.mjs?v=54';
+import {refundReportMarkup} from './refund-report-view.mjs?v=54';
+import {currentLabConfig} from './probability-config.mjs?v=54';
 const $=id=>document.getElementById(id);
 let worker=null,reports=[],selectedIndex=0,startedAt=0,toastTimer,runSnapshot=null,runState='等待模擬',settingsDirty=false;
 let formConfig=structuredClone(DEFAULT_CONFIG);
@@ -141,7 +141,7 @@ $('run').onclick=()=>{
     runSnapshot={config,simulation:settings,refund,startedAt:new Date().toISOString()};startedAt=performance.now();$('error').textContent='';updateProgress(0);$('progress-text').textContent='正在啟動統計…';$('run-label').textContent=`種子 ${settings.seed}・一般統計＋退幣率`;
     refundReports=[];refundSnapshot={config,refund,startedAt:runSnapshot.startedAt};refundStartedAt=0;
     $('refund-report').hidden=false;$('refund-state').textContent='等待一般統計';$('refund-content').innerHTML='';refundExports(false);refundProgress(0,'一般統計完成後自動計算退幣率。');
-    launching=true;setRunning(true);renderResults();worker=new Worker(new URL('./simulation-worker.mjs?v=53',import.meta.url),{type:'module'});
+    launching=true;setRunning(true);renderResults();worker=new Worker(new URL('./simulation-worker.mjs?v=54',import.meta.url),{type:'module'});
     const runWorker=worker;
     worker.onmessage=event=>{
       if(worker!==runWorker)return;

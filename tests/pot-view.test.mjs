@@ -198,7 +198,7 @@ test('fold settlement separates refund from net award and shows matched contribu
   assert.equal(refund.length, 1); assert.equal(refund[0].children[1].textContent, '退款 10');
   assert.equal(payouts.length, 1); assert.equal(payouts[0].children[1].textContent, '+20');
   assert.equal(refund[0].animations[0].options.duration, atGameSpeed(1100));
-  assert.equal(payouts[0].animations[0].options.duration, atGameSpeed(1100));
+  assert.equal(payouts[0].animations[0].options.duration, atGameSpeed(2200));
   assert.equal(payouts[0].dataset.seat, 'player');
   const count = flights(doc).length, delay = view.settledDelay();
   assert.equal(delay, 0);
@@ -228,7 +228,7 @@ test('1.2x refunds wait for contribution and arrival, then payouts wait for refu
   near([...timers.values()][0].delay, refund.duration + 80);
   [...timers.values()][0].callback(); await Promise.resolve();
   const payout = flights(doc).find(flight => flight.dataset.flow === 'payout').animations[0].options;
-  near(payout.delay, 0); near(payout.duration, 1100 / 1.2);
+  near(payout.delay, 0); near(payout.duration, 2200 / 1.2);
   near([...timers.values()][0].delay, payout.duration + 80);
   await finishMotion(doc); await view.whenIdle();
   assert.equal(timers.size, 0);
@@ -605,4 +605,64 @@ test('arrival watchdog updates each payment and notifies once even if its animat
   assert.equal(text(doc, 'pot-value'), '15');
   assert.equal(phases.filter(event => event.flow === 'arrival').length, 2);
   assert.equal(timers.size, 0);
+});
+
+test('one whole pot group per winner feeds continuous credits and finishes with exact immutable accounting', async () => {
+  const doc = fakeDocument(), frames = new Map(), progress = [];
+  let sequence = 0;
+  doc.defaultView.requestAnimationFrame = callback => { frames.set(++sequence, callback); return sequence; };
+  doc.defaultView.cancelAnimationFrame = id => frames.delete(id);
+  const advance = milliseconds => {
+    for (let elapsed = 0; elapsed < milliseconds; elapsed += 16) {
+      doc.tick(Math.min(16, milliseconds - elapsed));
+      const callbacks = [...frames.values()]; frames.clear(); for (const callback of callbacks) callback();
+    }
+  };
+  const view = createPotView({root: doc, onProgress: event => progress.push(event)}), hand = splitHand({jackpotEnabled: false});
+  view.render(hand); await finishMotion(doc); await view.whenIdle();
+  passive(hand); view.render(hand);
+  const before = JSON.stringify(hand), rng = hand.rng.state();
+  // Complete inbound work but keep the one outgoing bundle per recipient alive.
+  for (let pass = 0; pass < 5; pass++) {
+    for (const element of doc.created) if (element.dataset.flow !== 'payout') for (const animation of element.animations) {
+      if (!animation.completed && !animation.cancelled) animation.finish();
+    }
+    await Promise.resolve();
+  }
+  const payouts = flights(doc).filter(flight => flight.dataset.flow === 'payout');
+  assert.equal(payouts.length, 2);
+  assert.ok(payouts.every(flight => flight.animations[0].keyframes.at(-1).opacity === 1));
+  advance(1400);
+  const current = progress.at(-1);
+  assert.ok(current.returns.player > 0 && current.returns.player < hand.result.player.netReturn);
+  assert.equal(current.credits.player, current.returns.player);
+  assert.ok(Number(text(doc, 'pot-value')) > 0 && Number(text(doc, 'pot-value')) < hand.result.pot);
+  await finishMotion(doc); await view.whenIdle();
+  const final = progress.at(-1);
+  assert.equal(final.complete, true); assert.equal(final.flow, 'payout');
+  for (const seat of ['player', 'npc']) {
+    assert.equal(final.credits[seat], hand.result[seat].refund + hand.result[seat].totalReturn);
+    assert.equal(final.returns[seat], hand.result[seat].totalReturn);
+    const values = progress.map(event => event.returns[seat]);
+    assert.ok(values.every((value, index) => index === 0 || value >= values[index - 1]));
+  }
+  view.render(hand); assert.equal(flights(doc).filter(flight => flight.dataset.flow === 'payout').length, 2);
+  assert.equal(progress.filter(event => event.complete).length, 1);
+  assert.equal(frames.size, 0); assert.equal(JSON.stringify(hand), before); assert.equal(hand.rng.state(), rng);
+});
+
+test('JP arrives separately from the single pot payout and is included in the same final return counter', async () => {
+  const doc = fakeDocument(), events = [], phases = [], view = createPotView({root: doc, onProgress: event => events.push(event), onPhase: event => phases.push(event.flow)});
+  const hand = startHand(createSession({outcome: {mode: 'legacy-deck'}, deal: {player: {manual: ['As', 'Ks']}, npc: {manual: ['2c', '3d']}}}, 43));
+  const board = ['Qs', 'Js', 'Ts', '4h', '5d'];
+  hand.deck = [...board, ...hand.deck.filter(card => !board.includes(card))];
+  passive(hand); assert.ok(hand.result.player.jackpotAward > 0);
+  const before = JSON.stringify(hand); view.render(hand); await finishMotion(doc); await view.whenIdle();
+  assert.equal(flights(doc).filter(flight => flight.dataset.flow === 'payout').length, 1);
+  assert.equal(flights(doc).filter(flight => flight.dataset.flow === 'bonus').length, 1);
+  assert.ok(phases.indexOf('bonus') > phases.indexOf('payout'));
+  assert.equal(events.at(-1).flow, 'bonus'); assert.equal(events.at(-1).complete, true);
+  assert.equal(events.at(-1).returns.player, hand.result.player.totalReturn);
+  assert.equal(events.at(-1).credits.player, hand.result.player.refund + hand.result.player.totalReturn);
+  assert.equal(JSON.stringify(hand), before);
 });

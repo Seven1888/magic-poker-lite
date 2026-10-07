@@ -1,0 +1,68 @@
+Magic Poker Lite v54 action button assets
+Mode: built-in image_gen (no CLI/API fallback).
+Background: transparent_background=true; native alpha preserved by byte-for-byte copy.
+FOLD: generated from textual art direction after viewing existing gameplay and button artwork.
+CHECK/CALL/BET/RAISE: one separate built-in edit call each, using final fold.png as the local edit target.
+Canvas: 1774 x 887 pixels, 2:1. Keep native files; game can display all at the same CSS box dimensions.
+No game, CSS, or documentation source was changed by the asset-generation task.
+
+===== fold.png =====
+Output: assets/action-buttons-v54/fold.png
+Mode: built-in image_gen; generation; transparent_background=true
+Final prompt:
+Use case: stylized-concept.
+Asset type: finished transparent PNG game UI action-button asset for the existing Magic Poker Lite fantasy casino, one individual button only.
+Primary request: a richly polished dark ink-green rounded rectangular FOLD button, with a thick beveled sculpted metallic gold border matching a luxurious red-and-gold fantasy casino table. Front orthographic view, perfectly straight and symmetrical, no perspective tilt.
+Composition/framing: a wide button with exact visual width-to-height ratio 2:1. The whole button fits within the canvas with only a narrow 3% transparent safety margin. Keep the silhouette clean and entirely inside the image. Rounded corners, broad flat interior for text; no wings, no extra objects. Make the button artwork almost fill the canvas.
+Style/medium: high-end stylized 3D fantasy mobile game UI illustration; shiny but restrained gold bevels, warm top-left highlights, subtle aged-gold engraving only along the rim, luminous emerald-black enamel interior with a very faint ornamental texture. Match the shown existing red-and-gold casino artwork. Clear readable shape when displayed very small.
+Text (verbatim): "FOLD" only, spelled F-O-L-D. Large precisely legible bold serif display lettering in warm ivory-gold, carefully beveled and subtly extruded, centered horizontally in the upper portion with baseline about 45% of button height. The lettering must occupy about 70% of the interior width. Do not place the label in the lower half.
+Lower interior: leave the entire bottom 40% of the button empty and calm for code-rendered chip icon and dynamic amount later; do not draw any icon, amount, word, underline, divider or inset pill there.
+Constraints: true alpha transparency everywhere outside the button. Transparent background, no scene, no checkerboard drawn into pixels. No cast shadow beyond the narrow edge, no watermark, no mockup, no collage, no additional labels or text. Production-ready independent game asset.
+
+===== check.png =====
+Output: assets/action-buttons-v54/check.png
+Mode: built-in image_gen; edit of fold.png; transparent_background=true
+Final prompt:
+Use case: precise-object-edit.
+Asset type: independent transparent game UI action-button PNG, one asset.
+Input image 1 is the finished FOLD master button; edit that master into its matching CHECK sibling.
+Change ONLY the central English label and the interior enamel color. Preserve exactly the canvas dimensions, alpha transparency, 2:1 button geometry, safe margins, thick beveled gold frame, rounded corners, ornamental rim details, lighting, material, and label vertical location. Preserve the calm empty lower 40% interior space for a later code-rendered chip icon and amount.
+Replace "FOLD" with exact text "CHECK". The five letters C-H-E-C-K must be clear and complete. Use the same large ivory-gold sculpted bold serif lettering with golden bevels and subtle dark extrusion as the master. Center the entire label horizontally in the same upper portion; use modest natural spacing and fit comfortably within 78% of the interior width.
+Change only the dark green enamel interior to rich deep burgundy wine-red, with the same subtle ornamental texture and blackened shadows. Do not recolor any gold metal.
+True alpha transparency outside the button. Do not add any additional text, especially no AMOUNT, FREE, number, chip icon, dividing line, bottom inset pill or watermark. No scene, no checkerboard, no new ornaments, no collage.
+
+===== call.png =====
+Output: assets/action-buttons-v54/call.png
+Mode: built-in image_gen; edit of fold.png; transparent_background=true
+Final prompt:
+Use case: precise-object-edit.
+Asset type: independent transparent game UI action-button PNG, one asset.
+Input image 1 is the finished FOLD master button; edit that master into its matching CALL sibling.
+Change ONLY the central English label and the interior enamel color. Preserve exactly the canvas dimensions, alpha transparency, 2:1 button geometry, safe margins, thick beveled gold frame, rounded corners, ornamental rim details, lighting, material, and label vertical location. Preserve the calm empty lower 40% interior space for a later code-rendered chip icon and amount.
+Replace "FOLD" with exact text "CALL". The four letters C-A-L-L must be clear and complete. Use the same large ivory-gold sculpted bold serif lettering with golden bevels and subtle dark extrusion as the master. Center the entire label horizontally in the same upper portion; use modest natural spacing and fit comfortably within 78% of the interior width.
+Change only the dark green enamel interior to rich deep burgundy wine-red, with the same subtle ornamental texture and blackened shadows. Do not recolor any gold metal.
+True alpha transparency outside the button. Do not add any additional text, especially no AMOUNT, FREE, number, chip icon, dividing line, bottom inset pill or watermark. No scene, no checkerboard, no new ornaments, no collage.
+
+===== bet.png =====
+Output: assets/action-buttons-v54/bet.png
+Mode: built-in image_gen; edit of fold.png; transparent_background=true
+Final prompt:
+Use case: precise-object-edit.
+Asset type: independent transparent game UI action-button PNG, one asset.
+Input image 1 is the finished FOLD master button; edit that master into its matching BET sibling.
+Change ONLY the central English label and the interior enamel color. Preserve exactly the canvas dimensions, alpha transparency, 2:1 button geometry, safe margins, thick beveled gold frame, rounded corners, ornamental rim details, lighting, material, and label vertical location. Preserve the calm empty lower 40% interior space for a later code-rendered chip icon and amount.
+Replace "FOLD" with exact text "BET ▲". The three letters B-E-T must be clear and complete. Include one small solid upward-pointing triangle ▲ immediately after the word on the same baseline. The triangle points UP, never sideways or down. Use the same large ivory-gold sculpted bold serif lettering with golden bevels and subtle dark extrusion as the master. Center the entire label horizontally in the same upper portion; use modest natural spacing and fit comfortably within 78% of the interior width.
+Change only the dark green enamel interior to rich royal purple, with the same subtle ornamental texture and blackened shadows. Do not recolor any gold metal.
+True alpha transparency outside the button. Do not add any additional text, especially no AMOUNT, FREE, number, chip icon, dividing line, bottom inset pill or watermark. No scene, no checkerboard, no new ornaments, no collage.
+
+===== raise.png =====
+Output: assets/action-buttons-v54/raise.png
+Mode: built-in image_gen; edit of fold.png; transparent_background=true
+Final prompt:
+Use case: precise-object-edit.
+Asset type: independent transparent game UI action-button PNG, one asset.
+Input image 1 is the finished FOLD master button; edit that master into its matching RAISE sibling.
+Change ONLY the central English label and the interior enamel color. Preserve exactly the canvas dimensions, alpha transparency, 2:1 button geometry, safe margins, thick beveled gold frame, rounded corners, ornamental rim details, lighting, material, and label vertical location. Preserve the calm empty lower 40% interior space for a later code-rendered chip icon and amount.
+Replace "FOLD" with exact text "RAISE ▲". The five letters R-A-I-S-E must be clear and complete. Include one small solid upward-pointing triangle ▲ immediately after the word on the same baseline. The triangle points UP, never sideways or down. Use the same large ivory-gold sculpted bold serif lettering with golden bevels and subtle dark extrusion as the master. Center the entire label horizontally in the same upper portion; use modest natural spacing and fit comfortably within 78% of the interior width.
+Change only the dark green enamel interior to rich royal purple, with the same subtle ornamental texture and blackened shadows. Do not recolor any gold metal.
+True alpha transparency outside the button. Do not add any additional text, especially no AMOUNT, FREE, number, chip icon, dividing line, bottom inset pill or watermark. No scene, no checkerboard, no new ornaments, no collage.

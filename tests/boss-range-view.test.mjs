@@ -145,3 +145,26 @@ test('repeated pending and hidden states are idempotent; returning data still re
   assert.deepEqual(f.summary.children.map(node=>node.textContent),['PAIR60%','HIGH CARD40%']);
   assert.equal(f.list.children.length,9);
 });
+
+test('preflop explicitly presents the current two-card starting hand and switches back to made hands on the flop', () => {
+  const f = fixture(), data = distribution([1153/1225,72/1225]);
+  f.view.render({visible:true,basis:'starting-hand',distribution:data});
+  assert.equal(f.button.hidden,false);
+  assert.match(f.button.textContent,/STARTING HAND/);
+  assert.deepEqual(f.summary.children.map(node=>node.textContent),['PAIR5.9%','HIGH CARD94.1%']);
+  assert.match(f.button.getAttribute('aria-label'),/BOSS starting hand distribution/);
+  f.button.emit('click');
+  assert.equal(f.dialog.open,true);
+  assert.match(f.dialog.textContent,/current two-card hand/);
+  assert.match(f.dialog.textContent,/pair or unpaired high cards/);
+  assert.match(f.dialog.textContent,/not your win chance or a forecast of future cards/);
+  assert.equal(f.list.children.length,9);
+  assert.equal(f.list.children[0].textContent,'Straight Flush0%');
+  f.view.render({visible:true,basis:'made-hand',distribution:data});
+  assert.match(f.button.textContent,/POSSIBLE HANDS/);
+  assert.match(f.button.getAttribute('aria-label'),/BOSS current hand distribution/);
+  assert.match(f.dialog.textContent,/current best hand category/);
+  assert.doesNotMatch(f.dialog.textContent,/current two-card hand/);
+  f.view.clear();
+  assert.equal(f.button.dataset.basis,undefined);
+});

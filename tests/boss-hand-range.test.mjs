@@ -127,15 +127,34 @@ test('repeated, replaced and shortened boards do not retain stale blockers or ca
   assert.deepEqual(range.update({board: BOARD}), first);
 });
 
+test('preflop exactly counts paired and unpaired starting hands after excluding both player cards', () => {
+  for (const [playerHole, pairs] of [[['As', 'Kh'], 11 * 6 + 2 * 3], [['As', 'Ah'], 12 * 6 + 1]]) {
+    const range = createBossHandRange({playerHole}), result = range.update({board: []});
+    assert.equal(result.basis, 'starting-hand');
+    assertCounts(result, [1225 - pairs, pairs, 0, 0, 0, 0, 0, 0, 0]);
+    assert.deepEqual(createBossHandRange({playerHole: [...playerHole].reverse()}).update({board: []}), result);
+    result.distribution[0].probability = -1;
+    assertCounts(range.update({board: []}), [1225 - pairs, pairs, 0, 0, 0, 0, 0, 0, 0]);
+  }
+});
+
+test('preflop does not read hidden BOSS cards, future board cards, betting evidence or the game RNG', () => {
+  const forbidden = ['config', 'smallBlind', 'bossProfileId', 'actions', 'evidence', 'holes', 'npcHole', 'deck', 'seed', 'rng'];
+  const input = poison({playerHole: PLAYER}, forbidden), request = poison({board: []}, forbidden);
+  assert.deepEqual(createBossHandRange(input).update(request), createBossHandRange({playerHole: PLAYER}).update({board: []}));
+});
+
 test('partial flop reveal has no distribution until all three cards are visible', () => {
   const range = createBossHandRange({playerHole: PLAYER});
-  for (let count = 0; count < 3; count++) {
+  assert.equal(range.update({board: []}).status, 'ready');
+  for (let count = 1; count < 3; count++) {
     const result = range.update({board: BOARD.slice(0, count)});
     assert.equal(result.status, 'waiting-for-flop');
     assert.deepEqual(result.distribution, []);
     assert.equal(result.candidateCount, (50 - count) * (49 - count) / 2);
   }
   assert.equal(range.update({board: BOARD}).status, 'ready');
+  assert.equal(range.update({board: BOARD}).basis, 'made-hand');
 });
 
 test('known cards are normalized and invalid or impossible public cards are rejected', () => {

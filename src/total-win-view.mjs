@@ -1,4 +1,4 @@
-import {atGameSpeed} from './presentation-timing.mjs?v=53';
+import {atGameSpeed} from './presentation-timing.mjs?v=54';
 
 const money = value => value.toLocaleString('en-US', {maximumFractionDigits: 6});
 
@@ -98,7 +98,7 @@ export function createTotalWin({root = globalThis.document, effects, reducedMoti
     record.resolve(true);
   }
 
-  function start(result) {
+  function start(result, {followProgress = false} = {}) {
     if (destroyed || !stage) return Promise.resolve(false);
     if (result === lastResult) return lastDone;
     const model = totalWinModel(result);
@@ -120,8 +120,13 @@ export function createTotalWin({root = globalThis.document, effects, reducedMoti
     amount.dataset.amount = String(model.amount);
     let resolve;
     lastDone = new Promise(done => { resolve = done; });
-    const record = {model, resolve, frame: null, watchdog: null, started: now(), tick: 0};
+    const record = {model, resolve, frame: null, watchdog: null, started: now(), tick: 0, followProgress, displayed: 0};
     active = record;
+    if (followProgress && model.amount > 0) {
+      panel.dataset.phase = 'counting'; amount.textContent = '0';
+      if (!reducedMotion && !doc.hidden && model.outcome === 'win') sprayMoney();
+      return lastDone;
+    }
     if (reducedMotion || doc.hidden || model.outcome !== 'win' || model.amount === 0) {
       finish(record, false); return lastDone;
     }
@@ -148,8 +153,27 @@ export function createTotalWin({root = globalThis.document, effects, reducedMoti
     return lastDone;
   }
 
-  const onVisibility = () => { if (doc.hidden && active) finish(active, false); };
+  /** Follow the exact return already arriving in the bankroll. Refunds are
+   * excluded by the caller; no second animation clock or ledger is introduced.
+   */
+  function setAmount(result, value, {complete = false} = {}) {
+    if (destroyed || !stage) return;
+    if (result !== lastResult) start(result, {followProgress: true});
+    const record = active;
+    if (!record?.followProgress || !Number.isFinite(value)) return;
+    const next = Math.min(record.model.amount, Math.max(record.displayed, value, 0));
+    record.displayed = next; amount.textContent = money(Math.round(next * 1e6) / 1e6);
+    const progress = record.model.amount ? next / record.model.amount : 1;
+    const ticks = [.1, .24, .41, .61, .81];
+    if (record.tick < ticks.length && progress >= ticks[record.tick]) {
+      while (record.tick < ticks.length && progress >= ticks[record.tick]) record.tick++;
+      if (record.model.outcome === 'win') sound('chip-arrival');
+    }
+    if (complete) finish(record);
+  }
+
+  const onVisibility = () => { if (doc.hidden && active && !active.followProgress) finish(active, false); };
   doc.addEventListener?.('visibilitychange', onVisibility);
   function destroy() { if (destroyed) return; clear(); destroyed = true; panel?.remove(); moneyLayer?.remove(); doc.removeEventListener?.('visibilitychange', onVisibility); }
-  return {start, whenIdle: () => active ? lastDone : Promise.resolve(true), clear, destroy};
+  return {start, setAmount, whenIdle: () => active ? lastDone : Promise.resolve(true), clear, destroy};
 }

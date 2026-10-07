@@ -1,4 +1,4 @@
-import {makeDeck, normalizeCard, evaluateBest} from './poker.mjs?v=53';
+import {makeDeck, normalizeCard, evaluateBest} from './poker.mjs?v=54';
 
 export const BOSS_HAND_CATEGORIES = Object.freeze([
   ['high-card', 'High Card'], ['pair', 'Pair'], ['two-pair', 'Two Pair'],
@@ -20,7 +20,9 @@ function cards(input, length, name) {
  * Only the known player cards and the revealed board are read. Every unordered
  * pair among the remaining cards has equal weight; deal settings, manual cards,
  * blind positions, BOSS identity and betting behavior do not affect this model.
- * Before all three flop cards are visible the distribution remains hidden.
+ * Preflop classifies the two starting cards as paired or unpaired. From the flop
+ * onward it classifies the best five currently available cards. Neither stage
+ * forecasts unrevealed cards. A partly revealed flop is not a complete street.
  */
 export function createBossHandRange({playerHole} = {}) {
   const player = cards(playerHole, 2, '玩家手牌');
@@ -34,13 +36,16 @@ export function createBossHandRange({playerHole} = {}) {
     }
     const remaining = available.filter(card => !visible.includes(card));
     const candidateCount = remaining.length * (remaining.length - 1) / 2;
-    const metadata = {candidateCount, exact: true};
-    if (visible.length < 3) return {status: 'waiting-for-flop', distribution: [], ...metadata};
-    const key = visible.join('');
+    const metadata = {candidateCount, exact: true, basis: visible.length === 0 ? 'starting-hand' : 'made-hand'};
+    if (visible.length > 0 && visible.length < 3) return {status: 'waiting-for-flop', distribution: [], ...metadata};
+    const key = [...visible].sort().join('');
     if (!countsByBoard.has(key)) {
       const counts = new Uint16Array(9);
       for (let first = 0; first < remaining.length; first++) for (let second = first + 1; second < remaining.length; second++) {
-        counts[evaluateBest([remaining[first], remaining[second], ...visible]).category]++;
+        const category = visible.length === 0
+          ? Number(remaining[first][0] === remaining[second][0])
+          : evaluateBest([remaining[first], remaining[second], ...visible]).category;
+        counts[category]++;
       }
       countsByBoard.set(key, counts);
     }

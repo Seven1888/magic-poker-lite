@@ -1,6 +1,6 @@
-import {normalizeConfig} from './engine.mjs?v=53';
-import {minimumAssetsForBet} from './hand-entry.mjs?v=53';
-export {minimumAssetsForBet as minimumAssets} from './hand-entry.mjs?v=53';
+import {normalizeConfig} from './engine.mjs?v=54';
+import {minimumAssetsForBet} from './hand-entry.mjs?v=54';
+export {minimumAssetsForBet as minimumAssets} from './hand-entry.mjs?v=54';
 const round=n=>Math.round((n+Number.EPSILON)*1e6)/1e6;
 // Small-blind choices stay stable; pool budgets use the corresponding big blind.
 const BET_LEVELS=Object.freeze([1,2,5,10,20,50,100,200,500,800,1000,1200,1500,1800,2000]);

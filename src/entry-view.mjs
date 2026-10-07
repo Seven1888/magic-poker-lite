@@ -1,5 +1,5 @@
 /** BET-entry decoration only. No game state, validation, money movement or RNG. */
-import {setupEntryLayout} from './entry-layout.mjs?v=53';
+import {setupEntryLayout} from './entry-layout.mjs?v=54';
 /** Compact introduction, separate BET card, and an independent FIGHT action. */
 export function setupEntryFeatures(root = globalThis.document) {
   const doc = root.ownerDocument || root;
@@ -58,6 +58,15 @@ export function setupEntryFeatures(root = globalThis.document) {
   for (const selector of ['.entry-bet-label', '.entry-bet-picker', '#bet-presets', '.entry-funds', '#buyin-error', '.entry-details']) {
     betCard.append(root.querySelector(selector));
   }
+  const stakes = doc.createElement('div');stakes.className='entry-stakes';
+  const small = doc.createElement('div');small.className='entry-stake entry-stake-small';
+  const big = doc.createElement('div');big.className='entry-stake entry-stake-big';
+  const buyIn = doc.createElement('div');buyIn.className='entry-stake entry-stake-buyin';
+  big.innerHTML='<small>BIG BLIND</small>';
+  big.append(root.querySelector('#entry-blinds'));
+  small.append(betLabel,root.querySelector('.entry-bet-picker'));
+  const funds=root.querySelector('.entry-funds');funds.querySelector('small').textContent='BUY IN';
+  buyIn.append(funds);stakes.append(small,big,buyIn);betCard.prepend(stakes);
   const presets = root.querySelector('#bet-presets');
   presets.replaceChildren();
   presets.hidden = true;

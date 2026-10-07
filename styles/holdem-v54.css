@@ -1,0 +1,55 @@
+/* Keep the full-size action keys; move the table sequence up to make a separate odds row. */
+.game .table-bankroll-player:before{content:none;display:none;}
+.game .street-odds-button{display:none!important;}
+.game #showdown-preview{top:294px;}
+.game .action-flow-strip,.game .action-flow-strip[data-step='you']{top:326px;}
+.game .response-flyout{top:368px;}
+.game .felt{top:400px;}
+.game .player-area{top:590px;}
+.game .table-bankroll-player{top:588px;}
+.game .table-total-win,.game[data-total-win]:has(#pot-chips .casino-chip) .table-total-win{top:514px;}
+.game .win-money-layer{translate:0 40px;}
+.game #pot-display[data-flow='payout'] #pot-chips{visibility:hidden;}
+.game .controls .action-slot>.action.art-action{position:relative;height:66px;min-height:66px;padding:0;border:0;border-radius:10px;background:none;box-shadow:none;overflow:visible;}
+.game .controls .art-action:before,.game .controls .art-action:after{content:none;}
+.game .controls .action-art{position:absolute;left:0;top:-11%;width:100%;height:126%;object-fit:fill;pointer-events:none;}
+.game .controls .art-action .action-face{position:absolute;clip-path:inset(50%);width:1px;height:1px;overflow:hidden;}
+.game .controls .art-action .action-cost{position:absolute;left:6%;right:6%;top:65%;height:17px;line-height:17px;gap:4px;font-size:13px;color:#fff3c8;text-shadow:0 1px 3px #000;}
+.game .controls .action-cost-chip{display:inline-block;flex:none;width:15px;height:15px;vertical-align:middle;object-fit:contain;}
+.game .controls .art-action:focus-visible{outline:2px solid #fff0b0;outline-offset:2px;}
+.game .controls .button-response{position:absolute;top:-32px;left:0;right:0;height:34px;display:flex;align-items:stretch;overflow:hidden;border:1px solid #bd9d69aa;border-radius:6px;background:#18222dec;box-shadow:0 2px 5px #0005;pointer-events:none;}
+.game .controls .button-response-title{flex:0 0 25px;display:flex;align-items:center;justify-content:center;margin:0;font-size:8px;color:#ffdfa0;line-height:11px;letter-spacing:0;background:#27333d;}
+.game .controls .button-response-outcomes{display:flex;flex:1;min-width:0;align-items:stretch;justify-content:center;}
+.game .controls .button-response-outcome{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:1px;border-left:1px solid #fff2;color:#fff0ce;background:#274c3b;}
+.game .controls .button-response-outcome[data-response='call'],.game .controls .button-response-outcome[data-response='check']{background:#244761;}
+.game .controls .button-response-outcome[data-response='bet'],.game .controls .button-response-outcome[data-response='raise']{background:#51376a;}
+.game .controls .button-response-outcome>span{font-size:8px;line-height:10px;letter-spacing:-.2px;}
+.game .controls .button-response-outcome>b{font-size:10px;line-height:13px;font-variant-numeric:tabular-nums;letter-spacing:-.4px;}
+.game .controls .button-response-note{align-self:center;text-align:center;font-size:9px;line-height:12px;color:#d9d1bf;}
+/* Each sized action keeps its own exact response probabilities on the left. */
+.game .controls .raise-options{left:auto;right:0;bottom:calc(100% - 8px);width:calc(300% + 24px);padding:5px 0 8px;gap:5px;border:0;border-radius:0;background:none;box-shadow:none;z-index:4;}
+.game .controls .raise-option-row{display:grid;grid-template-columns:minmax(0,1fr) calc((100% - 24px)/3);align-items:stretch;gap:7px;}
+.game .controls .raise-options .button-response{position:static;height:auto;min-height:46px;box-shadow:0 2px 8px #000a;}
+.game .controls .raise-options .button-response-title{flex-basis:36px;font-size:10px;}
+.game .controls .raise-options .button-response-outcome>span{font-size:10px;line-height:13px;}
+.game .controls .raise-options .button-response-outcome>b{font-size:14px;line-height:17px;}
+.game .controls .raise-options button{min-height:46px;border:2px solid #ceb475;background:linear-gradient(#48305e,#261c39);box-shadow:inset 0 1px #ffefbf36,0 2px 5px #0008;}
+.game .controls .raise-options strong{display:flex;align-items:center;justify-content:center;gap:4px;font-size:17px;line-height:21px;white-space:nowrap;}
+.game .controls .raise-options .action-cost-chip{width:15px;height:15px;}
+.game .controls .raise-options small{font-size:9px;line-height:11px;letter-spacing:.3px;}
+/* Adjustable small blind, its big blind, and the wallet transfer read left to right. */
+#buyin-dialog .entry-bet-card{padding:8px 7px 2px;}
+#buyin-dialog .entry-stakes{display:grid;grid-template-columns:minmax(0,1.28fr) minmax(0,.8fr) minmax(0,1fr);gap:6px;align-items:stretch;}
+#buyin-dialog .entry-stake{min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:5px;padding:0 2px;}
+#buyin-dialog .entry-stake+.entry-stake{border-left:1px solid #c9a9664d;}
+#buyin-dialog .entry-stake small,#buyin-dialog .entry-bet-label label{font-size:10px;line-height:15px;font-weight:800;letter-spacing:.1px;color:#e4c99b;white-space:nowrap;}
+#buyin-dialog .entry-bet-label{justify-content:center;min-height:15px;}
+#buyin-dialog .entry-bet-picker{gap:2px;min-height:34px;}
+#buyin-dialog .entry-bet-picker button{flex:0 0 25px;width:25px;height:32px;min-height:32px;font-size:19px;line-height:28px;border-radius:7px;}
+#buyin-dialog #entry-bet{flex:1 1 auto;min-width:0;width:42px;height:32px;font-size:21px;line-height:30px;letter-spacing:-.5px;padding:0;}
+#buyin-dialog #entry-blinds{display:flex;align-items:center;justify-content:center;min-height:34px;font-size:23px;line-height:30px;font-weight:900;color:#ffe6a7;white-space:nowrap;}
+#buyin-dialog .entry-funds{margin:0;width:100%;}
+#buyin-dialog .entry-funds>div,#buyin-dialog .entry-funds>div>span{display:flex;flex-direction:column;gap:5px;width:100%;}
+#buyin-dialog .entry-funds .entry-minimum-icon{display:none;}
+#buyin-dialog .entry-funds strong{display:flex;align-items:center;justify-content:center;min-height:34px;font-size:21px;line-height:30px;font-weight:900;letter-spacing:-.5px;color:#ffe6a7;white-space:nowrap;}
+@media(prefers-reduced-motion:reduce){.game .controls .art-action{transition:none;}}

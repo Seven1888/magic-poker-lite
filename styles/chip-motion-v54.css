@@ -1,0 +1,27 @@
+/* Transfer stand-ins remain opaque until the real, growing pile replaces them. */
+.buyin-flight-layer { position:fixed; inset:0; z-index:2000; pointer-events:none; }
+.buyin-flight-chip {
+  position:fixed; width:32px; height:20px;
+  background:url('../assets/chip-casino-v24.svg') center/contain no-repeat;
+  filter:drop-shadow(0 3px 2px #100b164d); will-change:transform;
+}
+.game .bankroll-pile[data-counting='true'] .casino-chip {
+  animation:chip-stack-land-v54 180ms ease-out both;
+}
+.game .flying-chip:is([data-flow='refund'],[data-flow='payout'],[data-flow='bonus']) .flying-chip-group {
+  width:76px; height:54px;
+}
+.game .flying-chip:is([data-flow='refund'],[data-flow='payout'],[data-flow='bonus']) .casino-chip {
+  left:calc(var(--group-column,0) * 20px);
+  bottom:calc(5px + var(--group-level,0) * 3px);
+  width:36px; height:24px;
+}
+.game .flying-chip[data-flow='bonus'] { filter:drop-shadow(0 0 8px #ffd76088); }
+.game .table-total-win[data-phase='counting'] .total-win-amount { font-variant-numeric:tabular-nums; }
+@keyframes chip-stack-land-v54 {
+  from { transform:translateY(-5px) scale(1.06); }
+  to { transform:translateY(0) scale(1); }
+}
+@media(prefers-reduced-motion:reduce) {
+  .game .bankroll-pile[data-counting='true'] .casino-chip { animation:none; }
+}

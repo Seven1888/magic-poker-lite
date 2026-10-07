@@ -1,10 +1,34 @@
-# v53 驗證與發布狀態
+# v54 驗證與發布狀態
+
+更新：2026-10-07。**v54 本地驗證完成，待 Git／Pages 發布；新聊天室尚未建立。** 正式模型仍為 pooled-holdem，原 v53 遊戲數學與對手機率不改。本輪包含 11 項呈現回饋及重整返回入口修正。
+
+當前呈現需求見 [v54 規格](17-v54-presentation-spec.md)，遊戲數學見 [v53 規格](16-v53-holdem-spec.md) 及 [規則與公式](04-game-flow-and-math.md)。本頁只記實際證據；本地成功不能替代 Git／Actions／公開站發布驗證。
+
+## v54 本地驗證（2026-10-07）
+
+- `npm test`：552／552 通過，0 失敗、0 跳過；紀錄 `output/tests-v54.log`。
+- `npm run build`：成功，228 個公開檔案；包含 v54 規格、五張按鈕美術與生成提示詞。攤牌標籤上移後亦確認不與行動資訊重疊。
+- 桌面 Chrome viewport 320／375／393／412／1440 px：無水平溢出；三個操作按鈕 computed height 均 66 px。RAISE 尺寸選單由上往下 ALL IN／1× POT／0.5× POT，每項都有金額前籌碼圖示及左側對應 NPC 行為機率。
+- `output/playwright/qa-v54.js` 買入流程取樣兩場：每場各 84 個 rAF frames、取樣跨度 1,383 ms；期間雙方手牌 card count 全為 0，雙方籌碼堆及金額均單調上升。這是動畫取樣跨度，預設動畫契約仍為 1,400 ms、最低 1,000 ms。
+- 雙方底牌發完即顯示 Preflop 牌型參考；該測試底牌顯示 Pair 5.9%／High Card 94.1%，來自排除玩家牌後 1,225 組未知底牌的當前分布，不是固定通用比例或 River 預測。
+- seed 0：玩家全下獲勝，最終桌碼 2,000。收款取樣 108 frames、48 個不同數字值，玩家 TOTAL WIN 與籌碼完全同步；每位收款者只有一個飛行 group，來源堆在收款時隱藏，未出現重複收 POT。
+- seed 7：玩家全下輸光，桌碼 0；結果表演完成後自動返回買入入口，BALANCE 9,000、profile 的 `table: null`。
+- 以上 QA：page error 0、request failed 0。截圖為 `output/playwright/v54-raise-{320,375,393,412,1440}.png`、`v54-player-win-393.png`、`v54-auto-buyin-393.png`；本機 QA 檔不發布到 Pages。
+- 重整離桌帳務修正納入本輪完整測試。早先單項測試 529／529 與相關瀏覽器結果另保留於 [HANDOFF](../HANDOFF.md)，不拿該舊數字替代本次 552 項結果。
+
+## v54 發布狀態
+
+- Git 提交／推送：待執行及補入真實 SHA。
+- Actions／Pages：尚未部署，待補入真實 run URL、結果及公開站驗證。
+- 新聊天室：待發布完成後依使用者授權建立，不預填成功或連結。
+
+## v53 歷史驗證與發布狀態
 
 更新：2026-10-07。**方案B已完成並發布；正式模式pooled-holdem。519項測試、建置、Pages部署及公開站入場檢查通過。**
 
-本頁記錄實際測試與部署證據，不把規格、計畫或舊模式結果當通過紀錄。當前需求見 [完整規格](16-v53-holdem-spec.md)；數學見 [規則與公式](04-game-flow-and-math.md)。
+以下保留 v53 實際測試與部署證據，不把規格、計畫或舊模式結果當通過紀錄。v53 需求見 [完整規格](16-v53-holdem-spec.md)；數學見 [規則與公式](04-game-flow-and-math.md)。
 
-## 本輪正式驗證範圍
+## v53 正式驗證範圍
 
 - 以pooled-holdem共用引擎驗證預建牌面、實付結果轉換、同街換NPC配對仍鎖概率、新街重算、原子開手／動作與RNG恢復。
 - 德州首手抽盲／後手輪替、BB選擇權、多次加注、半池／全池／ALL IN、短全下不重開及未匹配全額退款。
@@ -15,7 +39,7 @@
 - 工具一般／退幣共用新mode，有限桌碼、外部錢包、歸零重入、正確總資產和有效投入、種子、報表、匯入匯出及中止完整性。
 - 最終完整測試、靜態建置、Git推送、Actions成功及公開網址實際內容。
 
-## 本輪正式整合驗證（2026-10-07）
+## v53 正式整合驗證（2026-10-07）
 
 - `npm test`：519／519通過，0失敗、0跳過；涵蓋正式pooled-holdem與明確指定模式的歷史回歸。紀錄：`output/tests-pooled-v53-final.log`。
 - `npm run build`：成功，218個公開檔案；不收錄本機QA、Git資料、憑證或舊5BET門檻校準檔。`git diff --check`通過。
@@ -60,8 +84,8 @@ v52將入口BET標題與加減控制列明確置中。Chrome320／360／375／39
 
 ## 入口
 
-- 本地：[遊戲](http://127.0.0.1:4177/index.html?v=53)／[機率工具](http://127.0.0.1:4177/probability.html?v=53)／[規則](http://127.0.0.1:4177/docs/04-game-flow-and-math.html?v=53)
-- 公開：[遊戲](https://seven1888.github.io/magic-poker-lite/)／[機率工具](https://seven1888.github.io/magic-poker-lite/probability.html)／[規則](https://seven1888.github.io/magic-poker-lite/docs/04-game-flow-and-math.html)
+- 本地：[遊戲](http://127.0.0.1:4177/index.html?v=54)／[機率工具](http://127.0.0.1:4177/probability.html?v=54)／[規則](http://127.0.0.1:4177/docs/04-game-flow-and-math.html?v=54)
+- 公開：[遊戲](https://seven1888.github.io/magic-poker-lite/?v=54)／[機率工具](https://seven1888.github.io/magic-poker-lite/probability.html?v=54)／[規則](https://seven1888.github.io/magic-poker-lite/docs/04-game-flow-and-math.html?v=54)；v54 尚待發布，查詢值不代表內容已更新。
 - [GitHub](https://github.com/Seven1888/magic-poker-lite)／[Actions](https://github.com/Seven1888/magic-poker-lite/actions)
 
-新聊天室以本輪交付訊息中的聊天室入口接續，先閱讀HANDOFF再接受後續需求。
+v54 新聊天室尚未建立；發布後依交付訊息的真實入口接續，先閱讀 HANDOFF／AGENTS／v54 及 v53 規格，再等待後續需求，不重做完成的工作。

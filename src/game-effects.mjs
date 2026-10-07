@@ -1,5 +1,5 @@
-import {atGameSpeed} from './presentation-timing.mjs?v=53';
-import {createGameAudio} from './game-audio.mjs?v=53';
+import {atGameSpeed} from './presentation-timing.mjs?v=54';
+import {createGameAudio} from './game-audio.mjs?v=54';
 
 /** Presentation only: no game state, card markup, or random-number access. */
 export function createGameEffects({root = globalThis.document, reducedMotion = false} = {}) {

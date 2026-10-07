@@ -55,3 +55,41 @@ test('same-street actions and odds do not recompute or enter the worker; failure
  assert.equal(paints.at(-1).unavailable,'calculation-unavailable');
  assert.deepEqual(paints.at(-1).distribution,[]);
 });
+
+test('preflop requests are asynchronous, reuse their result across actions and pass the starting-hand basis to the view',()=>{
+ const {controller,worker,messages,paints}=setup();
+ const context={playerHole:['As','Kd'],npcHole:['2s','2h'],deck:['3s'],rng:'private'};
+ const state={visible:true,busy:false,context,board:[]};
+ controller.update(state);
+ assert.equal(messages.length,1);
+ assert.deepEqual(messages[0].context,{playerHole:['As','Kd']});
+ assert.deepEqual(messages[0].board,[]);
+ assert.equal(paints.at(-1).calculating,true);
+ assert.equal(paints.at(-1).basis,'starting-hand');
+ const result={status:'ready',exact:true,candidateCount:1225,basis:'starting-hand',
+  distribution:[{category:0,probability:1153/1225},{category:1,probability:72/1225}]};
+ worker.onmessage({data:{...messages[0],result}});
+ assert.equal(paints.at(-1).calculating,false);
+ assert.equal(paints.at(-1).basis,'starting-hand');
+ assert.deepEqual(paints.at(-1).distribution,result.distribution);
+ controller.update({...state,busy:true});
+ assert.equal(messages.length,1);
+ assert.deepEqual(paints.at(-1).distribution,result.distribution);
+ controller.update({...state,board:['2s','5h','9c']});
+ assert.equal(messages.length,2);
+ assert.equal(paints.at(-1).basis,'made-hand');
+ assert.deepEqual(paints.at(-1).distribution,[]);
+});
+
+test('new player cards with the same empty board invalidate an old preflop calculation',()=>{
+ const {controller,worker,messages,paints}=setup();
+ const state={visible:true,busy:false,context:{playerHole:['As','Kd']},board:[]};
+ controller.update(state);const first=messages.at(-1);
+ controller.update({...state,context:{playerHole:['As','Ah']}});const second=messages.at(-1);
+ assert.equal(messages.length,2);
+ assert.notEqual(second.request,first.request);
+ worker.onmessage({data:{...first,result:{basis:'starting-hand',distribution:[{category:1,probability:72/1225}]}}});
+ assert.equal(paints.at(-1).calculating,true);
+ worker.onmessage({data:{...second,result:{basis:'starting-hand',distribution:[{category:1,probability:73/1225}]}}});
+ assert.equal(paints.at(-1).distribution[0].probability,73/1225);
+});

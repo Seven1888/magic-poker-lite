@@ -1,4 +1,6 @@
-import {createRng} from './poker.mjs?v=53';
+import {createRng} from './poker.mjs?v=54';
+import {endHandForTableExit} from './engine.mjs?v=54';
+import {normalizeOutcomePools} from './outcome-pools.mjs?v=54';
 
 const round = value => Math.round((value + Number.EPSILON) * 1e6) / 1e6;
 const validMoney = value => Number.isFinite(value) && value >= 0 && Number.isSafeInteger(Math.round(value * 1e6));
@@ -14,6 +16,16 @@ export function buyInFromWallet(balance, smallBlind) {
 export function cashOutToWallet(balance, chips) {
   if (!validMoney(balance) || !validMoney(chips) || !validMoney(round(balance + chips))) throw new RangeError('Invalid cash-out.');
   return round(balance + chips);
+}
+
+/** Close a saved table once; callers must save this entire profile before exposing its returned balance. */
+export function closeSavedTable(profile) {
+  if (!profile?.table) return profile;
+  const session = restoreTableSession(profile.table);
+  if (session.activeHand) endHandForTableExit(session.activeHand);
+  return {version: 2, balance: cashOutToWallet(profile.balance, session.stacks.player),
+    outcomePools: normalizeOutcomePools(session.outcomePools), table: null,
+    lastBossProfileId: session.lastBossProfileId ?? profile.lastBossProfileId ?? null};
 }
 
 /** Save the committed hand and RNG together; animation never becomes an account transaction. */

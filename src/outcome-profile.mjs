@@ -1,4 +1,4 @@
-import {normalizeOutcomePools} from './outcome-pools.mjs?v=53';
+import {normalizeOutcomePools} from './outcome-pools.mjs?v=54';
 
 export const OUTCOME_PROFILE_KEY = 'magic-poker-lite.player.v1';
 
@@ -23,7 +23,7 @@ export function normalizePlayerProfile(value) {
 }
 
 // Wallet, pools and the optional active table form one saved transaction.
-// Version-one records restore settled assets; version two resumes committed actions.
+// Version two retains committed actions so a saved table can be settled and cashed out on the next page load.
 export function loadPlayerProfile(storage) {
   try {
     if(storage === undefined)storage = globalThis.localStorage;

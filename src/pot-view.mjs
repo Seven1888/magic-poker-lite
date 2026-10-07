@@ -1,17 +1,20 @@
-import {atGameSpeed} from './presentation-timing.mjs?v=53';
+import {atGameSpeed} from './presentation-timing.mjs?v=54';
 
 /** Read-only pot presentation. It never calls the game RNG or mutates a hand. */
-export function createPotView({root = globalThis.document, reducedMotion = false, locale = 'zh', onPhase} = {}) {
+export function createPotView({root = globalThis.document, reducedMotion = false, locale = 'zh', onPhase, onProgress} = {}) {
   if (!root) throw new TypeError('createPotView needs a document or DOM root.');
   const doc = root.ownerDocument || root;
   const lookup = id => root.getElementById?.(id) || root.querySelector?.(`#${id}`) || null;
   const nodes = Object.fromEntries([
     'pot-display', 'pot-value', 'pot-label', 'pot-detail', 'pot-chips', 'pot-event',
     'contribution-player', 'contribution-npc', 'pot-flight-layer', 'player-stack', 'npc-stack',
-    'player-cards', 'npc-cards', 'player-bankroll-chips', 'npc-bankroll-chips'
+    'player-cards', 'npc-cards', 'player-bankroll-chips', 'npc-bankroll-chips', 'jackpot-button'
   ].map(id => [id, lookup(id)]));
   const clock = doc.defaultView?.performance || globalThis.performance;
   const now = () => clock?.now?.() ?? Date.now();
+  const requestFrame = doc.defaultView?.requestAnimationFrame?.bind(doc.defaultView);
+  const cancelFrame = doc.defaultView?.cancelAnimationFrame?.bind(doc.defaultView);
+  const round = value => Math.round(value * 1e6) / 1e6;
   const numeric = value => Number.isFinite(Number(value)) ? Math.max(0, Number(value)) : 0;
   const money = value => numeric(value).toLocaleString('en-US', {maximumFractionDigits:6});
   const english = locale === 'en';
@@ -29,6 +32,29 @@ export function createPotView({root = globalThis.document, reducedMotion = false
   let settlementUntil = 0, chipSignature = '';
   let generation = 0, pendingPot = null, displayedTotal = 0;
   let settlementPlan = null, advancingSettlement = false;
+  let credits = {player: 0, npc: 0}, returns = {player: 0, npc: 0};
+
+  function notifyProgress(flow, progress, complete = false) {
+    if (typeof onProgress !== 'function') return;
+    try { onProgress({flow, progress, credits: {...credits}, returns: {...returns}, complete}); }
+    catch { /* A progress observer cannot change or interrupt the ledger. */ }
+  }
+
+  function transferProgress(seat, amount, flow) {
+    let transferred = 0;
+    const decimals = (amount.toFixed(6).replace(/0+$/, '').split('.')[1] || '').length;
+    return progress => {
+      const value = progress >= 1 ? amount : Number((amount * progress).toFixed(decimals));
+      const addition = round(Math.max(0, value - transferred)); transferred = value;
+      credits[seat] = round(credits[seat] + addition);
+      if (flow !== 'refund') returns[seat] = round(returns[seat] + addition);
+      if (flow !== 'bonus') {
+        displayedTotal = round(Math.max(0, displayedTotal - addition));
+        write('pot-value', money(displayedTotal)); drawChips(displayedTotal, settlementPlan?.config);
+      }
+      notifyProgress(flow, progress);
+    };
+  }
 
   function notifyPhase(flow, entries = []) {
     if (typeof onPhase !== 'function') return;
@@ -100,7 +126,7 @@ export function createPotView({root = globalThis.document, reducedMotion = false
     };
   }
 
-  function trackAnimation(animation, {flow, duration, delay = 0, transfer = null, remove = () => {}}) {
+  function trackAnimation(animation, {flow, duration, delay = 0, transfer = null, progress = null, remove = () => {}}) {
     const epoch = generation;
     let resolveDone, timer, completed = false;
     const motion = {animation, flow, transfer, end: now() + delay + duration,
@@ -108,8 +134,9 @@ export function createPotView({root = globalThis.document, reducedMotion = false
     motion.complete = () => {
       if (completed) return;
       motion.start?.(); clearTimeout(motion.startTimer);
-      completed = true; clearTimeout(timer); motions.delete(motion);
+      completed = true; clearTimeout(timer); cancelFrame?.(motion.frame); motions.delete(motion);
       if (epoch === generation) {
+        progress?.(1);
         // The landed stack must exist before its opaque flying stand-in is removed.
         // Each route arrives separately, including the two staggered blind payments.
         if (flow === 'contribution') {
@@ -123,6 +150,18 @@ export function createPotView({root = globalThis.document, reducedMotion = false
       resolveDone();
     };
     motions.add(motion);
+    if (progress && requestFrame) {
+      const started = now() + delay;
+      const update = () => {
+        if (completed || epoch !== generation) return;
+        const elapsed = Math.max(0, Math.min(1, (now() - started) / duration));
+        // One intact group travels first, then feeds the growing landed stack.
+        const deposited = Math.max(0, Math.min(1, (elapsed - .56) / .44));
+        progress(deposited);
+        motion.frame = requestFrame(update);
+      };
+      motion.frame = requestFrame(update);
+    }
     // A missing/broken finished promise must not trap the gameplay controller.
     timer = setTimeout(motion.complete, delay + duration + 80);
     timer.unref?.();
@@ -157,7 +196,7 @@ export function createPotView({root = globalThis.document, reducedMotion = false
     } catch { /* Numeric accounting is already visible when feedback is unavailable. */ }
   }
 
-  function fly(seat, amount, flow, {delay = 0, duration = 1000, announce = false} = {}) {
+  function fly(seat, amount, flow, {delay = 0, duration = 1000, announce = false, progress = null} = {}) {
     if (reducedMotion || amount <= 0) return 0;
     const layer = nodes['pot-flight-layer'];
     const rect = layer?.getBoundingClientRect?.();
@@ -172,17 +211,21 @@ export function createPotView({root = globalThis.document, reducedMotion = false
       || center(nodes['pot-value'], rect, scaleX, scaleY);
     if (!stackPoint || !potPoint) return 0;
     const inbound = flow === 'contribution';
-    const from = inbound ? stackPoint : potPoint, to = inbound ? potPoint : stackPoint;
+    const from = inbound ? stackPoint : flow === 'bonus' ? center(nodes['jackpot-button'], rect, scaleX, scaleY) || potPoint : potPoint;
+    const to = inbound ? potPoint : stackPoint;
     const el = doc.createElement('span');
     el.className = 'flying-chip';
     el.dataset.flow = flow; el.dataset.seat = seat;
     el.setAttribute('aria-hidden', 'true');
     Object.assign(el.style, {position: 'absolute', left: '0', top: '0', pointerEvents: 'none', zIndex: '40'});
     const group = doc.createElement('span'); group.className = 'flying-chip-group';
-    const chipCount = Math.min(5, Math.max(3, 3 + Math.floor(Math.log2(1 + amount / 10))));
+    const chipCount = inbound ? Math.min(5, Math.max(3, 3 + Math.floor(Math.log2(1 + amount / 10))))
+      : Math.min(24, Math.max(9, 9 + Math.floor(3 * Math.log2(1 + amount / 10))));
     for (let index = 0; index < chipCount; index++) {
       const chip = doc.createElement('i'); chip.className = 'casino-chip';
-      chip.style.setProperty('--chip-index', String(index)); group.append(chip);
+      chip.style.setProperty('--chip-index', String(index));
+      chip.style.setProperty('--group-column', String(index % 3));
+      chip.style.setProperty('--group-level', String(Math.floor(index / 3))); group.append(chip);
     }
     const amountLabel = doc.createElement('b'); amountLabel.className = 'amount';
     amountLabel.textContent = `${flow === 'refund' ? copy.refund : '+'}${money(amount)}`;
@@ -192,15 +235,21 @@ export function createPotView({root = globalThis.document, reducedMotion = false
     const midpoint = {x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 - 32};
     const actualDuration = atGameSpeed(duration), actualDelay = atGameSpeed(delay);
     let animation;
-    try { animation = el.animate([
+    const frames = inbound ? [
       {transform: transform(from, 0.72), opacity: 0, offset: 0},
       {transform: transform(from, 0.9), opacity: 1, offset: 0.1},
       {transform: transform(midpoint, 1.05), opacity: 1, offset: 0.52},
-      {transform: transform(to, inbound ? 1 : 0.82), opacity: inbound ? 1 : 0, offset: 1}
-    ], {duration: actualDuration, delay: actualDelay, easing: 'cubic-bezier(.22,.72,.25,1)', fill: 'both'}); }
+      {transform: transform(to, 1), opacity: 1, offset: 1}
+    ] : [
+      {transform: transform(from, 1), opacity: 1, offset: 0},
+      {transform: transform(midpoint, 1.16), opacity: 1, offset: .3},
+      {transform: transform(to, 1.04), opacity: 1, offset: .56},
+      {transform: transform(to, 1), opacity: 1, offset: 1}
+    ];
+    try { animation = el.animate(frames, {duration: actualDuration, delay: actualDelay, easing: 'linear', fill: 'both'}); }
     catch { el.remove(); return 0; }
     const motion=trackAnimation(animation, {flow, duration: actualDuration, delay: actualDelay,
-      transfer: {seat, amount}, remove: () => el.remove()});
+      transfer: {seat, amount}, progress, remove: () => el.remove()});
     if(announce){
       const epoch=generation;let started=false;
       motion.start=()=>{if(started||epoch!==generation)return;started=true;notifyPhase(flow,[{seat,amount}]);};
@@ -225,10 +274,13 @@ export function createPotView({root = globalThis.document, reducedMotion = false
         } else if (plan.stage === 'refund') {
           pendingPot = {total: numeric(plan.result.pot), config: plan.config}; commitPot();
           plan.stage = 'payout'; flow = 'payout'; entries = plan.recipients;
+        } else if (plan.stage === 'payout') {
+          plan.stage = 'bonus'; flow = 'bonus'; entries = plan.bonuses;
         } else {
           pendingPot = {total: 0, config: plan.config}; commitPot();
           write('pot-label', copy.pot);
           settlementPlan = null; settlementUntil = 0; plan.finish();
+          notifyProgress(plan.bonuses.length ? 'bonus' : 'payout', 1, true);
           notifyPhase('complete');
           return;
         }
@@ -236,7 +288,12 @@ export function createPotView({root = globalThis.document, reducedMotion = false
           if (nodes['pot-display']) nodes['pot-display'].dataset.flow = flow;
           notifyPhase(flow, entries);
           if (settlementPlan !== plan || plan.generation !== generation) return;
-          const immediate = entries.filter(({seat, amount}, index) => !fly(seat, amount, flow, {duration: 1100, delay: index * 40}));
+          const immediate = entries.filter(({seat, amount}, index) => {
+            const progress = transferProgress(seat, amount, flow);
+            const animated = fly(seat, amount, flow, {duration: flow === 'refund' ? 1100 : 2200, delay: index * 40, progress});
+            if (!animated) progress(1);
+            return !animated;
+          });
           if (immediate.length) notifyPhase('arrival', immediate);
           if (settlementPlan !== plan || plan.generation !== generation) return;
           settlementUntil = Math.max(now(), ...[...motions].map(motion => motion.end));
@@ -249,6 +306,7 @@ export function createPotView({root = globalThis.document, reducedMotion = false
     if (!hand) {
       clearFlights(); hasHand = false; currentSession = currentNumber = null;
       paid = {player: 0, npc: 0}; seenHistory = 0; settled = false;
+      credits = {player: 0, npc: 0}; returns = {player: 0, npc: 0};
       displayedTotal = 0;
       write('pot-label', copy.pot); write('pot-value', '0');
       write('pot-detail', copy.empty); write('pot-event', '');
@@ -261,6 +319,7 @@ export function createPotView({root = globalThis.document, reducedMotion = false
     if (!hasHand || currentSession !== sessionIdentity || currentNumber !== hand.handNumber) {
       clearFlights(); currentSession = sessionIdentity; currentNumber = hand.handNumber; hasHand = true;
       paid = {player: 0, npc: 0}; seenHistory = 0; settled = false;
+      credits = {player: 0, npc: 0}; returns = {player: 0, npc: 0};
       displayedTotal = 0; write('pot-value', '0'); drawChips(0, config);
       write('pot-event', '');
     }
@@ -319,7 +378,8 @@ export function createPotView({root = globalThis.document, reducedMotion = false
     const done = new Promise(resolve => {finish = resolve;});
     settlementPlan = {generation, stage: 'contribution', result, config, done, finish,
       refunds: refunds.map(seat => ({seat, amount: numeric(result[seat].refund)})),
-      recipients: recipients.map(seat => ({seat, amount: numeric(result[seat].netReturn)}))};
+      recipients: recipients.map(seat => ({seat, amount: numeric(result[seat].netReturn)})),
+      bonuses: seats.filter(seat => numeric(result[seat]?.jackpotAward) > 0).map(seat => ({seat, amount: numeric(result[seat].jackpotAward)}))};
     settlementUntil = Math.max(now(), ...[...motions].map(motion => motion.end));
     if(blindBatch){for(const entry of immediate){notifyPhase('contribution',[entry]);notifyPhase('arrival',[entry]);}}
     else{if (additions.length) notifyPhase('contribution', additions);if (immediate.length) notifyPhase('arrival', immediate);}

@@ -1,10 +1,13 @@
-import {createBossHandRange} from './boss-hand-range.mjs?v=53';
+import {createBossHandRange} from './boss-hand-range.mjs?v=54';
 
-let currentEpoch=null,tracker=null;
+let currentEpoch=null,currentPlayer='',tracker=null;
 self.onmessage=({data})=>{
  const {epoch,request,context,board}=data;
  try {
-  if(currentEpoch!==epoch){tracker=createBossHandRange(context);currentEpoch=epoch;}
+  const playerKey=JSON.stringify(context?.playerHole);
+  if(currentEpoch!==epoch||currentPlayer!==playerKey){
+   tracker=createBossHandRange(context);currentEpoch=epoch;currentPlayer=playerKey;
+  }
   self.postMessage({epoch,request,result:tracker.update({board})});
  } catch {
   self.postMessage({epoch,request,result:{status:'unavailable',unavailable:'calculation-unavailable',distribution:[]}});

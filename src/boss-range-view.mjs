@@ -3,6 +3,8 @@ const CATEGORIES = [
   ['TRIPS', 'Three of a Kind'], ['STRAIGHT', 'Straight'], ['FLUSH', 'Flush'],
   ['FULL HOUSE', 'Full House'], ['QUADS', 'Four of a Kind'], ['STR. FLUSH', 'Straight Flush']
 ];
+const STARTING_DESCRIPTION = 'Preflop, the BOSS has two starting cards: a pair or unpaired high cards. These percentages describe that current two-card hand, based on your known cards. Other categories need community cards. This is not your win chance or a forecast of future cards.';
+const MADE_DESCRIPTION = 'What could the BOSS have right now? These are the chances of each current best hand category, based on the cards you can see. Updates on the FLOP, TURN and RIVER. This is not your win chance or a forecast of future cards.';
 
 function readDistribution(distribution) {
   if (!Array.isArray(distribution) || distribution.length !== CATEGORIES.length) return null;
@@ -42,8 +44,9 @@ export function createBossRangeView({root = globalThis.document} = {}) {
   button.id = 'boss-hand-range'; button.type = 'button'; button.hidden = true; button.disabled = true;
   button.setAttribute('aria-haspopup', 'dialog'); button.setAttribute('aria-controls', 'boss-range-dialog');
   button.setAttribute('aria-expanded', 'false');
-  const heading = make('span', 'boss-range-heading', 'POSSIBLE HANDS');
-  const hint = make('span', 'boss-range-info', 'ⓘ'); hint.setAttribute('aria-hidden', 'true'); heading.append(hint);
+  const heading = make('span', 'boss-range-heading');
+  const headingLabel = make('span', '', 'POSSIBLE HANDS');
+  const hint = make('span', 'boss-range-info', 'ⓘ'); hint.setAttribute('aria-hidden', 'true'); heading.append(headingLabel, hint);
   const summary = make('span', 'boss-range-summary');
   button.append(heading, summary); stage.append(button);
 
@@ -54,7 +57,7 @@ export function createBossRangeView({root = globalThis.document} = {}) {
   closeButton.setAttribute('aria-label', 'Close BOSS hand distribution');
   const eyebrow = make('span', 'eyebrow', 'READ THE BOARD');
   const title = make('h2', '', 'POSSIBLE BOSS HANDS'); title.id = 'boss-range-title';
-  const description = make('p', 'boss-range-description', 'What could the BOSS have right now? These are the chances of each current best hand category, based on the cards you can see. Updates on the FLOP, TURN and RIVER. This is not your win chance or a forecast of future cards.');
+  const description = make('p', 'boss-range-description', MADE_DESCRIPTION);
   description.id = 'boss-range-description';
   const list = make('dl', 'boss-range-list');
   const method = make('p', 'boss-range-method', 'Uses your hand and the revealed board. Every possible pair of unseen cards is equally likely, as in standard Texas Hold’em. Betting actions and action percentages do not affect these estimates. It never reads hidden BOSS cards or unrevealed board cards.');
@@ -76,6 +79,7 @@ export function createBossRangeView({root = globalThis.document} = {}) {
     if (button.getAttribute('aria-label') !== null) button.removeAttribute('aria-label');
     if (button.getAttribute('aria-busy') !== null) button.removeAttribute('aria-busy');
     delete button.dataset.state;
+    delete button.dataset.basis;
     if (paintedKey !== null) { summary.replaceChildren(); list.replaceChildren(); }
     paintedKey = null;
   }
@@ -84,8 +88,17 @@ export function createBossRangeView({root = globalThis.document} = {}) {
     result.append(make('span', 'boss-range-label', label), make('b', 'boss-range-percent', percent(probability)));
     return result;
   }
-  function render({visible = false, busy = false, calculating = false, distribution = null, unavailable = false} = {}) {
+  function render({visible = false, busy = false, calculating = false, distribution = null, unavailable = false, basis = 'made-hand'} = {}) {
     if (!visible) { clear(); return; }
+    const starting = basis === 'starting-hand';
+    const distributionName = starting ? 'starting hand' : 'current hand';
+    if (button.dataset.basis !== basis) {
+      button.dataset.basis = basis;
+      headingLabel.textContent = starting ? 'STARTING HAND' : 'POSSIBLE HANDS';
+      eyebrow.textContent = starting ? 'PREFLOP' : 'READ THE BOARD';
+      title.textContent = starting ? 'BOSS STARTING HAND' : 'POSSIBLE BOSS HANDS';
+      description.textContent = starting ? STARTING_DESCRIPTION : MADE_DESCRIPTION;
+    }
     const parsed = !calculating && !unavailable ? readDistribution(distribution) : null;
     if (button.hidden) button.hidden = false;
     const disabled = busy || !parsed;
@@ -94,19 +107,19 @@ export function createBossRangeView({root = globalThis.document} = {}) {
     if (busy || !parsed) close();
     current = parsed;
     if (!current) {
-      const nextKey = calculating ? 'calculating' : 'unavailable';
+      const nextKey = `${basis}:${calculating ? 'calculating' : 'unavailable'}`;
       if (paintedKey === nextKey) return;
       paintedKey = nextKey;
       list.replaceChildren();
       const message = calculating ? 'CALCULATING…' : 'UNAVAILABLE';
       summary.replaceChildren(make('span', 'boss-range-status', message));
       button.dataset.state = calculating ? 'calculating' : 'unavailable';
-      button.setAttribute('aria-label', `BOSS current hand distribution: ${message.toLowerCase()}`);
+      button.setAttribute('aria-label', `BOSS ${distributionName} distribution: ${message.toLowerCase()}`);
       return;
     }
     // Canonical public values catch in-place updates as well as equivalent new
     // arrays, while keeping all twelve summary/detail rows stable across actions.
-    const nextKey = [...current].sort((a,b) => a.category - b.category).map(entry => entry.probability).join(',');
+    const nextKey = `${basis}:` + [...current].sort((a,b) => a.category - b.category).map(entry => entry.probability).join(',');
     if (paintedKey === nextKey) return;
     paintedKey = nextKey;
     button.dataset.state = 'ready';
@@ -115,7 +128,7 @@ export function createBossRangeView({root = globalThis.document} = {}) {
     const top = ranked.slice(0, 3).sort((a, b) => b.category - a.category);
     const summaryRows = top.map(entry => row(CATEGORIES[entry.category][0], entry.probability));
     summary.replaceChildren(...summaryRows);
-    button.setAttribute('aria-label', `BOSS current hand distribution. ${top.map(entry => `${CATEGORIES[entry.category][1]} ${percent(entry.probability)}`).join(', ')}. View all nine categories.`);
+    button.setAttribute('aria-label', `BOSS ${distributionName} distribution. ${top.map(entry => `${CATEGORIES[entry.category][1]} ${percent(entry.probability)}`).join(', ')}. View all nine categories.`);
     list.replaceChildren(...[...current].sort((a, b) => b.category - a.category).map(entry => {
       const detail = make('div', 'boss-range-detail-row');
       if (entry.probability === 0) detail.className += ' is-zero';

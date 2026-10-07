@@ -1,6 +1,6 @@
-# Magic Poker Lite v53 API 契約
+# Magic Poker Lite v54 API 契約
 
-2026-10-07，方案 B 已完成並發布。正式模式為 `pooled-holdem`。規格見 [docs/16](docs/16-v53-holdem-spec.md)，數學見 [docs/04](docs/04-game-flow-and-math.md)，測試與部署證據見 [docs/06](docs/06-mobile-and-deployment.md)。
+2026-10-07，v54 本地驗證完成，待 Git／Pages 發布；包含 11 項呈現回饋及重整離桌修正。正式模式仍為 `pooled-holdem`，v53 遊戲數學及行為機率契約不改。呈現規格見 [docs/17](docs/17-v54-presentation-spec.md)，遊戲規格見 [docs/16](docs/16-v53-holdem-spec.md)，數學見 [docs/04](docs/04-game-flow-and-math.md)，歷史驗證見 [docs/06](docs/06-mobile-and-deployment.md)。
 
 ## Config 與 session
 
@@ -110,9 +110,15 @@ hand.bossStreetStates = {preflop, flop, turn, river};
 
 `cloneHand(hand,{compactPools})` 隔離RNG、籌碼、牌、history、result、池、outcomeDecision、pooledHoldem、actedSinceFullRaise、bossStreetStrength及bossStreetStates。`previewResponse(hand,action)` 只在clone試動作；回傳同街NPC分布或空陣列，不提交正式RNG、分類、牌面、資產或池。`stepNpc`／`playAutomatedHand` 提交完整抽選動作，不丟尺寸。
 
-`buyInFromWallet(balance,smallBlind)` 回傳balance、chips、buyIn；檢查有限非負金額及足額100SB。`cashOutToWallet(balance,chips)` 回傳總額，不自行決定可否離桌；UI只允許非忙碌且非未完手，一次清空session後保存。
+`src/action-options-view.mjs` 的 `actionResponsePreview(hand,action)` 接受完整合法動作，依 `previewResponse` 結果聚合同 type 行為百分比供顯示，不能把不同尺寸輸入壓成 type。無同街回應時，跨街顯示 `NEXT STREET`，已結算顯示 `SHOWDOWN`，不提供未公開牌街的機率。`raiseMenuChoices(actions)` 只排序已有合法候選，畫面由上到下 ALL IN／1× POT／0.5× POT；`raiseSizeLabel` 沿用 `allIn`、`sizeKeys`，同額不另造重複動作。展開選單與逐項預覽不提交正式 RNG 或結果票。
 
-`snapshotTableSession(session)` 接受pooled-holdem／fixed-holdem，輸出 `{version:1,rngState,session,hand}`，移除hand的session/rng指標再深拷貝。plain pooledHoldem及街道快照自然包含其中。`restoreTableSession(snapshot)` 重建rng，重接hand/session/stacks。重整不重新布局或抽牌。這是本機單瀏覽器續局，非伺服器帳本或跨裝置同步。
+`buyInFromWallet(balance,smallBlind)` 回傳balance、chips、buyIn；檢查有限非負金額及足額100SB。`cashOutToWallet(balance,chips)` 回傳總額，不自行決定可否離桌；一般離桌按鈕只允許非忙碌且非未完手。載入時另以舊桌結束流程處理保存中的牌局。
+
+`snapshotTableSession(session)` 接受pooled-holdem／fixed-holdem，輸出 `{version:1,rngState,session,hand}`，移除hand的session/rng指標再深拷貝。plain pooledHoldem及街道快照自然包含其中。`restoreTableSession(snapshot)` 重建rng，重接hand/session/stacks，不重新布局或抽牌。兩者保留為底層帳務／研究API；遊戲UI在重整或重開頁面時結束舊桌並回買入入口，不接續舊牌局。
+
+`endHandForTableExit(hand)` 由引擎結束離桌中的牌局。未完手按玩家棄牌處理，即使目前可免費CHECK或actor為NPC；沿用正常結算、未匹配退款及池帳。玩家已全下且待NPC回應時，使用保存RNG依正常NPC分布回應並完成結算，不改成玩家棄牌或重新抽牌。已結算手不重複派彩。
+
+`closeSavedTable(profile)` 是table-wallet的純轉換，不讀寫storage，也不修改輸入profile。它從快照重建舊桌、必要時呼叫 `endHandForTableExit`，將剩餘玩家籌碼兌回BALANCE，保留結算後雙池／CD及上一對手，產生 `table: null` 的profile。尚未開手時兌回全部桌籌碼；空table不重複兌回。呼叫方須先以一次profile保存提交此結果，成功後才允許新買入；失敗時保留原存檔並阻止新買入。這是本機單瀏覽器帳務，非伺服器帳本或跨裝置／多分頁同步。
 
 ## 個人水池與特殊獎
 
@@ -132,11 +138,15 @@ m=min(Cplayer,Cnpc)，各退款Ci-m；匹配POT=2m，勝方gross=2m、平手各m
 
 result保存reason、winner、folded、pot、gross、fee、net、totalReturn、jackpot、outcomePoolAudit、board、evaluations，及每座位totalContribution、matchedWager、refund、gross、fee、netReturn、jackpotAward、totalReturn、baseProfit、profit、stackBefore/After。
 
-profile key `magic-poker-lite.player.v1`，現用version2：balance、outcomePools、table及lastBossProfileId。接受version1舊餘額／池；不得因研究設定匯入覆寫。load失敗回null；save以一次setItem存整筆，成功true／storage不可用false並由UI提示。正式買入、開手、動作、結算和離桌均保存，table=null代表已兌回。
+v54 POT 收回表演按每個收款者的 `netReturn` 播放一次整包移動；平手為雙方各自的一包。退款與 JP 保留獨立帳務及呈現階段，不併成另一筆底池收入。玩家籌碼、TOTAL WIN 與 POT 顯示由同一進度對應已提交的結算金額；動畫 callback 不修改引擎資產，不二次派彩。結算表演結束且玩家桌碼為 0 時，UI 自動執行離桌並返回選 SB／FIGHT 入口，不在同桌補碼、不自動扣下次買入。
+
+`playBuyInFlight({root,reducedMotion,amounts,duration=1400,onProgress})` 僅呈現已提交的買入。實際時長 `max(1000,duration)` ms，不除以遊戲速度；`onProgress` 提供雙方由 0 至買入額的顯示值及完成旗標，目的區籌碼堆與數字一起更新。飛行籌碼抵達後由實體堆接續，不淡出成空桌；完成後才能下盲、發牌。尚未完成買入時雙方手牌區皆為空，包含背牌。
+
+profile key `magic-poker-lite.player.v1`，現用version2：balance、outcomePools、table及lastBossProfileId。接受version1舊餘額／池；不得因研究設定匯入覆寫。load失敗回null；save以一次setItem存整筆，成功true／storage不可用false並由UI提示。正式買入、開手、動作、結算和離桌均保存，table=null代表沒有待兌回舊桌。載入舊桌時先結算並保存包含BALANCE、雙池／CD、上一型及空table的整筆profile，不能只清table而丟失桌籌碼，也不能在保存失敗後繼續新買入。
 
 ## 公開資訊與研究
 
-公開牌參考算法只收playerHole、board；對手牌型range只枚舉公開牌下未知兩張牌。不可傳hand、target、pool、NPC實際牌或未來board給公開Worker。showdown view只能讀已揭NPC牌；牌背aria/CSS/DOM亦不能含暗牌。機率表只用三情境數字，抽籤條可聚合type但引擎不聚合動作。
+公開牌參考算法只收playerHole、board；對手牌型range只枚舉公開牌下未知兩張牌。雙方底牌發完即可啟動：Preflop 排除玩家兩張牌後，精確列舉 C(50,2)=1,225 組，按兩張底牌當前的 Pair／High Card 分類；不補未來公牌，不是最終河牌預測。Flop／Turn／River 依已揭公共牌計算當前最佳五張分布。不可傳hand、target、pool、NPC實際牌或未來board給公開Worker。showdown view只能讀已揭NPC牌；牌背aria/CSS/DOM亦不能含暗牌。機率預覽可聚合 type 顯示，但引擎與動作輸入不丟尺寸。
 
 `simulateStudy` 與 `simulateRefundStudy` 共用正式引擎。一般continuous／unlimitedBankroll是外部錢包無限，每次入桌有限100SB，桌碼跨手，歸零才模擬新入桌；tableEntries/tableBuyIns單列，買入不是投入。退幣initialAsset與targetAsset為錢包+桌碼總資產，池排除；達標或無碼且不足新買入才停，不設額外手數上限。
 
