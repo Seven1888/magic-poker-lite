@@ -1,6 +1,6 @@
 # Magic Poker Lite v58 接手紀錄
 
-更新：2026-10-07。本地實作與全部驗證完成；Git推送、Actions與公開驗收尚待原聊天室收尾。 本輪 [v58規格](docs/21-v58-actions-and-no-jackpot-spec.md) 優先於被取代的v53–v57；下方歷史不當成本輪證據。
+更新：2026-10-07。v58全部完成：本地驗證、Git推送、Pages部署與公開遊戲驗收通過。 本輪 [v58規格](docs/21-v58-actions-and-no-jackpot-spec.md) 優先於被取代的v53–v57；下方歷史不當成本輪證據。
 
 ## 授權與接手方式
 
@@ -28,6 +28,15 @@ v57比例色帶、紅CALL/CHECK、手機可讀性及帳務邊界保持。profile
 - 遊戲腳本與紀錄output/playwright/qa-v58.js、qa-v58.log、qa-v58-continuity.js／log；截圖v58-entry-393.png、v58-main-393.png、v58-menu-393.png、v58-player-raise-393.png、v58-allin-393.png。最後qa-v58單次errors／warnings／HTTPfailed皆0，session初始仍有既有圖片預載提示，不宣稱全session warning0。
 - 工具／規則Chrome320／393／1440共18項布局檢查無水平溢出。保留12列BOSS機率；JP／特殊池設定及正式可見報表移除。每尺寸一般2玩家×8手、退幣2玩家／2手完整完成，seed58010；這是功能小樣本，不用其RTP當長期證據。下載JSON確認JP關閉、random、無派獎及total=net，CSV37欄對齊且無JP／special。lab-v58 errors／warnings／HTTPfailed皆0。腳本、紀錄、截圖與下載核對位於output/playwright/lab-v58*。
 - 上述為桌面Chrome viewport及WebAudio啟動證據，不是實體Android／喇叭聽感或長期RTP認證。
+
+## v58 實際發布證據
+
+- 功能提交 [a7fb9c40a27699317a95cd032ee0b4252bef1c49](https://github.com/Seven1888/magic-poker-lite/commit/a7fb9c40a27699317a95cd032ee0b4252bef1c49) 已推送main；[Actions 37619283020](https://github.com/Seven1888/magic-poker-lite/actions/runs/37619283020) 的build／deploy均completed／success。
+- 26個公開核心檔（含六個WAV、v58規格及發布紀錄）HTTP200且正規化換行／二進位hash與dist一致，output/public-v58-files.json。
+- 公開Chrome393×852實際入場：JP入口移除、公開牌型參考保留；POT3時ALL IN／4×／2×為99／12／6，正式2×實付6。YOU RAISE、BOSS CALL／CHECK三次字卡與三次對應本地語音BufferSource啟動，首盲揭曉1次，文字不遮公牌／玩家牌。字卡截圖目視通過。
+- 公開腳本output/playwright/public-v58.js、public-v58.log；截圖public-v58-entry-393.png、public-v58-main-393.png、public-v58-menu-393.png、public-v58-player-raise-393.png、public-v58-boss-call-393.png。最後單次errors／warnings／HTTPfailed為0，初始載入仍有既有圖片預載提示，不宣稱整個session warning0。
+- 公開工具與規則393px另通過6組布局檢查，一般16手／退幣2人2手完成，12列機率、無舊JP設定或正式可見獎表；下載JSON與37欄CSV核對通過。public-lab-v58當次errors／warnings／HTTPfailed皆0，證據output/playwright/public-lab-v58*。
+- 後續純文件提交回填以上已完成證據，不修改已測功能；最終文件SHA／成功run由原聊天室交付訊息補充。原聊天室確認最後部署後才交接，新聊天室不需重跑或追蹤。
 
 ## 新聊天室必須直接提供的完整連結
 

@@ -1,6 +1,6 @@
 # v58 驗證與發布狀態
 
-更新：2026-10-07。本地實作與全部驗證完成；Git推送、Actions與公開驗收尚待原聊天室收尾。 本輪取消JP、2×／4× POT、行動字卡與語音、首次抽盲及隨機BOSS詳見 [v58規格](21-v58-actions-and-no-jackpot-spec.md)。
+更新：2026-10-07。v58全部完成：本地驗證、Git推送、Pages部署與公開遊戲驗收通過。 本輪取消JP、2×／4× POT、行動字卡與語音、首次抽盲及隨機BOSS詳見 [v58規格](21-v58-actions-and-no-jackpot-spec.md)。
 
 ## v58 本地驗證
 
@@ -16,7 +16,13 @@
 
 ## v58 Git 與公開發布
 
-尚待原聊天室記錄實際提交、成功run與公開檔核對；本地通過不等於已發布。
+- 功能提交 [a7fb9c40a27699317a95cd032ee0b4252bef1c49](https://github.com/Seven1888/magic-poker-lite/commit/a7fb9c40a27699317a95cd032ee0b4252bef1c49) 已推送main；[Actions 37619283020](https://github.com/Seven1888/magic-poker-lite/actions/runs/37619283020) 的build／deploy均completed／success。
+- 26個公開核心檔（含六個WAV、v58規格及發布紀錄）HTTP200且正規化換行／二進位hash與dist一致，output/public-v58-files.json。
+- 公開Chrome393×852實際入場：JP入口移除、公開牌型參考保留；POT3時ALL IN／4×／2×為99／12／6，正式2×實付6。YOU RAISE、BOSS CALL／CHECK三次字卡與三次對應本地語音BufferSource啟動，首盲揭曉1次，文字不遮公牌／玩家牌。字卡截圖目視通過。
+- 公開腳本output/playwright/public-v58.js、public-v58.log；截圖public-v58-entry-393.png、public-v58-main-393.png、public-v58-menu-393.png、public-v58-player-raise-393.png、public-v58-boss-call-393.png。最後單次errors／warnings／HTTPfailed為0，初始載入仍有既有圖片預載提示，不宣稱整個session warning0。
+- 公開工具與規則393px另通過6組布局檢查，一般16手／退幣2人2手完成，12列機率、無舊JP設定或正式可見獎表；下載JSON與37欄CSV核對通過。public-lab-v58當次errors／warnings／HTTPfailed皆0，證據output/playwright/public-lab-v58*。
+- 後續純文件提交回填以上已完成證據，不修改已測功能；最終文件SHA／成功run由原聊天室交付訊息補充。原聊天室確認最後部署後才交接，新聊天室不需重跑或追蹤。
+
 
 ## v58 入口
 
