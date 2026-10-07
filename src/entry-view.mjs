@@ -1,5 +1,5 @@
 /** BET-entry decoration only. No game state, validation, money movement or RNG. */
-import {setupEntryLayout} from './entry-layout.mjs?v=56';
+import {setupEntryLayout} from './entry-layout.mjs?v=58';
 /** Compact introduction, separate BET card, and an independent FIGHT action. */
 export function setupEntryFeatures(root = globalThis.document) {
   const doc = root.ownerDocument || root;
@@ -24,13 +24,13 @@ export function setupEntryFeatures(root = globalThis.document) {
       <div class="entry-guide-odds"><small>BOSS RESPONSE · EXAMPLE</small><div class="entry-guide-odds-bar"><span style="--chance:20%">FOLD <b>20%</b></span><span style="--chance:50%">CALL <b>50%</b></span><span style="--chance:30%">RAISE <b>30%</b></span></div></div>
       <p>Boss odds are shown before you choose.</p>
     </section>
-    <section class="feature-page entry-guide-page" id="entry-feature-2" aria-label="Feature 3 of 3: Jackpot bonus" hidden>
-      <small class="entry-guide-eyebrow">3 / 3 · EXTRA REWARDS</small><h3>JACKPOT BONUS</h3>
-      <div class="entry-guide-royal" aria-label="Royal flush example"><img src="assets/cards/s10.png" alt="Ten of spades" draggable="false"><img src="assets/cards/s11.png" alt="Jack of spades" draggable="false"><img src="assets/cards/s12.png" alt="Queen of spades" draggable="false"><img src="assets/cards/s13.png" alt="King of spades" draggable="false"><img src="assets/cards/s1.png" alt="Ace of spades" draggable="false"></div>
-      <div class="entry-guide-prize"><span class="feature-jp-label" id="entry-jp-label">ROYAL FLUSH · 200× BB</span><strong id="entry-jp-award">200</strong></div>
-      <p id="entry-jp-caption">Win a showdown with a qualifying special hand.<br>Highest bonus paid on top of the pot return.</p><div class="feature-jp-tiers"><span>STRAIGHT FLUSH <b>50×</b></span><span>FOUR OF A KIND <b>20×</b></span></div>
+    <section class="feature-page entry-guide-page" id="entry-feature-2" aria-label="Feature 3 of 3: Blinds and bosses" hidden>
+      <small class="entry-guide-eyebrow">3 / 3 · TAKE YOUR SEAT</small><h3>BLINDS &amp; BOSSES</h3>
+      <div class="entry-guide-actions"><div><b>SMALL BLIND</b><span>First draw: 50%</span></div><div><b>BIG BLIND</b><span>First draw: 50%</span></div></div>
+      <p>Draw your blind once when you enter.<br>Positions alternate each hand.</p>
+      <div class="entry-guide-caption"><span>RANDOM BOSS</span> AGGRESSIVE or PASSIVE each hand.<br>You may meet the same type again.</div>
     </section>`;
-  panel.insertAdjacentHTML('afterend', `<nav class="entry-feature-nav" aria-label="Feature pages"><button type="button" id="entry-feature-prev" aria-label="Previous feature">‹</button><div>${['Beat the boss','Choose your move','Jackpot bonus'].map((name,i)=>`<button type="button" data-feature="${i}" aria-label="${name}" aria-controls="entry-feature-${i}"></button>`).join('')}</div><button type="button" id="entry-feature-next" aria-label="Next feature">›</button></nav>`);
+  panel.insertAdjacentHTML('afterend', `<nav class="entry-feature-nav" aria-label="Feature pages"><button type="button" id="entry-feature-prev" aria-label="Previous feature">‹</button><div>${['Beat the boss','Choose your move','Blinds and bosses'].map((name,i)=>`<button type="button" data-feature="${i}" aria-label="${name}" aria-controls="entry-feature-${i}"></button>`).join('')}</div><button type="button" id="entry-feature-next" aria-label="Next feature">›</button></nav>`);
   let current = 0;
   const select = index => {
     current = (index + 3) % 3;

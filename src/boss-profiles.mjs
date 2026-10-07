@@ -1,4 +1,4 @@
-import {evaluateBest, normalizeCard, RANKS} from './poker.mjs?v=56';
+import {evaluateBest, normalizeCard, RANKS} from './poker.mjs?v=58';
 
 const freeze = value => {
   if (value && typeof value === 'object') { Object.values(value).forEach(freeze); Object.freeze(value); }
@@ -31,20 +31,20 @@ export const BOSS_PROFILE_BY_ID = freeze(Object.fromEntries(BOSS_PROFILES.map(pr
 
 export function normalizeBossConfig(input = {}) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) throw new TypeError('BOSS 設定須為物件。');
-  const mode = input.mode ?? 'rotate';
+  const mode = input.mode ?? 'random';
   const importedId = input.profileId ?? 'caller';
   const profileId = ['sniper', 'trapper'].includes(importedId) ? 'caller' : importedId;
-  if (!['rotate', 'fixed', 'legacy'].includes(mode)) throw new TypeError('BOSS 模式須為 rotate、fixed 或 legacy。');
+  if (!['random', 'rotate', 'fixed', 'legacy'].includes(mode)) throw new TypeError('BOSS 模式須為 random、rotate、fixed 或 legacy。');
   if (!BOSS_PROFILE_BY_ID[profileId]) throw new TypeError('未知 BOSS 類型。');
   return {mode, profileId};
 }
 
-/** One uniform draw per rotating encounter. After the first 50/50 draw, the two profiles alternate. */
+/** Independent 50/50 encounters; explicit historical rotate retains its exclusion rule. */
 export function selectBossProfile(rng, previousId = null, input = {}) {
   const {mode, profileId} = normalizeBossConfig(input);
   if (mode === 'legacy') return {profile: null, selection: {mode, probability: 1, previousId, eligibleIds: []}};
   if (mode === 'fixed') return {profile: BOSS_PROFILE_BY_ID[profileId], selection: {mode, probability: 1, previousId, eligibleIds: [profileId]}};
-  const eligibleIds = BOSS_PROFILE_IDS.filter(id => id !== previousId);
+  const eligibleIds = mode === 'random' ? [...BOSS_PROFILE_IDS] : BOSS_PROFILE_IDS.filter(id => id !== previousId);
   const roll = rng();
   if (!Number.isFinite(roll) || roll < 0 || roll >= 1) throw new RangeError('BOSS 選取亂數須介於 0（含）與 1（不含）。');
   const id = eligibleIds[Math.floor(roll * eligibleIds.length)];

@@ -1,7 +1,7 @@
-import {createRng,normalizeConfig,STREETS} from './engine.mjs?v=56';
-import {buildActionTree} from './action-tree.mjs?v=56';
-import {BOSS_PROFILE_IDS,BOSS_PROFILE_VERSION} from './boss-profiles.mjs?v=56';
-import {combinePoolStudySummaries} from './probability-pools.mjs?v=56';
+import {createRng,normalizeConfig,STREETS} from './engine.mjs?v=58';
+import {buildActionTree} from './action-tree.mjs?v=58';
+import {BOSS_PROFILE_IDS,BOSS_PROFILE_VERSION} from './boss-profiles.mjs?v=58';
+import {combinePoolStudySummaries} from './probability-pools.mjs?v=58';
 
 const TYPES=['fold','check','call','bet','raise'];
 const TIERS=['royal','straightFlush','quads'];

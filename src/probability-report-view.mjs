@@ -1,6 +1,6 @@
-import {esc} from './shared.mjs?v=56';
-import {JACKPOT_MULTIPLIERS} from './jackpot.mjs?v=56';
-import {LAB_STREETS as STREETS, LAB_POLICIES as POLICIES, LAB_JACKPOTS as JACKPOTS} from './probability-text.mjs?v=56';
+import {esc} from './shared.mjs?v=58';
+import {JACKPOT_MULTIPLIERS} from './jackpot.mjs?v=58';
+import {LAB_STREETS as STREETS, LAB_POLICIES as POLICIES, LAB_JACKPOTS as JACKPOTS} from './probability-text.mjs?v=58';
 
 const SEATS = {player: '玩家', npc: 'BOSS'};
 const ACTIONS = {fold: 'FOLD（棄牌）', check: 'CHECK（過牌）', call: 'CALL（跟注）', bet: 'BET（開注）', raise: 'RAISE（加注）'};
@@ -28,14 +28,14 @@ const metric = (title, value, description = '') => `<article><small>${esc(title)
 const pager = (kind, page, pages, total, pageSize) => `<div class="report-pager"><span>共 ${num(total)} 筆 · 第 ${num(total ? page * pageSize + 1 : 0)}–${num(Math.min((page + 1) * pageSize, total))} 筆</span><button type="button" data-page-kind="${kind}" data-page="${page - 1}" ${page <= 0 ? 'disabled' : ''}>上一頁</button><label>頁碼 <input data-page-input="${kind}" type="number" min="1" max="${pages}" value="${page + 1}" aria-label="${{players: '玩家', batches: '切片', nodes: '節點', terminals: '終端'}[kind]}表頁碼"></label><span>/ ${num(pages)}</span><button type="button" data-page-kind="${kind}" data-page="${page + 1}" ${page + 1 >= pages ? 'disabled' : ''}>下一頁</button></div>`;
 const ci = values => values?.length === 2 && values.every(finite) ? `${percent(values[0])}–${percent(values[1])}` : '—（有效樣本不足）';
 
-export function poolSummaryTable(summary) {
+export function poolSummaryTable(summary, {includeSpecial = true} = {}) {
   if (!summary) return '<p class="hint">此歷史模型未使用結果水池。</p>';
-  return table(['大盲分桶', '付費池開始', '付費池使用', '付費池增加', '付費池結束', '特殊池開始', '特殊池增加', '特殊池支出', '特殊池結束'],
-    summary.byBucket.map(bucket => [esc(bucket.label || bucket.bets.join('／')), ...['paidActionStart','paidActionBudgetUsed','paidActionAdded','paidActionEnd','specialStart','specialAdded','specialAward','specialEnd'].map(key=>num(bucket[key]))])) +
-    `<p class="hint">${summary.deals ? '池額按冷啟動牌局樣本加總' : summary.players ? '池額依研究玩家加總' : '各桶開始與結束金額'}；完整樹列為終端機率加權期望。特殊池支出已包含在 JP 與總返還，不再重複加計。最大池守恆誤差 ${num(summary.maxLedgerError, 12)}。</p>`;
+  return table(['大盲分桶', '付費池開始', '付費池使用', '付費池增加', '付費池結束', ...(includeSpecial ? ['特殊池開始', '特殊池增加', '特殊池支出', '特殊池結束'] : [])],
+    summary.byBucket.map(bucket => [esc(bucket.label || bucket.bets.join('／')), ...['paidActionStart','paidActionBudgetUsed','paidActionAdded','paidActionEnd', ...(includeSpecial ? ['specialStart','specialAdded','specialAward','specialEnd'] : [])].map(key=>num(bucket[key]))])) +
+    `<p class="hint">${summary.deals ? '池額按冷啟動牌局樣本加總' : summary.players ? '池額依研究玩家加總' : '各桶開始與結束金額'}；完整樹列為終端機率加權期望。${includeSpecial ? '特殊池支出已包含在 JP 與總返還，不再重複加計。' : '三桶付費池跨手保留，水池餘額不是玩家資產。'}最大池守恆誤差 ${num(summary.maxLedgerError, 12)}。</p>`;
 }
 
-function rtpChart(batches) {
+function rtpChart(batches, {current = false} = {}) {
   const available = (batches || []).filter(item => item.cumulativeWagers > 0 && finite(item.cumulativeHands)
     && finite(item.cumulativeBaseRtp) && finite(item.cumulativeTotalRtp));
   if (!available.length) return '<p class="status-note">尚無有效累計投入，無法繪製 RTP 走勢。</p>';
@@ -57,14 +57,17 @@ function rtpChart(batches) {
   }).join('');
   const xTicks = [0, lastHands / 2, lastHands].map(value => `<text x="${x(value)}" y="247" text-anchor="middle" fill="currentColor">${num(value, 0)}</text>`).join('');
   const last = available.at(-1);
-  const description = `依 ${num(available.length)} 個實際切片繪製。最後累計 ${num(last.cumulativeHands)} 手，底池 RTP ${percent(last.cumulativeBaseRtp)}，含 JP 總 RTP ${percent(last.cumulativeTotalRtp)}。${sampled ? `均勻抽取 ${limit} 個顯示點，完整切片保留在 JSON。` : '顯示所有切片。'}`;
-  return `<figure class="study-rtp-chart"><svg viewBox="0 0 720 280" width="100%" role="img" aria-labelledby="study-rtp-chart-title study-rtp-chart-desc" font-size="11"><title id="study-rtp-chart-title">累積底池與含 JP 總 RTP 走勢</title><desc id="study-rtp-chart-desc">${esc(description)}橫軸為累計完成手數，縱軸為返還率；高於 100% 的數值完整保留。</desc>${ticks}${xTicks}
+  const description = `依 ${num(available.length)} 個實際切片繪製。最後累計 ${num(last.cumulativeHands)} 手，${current ? `RTP ${percent(last.cumulativeTotalRtp)}` : `底池 RTP ${percent(last.cumulativeBaseRtp)}，含 JP 總 RTP ${percent(last.cumulativeTotalRtp)}`}。${sampled ? `均勻抽取 ${limit} 個顯示點，完整切片保留在 JSON。` : '顯示所有切片。'}`;
+  return `<figure class="study-rtp-chart"><svg viewBox="0 0 720 280" width="100%" role="img" aria-labelledby="study-rtp-chart-title study-rtp-chart-desc" font-size="11"><title id="study-rtp-chart-title">${current ? '累積 RTP 走勢' : '累積底池與含 JP 總 RTP 走勢'}</title><desc id="study-rtp-chart-desc">${esc(description)}橫軸為累計完成手數，縱軸為返還率；高於 100% 的數值完整保留。</desc>${ticks}${xTicks}
     <text x="377" y="270" text-anchor="middle" fill="currentColor">累計完成手數</text>
     <polyline points="${line('cumulativeBaseRtp')}" fill="none" stroke="#68c9eb" stroke-width="2.5"><title>底池 RTP：${percent(last.cumulativeBaseRtp)}</title></polyline>
-    <polyline points="${line('cumulativeTotalRtp')}" fill="none" stroke="#f2bf5f" stroke-width="2.5"><title>含 JP 總 RTP：${percent(last.cumulativeTotalRtp)}</title></polyline>
+    ${current ? '' : `<polyline points="${line('cumulativeTotalRtp')}" fill="none" stroke="#f2bf5f" stroke-width="2.5"><title>含 JP 總 RTP：${percent(last.cumulativeTotalRtp)}</title></polyline>`}
     <circle cx="${x(last.cumulativeHands)}" cy="${y(last.cumulativeBaseRtp)}" r="3" fill="#68c9eb"/><circle cx="${x(last.cumulativeHands)}" cy="${y(last.cumulativeTotalRtp)}" r="3" fill="#f2bf5f"/></svg>
-    <figcaption><span class="rtp-chart-base">● 底池 RTP</span> · <span class="rtp-chart-total">● 含 JP 總 RTP</span><p class="hint">${esc(description)}切片連線是累積比值走勢，並非信賴帶；少量樣本或零次 JP 不能證明模型已收斂。</p></figcaption></figure>`;
+    <figcaption><span class="rtp-chart-base">● ${current ? 'RTP' : '底池 RTP'}</span>${current ? '' : ' · <span class="rtp-chart-total">● 含 JP 總 RTP</span>'}<p class="hint">${esc(description)}切片連線是累積比值走勢，並非信賴帶；少量樣本不能證明模型已收斂。</p></figcaption></figure>`;
 }
+
+const reportJson = (value, current) => JSON.stringify(value, current ? (key, entry) =>
+  /jackpot|special|tierCounts/i.test(key) || key === 'paidActionBudgetShare' ? undefined : entry : null, 2);
 
 /** Render the saved run, never live form values. No mathematical state is changed here. */
 export function renderStudyDetails(report, runSnapshot, root = document) {
@@ -74,14 +77,14 @@ export function renderStudyDetails(report, runSnapshot, root = document) {
   if (!report) { target.innerHTML = '<p class="empty-results">完成模擬後，這裡會依序顯示本次參數、勝率、行動、水池與玩家統計。</p>'; return; }
   const r = report, c = r.config || runSnapshot?.config || {}, method = r.methodMeta || {};
   const pooled = ['prebuilt-pools','pooled-holdem'].includes(r.outcomeModel), fixedHoldem = r.outcomeModel === 'fixed-holdem';
-  const holdem = fixedHoldem || r.outcomeModel === 'pooled-holdem';
+  const current = r.outcomeModel === 'pooled-holdem', holdem = fixedHoldem || current;
   const mode = r.mode || 'independent', independent = mode === 'independent', unlimited = r.unlimitedBankroll === true;
   const playerRows = r.playerResults || [], playerSummary = r.playerSummary || {};
   const entryMinimum = method.minimumEntryOnly === false;
   const insufficientThreshold = finite(method.insufficientThreshold) ? method.insufficientThreshold : null;
   const thresholdDescription = holdem ? '桌籌碼歸零' : entryMinimum ? `目前 BET 的每手開局門檻 ${num(insufficientThreshold)}（${num(method.entryMinimumMultiplier)} × BET）` : `本次報表的續玩門檻 ${num(insufficientThreshold)}`;
   const sections = [['run-parameters', '本次參數'], ['win-rates', '勝率分母'], ['blind-street', '盲位與街道'], ['action-coverage', '所有動作'],
-    ...(pooled||fixedHoldem?[]:[['deal-audit', '起手重抽']]), ['return-jackpot', fixedHoldem ? '返還倍數' : '返還與 JP'], ['player-assets', '玩家資產'], ...(pooled ? [['outcome-pools', '跨手水池']] : []), ['study-accounting', '切片與守恆']];
+    ...(pooled||fixedHoldem?[]:[['deal-audit', '起手重抽']]), ['return-distribution', holdem ? '返還倍數' : '返還與 JP'], ['player-assets', '玩家資產'], ...(pooled ? [['outcome-pools', '跨手水池']] : []), ['study-accounting', '切片與守恆']];
   const configRows = [
     ['研究模式', unlimited ? '連續遊玩' : esc(label(MODES, mode)), unlimited ? esc(method.bankroll) : independent ? '每手重設雙方帶入，末手餘額不是累積資產。' : '同一玩家逐手保留資產，對手資產調整另外記錄。'],
     ['玩家策略', esc(label(POLICIES, r.policy)), '統計與期望使用本次執行的策略。'],
@@ -94,10 +97,10 @@ export function renderStudyDetails(report, runSnapshot, root = document) {
       [holdem ? '桌籌碼歸零停止' : entryMinimum ? '每手最低開局資產' : '續玩停止門檻', num(insufficientThreshold), holdem ? '低於首次帶入仍可續手及全下，不逐手檢查 100 小盲。' : entryMinimum ? `目前 BET 的 ${num(method.entryMinimumMultiplier)} 倍；每手開始前雙方都須達標，已開局全下仍正常完成。` : '依本次歷史報表設定顯示，不套用目前的每手開局門檻。']
     ]),
     [holdem ? '小盲（SB）／大盲（BB）' : '小盲／大盲（BET）', `${num(c.smallBlind)} / ${num(c.bigBlind)}`, esc(method.initialBlind || '')],
-    holdem ? ['入桌與加注', `帶入 ${num(c.smallBlind * 100)}（100 小盲／50 大盲）`, '桌籌碼連續增減；半池／全池／全下共用合法金額與 50%／35%／15% 尺寸權重。'] : ['各街下注增額', Object.keys(STREETS).map(street => `${esc(STREETS[street])} ${num(c.betSize?.[street])}`).join(' · '), '顯示本次引擎正規化後的實際參數。'],
-    ['底池派彩', '全額返還', fixedHoldem ? '依實際最佳五張牌型結算，未匹配下注退回。' : '不另扣底池費；JP 由個人特殊池另計。'],
-    ['BOSS 模式',esc(({rotate:'兩型輪替',fixed:'固定對手研究',legacy:'歷史權重'})[c.boss?.mode]||'歷史權重'),esc(method.bossSelection||'')],
-    ['JP（彩金）', yesNo(c.jackpotEnabled), '皇家同花順 200×、同花順 50×、四條 20× 大盲，只領最高一獎。'],
+    holdem ? ['入桌與加注', `帶入 ${num(c.smallBlind * 100)}（100 小盲／50 大盲）`, current ? '玩家 2× POT／4× POT 為當前底池倍數的本次支付，另有 ALL IN；BOSS 半池／全池／全下權重 50%／35%／15%。合法最小額與籌碼上限由引擎統一計算。' : '桌籌碼連續增減；半池／全池／全下共用合法金額與 50%／35%／15% 尺寸權重。'] : ['各街下注增額', Object.keys(STREETS).map(street => `${esc(STREETS[street])} ${num(c.betSize?.[street])}`).join(' · '), '顯示本次引擎正規化後的實際參數。'],
+    ['底池派彩', '全額返還', holdem ? '匹配底池全額派彩，未匹配下注退回。' : '不另扣底池費；JP 由個人特殊池另計。'],
+    ['BOSS 模式',esc(({random:'每手隨機遇到',rotate:'歷史兩型輪替',fixed:'固定對手研究',legacy:'歷史權重'})[c.boss?.mode]||'歷史權重'),esc(method.bossSelection||'')],
+    ...(holdem ? [] : [['JP（彩金）', yesNo(c.jackpotEnabled), '皇家同花順 200×、同花順 50×、四條 20× 大盲，只領最高一獎。']]),
     ['玩家策略基礎權重', Object.keys(ACTIONS).map(action => `${esc(ACTIONS[action])} ${num(c.npc?.[action])}`).join(' · '), '供模擬玩家策略使用；BOSS 使用兩型逐街強弱分布。'],
     ['玩家牌力與成本影響', `${num(c.npc?.strengthInfluence)} / ${num(c.npc?.priceInfluence)}`, '行動者只使用自己的底牌、已揭公共牌及下注狀態。'],
     ['信賴區間單位', `${method.ciUnit === 'player' ? '玩家整段聚類' : '獨立牌局'} · ${num(method.ciSamples)} 個樣本`, esc(method.uncertainty || '')],
@@ -108,10 +111,11 @@ export function renderStudyDetails(report, runSnapshot, root = document) {
   if (pooled) configRows.push(
     ['結果模型', esc(r.outcomeModel), esc(method.outcomeSampling || method.poolContinuity)],
     ['BOSS 行為表版本', esc(r.bossProfileVersion), '激進／不激進依本街鎖定的強／不強分類取表；同街再加注不重判分類。'],
-    ['全系統 RTP／付費池分配', `${percent(c.outcome.conversionRate)} / ${percent(c.outcome.paidActionBudgetShare)}`, '.99 為操作計分係數，並非整體 RTP 保證；餘額分配至特殊池。'],
+    ['全系統 RTP／付費池分配', `${percent(c.outcome.conversionRate)} / ${percent(c.outcome.paidActionBudgetShare)}`, current ? '.99 為操作計分係數，並非整體 RTP 保證；有效贏節點付費分數全數進同級付費池。' : '.99 為操作計分係數，並非整體 RTP 保證；餘額分配至特殊池。'],
     ['付費池冷卻範圍／初始冷卻', `${num(c.outcome.paidActionCooldownMin)}–${num(c.outcome.paidActionCooldownMax)} / ${num(c.outcome.initialPaidActionCooldown)}`, '冷卻跨手與大盲分桶共用。'],
-    ['特殊池使用機率', percent(c.outcome.specialUseChance), 'root win 時依最高可負擔級別抽取資格，正常獲勝攤牌才支出。'],
-    ['三桶初始付費池／特殊池', `${c.outcome.initialPaidActionPools.map(value=>num(value)).join('／')} · ${c.outcome.initialSpecialPools.map(value=>num(value)).join('／')}`, '每位玩家各自建立一次，重設資產模式仍跨手保留。']
+    ...(current ? [['三桶初始付費池', c.outcome.initialPaidActionPools.map(value=>num(value)).join('／'), '每位玩家各自建立一次，跨手、跨桌保留。']] : [
+      ['特殊池使用機率', percent(c.outcome.specialUseChance), 'root win 時依最高可負擔級別抽取資格，正常獲勝攤牌才支出。'],
+      ['三桶初始付費池／特殊池', `${c.outcome.initialPaidActionPools.map(value=>num(value)).join('／')} · ${c.outcome.initialSpecialPools.map(value=>num(value)).join('／')}`, '每位玩家各自建立一次，重設資產模式仍跨手保留。']])
   );
   if (mode === 'cashout') configRows.splice(6, 0, ['目標資產', num(r.targetAsset), '達到目標即停止；手數上限截尾另列。']);
   for (const seat of Object.keys(SEATS)) {
@@ -122,14 +126,14 @@ export function renderStudyDetails(report, runSnapshot, root = document) {
   }
   const snapshot = {config: c, simulation: {...runSnapshot?.simulation, mode, policy: r.policy, seed: r.seed, players: r.players, entries: r.entries,
     unlimitedBankroll: unlimited, targetAsset: r.targetAsset, maxHandsPerPlayer: r.maxHandsPerPlayer}, methodMeta: method};
-  const rates = `<div class="metrics study-win-metrics">${metric('全手贏池率', rate(r.wins, r.hands), `${num(r.wins)} / ${num(r.hands)} 手；包含對手棄牌`)}${metric('攤牌贏池率', rate(r.showdownWins, r.showdowns), `${num(r.showdownWins)} / ${num(r.showdowns)} 次攤牌；平手另列`)}${metric('淨獲利手率', rate(r.netWinningHands, r.hands), `${num(r.netWinningHands)} / ${num(r.hands)} 手；含 JP 淨利大於 0`)}${metric('全手平手率', rate(r.ties, r.hands), `${num(r.ties)} 次平分底池`)}${metric('攤牌平手率', rate(r.showdownTies, r.showdowns), '未將平手直接算成贏牌')}${metric('攤牌到達率', rate(r.showdowns, r.hands), `${num(r.showdowns)} / ${num(r.hands)} 手`)}</div>` +
+  const rates = `<div class="metrics study-win-metrics">${metric('全手贏池率', rate(r.wins, r.hands), `${num(r.wins)} / ${num(r.hands)} 手；包含對手棄牌`)}${metric('攤牌贏池率', rate(r.showdownWins, r.showdowns), `${num(r.showdownWins)} / ${num(r.showdowns)} 次攤牌；平手另列`)}${metric('淨獲利手率', rate(r.netWinningHands, r.hands), `${num(r.netWinningHands)} / ${num(r.hands)} 手；${current ? '本手' : '含 JP'}淨利大於 0`)}${metric('全手平手率', rate(r.ties, r.hands), `${num(r.ties)} 次平分底池`)}${metric('攤牌平手率', rate(r.showdownTies, r.showdowns), '未將平手直接算成贏牌')}${metric('攤牌到達率', rate(r.showdowns, r.hands), `${num(r.showdowns)} / ${num(r.hands)} 手`)}</div>` +
     table(['統計項目', '分子', '分母', '比例'], [
       ['玩家贏得底池', num(r.wins), num(r.hands), rate(r.wins, r.hands)], ['玩家輸掉底池', num(r.losses), num(r.hands), rate(r.losses, r.hands)],
       ['玩家棄牌', num(r.folds), num(r.hands), rate(r.folds, r.hands)], ['BOSS 棄牌', num(r.npcFolds), num(r.hands), rate(r.npcFolds, r.hands)],
       ['攤牌權益（勝＋半數平）', finite(r.showdownWins) && finite(r.showdownTies) ? num(r.showdownWins + r.showdownTies / 2) : '—', num(r.showdowns),
         rate(finite(r.showdownWins) && finite(r.showdownTies) ? r.showdownWins + r.showdownTies / 2 : null, r.showdowns)]
     ]);
-  const blindTable = table(['玩家盲位', '手數', '全手贏池率', '攤牌贏池率', '淨獲利手率', '底池 RTP', '總 RTP', '含 JP 淨利'], ['small', 'big'].map(blind => {
+  const blindTable = table(['玩家盲位', '手數', '全手贏池率', '攤牌贏池率', '淨獲利手率', '底池 RTP', '總 RTP', current ? '淨利' : '含 JP 淨利'], ['small', 'big'].map(blind => {
     const item = r.byBlind?.[blind] || {};
     return [blind === 'small' ? '小盲（翻牌前先行）' : '大盲（翻牌後先行）', num(item.hands), rate(item.wins, item.hands), rate(item.showdownWins, item.showdowns),
       rate(item.netWinningHands, item.hands), rate(item.netReturns, item.wagers), rate(item.totalReturns, item.wagers), num(item.profit)];
@@ -167,7 +171,7 @@ export function renderStudyDetails(report, runSnapshot, root = document) {
       metric('截尾率', mode === 'cashout' ? rate(playerSummary.censored ?? 0, countPlayers) : '不適用', '達手數上限仍未達標／資產不足；不能算作失敗');
   target.innerHTML = `<nav class="study-anchor-nav" id="study-report-nav" aria-label="完整報表索引">${sections.map(([id, title]) => `<a href="#${id}">${esc(title)}</a>`).join('')}</nav>` +
     block('run-parameters', '本次實際參數與估計方式', '以下全部讀取已完成報表的參數，不讀取現在表單值。', table(['參數', '本次值', '說明'], configRows) +
-      `<details class="report-json"><summary>本次完整參數 JSON</summary><pre>${esc(JSON.stringify(snapshot, null, 2))}</pre></details>`) +
+      `<details class="report-json"><summary>本次完整參數 JSON</summary><pre>${esc(reportJson(snapshot, current))}</pre></details>`) +
     block('win-rates', '勝率：三種分母分開看', '贏得底池、攤牌勝出、單手淨獲利是不同事件；沒有分母時顯示 —。', rates) +
     block('blind-street', '盲位與逐街到達', '街道列會包含同一手的不同階段；各街不能相加當成總手數。', blindTable + '<h4>逐街實際到達</h4>' + streetTable) +
     (holdem ? block('boss-strength', 'BOSS 逐街鎖定分類', '同一手每街只列一次；這是離線研究稽核，遊戲畫面不顯示對手當前分類。',
@@ -178,32 +182,32 @@ export function renderStudyDetails(report, runSnapshot, root = document) {
       table(['街道', '座位', '真實動作', '執行次數', '實付合計', '含此動作的手數', '全手覆蓋率', '這些手玩家贏池率', '這些手玩家淨獲利率', '覆蓋狀態'], actionRows) +
       (holdem ? '<h4>下注與加注尺寸</h4>' + table(['街道', '座位', '動作', '尺寸', '執行次數', '實付合計', '實際全下次數'], (r.actionSizeStats || []).map(row => [
         esc(STREETS[row.street]), esc(SEATS[row.actor]), esc(ACTIONS[row.type]),
-        esc(row.sizeKeys.map(key => ({half:'半池',pot:'全池',allin:'全下'})[key] || key).join('／')), num(row.count), num(row.amount), num(row.allIns)
+        esc(row.sizeKeys.map(key => ({half:'半池',pot:'全池','2x':'2× POT','4x':'4× POT',allin:'全下'})[key] || key).join('／')), num(row.count), num(row.amount), num(row.allIns)
       ])) + '<p class="hint">受最低加注或剩餘籌碼限制，同額選項合併顯示及累加權重；不把同一筆下注重複計次。</p>' : '') +
       `<p class="hint">${esc(method.actionOutcomeUnit || '同手同街同座位同動作只計一個結果樣本；執行次數可以大於手數。')}零次表示這次沒有觀測到；不能據此判定為非法動作。</p>`) +
     (pooled||fixedHoldem?'':block('deal-audit', '起手重抽與對子率', '重抽手率以非手動發牌手數為分母；起始／最終對子率包含指定底牌。未成對不等於低勝率，例如 AK 同花仍可重抽。',
       table(['座位', '發牌手數', '指定手數', '有重抽手數', '自然發牌重抽手率', '重抽總次數', '自然發牌平均重抽', '初始對子率', '最終對子率'], auditRows) +
       '<h4>最後停止原因</h4>' + table(['座位', '停止原因', '手數', '占該座位全部手數'], auditStops))) +
-    block('return-jackpot', fixedHoldem ? '返還倍數' : '返還倍數與 JP 獎項', method.returnDenominator || '單手倍數＝含 JP 總返還 ÷ 有效投入；未跟注退款不計入。',
+    block('return-distribution', holdem ? '返還倍數' : '返還倍數與 JP 獎項', method.returnDenominator || (current ? '單手倍數＝底池返還 ÷ 有效投入；未跟注退款不計入。' : '單手倍數＝含 JP 總返還 ÷ 有效投入；未跟注退款不計入。'),
       table(['單手返還倍數', '手數', '占全部手數'], (r.returnDistribution || []).map(item => [esc(item.label), num(item.hands), rate(item.hands, r.hands)])) +
-      (fixedHoldem ? '' : '<h4>JP（彩金）：牌型與倍數</h4>' + table(['牌型', '獎金倍數', '中獎手數', '全部手數命中率', '攤牌命中率', '獎金合計'], jackpotRows) +
+      (holdem ? '' : '<h4>JP（彩金）：牌型與倍數</h4>' + table(['牌型', '獎金倍數', '中獎手數', '全部手數命中率', '攤牌命中率', '獎金合計'], jackpotRows) +
       `<p class="status-note${hits ? '' : ' warning'}">${c.jackpotEnabled === false ? '本次 JP 關閉。' : hits ? `共有 ${num(hits)} 手符合獎項，僅取最高一獎。` : '本次 JP 零次命中；不代表真實機率為零。'} ${pooled ? '需有特殊池資格且玩家正常獲勝攤牌；普通無資格布局排除特殊牌。' : '歷史牌庫模式：玩家正常攤牌檢查牌型，彩金與底池勝負分開。'} 總 RTP 的稀有獎影響仍需足夠樣本。</p>`)) +
     block('player-assets', unlimited ? '玩家連續統計' : '玩家資產、達標與截尾', method.bankroll || '', `<div class="metrics">${summaryMetrics}</div>` +
       (mode === 'cashout' ? `<p class="status-note">達標 ${num(playerSummary.target ?? 0)} 位、資產不足 ${num(playerSummary.insufficient ?? 0)} 位、截尾 ${num(playerSummary.censored ?? 0)} 位；三者分母均為 ${num(countPlayers)} 位。目標資產 ${num(r.targetAsset)}，每人最多 ${num(r.maxHandsPerPlayer)} 手。</p>` : '') +
       `<p class="hint">每頁 100 位，全部玩家均可翻頁檢查，完整資料也包含在 JSON 匯出。${unlimited ? '資產為無限，連續淨利依實際結算累計。' : independent ? '「末手結束餘額」只代表最後一手；「樣本淨利合計」不可當作持續錢包餘額。' : '結束餘額是同一位玩家實際連續資產。'}</p><div data-player-results></div>`) +
-    (pooled ? block('outcome-pools', '三桶水池開始、累積與支出', method.poolContinuity || '依本次模型顯示。', poolSummaryTable(r.outcomePoolSummary)) : '') +
-    block('study-accounting', 'RTP、切片與資金守恆', '投入與返還採比值的總和統計；退款、底池返還、彩金、對手資產調整分開。',
-      `<div class="flow-cards">${[['有效投入', r.wagers], ['未跟注退款', r.refunds], ['底池返還', r.netReturns], ['特殊池派獎', r.jackpotAwards], ['含 JP 總返還', r.totalReturns], ['含 JP 淨利', r.profit ?? r.totalReturns - r.wagers]].map(([name, value]) => `<div><small>${esc(name)}</small><b>${num(value)}</b></div>`).join('')}</div>` +
+    (pooled ? block('outcome-pools', '三桶水池開始、累積與支出', method.poolContinuity || '依本次模型顯示。', poolSummaryTable(r.outcomePoolSummary, {includeSpecial: !current})) : '') +
+    block('study-accounting', 'RTP、切片與資金守恆', current ? '投入與返還採比值的總和統計；退款、底池返還與對手資產調整分開。' : '投入與返還採比值的總和統計；退款、底池返還、彩金、對手資產調整分開。',
+      `<div class="flow-cards">${[['有效投入', r.wagers], ['未跟注退款', r.refunds], ['底池返還', r.netReturns], ...(current ? [] : [['特殊池派獎', r.jackpotAwards]]), [current ? '總返還' : '含 JP 總返還', r.totalReturns], [current ? '淨利' : '含 JP 淨利', r.profit ?? r.totalReturns - r.wagers]].map(([name, value]) => `<div><small>${esc(name)}</small><b>${num(value)}</b></div>`).join('')}</div>` +
       table(['項目', '本次結果', '定義'], [
         ['底池 RTP', rate(r.netReturns, r.wagers), '底池返還／有效投入'], ['底池 RTP 95% 區間', ci(r.baseCi95), `${method.ciUnit === 'player' ? '玩家聚類' : '獨立手'}，${num(method.ciSamples)} 個樣本`],
-        ['總 RTP（含 JP）', rate(r.totalReturns, r.wagers), '（底池返還＋JP）／有效投入'], ['總 RTP 95% 區間', ci(r.ci95), esc(method.uncertainty || '')],
+        [current ? '總 RTP' : '總 RTP（含 JP）', rate(r.totalReturns, r.wagers), current ? '底池返還／有效投入' : '（底池返還＋JP）／有效投入'], ['總 RTP 95% 區間', ci(r.ci95), esc(method.uncertainty || '')],
 
         ['對手資產刷新次數', num(r.npcRefreshCount), holdem ? '每手開始匹配玩家桌籌碼；不在結算後刷新，不計派彩。' : unlimited ? '有限單手帳務的結算刷新，下一手使用足額研究額度，不計作派彩' : '每手結算後與玩家資產匹配，不計作派彩'],
-        ['對手資產增加／移出', `${num(r.npcRefreshAdded)} / ${num(r.npcRefreshRemoved)}`, '對手結算調整，與下注、退款、JP 完全分列'],
+        ['對手資產增加／移出', `${num(r.npcRefreshAdded)} / ${num(r.npcRefreshRemoved)}`, current ? '對手結算調整，與下注、退款分列' : '對手結算調整，與下注、退款、JP 完全分列'],
         ['對手資產淨調整', num(r.npcRefreshAdjustment), '增加 − 移出；不納入玩家 RTP 分子或分母'],
-        ['最大單手守恆誤差', finite(r.conservationError) ? r.conservationError.toExponential(3) : '—', '結算後雙方資產＝結算前雙方資產＋JP；不含結算後刷新']
-      ]) + '<h4>累積 RTP 走勢</h4>' + rtpChart(r.batches) + '<h4>逐段統計</h4><div data-batch-results></div>' +
-      `<p class="status-note warning">${esc(method.limitation || '模擬估計不等於 RTP 校準；稀有獎項需要足夠樣本。')}</p>`);
+        ['最大單手守恆誤差', finite(r.conservationError) ? r.conservationError.toExponential(3) : '—', current ? '結算後雙方資產＝結算前雙方資產；不含結算後刷新' : '結算後雙方資產＝結算前雙方資產＋JP；不含結算後刷新']
+      ]) + '<h4>累積 RTP 走勢</h4>' + rtpChart(r.batches, {current}) + '<h4>逐段統計</h4><div data-batch-results></div>' +
+      `<p class="status-note warning">${esc(method.limitation || '模擬估計不等於 RTP 校準；需要足夠樣本才能評估。')}</p>`);
 
   const playerTarget = target.querySelector('[data-player-results]'), pageSize = 100;
   const pages = Math.max(1, Math.ceil(playerRows.length / pageSize));
@@ -212,14 +216,14 @@ export function renderStudyDetails(report, runSnapshot, root = document) {
     playerTarget.innerHTML = pager('players', page, pages, playerRows.length, pageSize) + table(
       ['玩家', '獨立種子', '起始資產', independent ? '末手結束餘額' : '結束資產', '完成手數', '停止狀態', independent ? '樣本淨利合計' : '連續淨利', '對手刷新次數', '對手資產淨調整', '個人水池快照'],
       playerRows.slice(page * pageSize, (page + 1) * pageSize).map(item => [num(item.playerIndex + 1), esc(item.seed), unlimited ? '無限' : num(item.start), unlimited ? '無限' : num(item.end), num(item.hands),
-        esc(label(STATUSES, item.status)), num(item.profit), num(item.npcRefreshCount), num(item.npcRefreshAdjustment), item.outcomePoolSummary ? `<details><summary>開始／結束與稽核</summary><pre>${esc(JSON.stringify(item.outcomePoolSummary, null, 2))}</pre></details>` : '不適用']));
+        esc(label(STATUSES, item.status)), num(item.profit), num(item.npcRefreshCount), num(item.npcRefreshAdjustment), item.outcomePoolSummary ? `<details><summary>開始／結束與稽核</summary><pre>${esc(reportJson(item.outcomePoolSummary, current))}</pre></details>` : '不適用']));
   }
   function showBatches(requested) {
     const batches = r.batches || [], count = Math.max(1, Math.ceil(batches.length / pageSize));
     const page = Math.max(0, Math.min(count - 1, Math.trunc(requested) || 0));
     target.querySelector('[data-batch-results]').innerHTML = pager('batches', page, count, batches.length, pageSize) +
-      table(['切片', '手數', '有效投入', '底池返還', 'JP', '含 JP 返還', '本段總 RTP', '累計手數', '累計總 RTP'],
-        batches.slice(page * pageSize, (page + 1) * pageSize).map((item, index) => [num(item.index ?? page * pageSize + index + 1), num(item.hands), num(item.wagers), num(item.netReturns), num(item.jackpotAwards), num(item.totalReturns),
+      table(['切片', '手數', '有效投入', '底池返還', ...(current ? [] : ['JP']), current ? '總返還' : '含 JP 返還', '本段總 RTP', '累計手數', '累計總 RTP'],
+        batches.slice(page * pageSize, (page + 1) * pageSize).map((item, index) => [num(item.index ?? page * pageSize + index + 1), num(item.hands), num(item.wagers), num(item.netReturns), ...(current ? [] : [num(item.jackpotAwards)]), num(item.totalReturns),
           rate(item.totalReturns, item.wagers), num(item.cumulativeHands), finite(item.cumulativeWagers) && item.cumulativeWagers > 0 ? percent(item.cumulativeTotalRtp) : '—']));
   }
   showPlayers(0); showBatches(0);

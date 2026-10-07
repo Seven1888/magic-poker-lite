@@ -1,6 +1,6 @@
-import {createOutcomeLayout} from './outcome-layout.mjs?v=56';
-import {validateOutcomeLayout} from './prebuilt-outcome-tree.mjs?v=56';
-import {drawRootPoolOutcome, drawPaidPoolOutcome, applyBranchPools, isSpecialPoolLayout} from './outcome-pools.mjs?v=56';
+import {createOutcomeLayout} from './outcome-layout.mjs?v=58';
+import {validateOutcomeLayout} from './prebuilt-outcome-tree.mjs?v=58';
+import {drawRootPoolOutcome, drawPaidPoolOutcome, applyBranchPools} from './outcome-pools.mjs?v=58';
 
 export const POOLED_HOLDEM_MODEL = 'pooled-holdem-v1';
 const PAID = new Set(['call', 'bet', 'raise']);
@@ -36,7 +36,7 @@ export function initializePooledHoldem(hand, {dealHoles}) {
   let layout = null, layoutAttempts = 0;
   for (let attempt = 1; attempt <= hand.config.outcome.maxLayoutAttempts; attempt++) {
     const candidate = createOutcomeLayout({config: hand.config, rng: hand.rng, requiredTargets, dealHoles,
-      firstSeat: hand.smallBlind, qualification: decision.qualification, qualifyLayout: isSpecialPoolLayout});
+      firstSeat: hand.smallBlind});
     if (!candidate) continue;
     layout = validateOutcomeLayout(candidate, {requiredTargets});
     layoutAttempts = attempt;

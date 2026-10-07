@@ -1,4 +1,4 @@
-import {makeDeck, normalizeCard, evaluateBest, compareRanks} from './poker.mjs?v=56';
+import {makeDeck, normalizeCard, evaluateBest, compareRanks} from './poker.mjs?v=58';
 
 const TARGETS = ['win', 'nonWin'];
 const ACTIONS = ['fold', 'check', 'call', 'bet', 'raise'];

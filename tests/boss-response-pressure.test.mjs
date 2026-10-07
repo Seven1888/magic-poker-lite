@@ -46,9 +46,9 @@ test('all selected-size previews use the approved row and match the committed re
   for (const mode of ['fixed-holdem','pooled-holdem']) for (const [id,bands] of Object.entries(expected)) {
     for (const [band,rows] of Object.entries(bands)) {
       const hand = open(id,band,{mode}), before = snapshotTableSession(hand.session), locked = hand.bossStreetStrength;
-      for (const [index,key] of ['half','pot','allin'].entries()) {
+      for (const [index,key] of (mode === 'pooled-holdem' ? ['2x','4x','allin'] : ['half','pot','allin']).entries()) {
         const quote = action(hand,key), preview = previewResponse(hand,quote), visual = actionResponsePreview(hand,quote);
-        const actual = grouped(preview.distribution), [fold,call,raise] = rows[index];
+        const actual = grouped(preview.distribution), [fold,call,raise] = rows[mode === 'pooled-holdem' ? 2 : index];
         near(actual.fold,fold/100); near(actual.call,call/100); near(actual.raise,raise/100);
         const draft = cloneHand(hand); applyAction(draft,quote);
         assert.deepEqual(getActionDistribution(draft),preview.distribution);
@@ -62,7 +62,7 @@ test('all selected-size previews use the approved row and match the committed re
 });
 
 test('repeated raises classify the new unpaid increment against the call-completed pot', () => {
-  const hand = open(), locked = hand.bossStreetStrength;
+  const hand = open('maniac','strong',{mode:'fixed-holdem'}), locked = hand.bossStreetStrength;
   applyAction(hand,action(hand,'pot'));
   assert.deepEqual(getBossResponsePressure(hand),{key:'pot',callAmount:20,basePot:20});
   applyAction(hand,action(hand,'half'));
@@ -103,7 +103,7 @@ test('equal minimum-adjusted quotes use the same pot-pressure row even when labe
 
 test('six-decimal quote rounding cannot push a legal half-pot or pot quote over its threshold', () => {
   for (const priorPot of [10.000001,10.000003,10.333333,10.999999]) {
-    const hand = {status:'playing',actor:'player',config:{bigBlind:.000001,outcome:{mode:'pooled-holdem'}},
+    const hand = {status:'playing',actor:'player',config:{bigBlind:.000001,outcome:{mode:'fixed-holdem'}},
       pot:priorPot,currentBet:0,streetBets:{player:0,npc:0},stacks:{player:100,npc:100},lastFullRaise:.000001};
     for (const sizeKey of ['half','pot']) {
       const chosen = legalHoldemActions(hand).find(row=>row.sizeKeys?.includes(sizeKey));
@@ -135,7 +135,7 @@ test('free checks use the baseline row and price changes never reclassify the lo
 });
 
 test('full-pot aggression keeps the separate 50/35/15 sizing draw and sampling never adds a price draw', () => {
-  const hand = open(); applyAction(hand,action(hand,'pot'));
+  const hand = open('maniac','strong',{mode:'fixed-holdem'}); applyAction(hand,action(hand,'pot'));
   const distribution = getActionDistribution(hand), aggressive = distribution.filter(row=>row.type==='raise');
   for (const [index,weight] of [.5,.35,.15].entries()) near(aggressive[index].probability,.5*weight);
   for (const [roll,sizeRoll,key] of [[.6,.1,'half'],[.6,.6,'pot'],[.6,.9,'allin']]) {

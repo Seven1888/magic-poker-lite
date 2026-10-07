@@ -49,12 +49,14 @@ test('the production default and raw API use pooled Holdem, including a big-blin
   assert.equal(hand.pooledHoldem.model, 'pooled-holdem-v1'); assert.equal(hand._outcomeTree, undefined);
 });
 
-test('pooled Holdem retains 99 percent, JP and pools with standard NL entry rules', () => {
+test('pooled Holdem retains 99 percent and general pools while disabling JP', () => {
   const normalized = normalizeConfig(config({smallBlind: 5, targetRtp: .96}));
   assert.ok(isHoldemBetting(normalized)); assert.equal(normalized.bigBlind, 10);
   assert.equal(normalized.buyIn, 500); assert.equal(normalized.maxRaises, null);
   assert.equal(normalized.outcome.conversionRate, .99); assert.equal(normalized.targetRtp, 1);
-  assert.equal(normalized.jackpotEnabled, true);
+  assert.equal(normalized.jackpotEnabled, false);
+  assert.equal(normalized.outcome.paidActionBudgetShare, 1);
+  assert.equal(normalized.outcome.specialUseChance, 0);
   for (const seat of ['player', 'npc']) {
     assert.equal(normalized.deal[seat].rerollChance, 0); assert.equal(normalized.deal[seat].maxRerolls, 0);
   }
@@ -78,20 +80,20 @@ test('opening stores only necessary fixed private pairs and matches each result 
       assert.equal(new Set([...layout.player, ...layout.board, ...pair]).size, 9);
     }
     assert.equal(new Set([...hand.holes.player, ...hand.holes.npc, ...hand.board, ...hand.deck]).size, 52);
-    assert.equal(classifyJackpot(evaluateBest([...layout.player, ...layout.board])), null);
+    assert.equal(hand.outcomeDecision.qualification, null);
   }
 });
 
 test('nonWin paid draw follows the original formula and switches only to the saved win pair', () => {
   const hand = open({outcome: {conversionRate: 0, initialPaidActionPools: [1000, 0, 0]}});
   const layout = structuredClone(hand.pooledHoldem.layout), oldPair = [...hand.holes.npc], beforeRng = hand.rng.state();
-  const action = choose(hand, 'raise', 'pot'), draft = cloneHand(hand);
+  const action = choose(hand, 'raise', '2x'), draft = cloneHand(hand);
   const expected = drawPaidPoolOutcome({hand: draft, action, previousDecision: draft.outcomeDecision,
     rng: draft.rng, config: draft.config.outcome, nodeId: `1:1:${action.id}`});
   applyAction(hand, action);
   assert.deepEqual(hand.outcomeDecision, expected);
-  assert.equal(hand.outcomeDecision.target, 'win'); assert.equal(hand.outcomeDecision.denominator, 60);
-  assert.equal(hand.outcomeDecision.paidActionBudgetUsed, 60);
+  assert.equal(hand.outcomeDecision.target, 'win'); assert.equal(hand.outcomeDecision.denominator, 70);
+  assert.equal(hand.outcomeDecision.paidActionBudgetUsed, 70);
   assert.deepEqual(hand.holes.npc, layout.boss.win); assert.notDeepEqual(hand.holes.npc, oldPair);
   assert.deepEqual(hand.holes.player, layout.player); assert.deepEqual(hand.pooledHoldem.layout, layout);
   assert.equal(hand.board.length, 0); assert.equal(hand.rng.state(), draft.rng.state());
@@ -103,41 +105,41 @@ test('nonWin paid draw follows the original formula and switches only to the sav
 test('same-street public odds stay locked after private pair conversion; the next street locks the new pair', () => {
   const hand = open({outcome: {conversionRate: 0, initialPaidActionPools: [1000, 0, 0]}});
   const before = structuredClone(hand.bossStreetStrength), odds = getBossProbabilityScenarios(hand);
-  take(hand, 'raise', 'half');
+  take(hand, 'raise', '2x');
   assert.equal(hand.outcomeDecision.target, 'win');
-  assert.deepEqual(hand.bossStreetStrength, before); assert.deepEqual(getBossProbabilityScenarios(hand), odds);
+  assert.deepEqual(hand.bossStreetStrength, before); assert.deepEqual(getBossProbabilityScenarios(hand).byPressure, odds.byPressure);
   take(hand, 'call');
   assert.equal(hand.street, 'flop');
   assert.deepEqual(hand.bossStreetStrength, {street: 'flop', ...classifyBossStrength(hand)});
   assert.deepEqual(hand.bossStreetStates.preflop, before);
 });
 
-test('winning paid actions inherit without RNG, and only matched paid chips earn 80/20 credits', () => {
+test('winning paid actions inherit without RNG, and all matched paid score goes into the general pool', () => {
   const hand = open(), before = hand.rng.state();
   assert.equal(hand.outcomeDecision.target, 'win');
-  take(hand, 'raise', 'half');
+  take(hand, 'raise', '2x');
   assert.equal(hand.rng.state(), before); assert.equal(hand.outcomeDecision.kind, 'paid-win');
   assert.equal(hand.outcomeDecision.inherited, true); assert.equal(hand.outcomeDecision.roll, null);
   take(hand, 'fold');
   const audit = hand.result.outcomePoolAudit;
-  assert.equal(hand.result.player.refund, 10);
-  assert.equal(audit.credits[0].matchedPaidAmount, 5); assert.equal(audit.credits[0].refundablePaidAmount, 10);
-  assert.equal(audit.paidActionAdded, 3.96); assert.equal(audit.specialAdded, .99);
+  assert.equal(hand.result.player.refund, 25);
+  assert.equal(audit.credits[0].matchedPaidAmount, 5); assert.equal(audit.credits[0].refundablePaidAmount, 25);
+  assert.equal(audit.paidActionAdded, 4.95); assert.equal(audit.specialAdded, 0);
   assertConservation(hand);
 });
 
 test('CD decreases only on paid nonWin actions and an available pool can convert a later reraise', () => {
-  const hand = open({outcome: {conversionRate: 0, initialPaidActionPools: [2000, 0, 0], initialPaidActionCooldown: 2,
+  const hand = open({buyIn:10000,outcome: {conversionRate: 0, initialPaidActionPools: [20000, 0, 0], initialPaidActionCooldown: 2,
     paidActionCooldownMin: 3, paidActionCooldownMax: 3}});
   for (const expectedCD of [1, 0]) {
-    take(hand, 'raise', 'half');
+    take(hand, 'raise', '2x');
     assert.equal(hand.outcomeDecision.target, 'nonWin');
     assert.equal(hand.session.outcomePools.paidActionCooldown, expectedCD);
     assert.equal(hand.outcomeDecision.paidActionBudgetUsed, 0);
     const before = hand.rng.state(); take(hand, 'raise', 'half');
     assert.equal(hand.rng.state(), before, 'NPC raise does not draw a paid outcome');
   }
-  take(hand, 'raise', 'half');
+  take(hand, 'raise', '2x');
   assert.equal(hand.raises, 5); assert.equal(hand.outcomeDecision.target, 'win');
   assert.equal(hand.session.outcomePools.paidActionCooldown, 3);
   assert.ok(hand.outcomeDecision.paidActionBudgetUsed > 0);
@@ -153,19 +155,19 @@ test('free checks never use pools, reduce cooldown or draw another result', () =
   assert.deepEqual(hand.outcomeDecision, decision); assert.deepEqual(hand.session.outcomePools, pools);
 });
 
-test('funded root special qualification is paid once only on its matching winning showdown', () => {
+test('former special pools migrate once and cannot fund a new jackpot even when requested', () => {
   for (const [tier, award] of [['royal', 2000], ['straightFlush', 500], ['quads', 200]]) {
-    const hand = open({outcome: {initialSpecialPools: [award, 3, 4], specialUseChance: 1}});
-    assert.equal(hand.outcomeDecision.qualification.tier, tier);
+    const hand = open({jackpotEnabled:true,outcome: {initialSpecialPools: [award, 3, 4], specialUseChance: 1}});
+    assert.equal(hand.outcomeDecision.qualification, null);
     const folded = cloneHand(hand); take(folded, 'fold');
-    assert.equal(folded.result.player.jackpotAward, 0); assert.equal(folded.session.outcomePools.buckets[0].special, award);
-    assert.equal(hand.session.outcomePools.buckets[0].special, award);
+    assert.equal(folded.result.player.jackpotAward, 0); assert.equal(folded.session.outcomePools.buckets[0].paidAction, award);
+    assert.equal(hand.session.outcomePools.buckets[0].paidAction, award);
     passive(hand);
-    assert.equal(hand.result.jackpot.tier, tier); assert.equal(hand.result.player.jackpotAward, award);
-    assert.equal(hand.result.outcomePoolAudit.specialAward, award); assertConservation(hand);
+    assert.equal(hand.result.jackpot, null); assert.equal(hand.result.player.jackpotAward, 0);
+    assert.equal(hand.result.outcomePoolAudit.specialAward, 0); assertConservation(hand);
     const before = snapshot(hand.session);
     assert.throws(() => applyAction(hand, 'check')); assert.deepEqual(snapshot(hand.session), before);
-    assert.deepEqual(hand.session.outcomePools.buckets.slice(1), [{paidAction: 0, special: 3}, {paidAction: 0, special: 4}]);
+    assert.deepEqual(hand.session.outcomePools.buckets.slice(1), [{paidAction: 3, special: 0}, {paidAction: 4, special: 0}]);
   }
 });
 
@@ -185,8 +187,8 @@ test('short blind all-ins resolve only after root layout, classification and poo
 test('impossible manual layouts and exhausted layout retries fail before any money or RNG is committed', () => {
   const cases = [
     [config({outcome: {conversionRate: 0}, deal: {npc: {manual: ['As', 'Ah']}}}), 'MANUAL_BOSS_TARGET_CONFLICT'],
-    [config({outcome: {initialSpecialPools: [2000, 0, 0], specialUseChance: 1, maxLayoutAttempts: 2},
-      deal: {player: {manual: ['2c', '3d']}}}), 'LAYOUT_LIMIT']
+    [config({outcome: {maxLayoutAttempts: 1},
+      deal: {player: {manual: ['2c', '3d']},npc:{manual:['As','Ah']}}}), 'LAYOUT_LIMIT']
   ];
   for (const [settings, code] of cases) {
     const session = createSession(settings, 0), before = snapshot(session), money = session.stacks, pools = session.outcomePools, rng = session.rng;
@@ -200,15 +202,15 @@ test('a paid transition failure leaves the live target, RNG, accounts and contro
   const hand = open({outcome: {conversionRate: 0, initialPaidActionPools: [1000, 0, 0]}});
   delete hand.pooledHoldem.layout.boss.win;
   const before = snapshot(hand.session), rng = hand.rng, layout = hand.pooledHoldem, decision = hand.outcomeDecision;
-  assert.throws(() => take(hand, 'raise', 'half'), /saved pooled Holdem layout/);
+  assert.throws(() => take(hand, 'raise', '2x'), /saved pooled Holdem layout/);
   assert.deepEqual(snapshot(hand.session), before); assert.equal(hand.rng, rng);
   assert.equal(hand.pooledHoldem, layout); assert.equal(hand.outcomeDecision, decision);
 });
 
 test('cloned paths, previews and samples do not mutate the source controller or its RNG', () => {
   const hand = open({outcome: {conversionRate: 0, initialPaidActionPools: [1000, 0, 0]}}), before = snapshot(hand.session);
-  previewResponse(hand, 'raise:half');
-  const copy = cloneHand(hand); take(copy, 'raise', 'half');
+  previewResponse(hand, 'raise:2x');
+  const copy = cloneHand(hand); take(copy, 'raise', '2x');
   assert.deepEqual(snapshot(hand.session), before); assert.equal(hand.outcomeDecision.target, 'nonWin');
   assert.equal(copy.outcomeDecision.target, 'win'); assert.notEqual(copy.pooledHoldem.layout, hand.pooledHoldem.layout);
   copy.pooledHoldem.layout.board.reverse(); assert.deepEqual(snapshot(hand.session), before);

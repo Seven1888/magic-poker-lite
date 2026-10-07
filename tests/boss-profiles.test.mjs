@@ -38,11 +38,11 @@ test('the two profiles cover both bands on every street with exact immutable per
 });
 
 test('configuration migrates removed profiles and keeps explicit research modes', () => {
-  assert.deepEqual(normalizeConfig().boss, {mode:'rotate',profileId:'caller'});
-  assert.deepEqual(normalizeConfig({npc:{fold:1}}).boss, {mode:'rotate',profileId:'caller'});
+  assert.deepEqual(normalizeConfig().boss, {mode:'random',profileId:'caller'});
+  assert.deepEqual(normalizeConfig({npc:{fold:1}}).boss, {mode:'random',profileId:'caller'});
   assert.equal(normalizeConfig({boss:{mode:'legacy'}}).boss.mode, 'legacy');
   for (const profileId of ['sniper','trapper']) assert.deepEqual(normalizeBossConfig({mode:'fixed',profileId}), {mode:'fixed',profileId:'caller'});
-  for (const value of [null,[],{mode:'random'},{profileId:'unknown'}]) assert.throws(() => normalizeBossConfig(value));
+  for (const value of [null,[],{mode:'unknown'},{profileId:'unknown'}]) assert.throws(() => normalizeBossConfig(value));
 });
 
 test('first encounter is 50/50 and later rotating encounters alternate without rejection draws', () => {
@@ -54,7 +54,7 @@ test('first encounter is 50/50 and later rotating encounters alternate without r
   }
   for (const previous of BOSS_PROFILE_IDS) for (const roll of [0,.5,.99999]) {
     let calls = 0;
-    const selected = selectBossProfile(() => {calls++; return roll;}, previous);
+    const selected = selectBossProfile(() => {calls++; return roll;}, previous, {mode:'rotate'});
     assert.notEqual(selected.profile.id, previous); assert.equal(calls, 1);
     assert.deepEqual(selected.selection.eligibleIds, BOSS_PROFILE_IDS.filter(id => id !== previous));
     assert.equal(selected.selection.probability, 1);
@@ -72,7 +72,7 @@ test('fixed and legacy encounter modes consume no selection RNG', () => {
 test('long rotating sequences are reproducible, balanced and never repeat', () => {
   const run = () => {
     const rng=createRng('boss-encounters'), counts={caller:0,maniac:0}; let previous=null;
-    for(let i=0;i<20000;i++) {const {profile}=selectBossProfile(rng,previous);assert.notEqual(profile.id,previous);counts[profile.id]++;previous=profile.id;}
+    for(let i=0;i<20000;i++) {const {profile}=selectBossProfile(rng,previous,{mode:'rotate'});assert.notEqual(profile.id,previous);counts[profile.id]++;previous=profile.id;}
     return counts;
   };
   assert.deepEqual(run(),{caller:10000,maniac:10000}); assert.deepEqual(run(),run());
@@ -259,7 +259,7 @@ test('pooled card replacement cannot rewrite the completed Turn draw evidence', 
 test('probability tool explains explicit conditions and in-game table does not expose class or cards', () => {
   const element={innerHTML:''};renderBossProbabilityTables({getElementById:id=>id==='boss-profile-tables'?element:null});
   assert.equal([...element.innerHTML.matchAll(/<tbody>/g)].length,2);
-  assert.match(element.innerHTML,/首次兩種各 50%/);assert.match(element.innerHTML,/每街開始/);assert.match(element.innerHTML,/不是.*統計平均/);
+  assert.match(element.innerHTML,/每手兩種 BOSS 各 50%/);assert.match(element.innerHTML,/每街開始/);assert.match(element.innerHTML,/不是.*統計平均/);
   assert.match(element.innerHTML,/25.00%/);assert.match(element.innerHTML,/70.00%/);assert.match(element.innerHTML,/A234、JQKA 不算/);
   assert.doesNotMatch(element.innerHTML,/等權算術平均|每街最多加注一次|狙擊型|設局型/);
   const html=bossProbabilityScenariosHtml(classified('maniac'));

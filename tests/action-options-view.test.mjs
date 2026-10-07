@@ -53,6 +53,24 @@ test('stack-capped legal sizes stay merged once and retain the engine-selected a
   }
 });
 
+test('v58 pooled menu labels preserve the exact 2P and 4P quotes and capped action identity', () => {
+  const hand = create('maniac', {mode:'pooled-holdem'}), before = snapshotTableSession(hand.session);
+  const actions = raises(hand), menu = raiseMenuChoices(actions);
+  assert.deepEqual(menu.map(raiseSizeLabel), ['ALL IN','4× POT','2× POT']);
+  assert.deepEqual(menu.map(action => action.amount), [495, hand.pot * 4, hand.pot * 2]);
+  assert.deepEqual(menu.map(action => action.id), ['raise:allin','raise:4x','raise:2x']);
+  for (const quote of menu) {
+    const draft = cloneHand(hand); applyAction(draft, quote);
+    const committed = draft.history.find(event => event.actor==='player' && event.id===quote.id);
+    assert.equal(committed.amount, quote.amount);
+  }
+  assert.deepEqual(snapshotTableSession(hand.session), before);
+  const short = create('caller', {mode:'pooled-holdem',chips:20});
+  const capped = raiseMenuChoices(raises(short));
+  assert.equal(capped.length,1); assert.equal(raiseSizeLabel(capped[0]),'ALL IN');
+  assert.deepEqual(capped[0].sizeKeys,['2x','4x','allin']);
+});
+
 test('every selected size reports the same legal grouped response as the engine and its applied clone', () => {
   for (const mode of ['fixed-holdem', 'pooled-holdem']) for (const profileId of ['maniac', 'caller']) {
     const hand = create(profileId, {mode, seed: 0});
@@ -97,7 +115,7 @@ test('previews cannot commit paid result draws, changed NPC cards, pools, RNG or
   const session = hand.session, before = snapshotTableSession(session);
   const references = {rng: hand.rng, pools: session.outcomePools, stacks: session.stacks, holes: hand.holes, controller: hand.pooledHoldem};
   const draft = cloneHand(hand);
-  applyAction(draft, choose(draft, 'raise', 'half'));
+  applyAction(draft, choose(draft, 'raise', '2x'));
   assert.equal(draft.outcomeDecision.target, 'win');
   assert.notDeepEqual(draft.holes.npc, hand.holes.npc, 'the fixture must exercise a real private-pair conversion');
   for (let repeat = 0; repeat < 3; repeat++) {

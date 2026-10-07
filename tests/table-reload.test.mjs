@@ -1,7 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {createSession, startHand, legalActions, applyAction, stepNpc, endHandForTableExit} from '../src/engine.mjs';
 import {buyInFromWallet, snapshotTableSession, restoreTableSession, closeSavedTable} from '../src/table-wallet.mjs';
+import {migrateOutcomePoolsWithoutJackpot} from '../src/outcome-pools.mjs';
 
 const modes = ['pooled-holdem', 'fixed-holdem'];
 const create = (mode = 'pooled-holdem', seed = 0, options = {}, extra = {}) => createSession({
@@ -45,7 +47,7 @@ test('reload before the first deal returns the full buy-in once and preserves ex
     assert.equal(closed.balance, 10000);
     assert.equal(closed.table, null);
     assert.equal(closed.lastBossProfileId, 'caller');
-    assert.deepEqual(closed.outcomePools, session.outcomePools);
+    assert.deepEqual(closed.outcomePools, migrateOutcomePoolsWithoutJackpot(session.outcomePools));
     assert.equal(closeSavedTable(closed), closed);
     assert.deepEqual(profile, before);
     assert.equal(session.activeHand, undefined);
@@ -119,21 +121,21 @@ test('a free CHECK opportunity still exits as a player fold without placing anot
 test('reload refunds an unmatched raise and credits only its matched paid interval to pools', () => {
   const session = create(), hand = startHand(session);
   assert.equal(hand.outcomeDecision.target, 'win');
-  applyAction(hand, choose(hand, 'raise', 'half'));
+  applyAction(hand, choose(hand, 'raise', '2x'));
   assert.equal(hand.actor, 'npc');
-  assert.deepEqual(hand.contributions, {player: 40, npc: 20});
+  assert.deepEqual(hand.contributions, {player: 70, npc: 20});
   const profile = savedProfile(session), before = structuredClone(profile), rng = hand.rng.state();
   const closed = closeSavedTable(profile);
   endHandForTableExit(hand);
   const audit = hand.result.outcomePoolAudit;
   assert.equal(hand.result.folded, 'player');
-  assert.equal(hand.result.player.refund, 20);
+  assert.equal(hand.result.player.refund, 50);
   assert.equal(hand.result.player.matchedWager, 20);
   assert.equal(hand.stacks.player, 980);
   assert.equal(audit.credits[0].matchedPaidAmount, 10);
-  assert.equal(audit.credits[0].refundablePaidAmount, 20);
-  assert.equal(audit.paidActionAdded, 7.92);
-  assert.equal(audit.specialAdded, 1.98);
+  assert.equal(audit.credits[0].refundablePaidAmount, 50);
+  assert.equal(audit.paidActionAdded, 9.9);
+  assert.equal(audit.specialAdded, 0);
   assert.equal(audit.specialAward, 0);
   assert.equal(hand.rng.state(), rng);
   assert.equal(closed.balance, 9980);
@@ -144,22 +146,19 @@ test('reload refunds an unmatched raise and credits only its matched paid interv
 });
 
 test('a reserved jackpot survives an unfinished-table exit without being awarded', () => {
-  const session = create('pooled-holdem', 0, {}, {smallBlind: 5,
-    outcome: {initialSpecialPools: [2000, 3, 4], specialUseChance: 1}});
-  const hand = startHand(session);
-  assert.equal(hand.outcomeDecision.qualification.tier, 'royal');
-  const closed = closeSavedTable(savedProfile(session));
+  const {profile,expected} = JSON.parse(readFileSync(new URL('./fixtures/v57-jackpot-reserved.json',import.meta.url)));
+  assert.equal(profile.table.hand.outcomeDecision.qualification.tier, 'royal');
+  const closed = closeSavedTable(profile);
   assert.equal(closed.balance, 9995);
-  assert.deepEqual(closed.outcomePools.buckets, [{paidAction: 0, special: 2000}, {paidAction: 0, special: 3}, {paidAction: 0, special: 4}]);
+  assert.deepEqual(closed.outcomePools, migrateOutcomePoolsWithoutJackpot(expected.outcomePools));
+  assert.deepEqual(closed.outcomePools.buckets, [{paidAction: 2000, special: 0}, {paidAction: 3, special: 0}, {paidAction: 4, special: 0}]);
   assert.equal(closed.outcomePools.lastSettlement.audit.specialAward, 0);
   assert.equal(closed.outcomePools.lastSettlement.audit.qualification.status, 'deferred');
 });
 
 test('a settled winning jackpot is returned exactly once with no repeated settlement', () => {
-  const session = create('pooled-holdem', 0, {}, {smallBlind: 5,
-    outcome: {initialSpecialPools: [2000, 3, 4], specialUseChance: 1}});
-  const hand = startHand(session);
-  passive(hand);
+  const {profile:oldProfile,expected} = JSON.parse(readFileSync(new URL('./fixtures/v57-jackpot-settled.json',import.meta.url)));
+  const session = restoreTableSession(oldProfile.table), hand = session.activeHand;
   assert.equal(hand.result.player.jackpotAward, 2000);
   assert.equal(hand.stacks.player, 2510);
   const profile = savedProfile(session), before = structuredClone(profile), state = snapshotTableSession(session);
@@ -168,9 +167,11 @@ test('a settled winning jackpot is returned exactly once with no repeated settle
   const closed = closeSavedTable(profile);
   assert.equal(closed.balance, 12010);
   assert.equal(closed.table, null);
-  assert.deepEqual(closed.outcomePools, session.outcomePools);
+  assert.deepEqual(closed.outcomePools, migrateOutcomePoolsWithoutJackpot(session.outcomePools));
+  assert.equal(closed.balance,expected.balance);
   assert.equal(closed.outcomePools.handSequence, 1);
-  assert.equal(closed.outcomePools.buckets[0].special, .99);
+  assert.equal(closed.outcomePools.buckets[0].special, 0);
+  assert.equal(closed.outcomePools.buckets[0].paidAction, 4.95);
   assert.equal(closeSavedTable(closed), closed);
   assert.equal(closeSavedTable(closed).balance, 12010);
   assert.deepEqual(profile, before);
@@ -203,7 +204,7 @@ test('an all-in player awaiting NPC action keeps the normal seeded NPC decision 
 
 test('failed exit settlement cannot commit a partial refund, history, pool balance or RNG state', () => {
   const session = create(), hand = startHand(session);
-  applyAction(hand, choose(hand, 'raise', 'half'));
+  applyAction(hand, choose(hand, 'raise', '2x'));
   hand.outcomeDecision.poolBranch.handId = 'invalid-transaction';
   const before = snapshotTableSession(session), stacks = session.stacks, pools = session.outcomePools, rng = session.rng;
   assert.throws(() => endHandForTableExit(hand), /序號/);

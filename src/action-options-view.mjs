@@ -1,5 +1,5 @@
-import {previewResponse} from './engine.mjs?v=56';
-import {esc} from './shared.mjs?v=56';
+import {previewResponse} from './engine.mjs?v=58';
+import {esc} from './shared.mjs?v=58';
 
 export const ACTION_ART = Object.freeze({fold:'assets/action-buttons-v54/fold.png',
   check:'assets/action-buttons-v54/check.png',call:'assets/action-buttons-v54/call.png',
@@ -32,14 +32,17 @@ export function actionResponseMarkup(preview, {compact = false} = {}) {
   return `<span class="button-response${compact?' size-response':''}${isPhase?' phase-response':''}${needsLegend?' has-response-legend':''}" data-outcome-count="${preview.outcomes.length}" aria-label="${isPhase?'Next phase':'Opponent response'}: ${esc(description)}">${isPhase?'':'<small class="button-response-title">BOSS</small>'}${content}</span>`;
 }
 
-/** Visual top-to-bottom order: all-in, full pot, half pot. Never alter engine action identity. */
+/** Keep the largest choice on top without changing the quoted action identity. */
 export function raiseMenuChoices(actions) {
   return [...actions].sort((a,b) => {
-    const rank = action => action.allIn ? 2 : action.sizeKeys?.includes('pot') ? 1 : 0;
+    const rank = action => action.allIn ? 2 : action.sizeKeys?.some(key => ['4x','pot'].includes(key)) ? 1 : 0;
     return rank(b)-rank(a) || b.amount-a.amount;
   });
 }
 
 export function raiseSizeLabel(action) {
-  return action.allIn ? 'ALL IN' : action.sizeKeys?.includes('pot') ? '1× POT' : '0.5× POT';
+  if (action.allIn) return 'ALL IN';
+  if (action.sizeKeys?.includes('4x')) return '4× POT';
+  if (action.sizeKeys?.includes('2x')) return '2× POT';
+  return action.sizeKeys?.includes('pot') ? '1× POT' : '0.5× POT';
 }

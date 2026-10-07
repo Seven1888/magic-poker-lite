@@ -1,4 +1,4 @@
-import {DEFAULT_CONFIG, normalizeConfig} from './engine.mjs?v=56';
+import {DEFAULT_CONFIG, normalizeConfig} from './engine.mjs?v=58';
 
 export const CURRENT_LAB_OUTCOME_MODE = 'pooled-holdem';
 
@@ -8,6 +8,6 @@ export function currentLabConfig(source = DEFAULT_CONFIG) {
   const tableBuyIn = Math.round(smallBlind * 100 * 1e6) / 1e6;
   return normalizeConfig({...source, smallBlind, bigBlind: smallBlind * 2,
     buyIn: tableBuyIn, minBuyIn: tableBuyIn, maxBuyIn: Math.max(tableBuyIn, Number(source.maxBuyIn) || 0),
-    targetRtp: 1, outcome: {...source.outcome, mode: CURRENT_LAB_OUTCOME_MODE},
-    boss: source.boss?.mode === 'legacy' ? {...source.boss, mode: 'rotate'} : source.boss});
+    targetRtp: 1, jackpotEnabled: false, outcome: {...source.outcome, mode: CURRENT_LAB_OUTCOME_MODE},
+    boss: source.boss?.mode === 'fixed' ? source.boss : {...source.boss, mode: 'random'}});
 }

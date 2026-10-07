@@ -1,7 +1,7 @@
-import {normalizeConfig, createSession, playAutomatedHand, syncOpponentBankroll, beginNewTable} from './engine.mjs?v=56';
-import {handEntryStatus} from './hand-entry.mjs?v=56';
-import {studyPlayerSeed} from './simulation-study.mjs?v=56';
-import {createPoolStudySummary, collectPoolStudyAudit, finishPoolStudySummary, combinePoolStudySummaries} from './probability-pools.mjs?v=56';
+import {normalizeConfig, createSession, playAutomatedHand, syncOpponentBankroll, beginNewTable} from './engine.mjs?v=58';
+import {handEntryStatus} from './hand-entry.mjs?v=58';
+import {studyPlayerSeed} from './simulation-study.mjs?v=58';
+import {createPoolStudySummary, collectPoolStudyAudit, finishPoolStudySummary, combinePoolStudySummaries} from './probability-pools.mjs?v=58';
 
 const POLICIES = ['balanced', 'call', 'aggressive', 'tight'];
 

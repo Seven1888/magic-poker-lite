@@ -1,6 +1,6 @@
-import {esc} from './shared.mjs?v=56';
-import {LAB_POLICIES} from './probability-text.mjs?v=56';
-import {poolSummaryTable} from './probability-report-view.mjs?v=56';
+import {esc} from './shared.mjs?v=58';
+import {LAB_POLICIES} from './probability-text.mjs?v=58';
+import {poolSummaryTable} from './probability-report-view.mjs?v=58';
 
 const finite = value => typeof value === 'number' && Number.isFinite(value);
 const number = (value, digits = 6) => finite(value)
@@ -57,7 +57,7 @@ function reportMarkup(report) {
     metric('停止平均手數', number(averageHands(insufficient), 2), '資產不足玩家'),
   ].join('');
   const pools = report.outcomePoolSummary
-    ? `<details class="model-summary"><summary>跨手水池明細</summary>${poolSummaryTable(report.outcomePoolSummary)}</details>` : '';
+    ? `<details class="model-summary"><summary>跨手水池明細</summary>${poolSummaryTable(report.outcomePoolSummary, {includeSpecial: report.outcomeModel !== 'pooled-holdem'})}</details>` : '';
   return `<section class="report"><div class="report-heading"><h3>${esc(policy)}</h3></div><div class="report-context">${settings.map(value => `<small>${esc(value)}</small>`).join('')}</div><div class="metrics">${metrics}</div>${playerTable(indexedPlayers)}${pools}</section>`;
 }
 

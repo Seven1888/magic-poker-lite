@@ -1,3 +1,33 @@
+# v58 驗證與發布狀態
+
+更新：2026-10-07。本地實作與全部驗證完成；Git推送、Actions與公開驗收尚待原聊天室收尾。 本輪取消JP、2×／4× POT、行動字卡與語音、首次抽盲及隨機BOSS詳見 [v58規格](21-v58-actions-and-no-jackpot-spec.md)。
+
+## v58 本地驗證
+
+- npm test：598／598，0失敗、0跳過，30,707.0524 ms；output/tests-v58.log。本機Node20原npm萬用字元不展開，改scripts/run-tests.mjs跨平台列舉，不改測試內容或省略任何套件。
+- npm run build：246個公開檔，含六份英語WAV及來源、新規格。git diff --check通過。
+- 引擎專項101／101，output/tests-v58-engine.log；字卡語音11／11。四個由v57真實程式生成的舊存檔fixture覆蓋未完成JP預約、已派JP、全下後FOLD／CALL。按舊契約關桌後錢包依序9,995／12,010／10,010／12,500；同桶併池、來源不變及重關冪等通過。
+- Chrome六種viewport：320×900、375×900、393×852、412×900、1440×1000、320×640，RAISE選單正確顯示ALL IN／4× POT／2× POT，沒有水平溢出。POT3時報價99／12／6，正式2×事件實付6。對手牌型參考保留、JP入口移除。
+- 真實牌局字卡與本地WebAudio語音已觀察YOU RAISE／CHECK／ALL IN、BOSS CALL／CHECK／FOLD／ALL IN，共11次演出與11次對應語音BufferSource啟動。字卡位於公牌及底牌上方，不被回應抽取層遮擋。BET及其餘兩座位映射另由專項測試覆蓋。
+- 首手玩家SB、第二手玩家BB，繼續至第三手只出現一次抽盲揭曉；第二手可隨機再次遇到PASSIVE。連續兩次重整table:null、balance10,116不重複兌回。
+- 遊戲腳本與紀錄output/playwright/qa-v58.js、qa-v58.log、qa-v58-continuity.js／log；截圖v58-entry-393.png、v58-main-393.png、v58-menu-393.png、v58-player-raise-393.png、v58-allin-393.png。最後qa-v58單次errors／warnings／HTTPfailed皆0，session初始仍有既有圖片預載提示，不宣稱全session warning0。
+- 工具／規則Chrome320／393／1440共18項布局檢查無水平溢出。保留12列BOSS機率；JP／特殊池設定及正式可見報表移除。每尺寸一般2玩家×8手、退幣2玩家／2手完整完成，seed58010；這是功能小樣本，不用其RTP當長期證據。下載JSON確認JP關閉、random、無派獎及total=net，CSV37欄對齊且無JP／special。lab-v58 errors／warnings／HTTPfailed皆0。腳本、紀錄、截圖與下載核對位於output/playwright/lab-v58*。
+- 上述為桌面Chrome viewport及WebAudio啟動證據，不是實體Android／喇叭聽感或長期RTP認證。
+
+## v58 Git 與公開發布
+
+尚待原聊天室記錄實際提交、成功run與公開檔核對；本地通過不等於已發布。
+
+## v58 入口
+
+- 公開：[遊戲 v58](https://seven1888.github.io/magic-poker-lite/?v=58)／[機率工具](https://seven1888.github.io/magic-poker-lite/probability.html?v=58)／[規則](https://seven1888.github.io/magic-poker-lite/docs/04-game-flow-and-math.html?v=58)。
+- 本地：[遊戲 v58](http://127.0.0.1:4177/index.html?v=58)／[機率工具](http://127.0.0.1:4177/probability.html?v=58)／[規則](http://127.0.0.1:4177/docs/04-game-flow-and-math.html?v=58)。4177 若停止，在本專案 npm start 即可，無需安裝。
+- Git：[專案](https://github.com/Seven1888/magic-poker-lite)／[Actions](https://github.com/Seven1888/magic-poker-lite/actions)。本輪功能及最後文件提交、成功run以原聊天室最終交付為準，不以v57代替。
+- 文件：[HANDOFF](https://github.com/Seven1888/magic-poker-lite/blob/main/HANDOFF.md)／[AGENTS](https://github.com/Seven1888/magic-poker-lite/blob/main/AGENTS.md)／[README](https://github.com/Seven1888/magic-poker-lite/blob/main/README.md)／[v58完整規格](https://github.com/Seven1888/magic-poker-lite/blob/main/docs/21-v58-actions-and-no-jackpot-spec.md)／[v57](https://github.com/Seven1888/magic-poker-lite/blob/main/docs/20-v57-response-readability-spec.md)／[v56](https://github.com/Seven1888/magic-poker-lite/blob/main/docs/19-v56-blind-and-response-spec.md)／[v55](https://github.com/Seven1888/magic-poker-lite/blob/main/docs/18-v55-feedback-spec.md)／[v54](https://github.com/Seven1888/magic-poker-lite/blob/main/docs/17-v54-presentation-spec.md)／[v53](https://github.com/Seven1888/magic-poker-lite/blob/main/docs/16-v53-holdem-spec.md)／[API](https://github.com/Seven1888/magic-poker-lite/blob/main/API-CONTRACT.md)／[驗證與發布](https://github.com/Seven1888/magic-poker-lite/blob/main/docs/06-mobile-and-deployment.md)。
+- 資產：[按鈕圖片](https://github.com/Seven1888/magic-poker-lite/tree/main/assets/action-buttons-v54)／[圖片提示詞](https://github.com/Seven1888/magic-poker-lite/blob/main/assets/action-buttons-v54/prompts.txt)／[英文行動語音](https://github.com/Seven1888/magic-poker-lite/tree/main/assets/action-voice-v58)／[語音來源](https://github.com/Seven1888/magic-poker-lite/blob/main/assets/action-voice-v58/voice-source.txt)。
+
+---
+
 # v57 驗證與發布狀態
 
 更新：2026-10-07。**v57 全部完成，本地驗證、Git 推送、Pages 部署與公開驗收通過。** 本輪 [v57 規格](20-v57-response-readability-spec.md) 包含 BOSS 決策色帶按實際機率分配寬度、FOLD 綠／CALL 與 CHECK 紅／RAISE 與 BET 紫、尺寸選單行為名稱與百分比放大，以及小機率的獨立可讀標籤。正式引擎機率、RNG、方案 B 與帳務不變。下方 v56 及更早資料只作歷史，不代替本輪證據。

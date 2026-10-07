@@ -1,6 +1,6 @@
-import {createRng} from './poker.mjs?v=56';
-import {endHandForTableExit} from './engine.mjs?v=56';
-import {normalizeOutcomePools} from './outcome-pools.mjs?v=56';
+import {createRng} from './poker.mjs?v=58';
+import {endHandForTableExit} from './engine.mjs?v=58';
+import {migrateOutcomePoolsWithoutJackpot} from './outcome-pools.mjs?v=58';
 
 const round = value => Math.round((value + Number.EPSILON) * 1e6) / 1e6;
 const validMoney = value => Number.isFinite(value) && value >= 0 && Number.isSafeInteger(Math.round(value * 1e6));
@@ -24,7 +24,7 @@ export function closeSavedTable(profile) {
   const session = restoreTableSession(profile.table);
   if (session.activeHand) endHandForTableExit(session.activeHand);
   return {version: 2, balance: cashOutToWallet(profile.balance, session.stacks.player),
-    outcomePools: normalizeOutcomePools(session.outcomePools), table: null,
+    outcomePools: migrateOutcomePoolsWithoutJackpot(session.outcomePools), table: null,
     lastBossProfileId: session.lastBossProfileId ?? profile.lastBossProfileId ?? null};
 }
 

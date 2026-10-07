@@ -32,7 +32,8 @@ for (const mode of ['fixed-holdem', 'pooled-holdem']) {
     assert.deepEqual(closed.stacks, oldStacks); assert.equal(closed.rng, oldRng);
     const opening = startHand(session);
     assert.equal(opening.smallBlind, expectedBlind, 'new table opens on the reserved seat even at even global hand numbers');
-    assert.notEqual(opening.bossProfile.id, priorBoss);
+    if (mode === 'fixed-holdem') assert.notEqual(opening.bossProfile.id, priorBoss);
+    else assert.equal(opening.bossSelection.probability, .5);
     applyAction(opening, 'fold');
     const following = startHand(session);
     assert.notEqual(following.smallBlind, expectedBlind, 'alternation uses the new table origin');

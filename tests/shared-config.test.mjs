@@ -9,8 +9,8 @@ test('saved settings adopt pooled Holdem and 100 small blinds while preserving s
   globalThis.localStorage={getItem:key=>values.get(key)??null};
   const loaded=loadConfig();
   assert.equal(loaded.minBuyIn,500);assert.equal(loaded.buyIn,875.6);assert.equal(loaded.targetRtp,1);
-  assert.equal(loaded.outcome.mode,'pooled-holdem');assert.equal(loaded.boss.mode,'rotate');
-  assert.equal(loaded.outcome.conversionRate,.98);assert.equal(loaded.jackpotEnabled,true);
+  assert.equal(loaded.outcome.mode,'pooled-holdem');assert.equal(loaded.boss.mode,'random');
+  assert.equal(loaded.outcome.conversionRate,.98);assert.equal(loaded.jackpotEnabled,false);
   assert.deepEqual(loaded.outcome.initialPaidActionPools,[12,23,34]);
   assert.equal(values.size,1,'loading does not write storage');
   values.set('magic-poker-lite.config.v1',JSON.stringify({bigBlind:10,minBuyIn:350,buyIn:875.6}));

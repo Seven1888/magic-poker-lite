@@ -1,8 +1,8 @@
-import {normalizeConfig, createSession, playAutomatedHand, syncOpponentBankroll, beginNewTable} from './engine.mjs?v=56';
-import {BOSS_PROFILE_IDS} from './boss-profiles.mjs?v=56';
-import {handEntryStatus} from './hand-entry.mjs?v=56';
-import {BOSS_PROFILE_VERSION} from './boss-profiles.mjs?v=56';
-import {createPoolStudySummary, collectPoolStudyAudit, finishPoolStudySummary, combinePoolStudySummaries} from './probability-pools.mjs?v=56';
+import {normalizeConfig, createSession, playAutomatedHand, syncOpponentBankroll, beginNewTable} from './engine.mjs?v=58';
+import {BOSS_PROFILE_IDS} from './boss-profiles.mjs?v=58';
+import {handEntryStatus} from './hand-entry.mjs?v=58';
+import {BOSS_PROFILE_VERSION} from './boss-profiles.mjs?v=58';
+import {createPoolStudySummary, collectPoolStudyAudit, finishPoolStudySummary, combinePoolStudySummaries} from './probability-pools.mjs?v=58';
 
 const SEATS = ['player', 'npc'];
 const STREETS = ['preflop', 'flop', 'turn', 'river'];
@@ -167,21 +167,21 @@ export function simulateStudy(config = {}, {
     npcRefreshAdjustment: 0, npcRefreshAdded: 0, npcRefreshRemoved: 0,
     tableEntries: 0, tableBuyIns: 0,
     methodMeta: {mode, ciUnit: clustered ? 'player' : 'hand', ciSamples: 0,
-      bossSelection: normalized.boss.mode === 'rotate' ? `每位玩家首手 ${BOSS_PROFILE_IDS.length} 型等機率，之後排除上一型；換桌不重設對手序列。` : normalized.boss.mode === 'fixed' ? '研究固定指定 BOSS，刻意允許連續相同。' : '採用歷史對手權重模型。',
+      bossSelection: normalized.boss.mode === 'random' ? `每手從 ${BOSS_PROFILE_IDS.length} 型 BOSS 獨立等機率選取，允許連續遇到同型。` : normalized.boss.mode === 'rotate' ? `每位玩家首手 ${BOSS_PROFILE_IDS.length} 型等機率，之後排除上一型；換桌不重設對手序列。` : normalized.boss.mode === 'fixed' ? '研究固定指定 BOSS，刻意允許連續相同。' : '採用歷史對手權重模型。',
       seedDerivation: '每位玩家由主種子及零起算索引固定派生獨立亂數流；增加玩家數不改變既有玩家。',
       blindMode: holdem || independent ? 'alternating' : 'random-each-hand',
       initialBlind: independent ? '每位玩家首手固定小盲，之後逐手輪替。' : holdem ? '每桌首手隨機抽小盲／大盲，同桌之後交替盲位；桌籌碼歸零再帶入時重新抽新桌首盲，保留原亂數流、水池及 CD。' : '每位玩家入桌首手及每次下一手均以 50/50 重新抽盲位，允許連續同盲位。',
       bankroll: holdem && unlimitedBankroll ? '外部研究錢包無限，每次入桌帶入 100 小盲（50 大盲）。桌籌碼逐手真實增減，歸零才重新帶入；每手對手匹配目前桌籌碼。帶入不是賭注，不計入 RTP。' : unlimitedBankroll ? '連續遊玩，雙方研究資產無限；保留同一玩家的亂數流、BOSS 輪替、雙池與 CD，淨利按實際投入及返還累計。' : independent ? '每手只重設雙方相同帶入；同一玩家的水池與冷卻跨手保留。end 僅為最後一手結束餘額，不能當作連續資產。' : '同桌連續保留玩家餘額、水池與冷卻；每手結束包含最後一手，對手資產匹配玩家，調整另列且不計派彩。',
       outcomeModel: normalized.outcome.mode,
-      outcomeSampling: normalized.outcome.mode === 'pooled-holdem' ? '開局鎖定玩家牌、公牌序及對手兩組候選暗牌；玩家實際付費時依 99% 計分、雙池與 CD 決定目標，可切換對手暗牌。BOSS 本街強弱分類沿用該街鎖定結果。' : pooled ? '開局預建全部目標及合法分支，操作讀取已存結果。' : '本手自然牌序固定，依實際牌型結算。',
+      outcomeSampling: normalized.outcome.mode === 'pooled-holdem' ? '開局鎖定玩家牌、公牌序及對手兩組候選暗牌；玩家實際付費時依 RTP 計分係數、付費池與 CD 決定目標，可切換對手暗牌。BOSS 本街強弱分類沿用該街鎖定結果。' : pooled ? '開局預建全部目標及合法分支，操作讀取已存結果。' : '本手自然牌序固定，依實際牌型結算。',
       poolContinuity: pooled ? '每位玩家開始時建立自己的初始三桶，之後所有研究模式均跨手保留；independent 只重設資產。玩家之間不共用水池。' : holdem ? '固定手牌與公共牌序依真實牌型結算，沒有結果水池。' : '歷史牌庫模式，沒有跨手結果水池。',
       insufficientThreshold: unlimitedBankroll ? null : holdem ? 0 : normalized.minBuyIn, minimumEntryOnly: false,
       entryMinimumMultiplier: normalized.minBuyIn / normalized.bigBlind,
       stopRule: unlimitedBankroll ? '每位玩家完成指定手數，沒有資產達標、資產不足或額外安全手數停止條件。' : holdem && !independent ? '完成指定手數或玩家桌籌碼歸零才停止；低於初次帶入仍可續手，對手於每手開始匹配玩家桌籌碼。' : mode === 'cashout' ? '達到目標優先停止；否則任一方資產不足目前 BET 的每手開局門檻即停止，不自動降低 BET。安全手數上限列為截尾。' : independent ? '每位玩家完成指定獨立手數；每手重設資產並符合目前 BET 的開局門檻。' : '完成指定手數或任一方資產不足目前 BET 的每手開局門檻即停止，不自動降低 BET；已開始的牌局正常完成。',
       actionOutcomeUnit: 'count 是動作次數；hands 與結果欄是含該街／座位／動作的手數，同手只計一次，勝負均指玩家。',
-      returnDenominator: '單手倍數＝含 JP 總返還／有效投入；退款不進分子或分母。',
+      returnDenominator: normalized.outcome.mode === 'pooled-holdem' ? '單手倍數＝底池返還／有效投入；退款不進分子或分母。' : '單手倍數＝含 JP 總返還／有效投入；退款不進分子或分母。',
       uncertainty: !clustered ? '以獨立牌局充分統計量計算比值的 95% 常態近似區間。' : `以每位玩家整段分子／分母聚類，計算比值的 95% 常態近似區間；少於兩位玩家不報區間。${pooled ? '水池與冷卻跨手相依，即使 independent 或固定 BOSS 也不能按單手當獨立樣本。' : independent ? '雖然每手重設資產，BOSS 不連續重複會產生跨手相關，因此仍須按玩家聚類。' : ''}`,
-      limitation: '不是後端玩家帳本或 RTP 認證；零次稀有 JP 不代表機率為零，少量樣本不能證明尾部已收斂。'},
+      limitation: normalized.outcome.mode === 'pooled-holdem' ? '不是後端玩家帳本或 RTP 認證；少量樣本不能證明模型已收斂。' : '不是後端玩家帳本或 RTP 認證；零次稀有 JP 不代表機率為零，少量樣本不能證明尾部已收斂。'},
   };
   result.method = [result.methodMeta.bankroll, result.methodMeta.stopRule, result.methodMeta.uncertainty, result.methodMeta.limitation].join(' ');
   const stats = moments(), actionSizes = new Map(), bossStrengths = new Map();

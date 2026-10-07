@@ -1,0 +1,13 @@
+Magic Poker Lite v58 英文行動語音
+
+產製日期：2026-10-07
+工具：Windows System.Speech.Synthesis.SpeechSynthesizer（本機離線）
+聲音：Microsoft Zira Desktop / en-US
+Rate：-1；Volume：100
+格式：PCM WAV，22,050 Hz，16-bit，mono
+內容：Check / Call / Bet / Raise / All in / Fold
+
+遊戲優先播放這六個本地錄製檔，載入失敗時使用瀏覽器 en-US 語音備援。
+語音跟隨 Sound effects 開關與使用者手勢解鎖；背景頁面或離桌取消。
+字卡顯示 YOU 或 BOSS；語音只念動作名稱。
+生成不使用 API、網路服務、玩家牌局資料或遊戲 RNG。

@@ -27,13 +27,14 @@ test('one storage write saves wallet, pools, global cooldown and cross-table seq
   assert.equal(savePlayerProfile(source, storage), true);
   assert.equal(storage.writes.length, 1); assert.equal(storage.writes[0].key, OUTCOME_PROFILE_KEY);
   const saved = JSON.parse(storage.writes[0].value);
-  assert.deepEqual(saved, source);
+  assert.deepEqual(saved, normalizePlayerProfile(source));
   source.balance = 0; source.outcomePools.buckets[0].special = 0;
   const loaded = loadPlayerProfile(storage);
-  assert.equal(loaded.balance, 100); assert.equal(loaded.outcomePools.buckets[0].special, 4);
+  assert.equal(loaded.balance, 100); assert.equal(loaded.outcomePools.buckets[0].special, 0);
+  assert.equal(loaded.outcomePools.buckets[0].paidAction, 5);
   loaded.balance = 5; loaded.outcomePools.buckets[1].paidAction = 80;
   assert.equal(loadPlayerProfile(storage).balance, 100);
-  assert.equal(loadPlayerProfile(storage).outcomePools.buckets[1].paidAction, 2);
+  assert.equal(loadPlayerProfile(storage).outcomePools.buckets[1].paidAction, 7);
 });
 
 test('unsaved unfinished-hand changes cannot partially overwrite the last complete wallet/pool transaction', () => {
@@ -42,12 +43,12 @@ test('unsaved unfinished-hand changes cannot partially overwrite the last comple
   live.balance -= 20; live.outcomePools.buckets[0].paidAction = 0;
   live.outcomePools.paidActionCooldown = 0;
   const restored = loadPlayerProfile(storage);
-  assert.equal(restored.balance, 100); assert.equal(restored.outcomePools.buckets[0].paidAction, 1);
+  assert.equal(restored.balance, 100); assert.equal(restored.outcomePools.buckets[0].paidAction, 5);
   assert.equal(restored.outcomePools.paidActionCooldown, 2);
   const settled = profile({balance: 130}); settled.outcomePools.handSequence = 10;
   settled.outcomePools.lastSettlement = {id: '10', audit: {handId: '10', paidActionAdded: 0.792, specialAdded: 0.198}};
   assert.equal(savePlayerProfile(settled, storage), true);
-  assert.deepEqual(loadPlayerProfile(storage), settled);
+  assert.deepEqual(loadPlayerProfile(storage), normalizePlayerProfile(settled));
   assert.equal(storage.writes.length, 2);
 });
 
@@ -90,7 +91,7 @@ test('version two keeps the previous opponent across cash-out and reload', () =>
   for(const lastBossProfileId of [null,'caller','maniac']){
     const source=profile({version:2,table:null,lastBossProfileId});
     assert.equal(savePlayerProfile(source,storage),true);
-    assert.deepEqual(loadPlayerProfile(storage),source);
+    assert.deepEqual(loadPlayerProfile(storage),normalizePlayerProfile(source));
   }
   assert.throws(()=>normalizePlayerProfile(profile({version:2,table:null,lastBossProfileId:'other'})));
 });

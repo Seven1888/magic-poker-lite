@@ -1,5 +1,5 @@
-import {evaluateBest, normalizeCard, RANKS} from './poker.mjs?v=56';
-import {classifyJackpot, JACKPOT_MULTIPLIERS} from './jackpot.mjs?v=56';
+import {evaluateBest, normalizeCard, RANKS} from './poker.mjs?v=58';
+import {classifyJackpot, JACKPOT_MULTIPLIERS} from './jackpot.mjs?v=58';
 
 export const OUTCOME_POOL_SCALE = 1_000_000;
 export const OUTCOME_BET_BUCKETS = Object.freeze([
@@ -109,6 +109,13 @@ export function normalizeOutcomePools(input) {
 
 export function cloneOutcomePools(pools) { return normalizeOutcomePools(pools); }
 
+/** New tables keep every saved pool unit while retiring the special pool. */
+export function migrateOutcomePoolsWithoutJackpot(pools) {
+  const next = normalizeOutcomePools(pools);
+  next.buckets = next.buckets.map(bucket => ({paidAction: plus(bucket.paidAction, bucket.special), special: 0}));
+  return next;
+}
+
 /** Branches only need the preceding transaction identity, not its full audit. */
 export function compactOutcomePools(pools) {
   if (pools === undefined || pools === null) return createOutcomePools();
@@ -192,7 +199,7 @@ export function drawRootPoolOutcome({hand, rng, pools, config = {}} = {}) {
   const target = draw.hit ? 'win' : 'nonWin';
   const selection = reserveSpecialQualification({branch: createOutcomePoolBranch(pools, hand.config.bigBlind,
     {bucketMode: hand.config.outcome?.mode === 'pooled-holdem' ? 'blind-ranges' : 'exact-stakes'}),
-    rootTarget: target, rng, config, enabled: hand.config.jackpotEnabled !== false});
+    rootTarget: target, rng, config, enabled: hand.config.outcome?.mode !== 'pooled-holdem' && hand.config.jackpotEnabled !== false});
   if (hand.outcomeHandId !== undefined && hand.outcomeHandId !== selection.branch.handId) {
     throw new Error('牌局水池交易序號與持續保存序號不一致。');
   }

@@ -1,4 +1,4 @@
-import {normalizeOutcomePools} from './outcome-pools.mjs?v=56';
+import {normalizeOutcomePools, migrateOutcomePoolsWithoutJackpot} from './outcome-pools.mjs?v=58';
 
 export const OUTCOME_PROFILE_KEY = 'magic-poker-lite.player.v1';
 
@@ -19,6 +19,9 @@ export function normalizePlayerProfile(value) {
       profile.lastBossProfileId = value.lastBossProfileId;
     }
   }
+  // An existing table must settle under its saved accounting contract first.
+  // Profiles outside a table can migrate now; repeating the merge is harmless.
+  if (!profile.table) profile.outcomePools = migrateOutcomePoolsWithoutJackpot(profile.outcomePools);
   return profile;
 }
 
