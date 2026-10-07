@@ -1,6 +1,16 @@
 # Magic Poker Lite v59 介面發布與數學交接
 
-更新：2026-10-07。使用者最新指示：「開始處理，全部好了上GIT，好了之後請重開聊天室然後讓新聊天室給我相關連結，並接著討論數學模型」。本輪只發布四項非數學修正；正式結果公式、水池規則與 BOSS 機率表保持。數學缺口與原型詳見 [v59 審核](docs/22-v59-feedback-and-rtp-audit.md)，正式數學尚未修正。發布成功後才建立新聊天室，提交與驗收證據將回填本節；下方 v58 紀錄僅為歷史。
+更新：2026-10-07。使用者最新指示：「開始處理，全部好了上GIT，好了之後請重開聊天室然後讓新聊天室給我相關連結，並接著討論數學模型」。**v59 四項非數學修正已推送 main、部署成功並通過公開驗收。** 正式結果公式、水池規則與 BOSS 機率表保持。數學缺口與原型詳見 [v59 審核](docs/22-v59-feedback-and-rtp-audit.md)，正式數學尚未修正；下方 v58 紀錄僅為歷史。
+
+## v59 已完成發布證據
+
+- 功能提交：[7548746743177e559e307ff143bea73b143be81a](https://github.com/Seven1888/magic-poker-lite/commit/7548746743177e559e307ff143bea73b143be81a)。[Actions 37630704259](https://github.com/Seven1888/magic-poker-lite/actions/runs/37630704259) 的 build／deploy 均 completed／success。
+- 本地完整測試602／602，後續窄框20／20及工具文案9／9通過；靜態建置261檔。獨立審核確認引擎／BOSS／池／存檔差異只有快取版本字串，沒有正式數學語義變更。
+- 公開33個核心檔案HTTP200，文字正規化換行、WAV二進位hash均與dist一致；本機紀錄 `output/public-v59-files.json`。
+- 公開Chrome六種viewport：320×900、375×900、393×852、412×900、1440×1000、320×640；整高色塊比例誤差≤0.001，文字無裁切，無水平溢出。BOSS分布已移除、玩家勝率保留。
+- 公開牌局YOU RAISE、BOSS CALL／CHECK均實際啟動相應聲線的WAV；字卡顯示中POT從3→9→14，流程不等待語音。最後成功驗收單次errors／warnings／HTTPfailed均0；部署切換前曾讀到v58，該次不作驗收證據。桌面viewport及WebAudio啟動不等於實體Android或喇叭聽感測試。
+- 公開工具／規則320／393／1440共6組布局正常，工具顯示「結果計分係數」；errors及HTTPfailed皆0。規則保留v58數學標題，不宣稱已修正RTP。
+- 本機腳本、紀錄及截圖：`output/playwright/public-v59.js`／`.log`、`public-v59-pages.js`／`.log`、`public-v59-main-393.png`及`public-v59-menu-*`。本次純文件提交回填以上已完成證據；最終文件SHA與成功run由建立新聊天室時的交接訊息提供，不需新聊天室重新追蹤發布。
 
 ## 新聊天室的第一輪
 

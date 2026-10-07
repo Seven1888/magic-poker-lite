@@ -1,6 +1,18 @@
 # v59 非數學修正：驗證與發布紀錄
 
-更新：2026-10-07。使用者要求先將四項非數學修正上 Git，發布完成後另開聊天室提供相關連結並繼續討論數學。四項介面回饋已本地實作與驗證；正式公式、池規則及 BOSS 機率表未改。詳細計算、研究設定及證據見 [v59審核](22-v59-feedback-and-rtp-audit.md)。實際 Git／部署結果於完成後回填；下方v58部署成功不代表數學正確。
+更新：2026-10-07。**v59 四項非數學修正已推送 main、部署成功並通過公開驗收。** 使用者要求完成後另開聊天室提供相關連結並繼續討論數學。正式公式、池規則及 BOSS 機率表未改。詳細計算、研究設定及證據見 [v59審核](22-v59-feedback-and-rtp-audit.md)；介面發布不代表數學正確。
+
+## v59 Git 與公開驗收
+
+- 功能提交 [7548746743177e559e307ff143bea73b143be81a](https://github.com/Seven1888/magic-poker-lite/commit/7548746743177e559e307ff143bea73b143be81a) 已推送main；[Actions 37630704259](https://github.com/Seven1888/magic-poker-lite/actions/runs/37630704259) 的build／deploy均completed／success。
+- 33個公開核心檔HTTP200且與dist的正規化文字／二進位hash一致，包含12個雙聲線WAV、比例CSS、遊戲、引擎及本輪文件。紀錄：本機 `output/public-v59-files.json`。
+- 公開Chrome於320×900、375×900、393×852、412×900、1440×1000、320×640驗證比例色塊整高、比例誤差≤0.001、文字無裁切及無水平溢出；BOSS牌型分布移除、玩家勝率保留。主畫面及選單393px截圖已目視核對。
+- YOU RAISE及BOSS CALL／CHECK均有對應WAV的BufferSource啟動；字卡顯示中POT從3→9→14。最後成功腳本的errors／warnings／HTTPfailed皆0。部署切換前曾讀到v58；該次已作廢，不納入成功證據。
+- 工具與規則於320／393／1440共6組布局正常，errors及HTTPfailed皆0；工具顯示「結果計分係數」。規則保持v58既有模型與標題，數學另待討論。
+- 公開腳本、紀錄及截圖位於本機 `output/playwright/public-v59*`。桌面viewport及WebAudio啟動不等於實體Android／喇叭聽感驗證。本次後續純文件提交回填已完成證據，最終文件SHA及成功run由原聊天室交接訊息提供。
+- 入口：[遊戲 v59](https://seven1888.github.io/magic-poker-lite/?v=59)／[機率工具](https://seven1888.github.io/magic-poker-lite/probability.html?v=59)／[交接](../HANDOFF.md)。
+
+## v59 本地驗證與數學審核邊界
 
 - 完整 `npm test`：602／602，0失敗／跳過，32,126.0844 ms；`output/tests-v59.log`。後續窄框修正20／20、工具標籤文案9／9專項通過。
 - `npm run build`：261個檔案，含12個雙聲線WAV、來源、新比例CSS與數學審核文件。`git diff --check`通過。
