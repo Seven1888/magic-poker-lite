@@ -1,6 +1,10 @@
 # Magic Poker Lite v60 交接
 
-2026-10-08。v60本地實作與驗證完成：完整測試649／649、最後呈現專項24／24，靜態建置265檔；遊戲、工具、舊存檔及規則驗收通過。目前待推送與公開部署驗收，最後證據見docs/06及建立新聊天室的交接訊息。
+2026-10-08。v60功能已推送main並部署成功：完整測試649／649、最後呈現專項24／24，靜態建置265檔。公開143個核心檔與dist一致，公開遊戲六種viewport、整手鎖牌、預覽隔離及重整一次結算通過；完整證據見docs/06及建立新聊天室的交接訊息。
+
+- 功能提交：[d5ffbcefe800a73cdafc89cd72538de285154566](https://github.com/Seven1888/magic-poker-lite/commit/d5ffbcefe800a73cdafc89cd72538de285154566)。[Actions 37721226524](https://github.com/Seven1888/magic-poker-lite/actions/runs/37721226524) 的build與deploy皆completed／success。
+- 本次後續文件提交回填已完成的公開驗收證據；最終文件SHA與成功run由建立新聊天室的交接訊息提供，不需要新聊天室重跑或追蹤發布。
+- 公開工具完成四策略144手、退幣12玩家541手；5份下載檔核對通過。工具／規則三種寬度正常，44次HTTP皆200、console零錯誤／警告。這是功能驗收，不是長期RTP認證。
 
 新正式natural-holdem：均勻洗牌整手鎖牌，版本規則／設定快照，BOSS白名單資訊與natural-boss-pressure-v1，真實牌力及FOLD結算。保留完整HU與2P／4P／ALL IN，無新池、付款轉贏、換底牌、JP、退出報價。**這不等於所有策略99% RTP，未作此保證。**
 

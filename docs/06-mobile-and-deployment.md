@@ -1,6 +1,16 @@
 # v60 自然牌局：驗證與發布紀錄
 
-更新：2026-10-08。v60本地實作與驗證完成，待推送與公開部署驗收。正式模式為natural-holdem：一次均勻洗牌、整手鎖牌、BOSS專用資訊與連續下注壓力策略、真牌與普通FOLD結算。本版不保證99% RTP；規則見 [v60規格](23-v60-natural-holdem.md)。
+更新：2026-10-08。v60功能已推送main並部署成功。正式模式為natural-holdem：一次均勻洗牌、整手鎖牌、BOSS專用資訊與連續下注壓力策略、真牌與普通FOLD結算。本版不保證99% RTP；規則見 [v60規格](23-v60-natural-holdem.md)。
+
+## v60 Git 與公開驗收
+
+- 功能提交 [d5ffbcefe800a73cdafc89cd72538de285154566](https://github.com/Seven1888/magic-poker-lite/commit/d5ffbcefe800a73cdafc89cd72538de285154566) 已推送main；[Actions 37721226524](https://github.com/Seven1888/magic-poker-lite/actions/runs/37721226524) 的build／deploy均completed／success，CI測試及建置通過。
+- 公開143個核心檔HTTP200且與dist一致，包含全部src／styles、新規則、API及12個雙聲線WAV；文字正規化換行、WAV比對二進位hash。本機證據：`output/check-public-v60.mjs`、`output/public-v60-files.json`。
+- 公開Chrome六種viewport（320×900、375×900、393×852、412×900、1440×1000、320×640）通過；比例誤差小於0.001、數字在框內、無水平溢出，393px主畫面及三尺寸選單已目視核對。
+- 公開牌局seed0走完兩手BOSS FOLD及一手攤牌；每步底牌與牌序不變、公牌按固定序列揭示、預覽不改存檔。YOU／BOSS語音各實際啟動5次；兩次重整table皆null、錢包10,106保持，沒有重複派款。成功單次errors／warnings／HTTPfailed皆0。
+- 公開遊戲腳本、結果及截圖：本機 `output/playwright/public-v60-game.js`／`.log`／`public-v60-game-QA.json`、`public-v60-game-*.png`。桌面viewport及WebAudio啟動不是實體Android或喇叭聽感驗證；小樣本不是長期RTP認證。
+- 公開工具四策略共144手、退幣12位玩家共541手，seed60060。5個實際下載檔之JSON／CSV版本、規則／BOSS版本、seed、RTP分母及退幣帳務通過；CSV一般33欄、退幣19欄。工具與規則320／393／1440共6組無水平溢出，44次HTTP回應全200，console零錯誤／警告。本機證據：`output/playwright/public-lab-v60-QA.json`、`public-lab-v60.js`／`.log`與同前綴下載檔及截圖。首次QA腳本選到巢狀summary而暫停，只修正腳本選擇器後完整重跑通過，正式程式未修改。
+- 後續純文件提交只回填已完成證據；最終文件SHA及成功run由原聊天室交接訊息提供，新聊天室不需重跑或追蹤發布。
 
 ## v60 本地驗證
 
