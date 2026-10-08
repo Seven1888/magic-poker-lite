@@ -1,5 +1,5 @@
 /** Async presentation coordinator. Old streets/hands can never publish late results. */
-export function createBossRangeController({view,workerFactory=()=>new Worker(new URL('./boss-range-worker.mjs?v=59',import.meta.url),{type:'module'})}) {
+export function createBossRangeController({view,workerFactory=()=>new Worker(new URL('./boss-range-worker.mjs?v=60',import.meta.url),{type:'module'})}) {
  let worker=null,epoch=0,request=0,key='',state={visible:false,busy:false},result=null,pending=false,failed=false;
  function paint(){view.render({...state,calculating:pending,distribution:result?.distribution||[],
   basis:result?.basis||state.basis,

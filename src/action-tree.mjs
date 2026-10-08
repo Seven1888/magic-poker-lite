@@ -1,6 +1,8 @@
-import {createSession,startHand,cloneHand,legalActions,applyAction,getActionDistribution} from './engine.mjs?v=59';
-import {BOSS_PROFILE_VERSION} from './boss-profiles.mjs?v=59';
-import {createPoolStudySummary, collectPoolStudyAudit, finishPoolStudySummary} from './probability-pools.mjs?v=59';
+import {createSession,startHand,cloneHand,legalActions,applyAction,getActionDistribution} from './engine.mjs?v=60';
+import {getBossPolicyVersion} from './boss-profiles.mjs?v=60';
+import {NATURAL_HOLDEM_RULES} from './natural-holdem.mjs?v=60';
+import {labConfigSnapshot} from './probability-config.mjs?v=60';
+import {createPoolStudySummary, collectPoolStudyAudit, finishPoolStudySummary} from './probability-pools.mjs?v=60';
 
 const POLICIES = ['balanced','call','aggressive','tight'];
 const MEASURES = [
@@ -42,6 +44,8 @@ export function buildActionTree(config = {}, {
   const prebuilt=session.config.outcome?.mode==='prebuilt-pools';
   const pooled=prebuilt||compactPooled;
   const fixedHoldem=session.config.outcome?.mode==='fixed-holdem';
+  const natural=session.config.outcome?.mode==='natural-holdem';
+  const bossPolicyVersion=getBossPolicyVersion(session.config);
   if(prebuilt&&!rootHand._outcomeTree?.nodes?.length)throw new Error('預建結果研究缺少開局結果樹。');
   const storedNodes=new Map((rootHand._outcomeTree?.nodes||[]).map(node=>[node.id,node]));
   const initialRngState=rootHand.rng.state();
@@ -105,18 +109,20 @@ export function buildActionTree(config = {}, {
   if(pooled)finishPoolStudySummary(summary.outcomePoolSummary);
   const byId=new Map(nodes.map(node=>[node.id,node]));
   return {
-    version:3,mode:compactPooled?'sampled-outcome-full-action-tree':pooled?'prebuilt-outcome-full-action-tree':'fixed-deal-full-action-tree',complete:true,
-    meta:{modelVersion:`${compactPooled?'pooled-holdem-v1':fixedHoldem?'fixed-holdem-v1':pooled?'prebuilt-pools-v2-full-pot':'legacy-deck-v1'}+${BOSS_PROFILE_VERSION}+action-tree-v3`,cardModel:compactPooled?'shared-engine-pooled-holdem':fixedHoldem?'shared-engine-fixed-holdem':pooled?'shared-engine-prebuilt-pools':'shared-engine-fixed-deck',
-      bossProfileVersion:BOSS_PROFILE_VERSION,scope:compactPooled?'one-layout-all-legal-actions-with-sampled-outcomes':pooled?'one-prebuilt-layout-all-stored-actions':'one-fixed-deck-all-legal-actions',
-      description:compactPooled?'固定玩家底牌、公牌序與對手候選暗牌，逐一展開全部合法下注路徑；每條分支在隔離 RNG 上取樣付費目標。這是結果取樣樹，不是事先預建全部結果，也不是精確枚舉每次結果抽籤。':fixedHoldem?'固定本手雙方底牌與公牌序，依共用德州引擎展開全部合法下注尺寸及再加注；每條分支依真實最佳牌型結算。':pooled?'開局已預建全部目標與合法操作分支；玩家底牌及公牌布局固定，BOSS 暗牌由各節點預存目標決定。分析僅讀已建分支，不抽新目標或新牌。':'歷史牌庫模式：發牌後固定牌序，展開雙方所有合法動作；不是枚舉全部發牌組合。',
-      policyInformation:'玩家策略只使用自己的底牌、已揭公共牌及下注狀態；對手依該街鎖定強弱與 BOSS 類型的機率表；legacy 模式才使用原權重模型。',
+    version:natural?4:3,mode:compactPooled?'sampled-outcome-full-action-tree':pooled?'prebuilt-outcome-full-action-tree':'fixed-deal-full-action-tree',complete:true,
+    ...(natural ? {outcomeModel: 'natural-holdem', ruleSet: NATURAL_HOLDEM_RULES.id, rulesSnapshot: {...NATURAL_HOLDEM_RULES}} : {}),
+    meta:{modelVersion:`${natural?NATURAL_HOLDEM_RULES.id:compactPooled?'pooled-holdem-v1':fixedHoldem?'fixed-holdem-v1':pooled?'prebuilt-pools-v2-full-pot':'legacy-deck-v1'}+${bossPolicyVersion}+action-tree-v${natural?4:3}`,cardModel:natural?'shared-engine-natural-holdem':compactPooled?'shared-engine-pooled-holdem':fixedHoldem?'shared-engine-fixed-holdem':pooled?'shared-engine-prebuilt-pools':'shared-engine-fixed-deck',
+      bossProfileVersion:bossPolicyVersion,scope:compactPooled?'one-layout-all-legal-actions-with-sampled-outcomes':pooled?'one-prebuilt-layout-all-stored-actions':'one-fixed-deck-all-legal-actions',
+      description:compactPooled?'固定玩家底牌、公牌序與對手候選暗牌，逐一展開全部合法下注路徑；每條分支在隔離 RNG 上取樣付費目標。這是結果取樣樹，不是事先預建全部結果，也不是精確枚舉每次結果抽籤。':natural||fixedHoldem?'固定本手雙方底牌與公牌序，依共用德州引擎展開全部合法下注尺寸及再加注；每條分支依真實最佳牌型結算。這是一副已取樣牌序的條件結果，不是完整發牌空間或長期 RTP。':pooled?'開局已預建全部目標與合法操作分支；玩家底牌及公牌布局固定，BOSS 暗牌由各節點預存目標決定。分析僅讀已建分支，不抽新目標或新牌。':'歷史牌庫模式：發牌後固定牌序，展開雙方所有合法動作；不是枚舉全部發牌組合。',
+      policyInformation:natural?'玩家策略與 BOSS 政策各自只使用自己的底牌、已揭公共牌、行動歷史、價格與籌碼；BOSS 不讀玩家暗牌或未揭公牌。':'玩家策略只使用自己的底牌、已揭公共牌及下注狀態；對手依該街鎖定強弱與 BOSS 類型的機率表；legacy 模式才使用原權重模型。',
       expectation:compactPooled?'依沿途動作機率加權已取樣的分支結果；只完整積分合法動作，未窮舉 outcome RNG，不能解讀為全部結果的精確條件期望。':'每節點為到達後的策略條件期望；全樹統計依沿途動作機率加權，不以終端數量比例計算勝率。',
       outcomeRng:compactPooled?'sampled-on-isolated-branches':prebuilt?'prebuilt-stored-targets':'fixed-deal',
       outcomeRngEnumerated:false,
       holeCardsVisibility:'暗牌、分支目標及完整公共牌序僅供離線分析；各節點 holes 為該分支當下牌組，board 只列當下已揭公牌。',
-      poolSampling:pooled?'單手冷啟動：使用設定的初始三桶；沒有跨手水池歷史，不能當作長期 RTP。':fixedHoldem?'依固定牌序自然勝負，無結果水池。':'歷史牌庫模式，無結果水池。',
+      poolSampling:pooled?'單手冷啟動：使用設定的初始三桶；沒有跨手水池歷史，不能當作長期 RTP。':natural||fixedHoldem?'依固定牌序自然勝負，無結果水池。':'歷史牌庫模式，無結果水池。',
+      stateLimit,limitPolicy:'超過節點上限直接失敗，不發布部分樹或部分期望。',
       rngStateAfterDeal:initialRngState,rngStateAfterTraversal:rootHand.rng.state()},
-    config:session.config,seed,firstSmallBlind,policy,rootId:root.id,
+    config:labConfigSnapshot(session.config),seed,firstSmallBlind,policy,rootId:root.id,
     bossProfileId:rootHand.bossProfile?.id ?? 'legacy',bossProfile:rootHand.bossProfile,bossSelection:rootHand.bossSelection,
     cards:{player:[...rootHand.holes.player],npc:[...rootHand.holes.npc],
       npcByTarget:pooled?structuredClone((rootHand._outcomeTree?.layout||rootHand.pooledHoldem?.layout)?.boss):null,

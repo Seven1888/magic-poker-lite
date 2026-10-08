@@ -1,0 +1,3626 @@
+{
+  "revision": "363aa41999ad6762bfdc98fea8c7588b83b52843",
+  "fixtures": [
+    {
+      "scenario": "pending",
+      "seed": 0,
+      "profile": {
+        "version": 2,
+        "balance": 9900,
+        "outcomePools": {
+          "version": 1,
+          "buckets": [
+            {
+              "paidAction": 100,
+              "special": 0
+            },
+            {
+              "paidAction": 20,
+              "special": 0
+            },
+            {
+              "paidAction": 30,
+              "special": 0
+            }
+          ],
+          "paidActionCooldown": 0,
+          "qualificationSequence": 0,
+          "handSequence": 0,
+          "lastSettlement": null
+        },
+        "lastBossProfileId": "caller",
+        "table": {
+          "version": 1,
+          "rngState": 3399790538,
+          "session": {
+            "config": {
+              "targetRtp": 1,
+              "jackpotEnabled": false,
+              "smallBlind": 1,
+              "bigBlind": 2,
+              "minBuyIn": 100,
+              "maxBuyIn": 10000,
+              "buyIn": 100,
+              "betSize": {
+                "preflop": 10,
+                "flop": 20,
+                "turn": 40,
+                "river": 40
+              },
+              "maxRaises": null,
+              "animationMs": 850,
+              "npc": {
+                "fold": 0.2,
+                "call": 0.6,
+                "raise": 0.2,
+                "check": 0.65,
+                "bet": 0.35,
+                "strengthInfluence": 1,
+                "priceInfluence": 0.6
+              },
+              "boss": {
+                "mode": "random",
+                "profileId": "caller"
+              },
+              "deal": {
+                "player": {
+                  "rerollMode": "unpaired",
+                  "rerollChance": 0,
+                  "maxRerolls": 0,
+                  "manual": []
+                },
+                "npc": {
+                  "rerollMode": "unpaired",
+                  "rerollChance": 0,
+                  "maxRerolls": 0,
+                  "manual": []
+                }
+              },
+              "outcome": {
+                "mode": "pooled-holdem",
+                "conversionRate": 0.99,
+                "paidActionBudgetShare": 1,
+                "paidActionCooldownMin": 0,
+                "paidActionCooldownMax": 0,
+                "specialUseChance": 0,
+                "initialPaidActionPools": [
+                  100,
+                  20,
+                  30
+                ],
+                "initialSpecialPools": [
+                  0,
+                  0,
+                  0
+                ],
+                "initialPaidActionCooldown": 0,
+                "stateLimit": 10000,
+                "maxLayoutAttempts": 2000
+              }
+            },
+            "seed": 0,
+            "firstSmallBlind": "player",
+            "blindMode": "alternate",
+            "blindDraw": null,
+            "lastBossProfileId": "caller",
+            "tableNumber": 1,
+            "tableStartHandNumber": 1,
+            "outcomePools": {
+              "version": 1,
+              "buckets": [
+                {
+                  "paidAction": 100,
+                  "special": 0
+                },
+                {
+                  "paidAction": 20,
+                  "special": 0
+                },
+                {
+                  "paidAction": 30,
+                  "special": 0
+                }
+              ],
+              "paidActionCooldown": 0,
+              "qualificationSequence": 0,
+              "handSequence": 0,
+              "lastSettlement": null
+            },
+            "stacks": {
+              "player": 93,
+              "npc": 98
+            },
+            "handNumber": 1,
+            "fees": 0,
+            "jackpotAwards": 0,
+            "jackpotTierCounts": {
+              "royal": 0,
+              "straightFlush": 0,
+              "quads": 0
+            },
+            "opponentBankrollRefreshes": [
+              {
+                "type": "opponent-hand-buy-in",
+                "handNumber": 1,
+                "before": 100,
+                "after": 100,
+                "adjustment": 0
+              }
+            ]
+          },
+          "hand": {
+            "config": {
+              "targetRtp": 1,
+              "jackpotEnabled": false,
+              "smallBlind": 1,
+              "bigBlind": 2,
+              "minBuyIn": 100,
+              "maxBuyIn": 10000,
+              "buyIn": 100,
+              "betSize": {
+                "preflop": 10,
+                "flop": 20,
+                "turn": 40,
+                "river": 40
+              },
+              "maxRaises": null,
+              "animationMs": 850,
+              "npc": {
+                "fold": 0.2,
+                "call": 0.6,
+                "raise": 0.2,
+                "check": 0.65,
+                "bet": 0.35,
+                "strengthInfluence": 1,
+                "priceInfluence": 0.6
+              },
+              "boss": {
+                "mode": "random",
+                "profileId": "caller"
+              },
+              "deal": {
+                "player": {
+                  "rerollMode": "unpaired",
+                  "rerollChance": 0,
+                  "maxRerolls": 0,
+                  "manual": []
+                },
+                "npc": {
+                  "rerollMode": "unpaired",
+                  "rerollChance": 0,
+                  "maxRerolls": 0,
+                  "manual": []
+                }
+              },
+              "outcome": {
+                "mode": "pooled-holdem",
+                "conversionRate": 0.99,
+                "paidActionBudgetShare": 1,
+                "paidActionCooldownMin": 0,
+                "paidActionCooldownMax": 0,
+                "specialUseChance": 0,
+                "initialPaidActionPools": [
+                  100,
+                  20,
+                  30
+                ],
+                "initialSpecialPools": [
+                  0,
+                  0,
+                  0
+                ],
+                "initialPaidActionCooldown": 0,
+                "stateLimit": 10000,
+                "maxLayoutAttempts": 2000
+              }
+            },
+            "handNumber": 1,
+            "smallBlind": "player",
+            "bigBlind": "npc",
+            "bossProfile": {
+              "id": "caller",
+              "name": "不激進",
+              "nickname": "PASSIVE",
+              "description": "較少主動下注或加注，不強時也比較願意跟注。",
+              "weights": {
+                "weak": {
+                  "fold": 25,
+                  "call": 75,
+                  "raise": 0
+                },
+                "strong": {
+                  "fold": 5,
+                  "call": 65,
+                  "raise": 30
+                }
+              },
+              "pressureWeights": {
+                "half": {
+                  "weak": {
+                    "fold": 25,
+                    "call": 75,
+                    "raise": 0
+                  },
+                  "strong": {
+                    "fold": 5,
+                    "call": 65,
+                    "raise": 30
+                  }
+                },
+                "pot": {
+                  "weak": {
+                    "fold": 40,
+                    "call": 60,
+                    "raise": 0
+                  },
+                  "strong": {
+                    "fold": 10,
+                    "call": 70,
+                    "raise": 20
+                  }
+                },
+                "large": {
+                  "weak": {
+                    "fold": 55,
+                    "call": 45,
+                    "raise": 0
+                  },
+                  "strong": {
+                    "fold": 15,
+                    "call": 85,
+                    "raise": 0
+                  }
+                }
+              },
+              "tables": {
+                "preflop": {
+                  "weak": {
+                    "fold": 25,
+                    "call": 75,
+                    "raise": 0
+                  },
+                  "strong": {
+                    "fold": 5,
+                    "call": 65,
+                    "raise": 30
+                  }
+                },
+                "flop": {
+                  "weak": {
+                    "fold": 25,
+                    "call": 75,
+                    "raise": 0
+                  },
+                  "strong": {
+                    "fold": 5,
+                    "call": 65,
+                    "raise": 30
+                  }
+                },
+                "turn": {
+                  "weak": {
+                    "fold": 25,
+                    "call": 75,
+                    "raise": 0
+                  },
+                  "strong": {
+                    "fold": 5,
+                    "call": 65,
+                    "raise": 30
+                  }
+                },
+                "river": {
+                  "weak": {
+                    "fold": 25,
+                    "call": 75,
+                    "raise": 0
+                  },
+                  "strong": {
+                    "fold": 5,
+                    "call": 65,
+                    "raise": 30
+                  }
+                }
+              }
+            },
+            "bossSelection": {
+              "mode": "random",
+              "probability": 0.5,
+              "previousId": null,
+              "eligibleIds": [
+                "caller",
+                "maniac"
+              ]
+            },
+            "street": "preflop",
+            "status": "playing",
+            "actor": "npc",
+            "holes": {
+              "player": [
+                "Ks",
+                "9s"
+              ],
+              "npc": [
+                "7h",
+                "Qh"
+              ]
+            },
+            "deck": [
+              "5c",
+              "8h",
+              "3s",
+              "2s",
+              "4h",
+              "Ac",
+              "9c",
+              "Jc",
+              "9h",
+              "4d",
+              "5h",
+              "6c",
+              "5s",
+              "Jh",
+              "6d",
+              "Jd",
+              "8s",
+              "7d",
+              "Kh",
+              "2h",
+              "8d",
+              "Ah",
+              "Kd",
+              "Ad",
+              "8c",
+              "4c",
+              "3h",
+              "Ts",
+              "2c",
+              "7c",
+              "5d",
+              "Qc",
+              "Qs",
+              "6s",
+              "9d",
+              "Th",
+              "Qd",
+              "3c",
+              "As",
+              "6h",
+              "Td",
+              "Tc",
+              "Js",
+              "4s",
+              "7s",
+              "3d",
+              "2d",
+              "Kc"
+            ],
+            "dealAudit": {
+              "player": {
+                "manual": false,
+                "rerollMode": "unpaired",
+                "initialClass": "unpaired",
+                "finalClass": "unpaired",
+                "initialScore": 0.64,
+                "finalScore": 0.64,
+                "attempts": 1,
+                "rerolls": 0,
+                "stopReason": "natural-deal"
+              },
+              "npc": {
+                "manual": false,
+                "rerollMode": "prebuilt-outcome",
+                "initialClass": "unpaired",
+                "finalClass": "unpaired",
+                "initialScore": 0.5700000000000001,
+                "finalScore": 0.5700000000000001,
+                "attempts": 1,
+                "rerolls": 0,
+                "stopReason": "outcome-target"
+              }
+            },
+            "board": [],
+            "stacks": {
+              "player": 93,
+              "npc": 98
+            },
+            "stacksBefore": {
+              "player": 100,
+              "npc": 100
+            },
+            "streetBets": {
+              "player": 7,
+              "npc": 2
+            },
+            "contributions": {
+              "player": 7,
+              "npc": 2
+            },
+            "currentBet": 7,
+            "raises": 1,
+            "pending": [
+              "npc"
+            ],
+            "pot": 9,
+            "history": [
+              {
+                "actor": "player",
+                "type": "smallBlind",
+                "amount": 1,
+                "to": 1,
+                "street": "preflop"
+              },
+              {
+                "actor": "npc",
+                "type": "bigBlind",
+                "amount": 2,
+                "to": 2,
+                "street": "preflop"
+              },
+              {
+                "actor": "player",
+                "type": "raise",
+                "amount": 6,
+                "to": 7,
+                "street": "preflop",
+                "id": "raise:2x",
+                "sizeKey": "2x",
+                "sizeKeys": [
+                  "2x"
+                ],
+                "allIn": false,
+                "fullRaise": true
+              }
+            ],
+            "result": null,
+            "lastFullRaise": 5,
+            "actedSinceFullRaise": [
+              "player"
+            ],
+            "outcomePoolsBefore": {
+              "version": 1,
+              "buckets": [
+                {
+                  "paidAction": 100,
+                  "special": 0
+                },
+                {
+                  "paidAction": 20,
+                  "special": 0
+                },
+                {
+                  "paidAction": 30,
+                  "special": 0
+                }
+              ],
+              "paidActionCooldown": 0,
+              "qualificationSequence": 0,
+              "handSequence": 0,
+              "lastSettlement": null
+            },
+            "outcomeHandId": "1",
+            "pooledHoldem": {
+              "version": 1,
+              "model": "pooled-holdem-v1",
+              "layout": {
+                "player": [
+                  "Ks",
+                  "9s"
+                ],
+                "board": [
+                  "5c",
+                  "8h",
+                  "3s",
+                  "2s",
+                  "4h"
+                ],
+                "boss": {
+                  "win": [
+                    "7h",
+                    "Qh"
+                  ]
+                },
+                "comparisons": {
+                  "win": 1
+                },
+                "deckOrder": [
+                  "7h",
+                  "Ac",
+                  "9c",
+                  "Jc",
+                  "9h",
+                  "4d",
+                  "5h",
+                  "6c",
+                  "5s",
+                  "Jh",
+                  "6d",
+                  "Jd",
+                  "8s",
+                  "7d",
+                  "Kh",
+                  "2h",
+                  "8d",
+                  "Ah",
+                  "Kd",
+                  "Ad",
+                  "Qh",
+                  "8c",
+                  "4c",
+                  "3h",
+                  "Ts",
+                  "2c",
+                  "7c",
+                  "5d",
+                  "Qc",
+                  "Qs",
+                  "6s",
+                  "9d",
+                  "Th",
+                  "Qd",
+                  "3c",
+                  "As",
+                  "6h",
+                  "Td",
+                  "Tc",
+                  "Js",
+                  "4s",
+                  "7s",
+                  "3d",
+                  "2d",
+                  "Kc"
+                ],
+                "dealAudit": {
+                  "player": {
+                    "manual": false,
+                    "rerollMode": "unpaired",
+                    "initialClass": "unpaired",
+                    "finalClass": "unpaired",
+                    "initialScore": 0.64,
+                    "finalScore": 0.64,
+                    "attempts": 1,
+                    "rerolls": 0,
+                    "stopReason": "natural-deal"
+                  },
+                  "npcByTarget": {
+                    "win": {
+                      "manual": false,
+                      "rerollMode": "prebuilt-outcome",
+                      "initialClass": "unpaired",
+                      "finalClass": "unpaired",
+                      "initialScore": 0.5700000000000001,
+                      "finalScore": 0.5700000000000001,
+                      "attempts": 1,
+                      "rerolls": 0,
+                      "stopReason": "outcome-target"
+                    }
+                  }
+                }
+              },
+              "rootTarget": "win",
+              "layoutAttempts": 1,
+              "transitionIndex": 1
+            },
+            "outcomeDecision": {
+              "kind": "paid-win",
+              "previousTarget": "win",
+              "target": "win",
+              "inherited": true,
+              "paidPrice": 6,
+              "contributionBefore": 1,
+              "contributionAfter": 7,
+              "matchedAfterAction": 7,
+              "denominator": 14,
+              "score": 5.94,
+              "totalScore": 5.94,
+              "conversionRate": 0.99,
+              "paidActionBudgetShare": 1,
+              "paidActionBudgetBefore": 100,
+              "paidActionBudgetUsed": 0,
+              "paidActionCooldownBefore": 0,
+              "rawProbability": null,
+              "probability": null,
+              "roll": null,
+              "winningNumbers": null,
+              "ticketScale": 1000000,
+              "paidActionCooldownAfter": 0,
+              "cooldownDraw": null,
+              "poolBranch": {
+                "version": 1,
+                "bet": 2,
+                "bucketIndex": 0,
+                "bucketMode": "blind-ranges",
+                "basePools": {
+                  "version": 1,
+                  "buckets": [
+                    {
+                      "paidAction": 100,
+                      "special": 0
+                    },
+                    {
+                      "paidAction": 20,
+                      "special": 0
+                    },
+                    {
+                      "paidAction": 30,
+                      "special": 0
+                    }
+                  ],
+                  "paidActionCooldown": 0,
+                  "qualificationSequence": 0,
+                  "handSequence": 0,
+                  "lastSettlement": null
+                },
+                "handId": "1",
+                "paidAction": 100,
+                "special": 0,
+                "paidActionCooldown": 0,
+                "qualificationSequence": 0,
+                "paidActionBudgetUsed": 0,
+                "pendingWinPaidCredits": [
+                  {
+                    "from": 1,
+                    "to": 7,
+                    "conversionRate": 0.99,
+                    "paidActionBudgetShare": 1,
+                    "nodeId": "1:1:raise:2x"
+                  }
+                ],
+                "paidEvents": [
+                  {
+                    "paidPrice": 6,
+                    "contributionBefore": 1,
+                    "contributionAfter": 7,
+                    "matchedAfterAction": 7,
+                    "denominator": 14,
+                    "score": 5.94,
+                    "totalScore": 5.94,
+                    "conversionRate": 0.99,
+                    "paidActionBudgetShare": 1,
+                    "paidActionBudgetBefore": 100,
+                    "paidActionBudgetUsed": 0,
+                    "paidActionCooldownBefore": 0,
+                    "rawProbability": null,
+                    "probability": null,
+                    "nodeId": "1:1:raise:2x",
+                    "type": "raise",
+                    "previousTarget": "win",
+                    "target": "win",
+                    "paidActionBudgetAfter": 100,
+                    "paidActionCooldownAfter": 0,
+                    "cooldownDraw": null,
+                    "roll": null,
+                    "winningNumbers": null
+                  }
+                ],
+                "qualification": null
+              },
+              "qualification": null
+            },
+            "bossStreetStrength": {
+              "street": "preflop",
+              "band": "weak",
+              "category": null,
+              "reasons": [],
+              "flushDraw": false,
+              "holeFlushDraw": false,
+              "openEndedStraightDraw": false,
+              "holeOpenEndedStraightDraw": false,
+              "straightDraw": false,
+              "gutshot": false,
+              "holeGutshot": false
+            },
+            "bossStreetStates": {
+              "preflop": {
+                "street": "preflop",
+                "band": "weak",
+                "category": null,
+                "reasons": [],
+                "flushDraw": false,
+                "holeFlushDraw": false,
+                "openEndedStraightDraw": false,
+                "holeOpenEndedStraightDraw": false,
+                "straightDraw": false,
+                "gutshot": false,
+                "holeGutshot": false
+              }
+            }
+          }
+        }
+      },
+      "expected": {
+        "version": 2,
+        "balance": 9998,
+        "outcomePools": {
+          "version": 1,
+          "buckets": [
+            {
+              "paidAction": 100.99,
+              "special": 0
+            },
+            {
+              "paidAction": 20,
+              "special": 0
+            },
+            {
+              "paidAction": 30,
+              "special": 0
+            }
+          ],
+          "paidActionCooldown": 0,
+          "qualificationSequence": 0,
+          "handSequence": 1,
+          "lastSettlement": {
+            "id": "1",
+            "audit": {
+              "handId": "1",
+              "bet": 2,
+              "bucketIndex": 0,
+              "matchedWager": 2,
+              "before": {
+                "paidAction": 100,
+                "special": 0
+              },
+              "after": {
+                "paidAction": 100.99,
+                "special": 0
+              },
+              "paidActionBudgetUsed": 0,
+              "paidActionAdded": 0.99,
+              "specialAdded": 0,
+              "specialAward": 0,
+              "qualification": null,
+              "cooldownBefore": 0,
+              "cooldownAfter": 0,
+              "credits": [
+                {
+                  "from": 1,
+                  "to": 7,
+                  "conversionRate": 0.99,
+                  "paidActionBudgetShare": 1,
+                  "nodeId": "1:1:raise:2x",
+                  "matchedPaidAmount": 1,
+                  "refundablePaidAmount": 5,
+                  "score": 0.99,
+                  "paidActionAdded": 0.99,
+                  "specialAdded": 0
+                }
+              ],
+              "paidEvents": [
+                {
+                  "paidPrice": 6,
+                  "contributionBefore": 1,
+                  "contributionAfter": 7,
+                  "matchedAfterAction": 7,
+                  "denominator": 14,
+                  "score": 5.94,
+                  "totalScore": 5.94,
+                  "conversionRate": 0.99,
+                  "paidActionBudgetShare": 1,
+                  "paidActionBudgetBefore": 100,
+                  "paidActionBudgetUsed": 0,
+                  "paidActionCooldownBefore": 0,
+                  "rawProbability": null,
+                  "probability": null,
+                  "nodeId": "1:1:raise:2x",
+                  "type": "raise",
+                  "previousTarget": "win",
+                  "target": "win",
+                  "paidActionBudgetAfter": 100,
+                  "paidActionCooldownAfter": 0,
+                  "cooldownDraw": null,
+                  "roll": null,
+                  "winningNumbers": null
+                }
+              ]
+            }
+          }
+        },
+        "table": null,
+        "lastBossProfileId": "caller"
+      }
+    },
+    {
+      "scenario": "allin-fold",
+      "seed": 1,
+      "profile": {
+        "version": 2,
+        "balance": 9900,
+        "outcomePools": {
+          "version": 1,
+          "buckets": [
+            {
+              "paidAction": 100,
+              "special": 0
+            },
+            {
+              "paidAction": 20,
+              "special": 0
+            },
+            {
+              "paidAction": 30,
+              "special": 0
+            }
+          ],
+          "paidActionCooldown": 0,
+          "qualificationSequence": 0,
+          "handSequence": 0,
+          "lastSettlement": null
+        },
+        "lastBossProfileId": "maniac",
+        "table": {
+          "version": 1,
+          "rngState": 3399790539,
+          "session": {
+            "config": {
+              "targetRtp": 1,
+              "jackpotEnabled": false,
+              "smallBlind": 1,
+              "bigBlind": 2,
+              "minBuyIn": 100,
+              "maxBuyIn": 10000,
+              "buyIn": 100,
+              "betSize": {
+                "preflop": 10,
+                "flop": 20,
+                "turn": 40,
+                "river": 40
+              },
+              "maxRaises": null,
+              "animationMs": 850,
+              "npc": {
+                "fold": 0.2,
+                "call": 0.6,
+                "raise": 0.2,
+                "check": 0.65,
+                "bet": 0.35,
+                "strengthInfluence": 1,
+                "priceInfluence": 0.6
+              },
+              "boss": {
+                "mode": "random",
+                "profileId": "caller"
+              },
+              "deal": {
+                "player": {
+                  "rerollMode": "unpaired",
+                  "rerollChance": 0,
+                  "maxRerolls": 0,
+                  "manual": []
+                },
+                "npc": {
+                  "rerollMode": "unpaired",
+                  "rerollChance": 0,
+                  "maxRerolls": 0,
+                  "manual": []
+                }
+              },
+              "outcome": {
+                "mode": "pooled-holdem",
+                "conversionRate": 0.99,
+                "paidActionBudgetShare": 1,
+                "paidActionCooldownMin": 0,
+                "paidActionCooldownMax": 0,
+                "specialUseChance": 0,
+                "initialPaidActionPools": [
+                  100,
+                  20,
+                  30
+                ],
+                "initialSpecialPools": [
+                  0,
+                  0,
+                  0
+                ],
+                "initialPaidActionCooldown": 0,
+                "stateLimit": 10000,
+                "maxLayoutAttempts": 2000
+              }
+            },
+            "seed": 1,
+            "firstSmallBlind": "player",
+            "blindMode": "alternate",
+            "blindDraw": null,
+            "lastBossProfileId": "maniac",
+            "tableNumber": 1,
+            "tableStartHandNumber": 1,
+            "outcomePools": {
+              "version": 1,
+              "buckets": [
+                {
+                  "paidAction": 100,
+                  "special": 0
+                },
+                {
+                  "paidAction": 20,
+                  "special": 0
+                },
+                {
+                  "paidAction": 30,
+                  "special": 0
+                }
+              ],
+              "paidActionCooldown": 0,
+              "qualificationSequence": 0,
+              "handSequence": 0,
+              "lastSettlement": null
+            },
+            "stacks": {
+              "player": 0,
+              "npc": 98
+            },
+            "handNumber": 1,
+            "fees": 0,
+            "jackpotAwards": 0,
+            "jackpotTierCounts": {
+              "royal": 0,
+              "straightFlush": 0,
+              "quads": 0
+            },
+            "opponentBankrollRefreshes": [
+              {
+                "type": "opponent-hand-buy-in",
+                "handNumber": 1,
+                "before": 100,
+                "after": 100,
+                "adjustment": 0
+              }
+            ]
+          },
+          "hand": {
+            "config": {
+              "targetRtp": 1,
+              "jackpotEnabled": false,
+              "smallBlind": 1,
+              "bigBlind": 2,
+              "minBuyIn": 100,
+              "maxBuyIn": 10000,
+              "buyIn": 100,
+              "betSize": {
+                "preflop": 10,
+                "flop": 20,
+                "turn": 40,
+                "river": 40
+              },
+              "maxRaises": null,
+              "animationMs": 850,
+              "npc": {
+                "fold": 0.2,
+                "call": 0.6,
+                "raise": 0.2,
+                "check": 0.65,
+                "bet": 0.35,
+                "strengthInfluence": 1,
+                "priceInfluence": 0.6
+              },
+              "boss": {
+                "mode": "random",
+                "profileId": "caller"
+              },
+              "deal": {
+                "player": {
+                  "rerollMode": "unpaired",
+                  "rerollChance": 0,
+                  "maxRerolls": 0,
+                  "manual": []
+                },
+                "npc": {
+                  "rerollMode": "unpaired",
+                  "rerollChance": 0,
+                  "maxRerolls": 0,
+                  "manual": []
+                }
+              },
+              "outcome": {
+                "mode": "pooled-holdem",
+                "conversionRate": 0.99,
+                "paidActionBudgetShare": 1,
+                "paidActionCooldownMin": 0,
+                "paidActionCooldownMax": 0,
+                "specialUseChance": 0,
+                "initialPaidActionPools": [
+                  100,
+                  20,
+                  30
+                ],
+                "initialSpecialPools": [
+                  0,
+                  0,
+                  0
+                ],
+                "initialPaidActionCooldown": 0,
+                "stateLimit": 10000,
+                "maxLayoutAttempts": 2000
+              }
+            },
+            "handNumber": 1,
+            "smallBlind": "player",
+            "bigBlind": "npc",
+            "bossProfile": {
+              "id": "maniac",
+              "name": "激進",
+              "nickname": "AGGRESSIVE",
+              "description": "符合成牌、聽牌或詐唬條件時，較常主動下注或加注。",
+              "weights": {
+                "weak": {
+                  "fold": 45,
+                  "call": 55,
+                  "raise": 0
+                },
+                "strong": {
+                  "fold": 5,
+                  "call": 25,
+                  "raise": 70
+                }
+              },
+              "pressureWeights": {
+                "half": {
+                  "weak": {
+                    "fold": 45,
+                    "call": 55,
+                    "raise": 0
+                  },
+                  "strong": {
+                    "fold": 5,
+                    "call": 25,
+                    "raise": 70
+                  }
+                },
+                "pot": {
+                  "weak": {
+                    "fold": 55,
+                    "call": 45,
+                    "raise": 0
+                  },
+                  "strong": {
+                    "fold": 10,
+                    "call": 40,
+                    "raise": 50
+                  }
+                },
+                "large": {
+                  "weak": {
+                    "fold": 70,
+                    "call": 30,
+                    "raise": 0
+                  },
+                  "strong": {
+                    "fold": 20,
+                    "call": 80,
+                    "raise": 0
+                  }
+                }
+              },
+              "tables": {
+                "preflop": {
+                  "weak": {
+                    "fold": 45,
+                    "call": 55,
+                    "raise": 0
+                  },
+                  "strong": {
+                    "fold": 5,
+                    "call": 25,
+                    "raise": 70
+                  }
+                },
+                "flop": {
+                  "weak": {
+                    "fold": 45,
+                    "call": 55,
+                    "raise": 0
+                  },
+                  "strong": {
+                    "fold": 5,
+                    "call": 25,
+                    "raise": 70
+                  }
+                },
+                "turn": {
+                  "weak": {
+                    "fold": 45,
+                    "call": 55,
+                    "raise": 0
+                  },
+                  "strong": {
+                    "fold": 5,
+                    "call": 25,
+                    "raise": 70
+                  }
+                },
+                "river": {
+                  "weak": {
+                    "fold": 45,
+                    "call": 55,
+                    "raise": 0
+                  },
+                  "strong": {
+                    "fold": 5,
+                    "call": 25,
+                    "raise": 70
+                  }
+                }
+              }
+            },
+            "bossSelection": {
+              "mode": "random",
+              "probability": 0.5,
+              "previousId": null,
+              "eligibleIds": [
+                "caller",
+                "maniac"
+              ]
+            },
+            "street": "preflop",
+            "status": "playing",
+            "actor": "npc",
+            "holes": {
+              "player": [
+                "3d",
+                "Ac"
+              ],
+              "npc": [
+                "9s",
+                "6d"
+              ]
+            },
+            "deck": [
+              "8c",
+              "5d",
+              "Qs",
+              "Td",
+              "Kd",
+              "9h",
+              "Jd",
+              "7s",
+              "2s",
+              "Ad",
+              "Jc",
+              "Kc",
+              "2c",
+              "Th",
+              "4h",
+              "5h",
+              "Kh",
+              "As",
+              "5c",
+              "7h",
+              "Js",
+              "2h",
+              "8s",
+              "Qh",
+              "4s",
+              "Ts",
+              "4d",
+              "Ah",
+              "5s",
+              "2d",
+              "8h",
+              "7c",
+              "Jh",
+              "Tc",
+              "6h",
+              "Qc",
+              "Ks",
+              "9d",
+              "3s",
+              "6s",
+              "3c",
+              "Qd",
+              "4c",
+              "7d",
+              "6c",
+              "9c",
+              "8d",
+              "3h"
+            ],
+            "dealAudit": {
+              "player": {
+                "manual": false,
+                "rerollMode": "unpaired",
+                "initialClass": "unpaired",
+                "finalClass": "unpaired",
+                "initialScore": 0.45666666666666667,
+                "finalScore": 0.45666666666666667,
+                "attempts": 1,
+                "rerolls": 0,
+                "stopReason": "natural-deal"
+              },
+              "npc": {
+                "manual": false,
+                "rerollMode": "prebuilt-outcome",
+                "initialClass": "unpaired",
+                "finalClass": "unpaired",
+                "initialScore": 0.3533333333333334,
+                "finalScore": 0.3533333333333334,
+                "attempts": 1,
+                "rerolls": 0,
+                "stopReason": "outcome-target"
+              }
+            },
+            "board": [],
+            "stacks": {
+              "player": 0,
+              "npc": 98
+            },
+            "stacksBefore": {
+              "player": 100,
+              "npc": 100
+            },
+            "streetBets": {
+              "player": 100,
+              "npc": 2
+            },
+            "contributions": {
+              "player": 100,
+              "npc": 2
+            },
+            "currentBet": 100,
+            "raises": 1,
+            "pending": [
+              "npc"
+            ],
+            "pot": 102,
+            "history": [
+              {
+                "actor": "player",
+                "type": "smallBlind",
+                "amount": 1,
+                "to": 1,
+                "street": "preflop"
+              },
+              {
+                "actor": "npc",
+                "type": "bigBlind",
+                "amount": 2,
+                "to": 2,
+                "street": "preflop"
+              },
+              {
+                "actor": "player",
+                "type": "raise",
+                "amount": 99,
+                "to": 100,
+                "street": "preflop",
+                "id": "raise:allin",
+                "sizeKey": "allin",
+                "sizeKeys": [
+                  "allin"
+                ],
+                "allIn": true,
+                "fullRaise": true
+              }
+            ],
+            "result": null,
+            "lastFullRaise": 98,
+            "actedSinceFullRaise": [
+              "player"
+            ],
+            "outcomePoolsBefore": {
+              "version": 1,
+              "buckets": [
+                {
+                  "paidAction": 100,
+                  "special": 0
+                },
+                {
+                  "paidAction": 20,
+                  "special": 0
+                },
+                {
+                  "paidAction": 30,
+                  "special": 0
+                }
+              ],
+              "paidActionCooldown": 0,
+              "qualificationSequence": 0,
+              "handSequence": 0,
+              "lastSettlement": null
+            },
+            "outcomeHandId": "1",
+            "pooledHoldem": {
+              "version": 1,
+              "model": "pooled-holdem-v1",
+              "layout": {
+                "player": [
+                  "3d",
+                  "Ac"
+                ],
+                "board": [
+                  "8c",
+                  "5d",
+                  "Qs",
+                  "Td",
+                  "Kd"
+                ],
+                "boss": {
+                  "win": [
+                    "9s",
+                    "6d"
+                  ]
+                },
+                "comparisons": {
+                  "win": 1
+                },
+                "deckOrder": [
+                  "9h",
+                  "Jd",
+                  "7s",
+                  "2s",
+                  "9s",
+                  "Ad",
+                  "Jc",
+                  "Kc",
+                  "2c",
+                  "Th",
+                  "4h",
+                  "5h",
+                  "Kh",
+                  "As",
+                  "6d",
+                  "5c",
+                  "7h",
+                  "Js",
+                  "2h",
+                  "8s",
+                  "Qh",
+                  "4s",
+                  "Ts",
+                  "4d",
+                  "Ah",
+                  "5s",
+                  "2d",
+                  "8h",
+                  "7c",
+                  "Jh",
+                  "Tc",
+                  "6h",
+                  "Qc",
+                  "Ks",
+                  "9d",
+                  "3s",
+                  "6s",
+                  "3c",
+                  "Qd",
+                  "4c",
+                  "7d",
+                  "6c",
+                  "9c",
+                  "8d",
+                  "3h"
+                ],
+                "dealAudit": {
+                  "player": {
+                    "manual": false,
+                    "rerollMode": "unpaired",
+                    "initialClass": "unpaired",
+                    "finalClass": "unpaired",
+                    "initialScore": 0.45666666666666667,
+                    "finalScore": 0.45666666666666667,
+                    "attempts": 1,
+                    "rerolls": 0,
+                    "stopReason": "natural-deal"
+                  },
+                  "npcByTarget": {
+                    "win": {
+                      "manual": false,
+                      "rerollMode": "prebuilt-outcome",
+                      "initialClass": "unpaired",
+                      "finalClass": "unpaired",
+                      "initialScore": 0.3533333333333334,
+                      "finalScore": 0.3533333333333334,
+                      "attempts": 1,
+                      "rerolls": 0,
+                      "stopReason": "outcome-target"
+                    }
+                  }
+                }
+              },
+              "rootTarget": "win",
+              "layoutAttempts": 1,
+              "transitionIndex": 1
+            },
+            "outcomeDecision": {
+              "kind": "paid-win",
+              "previousTarget": "win",
+              "target": "win",
+              "inherited": true,
+              "paidPrice": 99,
+              "contributionBefore": 1,
+              "contributionAfter": 100,
+              "matchedAfterAction": 100,
+              "denominator": 200,
+              "score": 98.01,
+              "totalScore": 98.01,
+              "conversionRate": 0.99,
+              "paidActionBudgetShare": 1,
+              "paidActionBudgetBefore": 100,
+              "paidActionBudgetUsed": 0,
+              "paidActionCooldownBefore": 0,
+              "rawProbability": null,
+              "probability": null,
+              "roll": null,
+              "winningNumbers": null,
+              "ticketScale": 1000000,
+              "paidActionCooldownAfter": 0,
+              "cooldownDraw": null,
+              "poolBranch": {
+                "version": 1,
+                "bet": 2,
+                "bucketIndex": 0,
+                "bucketMode": "blind-ranges",
+                "basePools": {
+                  "version": 1,
+                  "buckets": [
+                    {
+                      "paidAction": 100,
+                      "special": 0
+                    },
+                    {
+                      "paidAction": 20,
+                      "special": 0
+                    },
+                    {
+                      "paidAction": 30,
+                      "special": 0
+                    }
+                  ],
+                  "paidActionCooldown": 0,
+                  "qualificationSequence": 0,
+                  "handSequence": 0,
+                  "lastSettlement": null
+                },
+                "handId": "1",
+                "paidAction": 100,
+                "special": 0,
+                "paidActionCooldown": 0,
+                "qualificationSequence": 0,
+                "paidActionBudgetUsed": 0,
+                "pendingWinPaidCredits": [
+                  {
+                    "from": 1,
+                    "to": 100,
+                    "conversionRate": 0.99,
+                    "paidActionBudgetShare": 1,
+                    "nodeId": "1:1:raise:allin"
+                  }
+                ],
+                "paidEvents": [
+                  {
+                    "paidPrice": 99,
+                    "contributionBefore": 1,
+                    "contributionAfter": 100,
+                    "matchedAfterAction": 100,
+                    "denominator": 200,
+                    "score": 98.01,
+                    "totalScore": 98.01,
+                    "conversionRate": 0.99,
+                    "paidActionBudgetShare": 1,
+                    "paidActionBudgetBefore": 100,
+                    "paidActionBudgetUsed": 0,
+                    "paidActionCooldownBefore": 0,
+                    "rawProbability": null,
+                    "probability": null,
+                    "nodeId": "1:1:raise:allin",
+                    "type": "raise",
+                    "previousTarget": "win",
+                    "target": "win",
+                    "paidActionBudgetAfter": 100,
+                    "paidActionCooldownAfter": 0,
+                    "cooldownDraw": null,
+                    "roll": null,
+                    "winningNumbers": null
+                  }
+                ],
+                "qualification": null
+              },
+              "qualification": null
+            },
+            "bossStreetStrength": {
+              "street": "preflop",
+              "band": "weak",
+              "category": null,
+              "reasons": [],
+              "flushDraw": false,
+              "holeFlushDraw": false,
+              "openEndedStraightDraw": false,
+              "holeOpenEndedStraightDraw": false,
+              "straightDraw": false,
+              "gutshot": false,
+              "holeGutshot": false
+            },
+            "bossStreetStates": {
+              "preflop": {
+                "street": "preflop",
+                "band": "weak",
+                "category": null,
+                "reasons": [],
+                "flushDraw": false,
+                "holeFlushDraw": false,
+                "openEndedStraightDraw": false,
+                "holeOpenEndedStraightDraw": false,
+                "straightDraw": false,
+                "gutshot": false,
+                "holeGutshot": false
+              }
+            }
+          }
+        }
+      },
+      "expected": {
+        "version": 2,
+        "balance": 10002,
+        "outcomePools": {
+          "version": 1,
+          "buckets": [
+            {
+              "paidAction": 100.99,
+              "special": 0
+            },
+            {
+              "paidAction": 20,
+              "special": 0
+            },
+            {
+              "paidAction": 30,
+              "special": 0
+            }
+          ],
+          "paidActionCooldown": 0,
+          "qualificationSequence": 0,
+          "handSequence": 1,
+          "lastSettlement": {
+            "id": "1",
+            "audit": {
+              "handId": "1",
+              "bet": 2,
+              "bucketIndex": 0,
+              "matchedWager": 2,
+              "before": {
+                "paidAction": 100,
+                "special": 0
+              },
+              "after": {
+                "paidAction": 100.99,
+                "special": 0
+              },
+              "paidActionBudgetUsed": 0,
+              "paidActionAdded": 0.99,
+              "specialAdded": 0,
+              "specialAward": 0,
+              "qualification": null,
+              "cooldownBefore": 0,
+              "cooldownAfter": 0,
+              "credits": [
+                {
+                  "from": 1,
+                  "to": 100,
+                  "conversionRate": 0.99,
+                  "paidActionBudgetShare": 1,
+                  "nodeId": "1:1:raise:allin",
+                  "matchedPaidAmount": 1,
+                  "refundablePaidAmount": 98,
+                  "score": 0.99,
+                  "paidActionAdded": 0.99,
+                  "specialAdded": 0
+                }
+              ],
+              "paidEvents": [
+                {
+                  "paidPrice": 99,
+                  "contributionBefore": 1,
+                  "contributionAfter": 100,
+                  "matchedAfterAction": 100,
+                  "denominator": 200,
+                  "score": 98.01,
+                  "totalScore": 98.01,
+                  "conversionRate": 0.99,
+                  "paidActionBudgetShare": 1,
+                  "paidActionBudgetBefore": 100,
+                  "paidActionBudgetUsed": 0,
+                  "paidActionCooldownBefore": 0,
+                  "rawProbability": null,
+                  "probability": null,
+                  "nodeId": "1:1:raise:allin",
+                  "type": "raise",
+                  "previousTarget": "win",
+                  "target": "win",
+                  "paidActionBudgetAfter": 100,
+                  "paidActionCooldownAfter": 0,
+                  "cooldownDraw": null,
+                  "roll": null,
+                  "winningNumbers": null
+                }
+              ]
+            }
+          }
+        },
+        "table": null,
+        "lastBossProfileId": "maniac"
+      }
+    },
+    {
+      "scenario": "allin-showdown",
+      "seed": 0,
+      "profile": {
+        "version": 2,
+        "balance": 9900,
+        "outcomePools": {
+          "version": 1,
+          "buckets": [
+            {
+              "paidAction": 100,
+              "special": 0
+            },
+            {
+              "paidAction": 20,
+              "special": 0
+            },
+            {
+              "paidAction": 30,
+              "special": 0
+            }
+          ],
+          "paidActionCooldown": 0,
+          "qualificationSequence": 0,
+          "handSequence": 0,
+          "lastSettlement": null
+        },
+        "lastBossProfileId": "caller",
+        "table": {
+          "version": 1,
+          "rngState": 3399790538,
+          "session": {
+            "config": {
+              "targetRtp": 1,
+              "jackpotEnabled": false,
+              "smallBlind": 1,
+              "bigBlind": 2,
+              "minBuyIn": 100,
+              "maxBuyIn": 10000,
+              "buyIn": 100,
+              "betSize": {
+                "preflop": 10,
+                "flop": 20,
+                "turn": 40,
+                "river": 40
+              },
+              "maxRaises": null,
+              "animationMs": 850,
+              "npc": {
+                "fold": 0.2,
+                "call": 0.6,
+                "raise": 0.2,
+                "check": 0.65,
+                "bet": 0.35,
+                "strengthInfluence": 1,
+                "priceInfluence": 0.6
+              },
+              "boss": {
+                "mode": "random",
+                "profileId": "caller"
+              },
+              "deal": {
+                "player": {
+                  "rerollMode": "unpaired",
+                  "rerollChance": 0,
+                  "maxRerolls": 0,
+                  "manual": []
+                },
+                "npc": {
+                  "rerollMode": "unpaired",
+                  "rerollChance": 0,
+                  "maxRerolls": 0,
+                  "manual": []
+                }
+              },
+              "outcome": {
+                "mode": "pooled-holdem",
+                "conversionRate": 0.99,
+                "paidActionBudgetShare": 1,
+                "paidActionCooldownMin": 0,
+                "paidActionCooldownMax": 0,
+                "specialUseChance": 0,
+                "initialPaidActionPools": [
+                  100,
+                  20,
+                  30
+                ],
+                "initialSpecialPools": [
+                  0,
+                  0,
+                  0
+                ],
+                "initialPaidActionCooldown": 0,
+                "stateLimit": 10000,
+                "maxLayoutAttempts": 2000
+              }
+            },
+            "seed": 0,
+            "firstSmallBlind": "player",
+            "blindMode": "alternate",
+            "blindDraw": null,
+            "lastBossProfileId": "caller",
+            "tableNumber": 1,
+            "tableStartHandNumber": 1,
+            "outcomePools": {
+              "version": 1,
+              "buckets": [
+                {
+                  "paidAction": 100,
+                  "special": 0
+                },
+                {
+                  "paidAction": 20,
+                  "special": 0
+                },
+                {
+                  "paidAction": 30,
+                  "special": 0
+                }
+              ],
+              "paidActionCooldown": 0,
+              "qualificationSequence": 0,
+              "handSequence": 0,
+              "lastSettlement": null
+            },
+            "stacks": {
+              "player": 0,
+              "npc": 98
+            },
+            "handNumber": 1,
+            "fees": 0,
+            "jackpotAwards": 0,
+            "jackpotTierCounts": {
+              "royal": 0,
+              "straightFlush": 0,
+              "quads": 0
+            },
+            "opponentBankrollRefreshes": [
+              {
+                "type": "opponent-hand-buy-in",
+                "handNumber": 1,
+                "before": 100,
+                "after": 100,
+                "adjustment": 0
+              }
+            ]
+          },
+          "hand": {
+            "config": {
+              "targetRtp": 1,
+              "jackpotEnabled": false,
+              "smallBlind": 1,
+              "bigBlind": 2,
+              "minBuyIn": 100,
+              "maxBuyIn": 10000,
+              "buyIn": 100,
+              "betSize": {
+                "preflop": 10,
+                "flop": 20,
+                "turn": 40,
+                "river": 40
+              },
+              "maxRaises": null,
+              "animationMs": 850,
+              "npc": {
+                "fold": 0.2,
+                "call": 0.6,
+                "raise": 0.2,
+                "check": 0.65,
+                "bet": 0.35,
+                "strengthInfluence": 1,
+                "priceInfluence": 0.6
+              },
+              "boss": {
+                "mode": "random",
+                "profileId": "caller"
+              },
+              "deal": {
+                "player": {
+                  "rerollMode": "unpaired",
+                  "rerollChance": 0,
+                  "maxRerolls": 0,
+                  "manual": []
+                },
+                "npc": {
+                  "rerollMode": "unpaired",
+                  "rerollChance": 0,
+                  "maxRerolls": 0,
+                  "manual": []
+                }
+              },
+              "outcome": {
+                "mode": "pooled-holdem",
+                "conversionRate": 0.99,
+                "paidActionBudgetShare": 1,
+                "paidActionCooldownMin": 0,
+                "paidActionCooldownMax": 0,
+                "specialUseChance": 0,
+                "initialPaidActionPools": [
+                  100,
+                  20,
+                  30
+                ],
+                "initialSpecialPools": [
+                  0,
+                  0,
+                  0
+                ],
+                "initialPaidActionCooldown": 0,
+                "stateLimit": 10000,
+                "maxLayoutAttempts": 2000
+              }
+            },
+            "handNumber": 1,
+            "smallBlind": "player",
+            "bigBlind": "npc",
+            "bossProfile": {
+              "id": "caller",
+              "name": "不激進",
+              "nickname": "PASSIVE",
+              "description": "較少主動下注或加注，不強時也比較願意跟注。",
+              "weights": {
+                "weak": {
+                  "fold": 25,
+                  "call": 75,
+                  "raise": 0
+                },
+                "strong": {
+                  "fold": 5,
+                  "call": 65,
+                  "raise": 30
+                }
+              },
+              "pressureWeights": {
+                "half": {
+                  "weak": {
+                    "fold": 25,
+                    "call": 75,
+                    "raise": 0
+                  },
+                  "strong": {
+                    "fold": 5,
+                    "call": 65,
+                    "raise": 30
+                  }
+                },
+                "pot": {
+                  "weak": {
+                    "fold": 40,
+                    "call": 60,
+                    "raise": 0
+                  },
+                  "strong": {
+                    "fold": 10,
+                    "call": 70,
+                    "raise": 20
+                  }
+                },
+                "large": {
+                  "weak": {
+                    "fold": 55,
+                    "call": 45,
+                    "raise": 0
+                  },
+                  "strong": {
+                    "fold": 15,
+                    "call": 85,
+                    "raise": 0
+                  }
+                }
+              },
+              "tables": {
+                "preflop": {
+                  "weak": {
+                    "fold": 25,
+                    "call": 75,
+                    "raise": 0
+                  },
+                  "strong": {
+                    "fold": 5,
+                    "call": 65,
+                    "raise": 30
+                  }
+                },
+                "flop": {
+                  "weak": {
+                    "fold": 25,
+                    "call": 75,
+                    "raise": 0
+                  },
+                  "strong": {
+                    "fold": 5,
+                    "call": 65,
+                    "raise": 30
+                  }
+                },
+                "turn": {
+                  "weak": {
+                    "fold": 25,
+                    "call": 75,
+                    "raise": 0
+                  },
+                  "strong": {
+                    "fold": 5,
+                    "call": 65,
+                    "raise": 30
+                  }
+                },
+                "river": {
+                  "weak": {
+                    "fold": 25,
+                    "call": 75,
+                    "raise": 0
+                  },
+                  "strong": {
+                    "fold": 5,
+                    "call": 65,
+                    "raise": 30
+                  }
+                }
+              }
+            },
+            "bossSelection": {
+              "mode": "random",
+              "probability": 0.5,
+              "previousId": null,
+              "eligibleIds": [
+                "caller",
+                "maniac"
+              ]
+            },
+            "street": "preflop",
+            "status": "playing",
+            "actor": "npc",
+            "holes": {
+              "player": [
+                "Ks",
+                "9s"
+              ],
+              "npc": [
+                "7h",
+                "Qh"
+              ]
+            },
+            "deck": [
+              "5c",
+              "8h",
+              "3s",
+              "2s",
+              "4h",
+              "Ac",
+              "9c",
+              "Jc",
+              "9h",
+              "4d",
+              "5h",
+              "6c",
+              "5s",
+              "Jh",
+              "6d",
+              "Jd",
+              "8s",
+              "7d",
+              "Kh",
+              "2h",
+              "8d",
+              "Ah",
+              "Kd",
+              "Ad",
+              "8c",
+              "4c",
+              "3h",
+              "Ts",
+              "2c",
+              "7c",
+              "5d",
+              "Qc",
+              "Qs",
+              "6s",
+              "9d",
+              "Th",
+              "Qd",
+              "3c",
+              "As",
+              "6h",
+              "Td",
+              "Tc",
+              "Js",
+              "4s",
+              "7s",
+              "3d",
+              "2d",
+              "Kc"
+            ],
+            "dealAudit": {
+              "player": {
+                "manual": false,
+                "rerollMode": "unpaired",
+                "initialClass": "unpaired",
+                "finalClass": "unpaired",
+                "initialScore": 0.64,
+                "finalScore": 0.64,
+                "attempts": 1,
+                "rerolls": 0,
+                "stopReason": "natural-deal"
+              },
+              "npc": {
+                "manual": false,
+                "rerollMode": "prebuilt-outcome",
+                "initialClass": "unpaired",
+                "finalClass": "unpaired",
+                "initialScore": 0.5700000000000001,
+                "finalScore": 0.5700000000000001,
+                "attempts": 1,
+                "rerolls": 0,
+                "stopReason": "outcome-target"
+              }
+            },
+            "board": [],
+            "stacks": {
+              "player": 0,
+              "npc": 98
+            },
+            "stacksBefore": {
+              "player": 100,
+              "npc": 100
+            },
+            "streetBets": {
+              "player": 100,
+              "npc": 2
+            },
+            "contributions": {
+              "player": 100,
+              "npc": 2
+            },
+            "currentBet": 100,
+            "raises": 1,
+            "pending": [
+              "npc"
+            ],
+            "pot": 102,
+            "history": [
+              {
+                "actor": "player",
+                "type": "smallBlind",
+                "amount": 1,
+                "to": 1,
+                "street": "preflop"
+              },
+              {
+                "actor": "npc",
+                "type": "bigBlind",
+                "amount": 2,
+                "to": 2,
+                "street": "preflop"
+              },
+              {
+                "actor": "player",
+                "type": "raise",
+                "amount": 99,
+                "to": 100,
+                "street": "preflop",
+                "id": "raise:allin",
+                "sizeKey": "allin",
+                "sizeKeys": [
+                  "allin"
+                ],
+                "allIn": true,
+                "fullRaise": true
+              }
+            ],
+            "result": null,
+            "lastFullRaise": 98,
+            "actedSinceFullRaise": [
+              "player"
+            ],
+            "outcomePoolsBefore": {
+              "version": 1,
+              "buckets": [
+                {
+                  "paidAction": 100,
+                  "special": 0
+                },
+                {
+                  "paidAction": 20,
+                  "special": 0
+                },
+                {
+                  "paidAction": 30,
+                  "special": 0
+                }
+              ],
+              "paidActionCooldown": 0,
+              "qualificationSequence": 0,
+              "handSequence": 0,
+              "lastSettlement": null
+            },
+            "outcomeHandId": "1",
+            "pooledHoldem": {
+              "version": 1,
+              "model": "pooled-holdem-v1",
+              "layout": {
+                "player": [
+                  "Ks",
+                  "9s"
+                ],
+                "board": [
+                  "5c",
+                  "8h",
+                  "3s",
+                  "2s",
+                  "4h"
+                ],
+                "boss": {
+                  "win": [
+                    "7h",
+                    "Qh"
+                  ]
+                },
+                "comparisons": {
+                  "win": 1
+                },
+                "deckOrder": [
+                  "7h",
+                  "Ac",
+                  "9c",
+                  "Jc",
+                  "9h",
+                  "4d",
+                  "5h",
+                  "6c",
+                  "5s",
+                  "Jh",
+                  "6d",
+                  "Jd",
+                  "8s",
+                  "7d",
+                  "Kh",
+                  "2h",
+                  "8d",
+                  "Ah",
+                  "Kd",
+                  "Ad",
+                  "Qh",
+                  "8c",
+                  "4c",
+                  "3h",
+                  "Ts",
+                  "2c",
+                  "7c",
+                  "5d",
+                  "Qc",
+                  "Qs",
+                  "6s",
+                  "9d",
+                  "Th",
+                  "Qd",
+                  "3c",
+                  "As",
+                  "6h",
+                  "Td",
+                  "Tc",
+                  "Js",
+                  "4s",
+                  "7s",
+                  "3d",
+                  "2d",
+                  "Kc"
+                ],
+                "dealAudit": {
+                  "player": {
+                    "manual": false,
+                    "rerollMode": "unpaired",
+                    "initialClass": "unpaired",
+                    "finalClass": "unpaired",
+                    "initialScore": 0.64,
+                    "finalScore": 0.64,
+                    "attempts": 1,
+                    "rerolls": 0,
+                    "stopReason": "natural-deal"
+                  },
+                  "npcByTarget": {
+                    "win": {
+                      "manual": false,
+                      "rerollMode": "prebuilt-outcome",
+                      "initialClass": "unpaired",
+                      "finalClass": "unpaired",
+                      "initialScore": 0.5700000000000001,
+                      "finalScore": 0.5700000000000001,
+                      "attempts": 1,
+                      "rerolls": 0,
+                      "stopReason": "outcome-target"
+                    }
+                  }
+                }
+              },
+              "rootTarget": "win",
+              "layoutAttempts": 1,
+              "transitionIndex": 1
+            },
+            "outcomeDecision": {
+              "kind": "paid-win",
+              "previousTarget": "win",
+              "target": "win",
+              "inherited": true,
+              "paidPrice": 99,
+              "contributionBefore": 1,
+              "contributionAfter": 100,
+              "matchedAfterAction": 100,
+              "denominator": 200,
+              "score": 98.01,
+              "totalScore": 98.01,
+              "conversionRate": 0.99,
+              "paidActionBudgetShare": 1,
+              "paidActionBudgetBefore": 100,
+              "paidActionBudgetUsed": 0,
+              "paidActionCooldownBefore": 0,
+              "rawProbability": null,
+              "probability": null,
+              "roll": null,
+              "winningNumbers": null,
+              "ticketScale": 1000000,
+              "paidActionCooldownAfter": 0,
+              "cooldownDraw": null,
+              "poolBranch": {
+                "version": 1,
+                "bet": 2,
+                "bucketIndex": 0,
+                "bucketMode": "blind-ranges",
+                "basePools": {
+                  "version": 1,
+                  "buckets": [
+                    {
+                      "paidAction": 100,
+                      "special": 0
+                    },
+                    {
+                      "paidAction": 20,
+                      "special": 0
+                    },
+                    {
+                      "paidAction": 30,
+                      "special": 0
+                    }
+                  ],
+                  "paidActionCooldown": 0,
+                  "qualificationSequence": 0,
+                  "handSequence": 0,
+                  "lastSettlement": null
+                },
+                "handId": "1",
+                "paidAction": 100,
+                "special": 0,
+                "paidActionCooldown": 0,
+                "qualificationSequence": 0,
+                "paidActionBudgetUsed": 0,
+                "pendingWinPaidCredits": [
+                  {
+                    "from": 1,
+                    "to": 100,
+                    "conversionRate": 0.99,
+                    "paidActionBudgetShare": 1,
+                    "nodeId": "1:1:raise:allin"
+                  }
+                ],
+                "paidEvents": [
+                  {
+                    "paidPrice": 99,
+                    "contributionBefore": 1,
+                    "contributionAfter": 100,
+                    "matchedAfterAction": 100,
+                    "denominator": 200,
+                    "score": 98.01,
+                    "totalScore": 98.01,
+                    "conversionRate": 0.99,
+                    "paidActionBudgetShare": 1,
+                    "paidActionBudgetBefore": 100,
+                    "paidActionBudgetUsed": 0,
+                    "paidActionCooldownBefore": 0,
+                    "rawProbability": null,
+                    "probability": null,
+                    "nodeId": "1:1:raise:allin",
+                    "type": "raise",
+                    "previousTarget": "win",
+                    "target": "win",
+                    "paidActionBudgetAfter": 100,
+                    "paidActionCooldownAfter": 0,
+                    "cooldownDraw": null,
+                    "roll": null,
+                    "winningNumbers": null
+                  }
+                ],
+                "qualification": null
+              },
+              "qualification": null
+            },
+            "bossStreetStrength": {
+              "street": "preflop",
+              "band": "weak",
+              "category": null,
+              "reasons": [],
+              "flushDraw": false,
+              "holeFlushDraw": false,
+              "openEndedStraightDraw": false,
+              "holeOpenEndedStraightDraw": false,
+              "straightDraw": false,
+              "gutshot": false,
+              "holeGutshot": false
+            },
+            "bossStreetStates": {
+              "preflop": {
+                "street": "preflop",
+                "band": "weak",
+                "category": null,
+                "reasons": [],
+                "flushDraw": false,
+                "holeFlushDraw": false,
+                "openEndedStraightDraw": false,
+                "holeOpenEndedStraightDraw": false,
+                "straightDraw": false,
+                "gutshot": false,
+                "holeGutshot": false
+              }
+            }
+          }
+        }
+      },
+      "expected": {
+        "version": 2,
+        "balance": 10100,
+        "outcomePools": {
+          "version": 1,
+          "buckets": [
+            {
+              "paidAction": 198.01,
+              "special": 0
+            },
+            {
+              "paidAction": 20,
+              "special": 0
+            },
+            {
+              "paidAction": 30,
+              "special": 0
+            }
+          ],
+          "paidActionCooldown": 0,
+          "qualificationSequence": 0,
+          "handSequence": 1,
+          "lastSettlement": {
+            "id": "1",
+            "audit": {
+              "handId": "1",
+              "bet": 2,
+              "bucketIndex": 0,
+              "matchedWager": 100,
+              "before": {
+                "paidAction": 100,
+                "special": 0
+              },
+              "after": {
+                "paidAction": 198.01,
+                "special": 0
+              },
+              "paidActionBudgetUsed": 0,
+              "paidActionAdded": 98.01,
+              "specialAdded": 0,
+              "specialAward": 0,
+              "qualification": null,
+              "cooldownBefore": 0,
+              "cooldownAfter": 0,
+              "credits": [
+                {
+                  "from": 1,
+                  "to": 100,
+                  "conversionRate": 0.99,
+                  "paidActionBudgetShare": 1,
+                  "nodeId": "1:1:raise:allin",
+                  "matchedPaidAmount": 99,
+                  "refundablePaidAmount": 0,
+                  "score": 98.01,
+                  "paidActionAdded": 98.01,
+                  "specialAdded": 0
+                }
+              ],
+              "paidEvents": [
+                {
+                  "paidPrice": 99,
+                  "contributionBefore": 1,
+                  "contributionAfter": 100,
+                  "matchedAfterAction": 100,
+                  "denominator": 200,
+                  "score": 98.01,
+                  "totalScore": 98.01,
+                  "conversionRate": 0.99,
+                  "paidActionBudgetShare": 1,
+                  "paidActionBudgetBefore": 100,
+                  "paidActionBudgetUsed": 0,
+                  "paidActionCooldownBefore": 0,
+                  "rawProbability": null,
+                  "probability": null,
+                  "nodeId": "1:1:raise:allin",
+                  "type": "raise",
+                  "previousTarget": "win",
+                  "target": "win",
+                  "paidActionBudgetAfter": 100,
+                  "paidActionCooldownAfter": 0,
+                  "cooldownDraw": null,
+                  "roll": null,
+                  "winningNumbers": null
+                }
+              ]
+            }
+          }
+        },
+        "table": null,
+        "lastBossProfileId": "caller"
+      }
+    },
+    {
+      "scenario": "settled",
+      "seed": 0,
+      "profile": {
+        "version": 2,
+        "balance": 9900,
+        "outcomePools": {
+          "version": 1,
+          "buckets": [
+            {
+              "paidAction": 198.01,
+              "special": 0
+            },
+            {
+              "paidAction": 20,
+              "special": 0
+            },
+            {
+              "paidAction": 30,
+              "special": 0
+            }
+          ],
+          "paidActionCooldown": 0,
+          "qualificationSequence": 0,
+          "handSequence": 1,
+          "lastSettlement": {
+            "id": "1",
+            "audit": {
+              "handId": "1",
+              "bet": 2,
+              "bucketIndex": 0,
+              "matchedWager": 100,
+              "before": {
+                "paidAction": 100,
+                "special": 0
+              },
+              "after": {
+                "paidAction": 198.01,
+                "special": 0
+              },
+              "paidActionBudgetUsed": 0,
+              "paidActionAdded": 98.01,
+              "specialAdded": 0,
+              "specialAward": 0,
+              "qualification": null,
+              "cooldownBefore": 0,
+              "cooldownAfter": 0,
+              "credits": [
+                {
+                  "from": 1,
+                  "to": 100,
+                  "conversionRate": 0.99,
+                  "paidActionBudgetShare": 1,
+                  "nodeId": "1:1:raise:allin",
+                  "matchedPaidAmount": 99,
+                  "refundablePaidAmount": 0,
+                  "score": 98.01,
+                  "paidActionAdded": 98.01,
+                  "specialAdded": 0
+                }
+              ],
+              "paidEvents": [
+                {
+                  "paidPrice": 99,
+                  "contributionBefore": 1,
+                  "contributionAfter": 100,
+                  "matchedAfterAction": 100,
+                  "denominator": 200,
+                  "score": 98.01,
+                  "totalScore": 98.01,
+                  "conversionRate": 0.99,
+                  "paidActionBudgetShare": 1,
+                  "paidActionBudgetBefore": 100,
+                  "paidActionBudgetUsed": 0,
+                  "paidActionCooldownBefore": 0,
+                  "rawProbability": null,
+                  "probability": null,
+                  "nodeId": "1:1:raise:allin",
+                  "type": "raise",
+                  "previousTarget": "win",
+                  "target": "win",
+                  "paidActionBudgetAfter": 100,
+                  "paidActionCooldownAfter": 0,
+                  "cooldownDraw": null,
+                  "roll": null,
+                  "winningNumbers": null
+                }
+              ]
+            }
+          }
+        },
+        "lastBossProfileId": "caller",
+        "table": {
+          "version": 1,
+          "rngState": 3399790538,
+          "session": {
+            "config": {
+              "targetRtp": 1,
+              "jackpotEnabled": false,
+              "smallBlind": 1,
+              "bigBlind": 2,
+              "minBuyIn": 100,
+              "maxBuyIn": 10000,
+              "buyIn": 100,
+              "betSize": {
+                "preflop": 10,
+                "flop": 20,
+                "turn": 40,
+                "river": 40
+              },
+              "maxRaises": null,
+              "animationMs": 850,
+              "npc": {
+                "fold": 0.2,
+                "call": 0.6,
+                "raise": 0.2,
+                "check": 0.65,
+                "bet": 0.35,
+                "strengthInfluence": 1,
+                "priceInfluence": 0.6
+              },
+              "boss": {
+                "mode": "random",
+                "profileId": "caller"
+              },
+              "deal": {
+                "player": {
+                  "rerollMode": "unpaired",
+                  "rerollChance": 0,
+                  "maxRerolls": 0,
+                  "manual": []
+                },
+                "npc": {
+                  "rerollMode": "unpaired",
+                  "rerollChance": 0,
+                  "maxRerolls": 0,
+                  "manual": []
+                }
+              },
+              "outcome": {
+                "mode": "pooled-holdem",
+                "conversionRate": 0.99,
+                "paidActionBudgetShare": 1,
+                "paidActionCooldownMin": 0,
+                "paidActionCooldownMax": 0,
+                "specialUseChance": 0,
+                "initialPaidActionPools": [
+                  100,
+                  20,
+                  30
+                ],
+                "initialSpecialPools": [
+                  0,
+                  0,
+                  0
+                ],
+                "initialPaidActionCooldown": 0,
+                "stateLimit": 10000,
+                "maxLayoutAttempts": 2000
+              }
+            },
+            "seed": 0,
+            "firstSmallBlind": "player",
+            "blindMode": "alternate",
+            "blindDraw": null,
+            "lastBossProfileId": "caller",
+            "tableNumber": 1,
+            "tableStartHandNumber": 1,
+            "outcomePools": {
+              "version": 1,
+              "buckets": [
+                {
+                  "paidAction": 198.01,
+                  "special": 0
+                },
+                {
+                  "paidAction": 20,
+                  "special": 0
+                },
+                {
+                  "paidAction": 30,
+                  "special": 0
+                }
+              ],
+              "paidActionCooldown": 0,
+              "qualificationSequence": 0,
+              "handSequence": 1,
+              "lastSettlement": {
+                "id": "1",
+                "audit": {
+                  "handId": "1",
+                  "bet": 2,
+                  "bucketIndex": 0,
+                  "matchedWager": 100,
+                  "before": {
+                    "paidAction": 100,
+                    "special": 0
+                  },
+                  "after": {
+                    "paidAction": 198.01,
+                    "special": 0
+                  },
+                  "paidActionBudgetUsed": 0,
+                  "paidActionAdded": 98.01,
+                  "specialAdded": 0,
+                  "specialAward": 0,
+                  "qualification": null,
+                  "cooldownBefore": 0,
+                  "cooldownAfter": 0,
+                  "credits": [
+                    {
+                      "from": 1,
+                      "to": 100,
+                      "conversionRate": 0.99,
+                      "paidActionBudgetShare": 1,
+                      "nodeId": "1:1:raise:allin",
+                      "matchedPaidAmount": 99,
+                      "refundablePaidAmount": 0,
+                      "score": 98.01,
+                      "paidActionAdded": 98.01,
+                      "specialAdded": 0
+                    }
+                  ],
+                  "paidEvents": [
+                    {
+                      "paidPrice": 99,
+                      "contributionBefore": 1,
+                      "contributionAfter": 100,
+                      "matchedAfterAction": 100,
+                      "denominator": 200,
+                      "score": 98.01,
+                      "totalScore": 98.01,
+                      "conversionRate": 0.99,
+                      "paidActionBudgetShare": 1,
+                      "paidActionBudgetBefore": 100,
+                      "paidActionBudgetUsed": 0,
+                      "paidActionCooldownBefore": 0,
+                      "rawProbability": null,
+                      "probability": null,
+                      "nodeId": "1:1:raise:allin",
+                      "type": "raise",
+                      "previousTarget": "win",
+                      "target": "win",
+                      "paidActionBudgetAfter": 100,
+                      "paidActionCooldownAfter": 0,
+                      "cooldownDraw": null,
+                      "roll": null,
+                      "winningNumbers": null
+                    }
+                  ]
+                }
+              }
+            },
+            "stacks": {
+              "player": 200,
+              "npc": 0
+            },
+            "handNumber": 1,
+            "fees": 0,
+            "jackpotAwards": 0,
+            "jackpotTierCounts": {
+              "royal": 0,
+              "straightFlush": 0,
+              "quads": 0
+            },
+            "opponentBankrollRefreshes": [
+              {
+                "type": "opponent-hand-buy-in",
+                "handNumber": 1,
+                "before": 100,
+                "after": 100,
+                "adjustment": 0
+              }
+            ]
+          },
+          "hand": {
+            "config": {
+              "targetRtp": 1,
+              "jackpotEnabled": false,
+              "smallBlind": 1,
+              "bigBlind": 2,
+              "minBuyIn": 100,
+              "maxBuyIn": 10000,
+              "buyIn": 100,
+              "betSize": {
+                "preflop": 10,
+                "flop": 20,
+                "turn": 40,
+                "river": 40
+              },
+              "maxRaises": null,
+              "animationMs": 850,
+              "npc": {
+                "fold": 0.2,
+                "call": 0.6,
+                "raise": 0.2,
+                "check": 0.65,
+                "bet": 0.35,
+                "strengthInfluence": 1,
+                "priceInfluence": 0.6
+              },
+              "boss": {
+                "mode": "random",
+                "profileId": "caller"
+              },
+              "deal": {
+                "player": {
+                  "rerollMode": "unpaired",
+                  "rerollChance": 0,
+                  "maxRerolls": 0,
+                  "manual": []
+                },
+                "npc": {
+                  "rerollMode": "unpaired",
+                  "rerollChance": 0,
+                  "maxRerolls": 0,
+                  "manual": []
+                }
+              },
+              "outcome": {
+                "mode": "pooled-holdem",
+                "conversionRate": 0.99,
+                "paidActionBudgetShare": 1,
+                "paidActionCooldownMin": 0,
+                "paidActionCooldownMax": 0,
+                "specialUseChance": 0,
+                "initialPaidActionPools": [
+                  100,
+                  20,
+                  30
+                ],
+                "initialSpecialPools": [
+                  0,
+                  0,
+                  0
+                ],
+                "initialPaidActionCooldown": 0,
+                "stateLimit": 10000,
+                "maxLayoutAttempts": 2000
+              }
+            },
+            "handNumber": 1,
+            "smallBlind": "player",
+            "bigBlind": "npc",
+            "bossProfile": {
+              "id": "caller",
+              "name": "不激進",
+              "nickname": "PASSIVE",
+              "description": "較少主動下注或加注，不強時也比較願意跟注。",
+              "weights": {
+                "weak": {
+                  "fold": 25,
+                  "call": 75,
+                  "raise": 0
+                },
+                "strong": {
+                  "fold": 5,
+                  "call": 65,
+                  "raise": 30
+                }
+              },
+              "pressureWeights": {
+                "half": {
+                  "weak": {
+                    "fold": 25,
+                    "call": 75,
+                    "raise": 0
+                  },
+                  "strong": {
+                    "fold": 5,
+                    "call": 65,
+                    "raise": 30
+                  }
+                },
+                "pot": {
+                  "weak": {
+                    "fold": 40,
+                    "call": 60,
+                    "raise": 0
+                  },
+                  "strong": {
+                    "fold": 10,
+                    "call": 70,
+                    "raise": 20
+                  }
+                },
+                "large": {
+                  "weak": {
+                    "fold": 55,
+                    "call": 45,
+                    "raise": 0
+                  },
+                  "strong": {
+                    "fold": 15,
+                    "call": 85,
+                    "raise": 0
+                  }
+                }
+              },
+              "tables": {
+                "preflop": {
+                  "weak": {
+                    "fold": 25,
+                    "call": 75,
+                    "raise": 0
+                  },
+                  "strong": {
+                    "fold": 5,
+                    "call": 65,
+                    "raise": 30
+                  }
+                },
+                "flop": {
+                  "weak": {
+                    "fold": 25,
+                    "call": 75,
+                    "raise": 0
+                  },
+                  "strong": {
+                    "fold": 5,
+                    "call": 65,
+                    "raise": 30
+                  }
+                },
+                "turn": {
+                  "weak": {
+                    "fold": 25,
+                    "call": 75,
+                    "raise": 0
+                  },
+                  "strong": {
+                    "fold": 5,
+                    "call": 65,
+                    "raise": 30
+                  }
+                },
+                "river": {
+                  "weak": {
+                    "fold": 25,
+                    "call": 75,
+                    "raise": 0
+                  },
+                  "strong": {
+                    "fold": 5,
+                    "call": 65,
+                    "raise": 30
+                  }
+                }
+              }
+            },
+            "bossSelection": {
+              "mode": "random",
+              "probability": 0.5,
+              "previousId": null,
+              "eligibleIds": [
+                "caller",
+                "maniac"
+              ]
+            },
+            "street": "river",
+            "status": "settled",
+            "actor": null,
+            "holes": {
+              "player": [
+                "Ks",
+                "9s"
+              ],
+              "npc": [
+                "7h",
+                "Qh"
+              ]
+            },
+            "deck": [
+              "Ac",
+              "9c",
+              "Jc",
+              "9h",
+              "4d",
+              "5h",
+              "6c",
+              "5s",
+              "Jh",
+              "6d",
+              "Jd",
+              "8s",
+              "7d",
+              "Kh",
+              "2h",
+              "8d",
+              "Ah",
+              "Kd",
+              "Ad",
+              "8c",
+              "4c",
+              "3h",
+              "Ts",
+              "2c",
+              "7c",
+              "5d",
+              "Qc",
+              "Qs",
+              "6s",
+              "9d",
+              "Th",
+              "Qd",
+              "3c",
+              "As",
+              "6h",
+              "Td",
+              "Tc",
+              "Js",
+              "4s",
+              "7s",
+              "3d",
+              "2d",
+              "Kc"
+            ],
+            "dealAudit": {
+              "player": {
+                "manual": false,
+                "rerollMode": "unpaired",
+                "initialClass": "unpaired",
+                "finalClass": "unpaired",
+                "initialScore": 0.64,
+                "finalScore": 0.64,
+                "attempts": 1,
+                "rerolls": 0,
+                "stopReason": "natural-deal"
+              },
+              "npc": {
+                "manual": false,
+                "rerollMode": "prebuilt-outcome",
+                "initialClass": "unpaired",
+                "finalClass": "unpaired",
+                "initialScore": 0.5700000000000001,
+                "finalScore": 0.5700000000000001,
+                "attempts": 1,
+                "rerolls": 0,
+                "stopReason": "outcome-target"
+              }
+            },
+            "board": [
+              "5c",
+              "8h",
+              "3s",
+              "2s",
+              "4h"
+            ],
+            "stacks": {
+              "player": 200,
+              "npc": 0
+            },
+            "stacksBefore": {
+              "player": 100,
+              "npc": 100
+            },
+            "streetBets": {
+              "player": 0,
+              "npc": 0
+            },
+            "contributions": {
+              "player": 100,
+              "npc": 100
+            },
+            "currentBet": 0,
+            "raises": 0,
+            "pending": [],
+            "pot": 0,
+            "history": [
+              {
+                "actor": "player",
+                "type": "smallBlind",
+                "amount": 1,
+                "to": 1,
+                "street": "preflop"
+              },
+              {
+                "actor": "npc",
+                "type": "bigBlind",
+                "amount": 2,
+                "to": 2,
+                "street": "preflop"
+              },
+              {
+                "actor": "player",
+                "type": "raise",
+                "amount": 99,
+                "to": 100,
+                "street": "preflop",
+                "id": "raise:allin",
+                "sizeKey": "allin",
+                "sizeKeys": [
+                  "allin"
+                ],
+                "allIn": true,
+                "fullRaise": true
+              },
+              {
+                "actor": "npc",
+                "type": "call",
+                "amount": 98,
+                "to": 100,
+                "street": "preflop",
+                "id": "call",
+                "allIn": true
+              },
+              {
+                "type": "reveal",
+                "street": "flop",
+                "cards": [
+                  "5c",
+                  "8h",
+                  "3s"
+                ]
+              },
+              {
+                "type": "reveal",
+                "street": "turn",
+                "cards": [
+                  "2s"
+                ]
+              },
+              {
+                "type": "reveal",
+                "street": "river",
+                "cards": [
+                  "4h"
+                ]
+              }
+            ],
+            "result": {
+              "reason": "showdown",
+              "winner": "player",
+              "folded": null,
+              "pot": 200,
+              "gross": 200,
+              "fee": 0,
+              "net": 200,
+              "totalReturn": 200,
+              "jackpot": null,
+              "outcomePoolAudit": {
+                "handId": "1",
+                "bet": 2,
+                "bucketIndex": 0,
+                "matchedWager": 100,
+                "before": {
+                  "paidAction": 100,
+                  "special": 0
+                },
+                "after": {
+                  "paidAction": 198.01,
+                  "special": 0
+                },
+                "paidActionBudgetUsed": 0,
+                "paidActionAdded": 98.01,
+                "specialAdded": 0,
+                "specialAward": 0,
+                "qualification": null,
+                "cooldownBefore": 0,
+                "cooldownAfter": 0,
+                "credits": [
+                  {
+                    "from": 1,
+                    "to": 100,
+                    "conversionRate": 0.99,
+                    "paidActionBudgetShare": 1,
+                    "nodeId": "1:1:raise:allin",
+                    "matchedPaidAmount": 99,
+                    "refundablePaidAmount": 0,
+                    "score": 98.01,
+                    "paidActionAdded": 98.01,
+                    "specialAdded": 0
+                  }
+                ],
+                "paidEvents": [
+                  {
+                    "paidPrice": 99,
+                    "contributionBefore": 1,
+                    "contributionAfter": 100,
+                    "matchedAfterAction": 100,
+                    "denominator": 200,
+                    "score": 98.01,
+                    "totalScore": 98.01,
+                    "conversionRate": 0.99,
+                    "paidActionBudgetShare": 1,
+                    "paidActionBudgetBefore": 100,
+                    "paidActionBudgetUsed": 0,
+                    "paidActionCooldownBefore": 0,
+                    "rawProbability": null,
+                    "probability": null,
+                    "nodeId": "1:1:raise:allin",
+                    "type": "raise",
+                    "previousTarget": "win",
+                    "target": "win",
+                    "paidActionBudgetAfter": 100,
+                    "paidActionCooldownAfter": 0,
+                    "cooldownDraw": null,
+                    "roll": null,
+                    "winningNumbers": null
+                  }
+                ]
+              },
+              "board": [
+                "5c",
+                "8h",
+                "3s",
+                "2s",
+                "4h"
+              ],
+              "evaluations": {
+                "player": {
+                  "category": 0,
+                  "name": "高牌",
+                  "rank": [
+                    0,
+                    13,
+                    9,
+                    8,
+                    5,
+                    4
+                  ],
+                  "best5": [
+                    "Ks",
+                    "9s",
+                    "8h",
+                    "5c",
+                    "4h"
+                  ],
+                  "royal": false
+                },
+                "npc": {
+                  "category": 0,
+                  "name": "高牌",
+                  "rank": [
+                    0,
+                    12,
+                    8,
+                    7,
+                    5,
+                    4
+                  ],
+                  "best5": [
+                    "Qh",
+                    "8h",
+                    "7h",
+                    "5c",
+                    "4h"
+                  ],
+                  "royal": false
+                }
+              },
+              "player": {
+                "totalContribution": 100,
+                "matchedWager": 100,
+                "refund": 0,
+                "gross": 200,
+                "fee": 0,
+                "netReturn": 200,
+                "jackpotAward": 0,
+                "totalReturn": 200,
+                "baseProfit": 100,
+                "profit": 100,
+                "stackBefore": 100,
+                "stackAfter": 200
+              },
+              "npc": {
+                "totalContribution": 100,
+                "matchedWager": 100,
+                "refund": 0,
+                "gross": 0,
+                "fee": 0,
+                "netReturn": 0,
+                "jackpotAward": 0,
+                "totalReturn": 0,
+                "baseProfit": -100,
+                "profit": -100,
+                "stackBefore": 100,
+                "stackAfter": 0
+              }
+            },
+            "lastFullRaise": 2,
+            "actedSinceFullRaise": [],
+            "outcomePoolsBefore": {
+              "version": 1,
+              "buckets": [
+                {
+                  "paidAction": 100,
+                  "special": 0
+                },
+                {
+                  "paidAction": 20,
+                  "special": 0
+                },
+                {
+                  "paidAction": 30,
+                  "special": 0
+                }
+              ],
+              "paidActionCooldown": 0,
+              "qualificationSequence": 0,
+              "handSequence": 0,
+              "lastSettlement": null
+            },
+            "outcomeHandId": "1",
+            "pooledHoldem": {
+              "version": 1,
+              "model": "pooled-holdem-v1",
+              "layout": {
+                "player": [
+                  "Ks",
+                  "9s"
+                ],
+                "board": [
+                  "5c",
+                  "8h",
+                  "3s",
+                  "2s",
+                  "4h"
+                ],
+                "boss": {
+                  "win": [
+                    "7h",
+                    "Qh"
+                  ]
+                },
+                "comparisons": {
+                  "win": 1
+                },
+                "deckOrder": [
+                  "7h",
+                  "Ac",
+                  "9c",
+                  "Jc",
+                  "9h",
+                  "4d",
+                  "5h",
+                  "6c",
+                  "5s",
+                  "Jh",
+                  "6d",
+                  "Jd",
+                  "8s",
+                  "7d",
+                  "Kh",
+                  "2h",
+                  "8d",
+                  "Ah",
+                  "Kd",
+                  "Ad",
+                  "Qh",
+                  "8c",
+                  "4c",
+                  "3h",
+                  "Ts",
+                  "2c",
+                  "7c",
+                  "5d",
+                  "Qc",
+                  "Qs",
+                  "6s",
+                  "9d",
+                  "Th",
+                  "Qd",
+                  "3c",
+                  "As",
+                  "6h",
+                  "Td",
+                  "Tc",
+                  "Js",
+                  "4s",
+                  "7s",
+                  "3d",
+                  "2d",
+                  "Kc"
+                ],
+                "dealAudit": {
+                  "player": {
+                    "manual": false,
+                    "rerollMode": "unpaired",
+                    "initialClass": "unpaired",
+                    "finalClass": "unpaired",
+                    "initialScore": 0.64,
+                    "finalScore": 0.64,
+                    "attempts": 1,
+                    "rerolls": 0,
+                    "stopReason": "natural-deal"
+                  },
+                  "npcByTarget": {
+                    "win": {
+                      "manual": false,
+                      "rerollMode": "prebuilt-outcome",
+                      "initialClass": "unpaired",
+                      "finalClass": "unpaired",
+                      "initialScore": 0.5700000000000001,
+                      "finalScore": 0.5700000000000001,
+                      "attempts": 1,
+                      "rerolls": 0,
+                      "stopReason": "outcome-target"
+                    }
+                  }
+                }
+              },
+              "rootTarget": "win",
+              "layoutAttempts": 1,
+              "transitionIndex": 2
+            },
+            "outcomeDecision": {
+              "kind": "paid-win",
+              "previousTarget": "win",
+              "target": "win",
+              "inherited": true,
+              "paidPrice": 99,
+              "contributionBefore": 1,
+              "contributionAfter": 100,
+              "matchedAfterAction": 100,
+              "denominator": 200,
+              "score": 98.01,
+              "totalScore": 98.01,
+              "conversionRate": 0.99,
+              "paidActionBudgetShare": 1,
+              "paidActionBudgetBefore": 100,
+              "paidActionBudgetUsed": 0,
+              "paidActionCooldownBefore": 0,
+              "rawProbability": null,
+              "probability": null,
+              "roll": null,
+              "winningNumbers": null,
+              "ticketScale": 1000000,
+              "paidActionCooldownAfter": 0,
+              "cooldownDraw": null,
+              "poolBranch": {
+                "version": 1,
+                "bet": 2,
+                "bucketIndex": 0,
+                "bucketMode": "blind-ranges",
+                "basePools": {
+                  "version": 1,
+                  "buckets": [
+                    {
+                      "paidAction": 100,
+                      "special": 0
+                    },
+                    {
+                      "paidAction": 20,
+                      "special": 0
+                    },
+                    {
+                      "paidAction": 30,
+                      "special": 0
+                    }
+                  ],
+                  "paidActionCooldown": 0,
+                  "qualificationSequence": 0,
+                  "handSequence": 0,
+                  "lastSettlement": null
+                },
+                "handId": "1",
+                "paidAction": 100,
+                "special": 0,
+                "paidActionCooldown": 0,
+                "qualificationSequence": 0,
+                "paidActionBudgetUsed": 0,
+                "pendingWinPaidCredits": [
+                  {
+                    "from": 1,
+                    "to": 100,
+                    "conversionRate": 0.99,
+                    "paidActionBudgetShare": 1,
+                    "nodeId": "1:1:raise:allin"
+                  }
+                ],
+                "paidEvents": [
+                  {
+                    "paidPrice": 99,
+                    "contributionBefore": 1,
+                    "contributionAfter": 100,
+                    "matchedAfterAction": 100,
+                    "denominator": 200,
+                    "score": 98.01,
+                    "totalScore": 98.01,
+                    "conversionRate": 0.99,
+                    "paidActionBudgetShare": 1,
+                    "paidActionBudgetBefore": 100,
+                    "paidActionBudgetUsed": 0,
+                    "paidActionCooldownBefore": 0,
+                    "rawProbability": null,
+                    "probability": null,
+                    "nodeId": "1:1:raise:allin",
+                    "type": "raise",
+                    "previousTarget": "win",
+                    "target": "win",
+                    "paidActionBudgetAfter": 100,
+                    "paidActionCooldownAfter": 0,
+                    "cooldownDraw": null,
+                    "roll": null,
+                    "winningNumbers": null
+                  }
+                ],
+                "qualification": null
+              },
+              "qualification": null
+            },
+            "bossStreetStrength": {
+              "street": "river",
+              "band": "weak",
+              "category": 0,
+              "reasons": [],
+              "flushDraw": false,
+              "holeFlushDraw": false,
+              "openEndedStraightDraw": false,
+              "holeOpenEndedStraightDraw": false,
+              "gutshot": false,
+              "holeGutshot": false,
+              "straightDraw": false
+            },
+            "bossStreetStates": {
+              "preflop": {
+                "street": "preflop",
+                "band": "weak",
+                "category": null,
+                "reasons": [],
+                "flushDraw": false,
+                "holeFlushDraw": false,
+                "openEndedStraightDraw": false,
+                "holeOpenEndedStraightDraw": false,
+                "straightDraw": false,
+                "gutshot": false,
+                "holeGutshot": false
+              },
+              "flop": {
+                "street": "flop",
+                "band": "weak",
+                "category": 0,
+                "reasons": [],
+                "flushDraw": false,
+                "holeFlushDraw": false,
+                "openEndedStraightDraw": false,
+                "holeOpenEndedStraightDraw": false,
+                "gutshot": false,
+                "holeGutshot": false,
+                "straightDraw": false
+              },
+              "turn": {
+                "street": "turn",
+                "band": "weak",
+                "category": 0,
+                "reasons": [],
+                "flushDraw": false,
+                "holeFlushDraw": false,
+                "openEndedStraightDraw": false,
+                "holeOpenEndedStraightDraw": false,
+                "gutshot": false,
+                "holeGutshot": false,
+                "straightDraw": false
+              },
+              "river": {
+                "street": "river",
+                "band": "weak",
+                "category": 0,
+                "reasons": [],
+                "flushDraw": false,
+                "holeFlushDraw": false,
+                "openEndedStraightDraw": false,
+                "holeOpenEndedStraightDraw": false,
+                "gutshot": false,
+                "holeGutshot": false,
+                "straightDraw": false
+              }
+            }
+          }
+        }
+      },
+      "expected": {
+        "version": 2,
+        "balance": 10100,
+        "outcomePools": {
+          "version": 1,
+          "buckets": [
+            {
+              "paidAction": 198.01,
+              "special": 0
+            },
+            {
+              "paidAction": 20,
+              "special": 0
+            },
+            {
+              "paidAction": 30,
+              "special": 0
+            }
+          ],
+          "paidActionCooldown": 0,
+          "qualificationSequence": 0,
+          "handSequence": 1,
+          "lastSettlement": {
+            "id": "1",
+            "audit": {
+              "handId": "1",
+              "bet": 2,
+              "bucketIndex": 0,
+              "matchedWager": 100,
+              "before": {
+                "paidAction": 100,
+                "special": 0
+              },
+              "after": {
+                "paidAction": 198.01,
+                "special": 0
+              },
+              "paidActionBudgetUsed": 0,
+              "paidActionAdded": 98.01,
+              "specialAdded": 0,
+              "specialAward": 0,
+              "qualification": null,
+              "cooldownBefore": 0,
+              "cooldownAfter": 0,
+              "credits": [
+                {
+                  "from": 1,
+                  "to": 100,
+                  "conversionRate": 0.99,
+                  "paidActionBudgetShare": 1,
+                  "nodeId": "1:1:raise:allin",
+                  "matchedPaidAmount": 99,
+                  "refundablePaidAmount": 0,
+                  "score": 98.01,
+                  "paidActionAdded": 98.01,
+                  "specialAdded": 0
+                }
+              ],
+              "paidEvents": [
+                {
+                  "paidPrice": 99,
+                  "contributionBefore": 1,
+                  "contributionAfter": 100,
+                  "matchedAfterAction": 100,
+                  "denominator": 200,
+                  "score": 98.01,
+                  "totalScore": 98.01,
+                  "conversionRate": 0.99,
+                  "paidActionBudgetShare": 1,
+                  "paidActionBudgetBefore": 100,
+                  "paidActionBudgetUsed": 0,
+                  "paidActionCooldownBefore": 0,
+                  "rawProbability": null,
+                  "probability": null,
+                  "nodeId": "1:1:raise:allin",
+                  "type": "raise",
+                  "previousTarget": "win",
+                  "target": "win",
+                  "paidActionBudgetAfter": 100,
+                  "paidActionCooldownAfter": 0,
+                  "cooldownDraw": null,
+                  "roll": null,
+                  "winningNumbers": null
+                }
+              ]
+            }
+          }
+        },
+        "table": null,
+        "lastBossProfileId": "caller"
+      }
+    }
+  ]
+}

@@ -1,4 +1,6 @@
-import {evaluateBest, normalizeCard, RANKS} from './poker.mjs?v=59';
+import {evaluateBest, normalizeCard, RANKS} from './poker.mjs?v=60';
+import {NATURAL_BOSS_POLICY_VERSION, createBossDecisionView, getNaturalBossDistribution} from './boss-policy.mjs?v=60';
+import {legalHoldemActions} from './holdem-betting.mjs?v=60';
 
 const freeze = value => {
   if (value && typeof value === 'object') { Object.values(value).forEach(freeze); Object.freeze(value); }
@@ -8,6 +10,10 @@ const row = (fold, call, raise) => ({fold, call, raise});
 const STREETS = ['preflop', 'flop', 'turn', 'river'];
 const rankOf = card => RANKS.indexOf(card[0]) + 2;
 export const BOSS_PROFILE_VERSION = 'two-boss-price-response-v4';
+export function getBossPolicyVersion(configOrMode) {
+  return (typeof configOrMode === 'string' ? configOrMode : configOrMode?.outcome?.mode) === 'natural-holdem'
+    ? NATURAL_BOSS_POLICY_VERSION : BOSS_PROFILE_VERSION;
+}
 export const BOSS_RAISE_SIZE_WEIGHTS = freeze({half: .5, pot: .35, allin: .15});
 export const BOSS_RESPONSE_PRESSURES = freeze({half: '半池以下', pot: '超過半池至全池', large: '超過全池'});
 export const BOSS_BANDS = freeze({
@@ -159,6 +165,12 @@ function lockedWeights(hand, pressure = getBossResponsePressure(hand).key) {
 
 /** Public numeric contract. It deliberately omits classification, reasons and all card data. */
 export function getBossProbabilityScenarios(hand) {
+  if (hand.config?.outcome?.mode === 'natural-holdem') {
+    const distribution = getNaturalBossDistribution(createBossDecisionView(hand, legalHoldemActions(hand, 'npc')));
+    const current = {fold: 0, call: 0, check: 0, raise: 0};
+    for (const action of distribution) current[action.type === 'bet' ? 'raise' : action.type] += action.probability;
+    return {policyVersion: NATURAL_BOSS_POLICY_VERSION, distribution, current, facing: current};
+  }
   const scenarios = weights => {
     const passive = weights.fold + weights.call;
     return {facing: {fold: weights.fold / 100, call: weights.call / 100, raise: weights.raise / 100},
@@ -173,6 +185,7 @@ export function getBossProbabilityScenarios(hand) {
 /** Apply public context rules, then distribute aggression over the legal, merged size choices. */
 export function getBossProfileDistribution(hand, actions) {
   if (!actions.length) return [];
+  if (hand.config?.outcome?.mode === 'natural-holdem') return getNaturalBossDistribution(createBossDecisionView(hand, actions));
   const canCheck = actions.some(action => action.type === 'check');
   const weights = canCheck ? lockedWeights(hand, 'half') : lockedWeights(hand);
   const aggressive = actions.filter(action => action.type === 'bet' || action.type === 'raise');

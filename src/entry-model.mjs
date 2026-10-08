@@ -1,12 +1,12 @@
-import {normalizeConfig} from './engine.mjs?v=59';
-import {minimumAssetsForBet} from './hand-entry.mjs?v=59';
-export {minimumAssetsForBet as minimumAssets} from './hand-entry.mjs?v=59';
+import {normalizeConfig} from './engine.mjs?v=60';
+import {minimumAssetsForBet} from './hand-entry.mjs?v=60';
+export {minimumAssetsForBet as minimumAssets} from './hand-entry.mjs?v=60';
 const round=n=>Math.round((n+Number.EPSILON)*1e6)/1e6;
-// Small-blind choices stay stable; pool budgets use the corresponding big blind.
+// Small-blind choices stay stable across rules versions.
 const BET_LEVELS=Object.freeze([1,2,5,10,20,50,100,200,500,800,1000,1200,1500,1800,2000]);
 export function betOptions(_config){return [...BET_LEVELS];}
 export function tableConfig(config,bet,assets){
- if(['fixed-holdem','pooled-holdem'].includes(config.outcome?.mode)){
+ if(['natural-holdem','fixed-holdem','pooled-holdem'].includes(config.outcome?.mode)){
   const smallBlind=round(bet),bigBlind=round(smallBlind*2),buyIn=round(smallBlind*100);
   if(!Number.isFinite(smallBlind)||smallBlind<=0||!Number.isFinite(assets)||assets<buyIn)throw new Error('Not enough balance. Choose a lower small blind.');
   return normalizeConfig({...config,smallBlind,bigBlind,buyIn,minBuyIn:buyIn,maxBuyIn:Math.max(buyIn,config.maxBuyIn)});

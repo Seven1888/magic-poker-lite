@@ -1,3 +1,26 @@
+# v60 自然牌局：驗證與發布紀錄
+
+更新：2026-10-08。v60本地實作與驗證完成，待推送與公開部署驗收。正式模式為natural-holdem：一次均勻洗牌、整手鎖牌、BOSS專用資訊與連續下注壓力策略、真牌與普通FOLD結算。本版不保證99% RTP；規則見 [v60規格](23-v60-natural-holdem.md)。
+
+## v60 本地驗證
+
+- 完整 `npm test`：649／649，0失敗／跳過，32,144.3366 ms；本機 `output/tests-v60.log`。最後百分比文字與工具說明留白調整後，呈現及v60工具專項24／24通過。
+- `npm run build`：265個公開檔案；`git diff --check`通過。新增核心、BOSS策略、v60樣式與規格均包含在建置內；既有雙聲線WAV保持。
+- 獨立程式審核另走622個保存→JSON還原→結束案例，40個全下離桌案例、5個損壞存檔及40個種子的UI抽樣／引擎RNG一致性均通過。v59 fixture由實際已發布363aa41999ad6762bfdc98fea8c7588b83b52843程式產生；未完手、全下棄牌、全下攤牌及已結算皆按原契約結清。
+- Chrome遊戲六種viewport：320×900、375×900、393×852、412×900、1440×1000、320×640。整高色塊比例誤差小於0.001、文字在框內、沒有水平溢出；三種含小數回應的窄框已目視修正並重驗。
+- 實際按鈕走完三手，涵蓋BOSS棄牌與攤牌。每步核對底牌及完整牌序不變，公牌按鎖定序列揭示；預覽不改保存資料。YOU與BOSS對應WAV均啟動；連續兩次重整只結清一次，table為null、錢包10,106保持。最後成功單次驗收errors／warnings／HTTPfailed皆0。
+- 工具實跑四策略共144手，退幣12位玩家共541手；JSON及CSV一般33欄／退幣19欄核對通過，seed60060、規則／BOSS版本及玩家有效投入分母正確。舊池／CD／指定牌設定匯入、保存、重載、匯出後為natural-holdem，保留SB3／buyIn300，無舊控制設定或資產覆寫。
+- 工具與規則在320／393／1440寬度無水平溢出；65次靜態請求HTTP200，console零錯誤／警告。工具說明留白另修正並重驗。
+- 本機證據：`output/playwright/qa-v60-game.js`／`.log`、`lab-v60-local-QA.json`、`lab-v60-*`、`output/v60-snapshot-integration-review.json`。桌面viewport及WebAudio啟動不是實體Android或喇叭聽感驗證；上述小樣本不是長期RTP認證。
+
+## v60 入口
+
+- [公開遊戲](https://seven1888.github.io/magic-poker-lite/?v=60)／[工具](https://seven1888.github.io/magic-poker-lite/probability.html?v=60)／[規則](https://seven1888.github.io/magic-poker-lite/docs/04-game-flow-and-math.html?v=60)
+- [本地遊戲](http://127.0.0.1:4177/index.html?v=60)／[工具](http://127.0.0.1:4177/probability.html?v=60)／[規則](http://127.0.0.1:4177/docs/04-game-flow-and-math.html?v=60)
+- [GitHub](https://github.com/Seven1888/magic-poker-lite)／[Actions](https://github.com/Seven1888/magic-poker-lite/actions)／[交接](../HANDOFF.md)
+
+---
+
 # v59 非數學修正：驗證與發布紀錄
 
 更新：2026-10-07。**v59 四項非數學修正已推送 main、部署成功並通過公開驗收。** 使用者要求完成後另開聊天室提供相關連結並繼續討論數學。正式公式、池規則及 BOSS 機率表未改。詳細計算、研究設定及證據見 [v59審核](22-v59-feedback-and-rtp-audit.md)；介面發布不代表數學正確。

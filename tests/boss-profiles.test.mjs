@@ -40,7 +40,7 @@ test('the two profiles cover both bands on every street with exact immutable per
 test('configuration migrates removed profiles and keeps explicit research modes', () => {
   assert.deepEqual(normalizeConfig().boss, {mode:'random',profileId:'caller'});
   assert.deepEqual(normalizeConfig({npc:{fold:1}}).boss, {mode:'random',profileId:'caller'});
-  assert.equal(normalizeConfig({boss:{mode:'legacy'}}).boss.mode, 'legacy');
+  assert.equal(normalizeConfig({outcome:{mode:'legacy-deck'},boss:{mode:'legacy'}}).boss.mode, 'legacy');
   for (const profileId of ['sniper','trapper']) assert.deepEqual(normalizeBossConfig({mode:'fixed',profileId}), {mode:'fixed',profileId:'caller'});
   for (const value of [null,[],{mode:'unknown'},{profileId:'unknown'}]) assert.throws(() => normalizeBossConfig(value));
 });
@@ -257,7 +257,7 @@ test('pooled card replacement cannot rewrite the completed Turn draw evidence', 
 });
 
 test('probability tool explains explicit conditions and in-game table does not expose class or cards', () => {
-  const element={innerHTML:''};renderBossProbabilityTables({getElementById:id=>id==='boss-profile-tables'?element:null});
+  const element={innerHTML:''};renderBossProbabilityTables({getElementById:id=>id==='boss-profile-tables'?element:null}, 'pooled-holdem');
   assert.equal([...element.innerHTML.matchAll(/<tbody>/g)].length,2);
   assert.match(element.innerHTML,/每手兩種 BOSS 各 50%/);assert.match(element.innerHTML,/每街開始/);assert.match(element.innerHTML,/不是.*統計平均/);
   assert.match(element.innerHTML,/25.00%/);assert.match(element.innerHTML,/70.00%/);assert.match(element.innerHTML,/A234、JQKA 不算/);

@@ -72,14 +72,14 @@ test('JP configuration cannot reopen production payouts and pool migration prese
   assert.deepEqual(pools,before); assert.deepEqual(migrated.buckets,[{paidAction:5.123456,special:0},{paidAction:7.654321,special:0},{paidAction:9,special:0}]);
   assert.equal(migrated.paidActionCooldown,7); assert.equal(migrated.handSequence,9); assert.equal(migrated.qualificationSequence,8);
   assert.deepEqual(migrateOutcomePoolsWithoutJackpot(migrated),migrated);
-  const config=normalizeConfig({jackpotEnabled:true,outcome:{paidActionBudgetShare:0,specialUseChance:1,initialSpecialPools:[2000,5000,10000]}});
+  const config=normalizeConfig({jackpotEnabled:true,outcome:{mode:'pooled-holdem',paidActionBudgetShare:0,specialUseChance:1,initialSpecialPools:[2000,5000,10000]}});
   assert.equal(config.jackpotEnabled,false); assert.equal(config.outcome.paidActionBudgetShare,1); assert.equal(config.outcome.specialUseChance,0);
   assert.deepEqual(config.outcome.initialPaidActionPools,[2000,5000,10000]); assert.deepEqual(config.outcome.initialSpecialPools,[0,0,0]);
   assert.deepEqual(createSession(config,0,{outcomePools:pools}).outcomePools,migrated);
 });
 
 test('natural royal flushes are no longer removed from a pooled layout without a JP qualification', () => {
-  const hand=startHand(createSession({},0));
+  const hand=startHand(createSession({outcome:{mode:'pooled-holdem'}},0));
   hand.rng=()=>0;
   const player=['As','Ks'],npc=['2c','3c'],board=['Qs','Js','Ts','9d','8h'];
   const used=new Set([...player,...npc,...board]);

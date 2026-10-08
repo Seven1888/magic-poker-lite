@@ -1,9 +1,12 @@
-import {BOSS_PROFILES, BOSS_BANDS, BOSS_RESPONSE_PRESSURES, getBossProbabilityScenarios} from './boss-profiles.mjs?v=59';
-import {esc,money} from './shared.mjs?v=59';
+import {BOSS_PROFILES, BOSS_BANDS, BOSS_RESPONSE_PRESSURES, getBossProbabilityScenarios} from './boss-profiles.mjs?v=60';
+import {esc,money} from './shared.mjs?v=60';
+import {NATURAL_BOSS_POLICY_VERSION, NATURAL_BOSS_PROFILES, createBossDecisionView, getNaturalBossDistribution} from './boss-policy.mjs?v=60';
+import {legalHoldemActions} from './holdem-betting.mjs?v=60';
 const pct=(v,digits=2)=>Number.isFinite(v)?`${(v*100).toFixed(digits)}%`:'—';
 const ratio=(a,b)=>b>0?pct(a/b):'—';
-export function renderBossProbabilityTables(root=document){
+export function renderBossProbabilityTables(root=document, mode='natural-holdem'){
  const el=root.getElementById('boss-profile-tables');if(!el)return;
+ if(mode==='natural-holdem'){el.innerHTML=naturalBossTablesHtml();return;}
  el.innerHTML=`<p class="hint">每手兩種 BOSS 各 50%，獨立隨機遇到，允許連續同型。研究可固定對手。每街開始先按對手底牌、已揭公共牌及前一街紀錄判定並鎖定強／不強；回應機率依玩家本次實際下注壓力選列。下列為遊戲設計參數，不是真人統計平均。</p><div class="boss-profile-grid">${BOSS_PROFILES.map(p=>`<details class="boss-profile-card" data-profile="${p.id}" ${p.id==='caller'?'open':''}><summary><b>${esc(p.name)}｜${esc(p.nickname)}</b><span>查看強／不強與下注壓力機率</span></summary><p>${esc(p.description)}</p><div class="table-scroll"><table><thead><tr><th>分類</th><th>實際壓力</th><th>FOLD 棄牌</th><th>CALL 跟注</th><th>RAISE 加注</th><th>不能加注 FOLD／CALL</th></tr></thead><tbody>${['strong','weak'].flatMap(band=>Object.entries(BOSS_RESPONSE_PRESSURES).map(([key,label])=>{
  const row=p.pressureWeights[key][band],den=row.fold+row.call;
  return `<tr><td>${BOSS_BANDS[band].label}</td><td>${label}</td><td>${pct(row.fold/100)}</td><td>${pct(row.call/100)}</td><td class="boss-raise-prob">${pct(row.raise/100)}</td><td>${ratio(row.fold,den)}／${ratio(row.call,den)}</td></tr>`;
@@ -12,10 +15,27 @@ export function renderBossProbabilityTables(root=document){
 
 /** In-game view exposes each numeric price scenario, never the private class. */
 export function bossProbabilityScenariosHtml(hand) {
+ if(hand.config?.outcome?.mode==='natural-holdem') {
+  const {distribution}=getBossProbabilityScenarios(hand);
+  return `<p class="muted">Responses use the exact legal call price, your opponent’s own cards, revealed board and action history. The action previews show the distribution after each selected action. Future cards and your private cards are unavailable to this policy.</p>${distribution.length?`<section class="odds-scenario"><h3>Current legal response</h3>${distribution.map(action=>`<div><span>${esc(action.type.toUpperCase())}${action.amount?' · '+money(action.amount):''}</span><b>${pct(action.probability)}</b></div>`).join('')}</section>`:''}`;
+ }
  const scenarios=getBossProbabilityScenarios(hand),c=scenarios.free;
  const labels={half:'Up to ½ pot',pot:'Over ½ to 1 pot',large:'Over 1 pot'};
  const section=(title,rows)=>`<section class="odds-scenario"><h3>${title}</h3>${rows.map(([label,value])=>`<div><span>${label}</span><b>${pct(value)}</b></div>`).join('')}</section>`;
  return `${Object.entries(scenarios.byPressure).map(([key,{facing:f}])=>section(`Facing a bet · ${labels[key]}`,[['FOLD',f.fold],['CALL',f.call],['RAISE',f.raise]])).join('')}${section('Free to check',[['CHECK',c.check],['BET / RAISE',c.raise]])}${Object.entries(scenarios.byPressure).map(([key,{noRaise:n}])=>section(`No raise available · ${labels[key]}`,[['FOLD',n.fold],['CALL',n.call]])).join('')}<p class="muted">Responses follow the actual call price relative to the pot before your new raise. Short all-ins use their actual pressure. Raise sizes: ½ pot 50% · pot 35% · all in 15%.</p>`;
+}
+function naturalBossTablesHtml() {
+ const examples=[['低張非同花',['7c','2d']],['同花連張',['Jd','Td']],['高對子',['As','Ah']]];
+ const rows=profileId=>examples.flatMap(([label,hole])=>[.5,2,4].map(pressure=>{
+  const owed=20*pressure;
+  const hand={config:{outcome:{mode:'natural-holdem'},bigBlind:2},status:'playing',actor:'npc',street:'preflop',
+   holes:{npc:hole},board:[],bossProfile:{id:profileId},stacks:{npc:1000,player:1000-owed},
+   streetBets:{npc:0,player:owed},pot:20+owed,currentBet:owed,lastFullRaise:owed,actedSinceFullRaise:[],history:[]};
+  const distribution=getNaturalBossDistribution(createBossDecisionView(hand,legalHoldemActions(hand)));
+  const family=type=>distribution.filter(action=>action.type===type).reduce((sum,action)=>sum+action.probability,0);
+  return `<tr><td>${label} ${hole.join(' ')}</td><td>${pressure}×</td><td>${pct(family('fold'))}</td><td>${pct(family('call'))}</td><td class="boss-raise-prob">${pct(family('raise'))}</td></tr>`;
+ })).join('');
+ return `<p class="hint">每手兩種 BOSS 各 50%，獨立隨機遇到，允許連續同型。自然固定牌政策 ${NATURAL_BOSS_POLICY_VERSION} 只使用自己的兩張牌、已揭公牌、公開價格、籌碼與行動紀錄。下面是同一正式策略算出的示例，不是固定強／弱機率表，也不是勝率或 RTP 保證。</p><div class="boss-profile-grid">${Object.entries(NATURAL_BOSS_PROFILES).map(([id,profile])=>`<details class="boss-profile-card" data-profile="${id}" ${id==='caller'?'open':''}><summary><b>${profile.name}｜${profile.nickname}</b><span>查看連續價格回應示例</span></summary><div class="table-scroll"><table><thead><tr><th>示例底牌</th><th>跟注額／基準底池</th><th>FOLD 棄牌</th><th>CALL 跟注</th><th>RAISE 加注</th></tr></thead><tbody>${rows(id)}</tbody></table></div><p class="hint">基準底池 20、BOSS 剩碼 1,000、Preflop，無先前加注紀錄。各列是分開的定價示例；實際對局另計既有行動與合法權限。</p></details>`).join('')}</div><details class="boss-band-notes"><summary>連續回應與合法尺寸的計算方式</summary><ul><li>底牌品質與當前成牌、涉及自身底牌的聽牌構成啟發強度 s；s 不是玩家或 BOSS 勝率。公牌單獨成一對不視為自身成對，River 不再增加聽牌強度。</li><li>壓力 x＝BOSS 實際可跟金額 ÷（目前底池－尚未補的差額），分母最小為 0.000001。以 log(1+x) 連續影響 FOLD／CALL／RAISE，沒有半池、全池、大額三檔切換。相同實際報價及相同公開歷史得到相同分布。</li><li>PASSIVE 的原始 FOLD／CALL／進攻係數為 0.7／2.6／0.42；AGGRESSIVE 為 1／1.8／1.15。跟注成本越高，棄牌權重上升、跟注與進攻權重下降；自身成牌／聽牌及此前進攻紀錄可提高進攻權重。強牌的價格敏感度較低，不會因大額全下就與弱牌一樣幾乎全棄。當街加注次數抑制持續再加注。</li><li>若已知牌可證明不可能輸，FOLD 權重為零；若同時完全使用公共牌，則只 CHECK／CALL。River 順子以上以自己的牌和已揭公牌，檢查所有合法未知對手底牌是否可能更高，不讀真實玩家暗牌。這只判斷是否確定不敗，不估計未知對手持牌機率。</li><li>只分配給引擎當下合法動作：免費可 CHECK 時 FOLD 權重為零；短全下未重開加注權、對方已全下時不生成 RAISE；剩餘權重再正規化為 100%。</li><li>進攻尺寸基礎權重：PASSIVE 半池／全池／ALL IN＝60／30／10；AGGRESSIVE＝35／40／25。ALL IN 權重再乘 exp(2×(s−0.5))，三項正規化。最小合法額與籌碼上限仍由引擎計算，同額合併全部尺寸權重。</li><li>預覽與正式行動共用同一個純函式；預覽不抽亂數。正式先抽動作，選到 BET／RAISE 再抽尺寸。政策不讀玩家暗牌、未揭牌、牌局勝負目標、結果水池或返還缺口。</li></ul><p class="hint">本政策是可重現的遊戲行為設計，不是真人統計平均，也未校準為任意玩家策略皆達 99% RTP。</p></details>`;
 }
 export function renderBossStudy(report,root=document){
  const el=root.getElementById('boss-study-results');if(!el)return;

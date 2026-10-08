@@ -1,3 +1,23 @@
+# Magic Poker Lite v60 API
+
+2026-10-08。[v60完整規格](docs/23-v60-natural-holdem.md)取代下方v58的正式預設；歷史模式保持原語義。
+
+- normalizeConfig／createSession預設natural-holdem。正式loadConfig與currentLabConfig將新桌切到此模式，清除指定牌／重抽及結果控制設定；保存舊桌不經這個遷移。
+- NATURAL_HOLDEM_RULES由src/natural-holdem.mjs提供，包含id、dealModel、bossPolicy、bettingModel、settlementModel、poolModel與jackpotModel。hand.rulesSnapshot與hand.naturalHoldem保存牌序、首次發牌座位和configSnapshot；底牌與規則凍結。
+- createNaturalHoldemDeal只洗牌一次；assertNaturalHoldemIntegrity驗證牌序、規則、開手設定與無結果控制器；lockNaturalHoldemDeal只驗證並凍結已有資料，還原時不補牌。
+- startHand／applyAction／stepNpc使用隔離draft，成功後才提交。玩家付款只改籌碼與下注流程，不抽結果票。previewResponse只用clone，無正式RNG／資產改動。
+- createBossDecisionView是BOSS資訊白名單邊界；getNaturalBossDistribution只接受該凍結view。getBossPolicyVersion按明確模式區分natural-boss-pressure-v1與歷史v4。預覽與正式使用相同策略。
+- natural模式保留完整HU與玩家2P／4P／ALL IN，BOSS半池／全池／ALL IN。結果保存rulesSnapshot，按匹配底池全額派，未匹配退款獨立；無JP、抽成、退出報價或新池收支。
+- snapshotTableSession／restoreTableSession接受natural與歷史fixed／pooled；自然還原驗證原牌序及版本。closeSavedTable未全下FOLD，已全下用保存RNG正常完成，餘碼只兌回一次。profile key及version 2不變。
+- 舊池只保存，不影響新牌局。相容outcome與result欄位不代表新版使用99計分或JP；正式工具的有效參數不顯示它們。
+- 研究報表記錄規則／BOSS版本、seed、完成樣本及真實RTP口徑。全樹研究超限拒絕，不發布部分期望。有限樣本與功能測試不證明全策略99%。
+
+## 以下為歷史v58 API
+
+僅供舊桌結算與明確歷史研究模式使用；其中「正式」措辭限於v58當時。
+
+---
+
 # Magic Poker Lite v58 API 契約
 
 2026-10-07。正式 pooled-holdem 取消 Jackpot，玩家改 2× POT／4× POT／ALL IN、每手獨立隨機 BOSS、每桌首手抽盲，雙方正式行動加字卡與語音。[v58 規格](docs/21-v58-actions-and-no-jackpot-spec.md) 優先於被取代的舊契約；[v57 呈現](docs/20-v57-response-readability-spec.md) 與 [v56 壓力機率](docs/19-v56-blind-and-response-spec.md) 延續。現行完整規則見 [docs/04](docs/04-game-flow-and-math.md)，實際驗證與發布見 [docs/06](docs/06-mobile-and-deployment.md)。

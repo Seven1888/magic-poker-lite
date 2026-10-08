@@ -1,0 +1,11 @@
+/* Continuous response odds need room for three independent decimal values.
+   Size text against the response container, never the colored probability slice. */
+.game .controls .raise-options .button-response[data-outcome-count='2'][data-long-percent='true'] .button-response-key>b{
+ font-size:min(27px,11cqi);line-height:1.25;
+}
+.game .controls .raise-options .button-response[data-outcome-count='3'][data-long-percent='true'] .button-response-key>b{
+ font-size:min(27px,7cqi);line-height:1.25;
+}
+.game .controls .action-slot>.button-response[data-outcome-count='3'][data-long-percent='true'] .button-response-key>b{
+ font-size:min(24px,7cqi);line-height:1.25;
+}

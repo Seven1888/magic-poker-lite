@@ -5,7 +5,7 @@ import {createSession, startHand, legalActions, applyAction, stepNpc, endHandFor
 import {buyInFromWallet, snapshotTableSession, restoreTableSession, closeSavedTable} from '../src/table-wallet.mjs';
 import {migrateOutcomePoolsWithoutJackpot} from '../src/outcome-pools.mjs';
 
-const modes = ['pooled-holdem', 'fixed-holdem'];
+const modes = ['natural-holdem', 'pooled-holdem', 'fixed-holdem'];
 const create = (mode = 'pooled-holdem', seed = 0, options = {}, extra = {}) => createSession({
   smallBlind: 10, ...extra, outcome: {mode, ...extra.outcome}, boss: {mode: 'fixed', profileId: 'maniac'}
 }, seed, {firstSmallBlind: 'player', ...options});

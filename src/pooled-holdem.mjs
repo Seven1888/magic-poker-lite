@@ -1,6 +1,6 @@
-import {createOutcomeLayout} from './outcome-layout.mjs?v=59';
-import {validateOutcomeLayout} from './prebuilt-outcome-tree.mjs?v=59';
-import {drawRootPoolOutcome, drawPaidPoolOutcome, applyBranchPools} from './outcome-pools.mjs?v=59';
+import {createOutcomeLayout} from './outcome-layout.mjs?v=60';
+import {validateOutcomeLayout} from './prebuilt-outcome-tree.mjs?v=60';
+import {drawRootPoolOutcome, drawPaidPoolOutcome, applyBranchPools} from './outcome-pools.mjs?v=60';
 
 export const POOLED_HOLDEM_MODEL = 'pooled-holdem-v1';
 const PAID = new Set(['call', 'bet', 'raise']);

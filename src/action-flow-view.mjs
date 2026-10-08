@@ -1,4 +1,4 @@
-import {esc} from './shared.mjs?v=59';
+import {esc} from './shared.mjs?v=60';
 
 const clean=value=>String(value??'').replace(/\s+/g,' ').trim();
 const blindAmount=value=>value.toLocaleString('en-US',{maximumFractionDigits:6});

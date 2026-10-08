@@ -18,6 +18,7 @@ const files = new Set(['index.html', 'probability.html', 'docs/04-game-flow-and-
 for (const word of ['call','check','bet','raise','allin','fold']) files.add(`assets/action-voice-v58/${word}.wav`);
 files.add('assets/action-voice-v59/voice-source.txt');
 files.add('docs/22-v59-feedback-and-rtp-audit.md');
+files.add('docs/23-v60-natural-holdem.md');
 for (const seat of ['player','boss']) {
   for (const word of ['call','check','bet','raise','allin','fold']) files.add(`assets/action-voice-v59/${seat}/${word}.wav`);
 }

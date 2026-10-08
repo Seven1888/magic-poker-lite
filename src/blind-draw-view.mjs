@@ -1,5 +1,5 @@
-import {atGameSpeed} from './presentation-timing.mjs?v=59';
-import {createActionFlow} from './action-flow-view.mjs?v=59';
+import {atGameSpeed} from './presentation-timing.mjs?v=60';
+import {createActionFlow} from './action-flow-view.mjs?v=60';
 
 // The left icon slot of the action ribbon (326–394 px), above the board and POT.
 const RIBBON = {x: 46, y: 360, size: 50};

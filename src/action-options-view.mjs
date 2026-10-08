@@ -1,5 +1,5 @@
-import {previewResponse} from './engine.mjs?v=59';
-import {esc} from './shared.mjs?v=59';
+import {previewResponse} from './engine.mjs?v=60';
+import {esc} from './shared.mjs?v=60';
 
 export const ACTION_ART = Object.freeze({fold:'assets/action-buttons-v54/fold.png',
   check:'assets/action-buttons-v54/check.png',call:'assets/action-buttons-v54/call.png',

@@ -1,6 +1,6 @@
-import {esc} from './shared.mjs?v=59';
-import {LAB_POLICIES} from './probability-text.mjs?v=59';
-import {poolSummaryTable} from './probability-report-view.mjs?v=59';
+import {esc} from './shared.mjs?v=60';
+import {LAB_POLICIES} from './probability-text.mjs?v=60';
+import {poolSummaryTable} from './probability-report-view.mjs?v=60';
 
 const finite = value => typeof value === 'number' && Number.isFinite(value);
 const number = (value, digits = 6) => finite(value)
@@ -44,7 +44,8 @@ function reportMarkup(report) {
     `種子 ${report.seed ?? '—'}`,
     `初始資產 ${number(report.initialAsset)}`,
     `目標資產 ${number(report.targetAsset)}`,
-    ['fixed-holdem','pooled-holdem'].includes(report.outcomeModel) ? `固定小盲 ${number(report.config?.smallBlind)}（不自動降低）` : `固定 BET ${number(report.config?.bigBlind)}（不自動降低）`,
+    ['natural-holdem','fixed-holdem','pooled-holdem'].includes(report.outcomeModel) ? `固定小盲 ${number(report.config?.smallBlind)}（不自動降低）` : `固定 BET ${number(report.config?.bigBlind)}（不自動降低）`,
+    ...(report.outcomeModel === 'natural-holdem' ? [`結果模式 ${report.outcomeModel}`, `牌局規則 ${report.ruleSet}`, `BOSS 政策 ${report.bossProfileVersion}`, `實際完成 ${number(report.hands, 0)} 手`] : []),
     ...(report.assetModel === 'external-wallet-plus-table-chips' ? [`每次帶入 ${number(report.tableBuyIn)}（100 小盲）`, '總資產＝外部錢包＋桌籌碼；歸零才重新帶入'] : []),
     ...(date ? [`時間 ${date}`] : []),
   ];
@@ -58,7 +59,7 @@ function reportMarkup(report) {
   ].join('');
   const pools = report.outcomePoolSummary
     ? `<details class="model-summary"><summary>跨手水池明細</summary>${poolSummaryTable(report.outcomePoolSummary, {includeSpecial: report.outcomeModel !== 'pooled-holdem'})}</details>` : '';
-  return `<section class="report"><div class="report-heading"><h3>${esc(policy)}</h3></div><div class="report-context">${settings.map(value => `<small>${esc(value)}</small>`).join('')}</div><div class="metrics">${metrics}</div>${playerTable(indexedPlayers)}${pools}</section>`;
+  return `<section class="report"><div class="report-heading"><h3>${esc(policy)}</h3></div><div class="report-context">${settings.map(value => `<small>${esc(value)}</small>`).join('')}</div><div class="metrics">${metrics}</div>${playerTable(indexedPlayers)}${pools}${report.limitation ? `<p class="status-note warning">${esc(report.limitation)}</p>` : ''}</section>`;
 }
 
 /** 產生獨立退幣率報表；僅回傳 HTML，不操作 DOM 或改寫模擬結果。 */

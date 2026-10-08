@@ -32,6 +32,23 @@ const terminalResult = messages => {
   return messages.at(-1);
 };
 
+test('自然模式 Worker 一次執行保留實際種子、版本與一般／退幣獨立口徑', () => {
+  const config = {outcome: {mode: 'natural-holdem'}, smallBlind: 1};
+  const messages = runWorker({type: 'run', config, players: 2, entries: 3,
+    mode: 'continuous', unlimitedBankroll: true, sliceSize: 2, seed: 0, policies: ['call'],
+    refund: {players: 2, initialAsset: 0, targetAsset: 100}});
+  const result = terminalResult(messages), report = result.reports[0], refund = result.refundReports[0];
+  assert.equal(report.outcomeModel, 'natural-holdem');
+  assert.equal(report.ruleSet, 'natural-holdem-v1');
+  assert.equal(report.bossProfileVersion, 'natural-boss-pressure-v1');
+  assert.equal(report.seed, 0); assert.equal(refund.seed, 0);
+  assert.equal(report.hands, 6); assert.equal(refund.hands, 0);
+  assert.equal(report.outcomePoolSummary, null); assert.equal(refund.outcomePoolSummary, null);
+  assert.equal(refund.insufficientPlayers, 2);
+  assert.equal(report.rtpTarget, null);
+  assert.ok(messages.findIndex(message => message.type === 'refundProgress') > messages.findIndex(message => message.type === 'partial'));
+});
+
 test('一次開始統計沿用真實預建引擎，最後同時發布一般及退幣報表', () => {
   const config = {outcome: {mode: 'prebuilt-pools'}}, refund = {players: 1, initialAsset: 50, targetAsset: 51};
   const messages = runWorker({type: 'run', config, ...general, policies: ['call'], refund});

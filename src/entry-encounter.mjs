@@ -1,5 +1,5 @@
-import {createSession} from './engine.mjs?v=59';
-import {selectBossProfile} from './boss-profiles.mjs?v=59';
+import {createSession} from './engine.mjs?v=60';
+import {selectBossProfile} from './boss-profiles.mjs?v=60';
 
 /** Reserve the entry seed and public identity without dealing or charging chips.
  * This isolated session mirrors the opening blind draw before the boss draw.

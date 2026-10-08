@@ -1,8 +1,11 @@
-import {normalizeConfig, createSession, playAutomatedHand, syncOpponentBankroll, beginNewTable} from './engine.mjs?v=59';
-import {BOSS_PROFILE_IDS} from './boss-profiles.mjs?v=59';
-import {handEntryStatus} from './hand-entry.mjs?v=59';
-import {BOSS_PROFILE_VERSION} from './boss-profiles.mjs?v=59';
-import {createPoolStudySummary, collectPoolStudyAudit, finishPoolStudySummary, combinePoolStudySummaries} from './probability-pools.mjs?v=59';
+import {normalizeConfig, createSession, playAutomatedHand, syncOpponentBankroll, beginNewTable} from './engine.mjs?v=60';
+import {BOSS_PROFILE_IDS} from './boss-profiles.mjs?v=60';
+import {handEntryStatus} from './hand-entry.mjs?v=60';
+import {getBossPolicyVersion} from './boss-profiles.mjs?v=60';
+import {NATURAL_HOLDEM_RULES} from './natural-holdem.mjs?v=60';
+import {NATURAL_LAB_NOTES} from './probability-text.mjs?v=60';
+import {labConfigSnapshot} from './probability-config.mjs?v=60';
+import {createPoolStudySummary, collectPoolStudyAudit, finishPoolStudySummary, combinePoolStudySummaries} from './probability-pools.mjs?v=60';
 
 const SEATS = ['player', 'npc'];
 const STREETS = ['preflop', 'flop', 'turn', 'river'];
@@ -137,7 +140,9 @@ export function simulateStudy(config = {}, {
   if (!['balanced', 'call', 'aggressive', 'tight'].includes(policy)) throw new TypeError('未知玩家策略。');
   if (!(typeof seed === 'string' || typeof seed === 'number' && Number.isFinite(seed))) throw new TypeError('種子須為文字或有限數字。');
   const normalized = normalizeConfig(config), handLimit = mode === 'cashout' ? maxHandsPerPlayer : entries;
-  const holdem = ['fixed-holdem','pooled-holdem'].includes(normalized.outcome?.mode);
+  const natural = normalized.outcome?.mode === 'natural-holdem';
+  const holdem = natural || ['fixed-holdem','pooled-holdem'].includes(normalized.outcome?.mode);
+  const bossPolicyVersion = getBossPolicyVersion(normalized);
   // 歷史限次模型仍以有限單手額度代替 Infinity；現行德州只在入桌時
   // 帶入 100 小盲，續手保留真實桌籌碼，不藉無限外部錢包抹平 ALL IN。
   const handBankroll = holdem ? round(normalized.smallBlind * 100) : unlimitedBankroll
@@ -150,12 +155,13 @@ export function simulateStudy(config = {}, {
   if (mode === 'cashout' && (!Number.isFinite(target) || target <= 0)) throw new RangeError('目標資產必須是有限正數。');
   const independent = mode === 'independent';
   const pooled = ['prebuilt-pools','pooled-holdem'].includes(normalized.outcome?.mode);
-  const clustered = pooled || !independent || normalized.boss.mode === 'rotate';
+  const clustered = natural || pooled || !independent || normalized.boss.mode === 'rotate';
   const encounterCounts = () => Object.fromEntries([...BOSS_PROFILE_IDS, 'legacy'].map(id => [id, 0]));
-  const result = {...summary(), ruleSet: holdem ? 'heads-up-no-limit-v1' : 'heads-up-two-blinds-v1', studyVersion: 4,
-    modelVersion: `${normalized.outcome.mode==='pooled-holdem'?'pooled-holdem-v1':holdem?'fixed-holdem-v1':pooled?'prebuilt-pools-v2-full-pot':'legacy-deck-v1'}+${BOSS_PROFILE_VERSION}+study-v4`,
-    outcomeModel: normalized.outcome.mode, bossProfileVersion: BOSS_PROFILE_VERSION, mode, players, entries,
-    seed, policy, config: normalized, sliceSize, unlimitedBankroll,
+  const result = {...summary(), ruleSet: natural ? NATURAL_HOLDEM_RULES.id : holdem ? 'heads-up-no-limit-v1' : 'heads-up-two-blinds-v1', studyVersion: natural ? 5 : 4,
+    modelVersion: `${natural?NATURAL_HOLDEM_RULES.id:normalized.outcome.mode==='pooled-holdem'?'pooled-holdem-v1':holdem?'fixed-holdem-v1':pooled?'prebuilt-pools-v2-full-pot':'legacy-deck-v1'}+${bossPolicyVersion}+study-v${natural?5:4}`,
+    ...(natural ? {rulesSnapshot: {...NATURAL_HOLDEM_RULES}, rtpTarget: null} : {}),
+    outcomeModel: normalized.outcome.mode, bossProfileVersion: bossPolicyVersion, mode, players, entries,
+    seed, policy, config: labConfigSnapshot(normalized), sliceSize, unlimitedBankroll,
     targetAsset: mode === 'cashout' ? target : null, maxHandsPerPlayer: unlimitedBankroll ? null : maxHandsPerPlayer,
     playerResults: [], playerSummary: {completed: 0, target: 0, insufficient: 0, censored: 0},
     byBlind: {small: summary(), big: summary()}, actionStats: newActionStats(), actionSizeStats: [], bossStrengthStats: [], dealAudit: newDealAudit(),
@@ -183,6 +189,16 @@ export function simulateStudy(config = {}, {
       uncertainty: !clustered ? '以獨立牌局充分統計量計算比值的 95% 常態近似區間。' : `以每位玩家整段分子／分母聚類，計算比值的 95% 常態近似區間；少於兩位玩家不報區間。${pooled ? '水池與冷卻跨手相依，即使 independent 或固定 BOSS 也不能按單手當獨立樣本。' : independent ? '雖然每手重設資產，BOSS 不連續重複會產生跨手相關，因此仍須按玩家聚類。' : ''}`,
       limitation: normalized.outcome.mode === 'pooled-holdem' ? '不是後端玩家帳本或 RTP 認證；少量樣本不能證明模型已收斂。' : '不是後端玩家帳本或 RTP 認證；零次稀有 JP 不代表機率為零，少量樣本不能證明尾部已收斂。'},
   };
+  if (natural) Object.assign(result.methodMeta, {
+    initialBlind: independent ? '每位玩家首手固定小盲，之後逐手輪替；此為明示的獨立手研究設定。' : '每桌首手隨機抽小盲／大盲，同桌之後交替盲位；桌籌碼歸零再帶入時重新抽新桌首盲，保留原亂數流。',
+    bankroll: unlimitedBankroll ? '外部研究錢包無限，每次入桌帶入 100 小盲（50 大盲）。桌籌碼逐手真實增減，歸零才重新帶入；每手對手匹配目前桌籌碼。帶入不是賭注，不計入 RTP。' : independent ? '每手重設雙方相同帶入；end 僅為最後一手結束餘額，不能當作連續資產。' : '同桌連續保留玩家桌籌碼；每手開始時對手匹配玩家桌籌碼，其調整不計玩家返還。',
+    outcomeSampling: NATURAL_LAB_NOTES.dealing,
+    poolContinuity: '自然牌模式沒有結果水池收支；舊池存量不是玩家資產，也不轉為返還。',
+    returnDenominator: '單手倍數＝實際底池返還／玩家有效匹配投入；退款不進分子或分母。',
+    rtpDefinition: NATURAL_LAB_NOTES.accounting,
+    uncertainty: '以每位玩家整段分子／分母聚類，計算比值的 95% 常態近似區間；少於兩位玩家或零有效投入時不報區間。',
+    limitation: NATURAL_LAB_NOTES.limitation,
+  });
   result.method = [result.methodMeta.bankroll, result.methodMeta.stopRule, result.methodMeta.uncertainty, result.methodMeta.limitation].join(' ');
   const stats = moments(), actionSizes = new Map(), bossStrengths = new Map();
   let batch = summary(), completedPlayers = 0;

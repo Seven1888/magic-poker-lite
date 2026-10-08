@@ -3,6 +3,11 @@ export const LAB_LABELS=Object.freeze({fold:'棄牌',check:'過牌',call:'跟注
 export const LAB_STREETS=Object.freeze({preflop:'翻牌前',flop:'翻牌',turn:'轉牌',river:'河牌'});
 export const LAB_POLICIES=Object.freeze({balanced:'平衡',call:'始終跟注',aggressive:'積極',tight:'保守'});
 export const LAB_JACKPOTS=Object.freeze({royal:'皇家同花順',straightFlush:'同花順',quads:'四條'});
+export const NATURAL_LAB_NOTES=Object.freeze({
+  dealing:'開手均勻洗牌並鎖定雙方底牌及全部公共牌順序；後續下注與 BOSS 行動不改牌。',
+  accounting:'樣本 RTP＝玩家實際底池返還總額 ÷ 玩家有效匹配投入總額。未匹配退款、買入與 BOSS 投入不列分母；退款及舊池存量不列返還。',
+  limitation:'此為指定玩家策略、BOSS 政策、種子與樣本規模的觀測結果；沒有固定 RTP 目標，不保證任何策略為 99%，有限樣本不是長期 RTP 認證。',
+});
 
 const nativeErrors=[
   [/JSON\.parse|Unexpected (?:token|end)|Expected (?:property|double-quoted|','|':'|'\}')|(?:not valid|invalid|malformed) JSON|JSON.*(?:parse|unexpected)/i,'JSON 資料格式不正確，請檢查檔案內容後重試。'],

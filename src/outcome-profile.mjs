@@ -1,4 +1,4 @@
-import {normalizeOutcomePools, migrateOutcomePoolsWithoutJackpot} from './outcome-pools.mjs?v=59';
+import {normalizeOutcomePools, migrateOutcomePoolsWithoutJackpot} from './outcome-pools.mjs?v=60';
 
 export const OUTCOME_PROFILE_KEY = 'magic-poker-lite.player.v1';
 
@@ -10,7 +10,7 @@ export function normalizePlayerProfile(value) {
   if (value.version === 2) {
     if (value.table !== null && value.table !== undefined
       && (value.table.version !== 1 || !Number.isInteger(value.table.rngState)
-        || !value.table.session || !['fixed-holdem', 'pooled-holdem'].includes(value.table.session.config?.outcome?.mode))) {
+        || !value.table.session || !['natural-holdem', 'fixed-holdem', 'pooled-holdem'].includes(value.table.session.config?.outcome?.mode))) {
       throw new TypeError('Invalid saved table.');
     }
     profile.table = value.table ? structuredClone(value.table) : null;

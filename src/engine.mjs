@@ -1,14 +1,16 @@
-import {makeDeck, createRng, shuffle, normalizeCard, evaluateBest, compareRanks, holeScore} from './poker.mjs?v=59';
-import {getJackpotAward, classifyJackpot, quoteJackpot} from './jackpot.mjs?v=59';
-import {normalizeBossConfig, selectBossProfile, getBossProfileDistribution, lockBossStreetStrength} from './boss-profiles.mjs?v=59';
-import {isFixedHoldem, isPooledHoldem, isHoldemBetting, legalHoldemActions, resolveHoldemAction, markHoldemAction, HOLDEM_SIZE_WEIGHTS, PLAYER_HOLDEM_SIZE_WEIGHTS} from './holdem-betting.mjs?v=59';
-import {initializePooledHoldem, preparePooledHoldemAction} from './pooled-holdem.mjs?v=59';
-import {assertHandEntryAssets} from './hand-entry.mjs?v=59';
+import {makeDeck, createRng, shuffle, normalizeCard, evaluateBest, compareRanks, holeScore} from './poker.mjs?v=60';
+import {getJackpotAward, classifyJackpot, quoteJackpot} from './jackpot.mjs?v=60';
+import {normalizeBossConfig, selectBossProfile, getBossProfileDistribution, lockBossStreetStrength} from './boss-profiles.mjs?v=60';
+import {isFixedHoldem, isPooledHoldem, isNaturalHoldem, isHoldemBetting, legalHoldemActions, resolveHoldemAction, markHoldemAction, HOLDEM_SIZE_WEIGHTS, PLAYER_HOLDEM_SIZE_WEIGHTS} from './holdem-betting.mjs?v=60';
+import {initializePooledHoldem, preparePooledHoldemAction} from './pooled-holdem.mjs?v=60';
+import {NATURAL_HOLDEM_RULES, createNaturalHoldemDeal, assertNaturalHoldemIntegrity, lockNaturalHoldemDeal} from './natural-holdem.mjs?v=60';
+import {createBossDecisionView, getNaturalBossDistribution} from './boss-policy.mjs?v=60';
+import {assertHandEntryAssets} from './hand-entry.mjs?v=60';
 import {DEFAULT_OUTCOME_POOL_CONFIG, normalizeOutcomePoolConfig, createOutcomePools, normalizeOutcomePools, compactOutcomePools, migrateOutcomePoolsWithoutJackpot,
-  drawRootPoolOutcome, drawPaidPoolOutcome, applyBranchPools, settleOutcomePools, isSpecialPoolLayout} from './outcome-pools.mjs?v=59';
-import {buildPrebuiltOutcomeTree, lookupPrebuiltOutcomeTransition} from './prebuilt-outcome-tree.mjs?v=59';
-import {createOutcomeLayout} from './outcome-layout.mjs?v=59';
-export {makeDeck, createRng, shuffle, evaluateBest, compareHands, holeScore, normalizeCard} from './poker.mjs?v=59';
+  drawRootPoolOutcome, drawPaidPoolOutcome, applyBranchPools, settleOutcomePools, isSpecialPoolLayout} from './outcome-pools.mjs?v=60';
+import {buildPrebuiltOutcomeTree, lookupPrebuiltOutcomeTransition} from './prebuilt-outcome-tree.mjs?v=60';
+import {createOutcomeLayout} from './outcome-layout.mjs?v=60';
+export {makeDeck, createRng, shuffle, evaluateBest, compareHands, holeScore, normalizeCard} from './poker.mjs?v=60';
 
 const SEATS = ['player', 'npc'];
 export const STREETS = ['preflop', 'flop', 'turn', 'river'];
@@ -25,7 +27,7 @@ export const DEFAULT_CONFIG = Object.freeze({
   maxRaises: null, animationMs: 850,
   npc: Object.freeze({fold: 0.2, call: 0.6, raise: 0.2, check: 0.65, bet: 0.35, strengthInfluence: 1, priceInfluence: 0.6}),
   boss: Object.freeze({mode: 'random', profileId: 'caller'}),
-  outcome: Object.freeze({mode: 'pooled-holdem', ...DEFAULT_OUTCOME_POOL_CONFIG, paidActionBudgetShare: 1, specialUseChance: 0,
+  outcome: Object.freeze({mode: 'natural-holdem', ...DEFAULT_OUTCOME_POOL_CONFIG, paidActionBudgetShare: 1, specialUseChance: 0,
     initialPaidActionPools: Object.freeze([0, 0, 0]), initialSpecialPools: Object.freeze([0, 0, 0]),
     initialPaidActionCooldown: 0, stateLimit: 10000, maxLayoutAttempts: 2000}),
   deal: Object.freeze({
@@ -90,12 +92,16 @@ export function normalizeConfig(source = {}) {
   if (new Set(manualCards).size !== manualCards.length) throw new Error('雙方指定手牌不可重複。');
   const outcome = source.outcome ?? {};
   const mode = outcome.mode ?? d.outcome.mode;
-  if (!['prebuilt-pools', 'legacy-deck', 'fixed-holdem', 'pooled-holdem'].includes(mode)) throw new TypeError('未知結果模型。');
+  if (!['prebuilt-pools', 'legacy-deck', 'fixed-holdem', 'pooled-holdem', 'natural-holdem'].includes(mode)) throw new TypeError('未知結果模型。');
   // Current pooled outcomes use one score coefficient and pay the full pot.
   // A saved prototype pot fee must not reappear when old settings are loaded.
   if (mode === 'prebuilt-pools' || holdem) config.targetRtp = 1;
   if (holdem) config.jackpotEnabled = false;
   if (mode === 'pooled-holdem' && config.boss.mode === 'rotate') config.boss.mode = 'random';
+  if (mode === 'natural-holdem') {
+    if (manualCards.length) throw new TypeError('Natural Holdem uses a uniform deck and does not accept manual cards.');
+    if (['legacy', 'rotate'].includes(config.boss.mode)) config.boss.mode = 'random';
+  }
   let initial = createOutcomePools({paidAction: outcome.initialPaidActionPools,
     special: outcome.initialSpecialPools, paidActionCooldown: outcome.initialPaidActionCooldown});
   if (mode === 'pooled-holdem') initial = migrateOutcomePoolsWithoutJackpot(initial);
@@ -265,6 +271,7 @@ function startHandRaw(session) {
   // around the one root result before classifying or resolving short blinds.
   const deal = isPooledHoldem(session.config)
     ? {holes: {player: [], npc: []}, deck: [], audit: undefined}
+    : isNaturalHoldem(session.config) ? createNaturalHoldemDeal(session.config, session.rng, smallBlind)
     : dealHoles(session.config, session.rng, smallBlind);
   const hand = {
     session, config: session.config, rng: session.rng, handNumber: session.handNumber, smallBlind, bigBlind,
@@ -275,12 +282,19 @@ function startHandRaw(session) {
     streetBets: {player: 0, npc: 0}, contributions: {player: 0, npc: 0},
     currentBet: 0, raises: 0, pending: [smallBlind, bigBlind], pot: 0, history: [], result: null
   };
+  if (isNaturalHoldem(hand.config)) {
+    hand.naturalHoldem = deal.naturalHoldem;
+    hand.rulesSnapshot = deal.rulesSnapshot;
+    lockNaturalHoldemDeal(hand);
+  }
   if (isHoldemBetting(hand.config)) {
     hand.lastFullRaise = hand.config.bigBlind;
     hand.actedSinceFullRaise = [];
   }
-  hand.outcomePoolsBefore = normalizeOutcomePools(session.outcomePools);
-  hand.outcomeHandId = String((session.outcomePools.handSequence ?? 0) + 1);
+  if (!isNaturalHoldem(hand.config)) {
+    hand.outcomePoolsBefore = normalizeOutcomePools(session.outcomePools);
+    hand.outcomeHandId = String((session.outcomePools.handSequence ?? 0) + 1);
+  }
   // Non-enumerable pointer prevents JSON snapshots from acquiring circular references.
   Object.defineProperty(session, 'activeHand', {value: hand, writable: true, configurable: true, enumerable: false});
   // Choosing BET is free. Both seats post only when the hand starts.
@@ -308,11 +322,15 @@ export function startHand(session) {
   assertHandEntryAssets(session);
   if (session.config.outcome.mode === 'legacy-deck' || isFixedHoldem(session.config)) return startHandRaw(session);
   const working = {...session, rng: session.rng.clone(), stacks: {...session.stacks},
-    ...(isPooledHoldem(session.config) ? {config: normalizeConfig(session.config)} : {}),
+    ...((isPooledHoldem(session.config) || isNaturalHoldem(session.config)) ? {config: normalizeConfig(session.config)} : {}),
     outcomePools: (isPooledHoldem(session.config) ? migrateOutcomePoolsWithoutJackpot : normalizeOutcomePools)(session.outcomePools),
     jackpotTierCounts: {...session.jackpotTierCounts},
     opponentBankrollRefreshes: [...session.opponentBankrollRefreshes]};
   const draft = startHandRaw(working);
+  if (isNaturalHoldem(session.config)) {
+    lockNaturalHoldemDeal(draft);
+    return publishPooledHand(session, draft);
+  }
   if (isPooledHoldem(session.config)) {
     initializePooledHoldem(draft, {dealHoles});
     lockBossStreetStrength(draft);
@@ -371,6 +389,7 @@ export function legalActions(hand, actor = hand.actor) {
 
 function settle(hand, folded = null) {
   if (hand.status !== 'playing' || hand.result) return hand;
+  if (isNaturalHoldem(hand.config)) assertNaturalHoldemIntegrity(hand);
   const contributions = {...hand.contributions};
   const matched = Math.min(contributions.player, contributions.npc);
   const refunds = {player: round(contributions.player - matched), npc: round(contributions.npc - matched)};
@@ -397,6 +416,7 @@ function settle(hand, folded = null) {
     jackpot = getJackpotAward({reason, evaluation: evaluations.player, baseBet: hand.config.bigBlind, enabled: hand.config.jackpotEnabled});
   }
   const result = {reason, winner, folded, pot, gross: pot, fee: 0, net: 0, totalReturn: 0,
+    ...(isNaturalHoldem(hand.config) ? {rulesSnapshot: structuredClone(hand.rulesSnapshot)} : {}),
     jackpot, outcomePoolAudit, board: [...hand.board], evaluations};
   for (const seat of SEATS) {
     const gross = winner === seat ? pot : winner === 'tie' ? round(pot / 2) : 0;
@@ -438,7 +458,7 @@ function revealStreet(hand) {
   if (isHoldemBetting(hand.config)) {
     hand.lastFullRaise = hand.config.bigBlind;
     hand.actedSinceFullRaise = [];
-    lockBossStreetStrength(hand);
+    if (!isNaturalHoldem(hand.config)) lockBossStreetStrength(hand);
   }
   hand.pending = [hand.bigBlind, hand.smallBlind];
   hand.actor = hand.bigBlind;
@@ -500,9 +520,11 @@ function applyActionRaw(hand, requested) {
 }
 
 function publishPooledHand(session, draft, existing = null) {
+  const natural = isNaturalHoldem(draft.config), config = draft.config;
+  if (natural) lockNaturalHoldemDeal(draft);
   Object.assign(session, draft.session);
   const hand = existing ? Object.assign(existing, draft) : draft;
-  Object.assign(hand, {session, rng: session.rng, stacks: session.stacks, config: session.config});
+  Object.assign(hand, {session, rng: session.rng, stacks: session.stacks, config: natural ? config : session.config});
   Object.defineProperty(session, 'activeHand', {value: hand, writable: true, configurable: true, enumerable: false});
   return hand;
 }
@@ -510,9 +532,10 @@ function publishPooledHand(session, draft, existing = null) {
 /** Leaving forfeits an unfinished hand, but an already all-in player keeps the pending showdown. */
 export function endHandForTableExit(hand) {
   if (hand.status === 'settled') return hand;
-  if (hand.status !== 'playing' || !['fixed-holdem', 'pooled-holdem'].includes(hand.config.outcome.mode)) {
+  if (hand.status !== 'playing' || !isHoldemBetting(hand.config)) {
     throw new TypeError('This hand cannot be closed on table exit.');
   }
+  if (isNaturalHoldem(hand.config)) assertNaturalHoldemIntegrity(hand);
   const draft = cloneHand(hand);
   if (draft.stacks.player <= epsilon) {
     stepNpc(draft);
@@ -528,6 +551,15 @@ export function endHandForTableExit(hand) {
 
 /** Pooled Holdem advances an atomic selected path; the historical model reads its stored tree. */
 export function applyAction(hand, requested) {
+  if (isNaturalHoldem(hand.config)) {
+    assertNaturalHoldemIntegrity(hand);
+    const chosen = resolveHoldemAction(legalActions(hand), requested);
+    if (!chosen) throw new Error('目前沒有指定的合法動作。');
+    const draft = cloneHand(hand);
+    applyActionRaw(draft, chosen);
+    lockNaturalHoldemDeal(draft);
+    return publishPooledHand(hand.session, draft, hand);
+  }
   if (isPooledHoldem(hand.config)) {
     const chosen = resolveHoldemAction(legalActions(hand), requested);
     if (!chosen) throw new Error('目前沒有指定的合法動作。');
@@ -558,6 +590,9 @@ function knownStrength(hand, actor) {
 export function getActionDistribution(hand, actor = hand.actor, policy = 'balanced') {
   const actions = legalActions(hand, actor);
   if (!actions.length) return [];
+  if (actor === 'npc' && isNaturalHoldem(hand.config)) {
+    return getNaturalBossDistribution(createBossDecisionView(hand, actions));
+  }
   if (actor === 'npc' && hand.config.boss.mode !== 'legacy') return getBossProfileDistribution(hand, actions);
   if (policy === 'call') {
     const chosen = actions.find(a => a.type === 'call') || actions.find(a => a.type === 'check') || actions[0];
@@ -578,7 +613,7 @@ export function getActionDistribution(hand, actor = hand.actor, policy = 'balanc
     if (policy === 'aggressive') weight *= item.type === 'fold' ? 0.15 : ['bet', 'raise'].includes(item.type) ? 3.5 : 1;
     if (policy === 'tight') weight *= item.type === 'fold' ? 3 : ['bet', 'raise'].includes(item.type) ? (strength > 0.72 ? 1.5 : 0.25) : 1;
     if (isHoldemBetting(hand.config) && item.sizeKeys) {
-      const sizes = actor === 'player' && isPooledHoldem(hand.config) ? PLAYER_HOLDEM_SIZE_WEIGHTS : HOLDEM_SIZE_WEIGHTS;
+      const sizes = actor === 'player' && (isPooledHoldem(hand.config) || isNaturalHoldem(hand.config)) ? PLAYER_HOLDEM_SIZE_WEIGHTS : HOLDEM_SIZE_WEIGHTS;
       weight *= item.sizeKeys.reduce((sum, key) => sum + (sizes[key] || 0), 0);
     }
     return weight;
@@ -661,6 +696,11 @@ export function cloneHand(hand, {compactPools = false} = {}) {
   if (hand.bossStreetStrength) copy.bossStreetStrength = structuredClone(hand.bossStreetStrength);
   if (hand.bossStreetStates) copy.bossStreetStates = structuredClone(hand.bossStreetStates);
   if (hand.pooledHoldem) copy.pooledHoldem = structuredClone(hand.pooledHoldem);
+  if (isNaturalHoldem(hand.config)) {
+    copy.naturalHoldem = structuredClone(hand.naturalHoldem);
+    copy.rulesSnapshot = structuredClone(hand.rulesSnapshot);
+    lockNaturalHoldemDeal(copy);
+  }
   if (hand._outcomeTree) attachOutcomeTree(copy, hand._outcomeTree, hand._outcomeNodeId);
   return copy;
 }
@@ -676,6 +716,15 @@ export function previewResponse(hand, playerActionType) {
 
 export function stepNpc(hand) {
   if (hand.actor !== 'npc') throw new Error('目前不是電腦行動。');
+  if (isNaturalHoldem(hand.config)) {
+    assertNaturalHoldemIntegrity(hand);
+    const draft = cloneHand(hand), distribution = getActionDistribution(draft);
+    const selected = sampleDistribution(distribution, draft.rng);
+    applyActionRaw(draft, selected);
+    lockNaturalHoldemDeal(draft);
+    publishPooledHand(hand.session, draft, hand);
+    return {distribution, selected, roll: selected.roll};
+  }
   const distribution = getActionDistribution(hand);
   const selected = sampleDistribution(distribution, hand.rng);
   applyAction(hand, selected);
@@ -727,7 +776,7 @@ export function simulate(config = {}, {hands = 10000, seed = 123, policy = 'bala
   const emptyTiers = () => ({royal: 0, straightFlush: 0, quads: 0});
   const newBatch = () => ({hands: 0, wagers: 0, netReturns: 0, totalReturns: 0, jackpotAwards: 0, tierCounts: emptyTiers()});
   const holdem = isHoldemBetting(normalized), pooled = normalized.outcome.mode === 'prebuilt-pools' || isPooledHoldem(normalized);
-  const result = {ruleSet: isPooledHoldem(normalized) ? 'pooled-holdem-v1' : isFixedHoldem(normalized) ? 'fixed-holdem-v1'
+  const result = {ruleSet: isNaturalHoldem(normalized) ? NATURAL_HOLDEM_RULES.id : isPooledHoldem(normalized) ? 'pooled-holdem-v1' : isFixedHoldem(normalized) ? 'fixed-holdem-v1'
     : pooled ? 'hands-up-pooled-pot-v51' : 'heads-up-two-blinds-v1', hands, seed, policy, config: normalized, wagers: 0, refunds: 0, grossReturns: 0, netReturns: 0,
     totalReturns: 0, jackpotAwards: 0, tierCounts: emptyTiers(),
     fees: 0, playerFees: 0, wins: 0, losses: 0, ties: 0, folds: 0, npcFolds: 0, showdowns: 0, totalActions: 0,

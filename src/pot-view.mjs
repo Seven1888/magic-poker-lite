@@ -1,4 +1,4 @@
-import {atGameSpeed} from './presentation-timing.mjs?v=59';
+import {atGameSpeed} from './presentation-timing.mjs?v=60';
 
 /** Read-only pot presentation. It never calls the game RNG or mutates a hand. */
 export function createPotView({root = globalThis.document, reducedMotion = false, locale = 'zh', onPhase, onProgress} = {}) {

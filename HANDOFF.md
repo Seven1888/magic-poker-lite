@@ -1,3 +1,19 @@
+# Magic Poker Lite v60 交接
+
+2026-10-08。v60本地實作與驗證完成：完整測試649／649、最後呈現專項24／24，靜態建置265檔；遊戲、工具、舊存檔及規則驗收通過。目前待推送與公開部署驗收，最後證據見docs/06及建立新聊天室的交接訊息。
+
+新正式natural-holdem：均勻洗牌整手鎖牌，版本規則／設定快照，BOSS白名單資訊與natural-boss-pressure-v1，真實牌力及FOLD結算。保留完整HU與2P／4P／ALL IN，無新池、付款轉贏、換底牌、JP、退出報價。**這不等於所有策略99% RTP，未作此保證。**
+
+舊桌按舊契約結清，舊池封存不列資產；v59相容fixture由363aa41999ad6762bfdc98fea8c7588b83b52843實際程式產生。新聊天室不要擅自恢復歷史方案B要求。先讀AGENTS、docs/23、docs/06，依交接訊息給相關連結，再接使用者新需求。
+
+- [公開遊戲v60](https://seven1888.github.io/magic-poker-lite/?v=60)／[工具](https://seven1888.github.io/magic-poker-lite/probability.html?v=60)／[規則](https://seven1888.github.io/magic-poker-lite/docs/04-game-flow-and-math.html?v=60)
+- [本地遊戲](http://127.0.0.1:4177/index.html?v=60)／[本地工具](http://127.0.0.1:4177/probability.html?v=60)
+- [GitHub](https://github.com/Seven1888/magic-poker-lite)／[Actions](https://github.com/Seven1888/magic-poker-lite/actions)／[v60規格](https://github.com/Seven1888/magic-poker-lite/blob/main/docs/23-v60-natural-holdem.md)／[雙聲線資產](https://github.com/Seven1888/magic-poker-lite/tree/main/assets/action-voice-v59)
+
+唯一可改Magic Poker Lite；同層Hands Up、Boss Duel、Final Table永遠唯讀。沿現checkout、繁中溝通。不要重做本輪實作／發布、不另開聊天室、不向原聊天室回報。
+
+---
+
 # Magic Poker Lite v59 介面發布與數學交接
 
 更新：2026-10-07。使用者最新指示：「開始處理，全部好了上GIT，好了之後請重開聊天室然後讓新聊天室給我相關連結，並接著討論數學模型」。**v59 四項非數學修正已推送 main、部署成功並通過公開驗收。** 正式結果公式、水池規則與 BOSS 機率表保持。數學缺口與原型詳見 [v59 審核](docs/22-v59-feedback-and-rtp-audit.md)，正式數學尚未修正；下方 v58 紀錄僅為歷史。

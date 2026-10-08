@@ -7,7 +7,8 @@ export const HOLDEM_SIZE_WEIGHTS = Object.freeze({half: 0.5, pot: 0.35, allin: 0
 export const PLAYER_HOLDEM_SIZE_WEIGHTS = Object.freeze({'2x': 0.5, '4x': 0.35, allin: 0.15});
 export const isFixedHoldem = config => config?.outcome?.mode === 'fixed-holdem';
 export const isPooledHoldem = config => config?.outcome?.mode === 'pooled-holdem';
-export const isHoldemBetting = config => isFixedHoldem(config) || isPooledHoldem(config);
+export const isNaturalHoldem = config => config?.outcome?.mode === 'natural-holdem';
+export const isHoldemBetting = config => isFixedHoldem(config) || isPooledHoldem(config) || isNaturalHoldem(config);
 
 function action(type, amount = 0, to = 0, extra = {}) {
   return {id: type, type, label: LABELS[type], amount: round(amount), to: round(to), allIn: false, ...extra};
@@ -27,7 +28,7 @@ export function legalHoldemActions(hand, actor = hand.actor) {
   if (!(hand.stacks[opponent] > EPSILON) || maximum <= hand.currentBet + EPSILON || !mayRaise) return actions;
   const type = hand.currentBet > EPSILON ? 'raise' : 'bet';
   const minimumTo = round(hand.currentBet + (hand.lastFullRaise || hand.config.bigBlind));
-  const quotes = actor === 'player' && isPooledHoldem(hand.config) ? [
+  const quotes = actor === 'player' && (isPooledHoldem(hand.config) || isNaturalHoldem(hand.config)) ? [
     ['2x', round(paid + 2 * hand.pot)],
     ['4x', round(paid + 4 * hand.pot)],
     ['allin', maximum]

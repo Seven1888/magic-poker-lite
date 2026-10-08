@@ -1,4 +1,4 @@
-import {createBossHandRange} from './boss-hand-range.mjs?v=59';
+import {createBossHandRange} from './boss-hand-range.mjs?v=60';
 
 let currentEpoch=null,currentPlayer='',tracker=null;
 self.onmessage=({data})=>{

@@ -1,41 +1,41 @@
-import {createSession,startHand,legalActions,applyAction,getActionDistribution,sampleDistribution} from './engine.mjs?v=59';
-import {loadConfig,CONFIG_KEY,money,pct,esc,cardMarkup,cardText} from './shared.mjs?v=59';
-import {GAME_LABELS as LABELS,GAME_STREETS as STREETS,handName,translateError} from './game-text.mjs?v=59';
-import {createPotView} from './pot-view.mjs?v=59';
-import {fitStage} from './stage-fit.mjs?v=59';
-import {getHudSnapshot} from './hud-state.mjs?v=59';
-import {createGameEffects} from './game-effects.mjs?v=59';
-import {renderBetPresets,updateBetSelection,setupEntryFeatures} from './entry-view.mjs?v=59';
-import {betOptions,tableConfig} from './entry-model.mjs?v=59';
-import {handEntryStatus} from './hand-entry.mjs?v=59';
-import {loadPlayerProfile,savePlayerProfile} from './outcome-profile.mjs?v=59';
-import {createOutcomePools,normalizeOutcomePools} from './outcome-pools.mjs?v=59';
-import {createEntryEncounter} from './entry-encounter.mjs?v=59';
-import {icon} from './ui-icons.mjs?v=59';
-import {getCurrentHandView} from './hand-view.mjs?v=59';
-import {decisionMotion} from './decision-motion.mjs?v=59';
-import {getShowdownView} from './showdown-view.mjs?v=59';
-import {GAME_SPEED,atGameSpeed} from './presentation-timing.mjs?v=59';
-import {createBankrollView} from './bankroll-view.mjs?v=59';
-import {renderWinRate,equityPercent} from './win-rate-view.mjs?v=59';
-import {createHoldemEquityController} from './holdem-equity-controller.mjs?v=59';
-import {responseActionLabel,captureResponseSource,responseSourceMatches,isCertainResponse} from './action-response-view.mjs?v=59';
-import {boardCardView,nextBoardReveal,tableDeckCounts} from './board-presentation.mjs?v=59';
-import {createResponseFlight} from './response-flight-view.mjs?v=59';
-import {createActionFlow} from './action-flow-view.mjs?v=59';
-import {createBlindDraw} from './blind-draw-view.mjs?v=59';
-import {createTotalWin} from './total-win-view.mjs?v=59';
-import {createBossActionView} from './boss-action-view.mjs?v=59';
-import {renderBossIdentity,preloadBossScenes,waitForBossScene} from './boss-scene-view.mjs?v=59';
-import {createEquityMomentum} from './equity-momentum.mjs?v=59';
-import {renderCardRow} from './card-row-view.mjs?v=59';
-import {getBossProbabilityScenarios} from './boss-profiles.mjs?v=59';
-import {bossProbabilityScenariosHtml} from './boss-probability-view.mjs?v=59';
-import {buyInFromWallet,cashOutToWallet,snapshotTableSession,closeSavedTable} from './table-wallet.mjs?v=59';
-import {playBuyInFlight} from './buyin-flight.mjs?v=59';
-import {createActionAnnouncements} from './action-announcement.mjs?v=59';
-import {totalBalance} from './balance-display.mjs?v=59';
-import {ACTION_ART,chipIcon,actionResponsePreview,actionResponseMarkup,raiseMenuChoices,raiseSizeLabel} from './action-options-view.mjs?v=59';
+import {createSession,startHand,legalActions,applyAction,getActionDistribution,sampleDistribution} from './engine.mjs?v=60';
+import {loadConfig,CONFIG_KEY,money,pct,esc,cardMarkup,cardText} from './shared.mjs?v=60';
+import {GAME_LABELS as LABELS,GAME_STREETS as STREETS,handName,translateError} from './game-text.mjs?v=60';
+import {createPotView} from './pot-view.mjs?v=60';
+import {fitStage} from './stage-fit.mjs?v=60';
+import {getHudSnapshot} from './hud-state.mjs?v=60';
+import {createGameEffects} from './game-effects.mjs?v=60';
+import {renderBetPresets,updateBetSelection,setupEntryFeatures} from './entry-view.mjs?v=60';
+import {betOptions,tableConfig} from './entry-model.mjs?v=60';
+import {handEntryStatus} from './hand-entry.mjs?v=60';
+import {loadPlayerProfile,savePlayerProfile} from './outcome-profile.mjs?v=60';
+import {createOutcomePools,normalizeOutcomePools} from './outcome-pools.mjs?v=60';
+import {createEntryEncounter} from './entry-encounter.mjs?v=60';
+import {icon} from './ui-icons.mjs?v=60';
+import {getCurrentHandView} from './hand-view.mjs?v=60';
+import {decisionMotion} from './decision-motion.mjs?v=60';
+import {getShowdownView} from './showdown-view.mjs?v=60';
+import {GAME_SPEED,atGameSpeed} from './presentation-timing.mjs?v=60';
+import {createBankrollView} from './bankroll-view.mjs?v=60';
+import {renderWinRate,equityPercent} from './win-rate-view.mjs?v=60';
+import {createHoldemEquityController} from './holdem-equity-controller.mjs?v=60';
+import {responseActionLabel,captureResponseSource,responseSourceMatches,isCertainResponse} from './action-response-view.mjs?v=60';
+import {boardCardView,nextBoardReveal,tableDeckCounts} from './board-presentation.mjs?v=60';
+import {createResponseFlight} from './response-flight-view.mjs?v=60';
+import {createActionFlow} from './action-flow-view.mjs?v=60';
+import {createBlindDraw} from './blind-draw-view.mjs?v=60';
+import {createTotalWin} from './total-win-view.mjs?v=60';
+import {createBossActionView} from './boss-action-view.mjs?v=60';
+import {renderBossIdentity,preloadBossScenes,waitForBossScene} from './boss-scene-view.mjs?v=60';
+import {createEquityMomentum} from './equity-momentum.mjs?v=60';
+import {renderCardRow} from './card-row-view.mjs?v=60';
+import {getBossProbabilityScenarios} from './boss-profiles.mjs?v=60';
+import {bossProbabilityScenariosHtml} from './boss-probability-view.mjs?v=60';
+import {buyInFromWallet,cashOutToWallet,snapshotTableSession,closeSavedTable} from './table-wallet.mjs?v=60';
+import {playBuyInFlight} from './buyin-flight.mjs?v=60';
+import {createActionAnnouncements} from './action-announcement.mjs?v=60';
+import {totalBalance} from './balance-display.mjs?v=60';
+import {ACTION_ART,chipIcon,actionResponsePreview,actionResponseMarkup,raiseMenuChoices,raiseSizeLabel} from './action-options-view.mjs?v=60';
 document.documentElement.style.setProperty('--game-speed',String(GAME_SPEED));
 const $=id=>document.getElementById(id);
 // Stable player controls; engine actions and opponent response types stay unchanged.
@@ -58,7 +58,7 @@ let raiseMenuOpen=false;
 function saveSettledPlayer(){
  if(restoreError)return;
  if(session){personalPools=normalizeOutcomePools(session.outcomePools);previousBossProfileId=session.lastBossProfileId??previousBossProfileId;}
- const table=session&&['fixed-holdem','pooled-holdem'].includes(session.config.outcome.mode)?snapshotTableSession(session):null;
+ const table=session&&['natural-holdem','fixed-holdem','pooled-holdem'].includes(session.config.outcome.mode)?snapshotTableSession(session):null;
  if(!savePlayerProfile({version:2,balance:demoAssets,outcomePools:personalPools,table,lastBossProfileId:previousBossProfileId}))toast('Progress could not be saved on this device.');
 }
 let entryEncounter=null;
@@ -156,10 +156,10 @@ function decorateMenu(){
  const reset=document.createElement('button');reset.id='reset-demo';reset.className='text-button wide';reset.textContent='↻ Reset demo chips';reset.onclick=()=>{if(busy||session)return;session=null;hand=null;closedTable=null;config=loadConfig();demoAssets=10000;saveSettledPlayer();selectedBet=1;handArchive=[];drawLog=[];lastResponse=null;entryEncounter=null;prepareEntry();$('menu-dialog').close();render();setupBuyin();};
  $('menu-dialog').append(reset);
  const rules=document.querySelector('#help-dialog .rules');
- rules.innerHTML=`<li>Choose your SMALL BLIND. The BIG BLIND is twice that amount. Buy-in is 100 small blinds. FIGHT moves wallet funds to the table without changing TOTAL BALANCE. No top-ups at this table.</li><li>Each player receives two hole cards. Five dashed slots show the future board. Deal FLOP (3), TURN (1), RIVER (1), with a betting round at each stage.</li><li>CHECK when nothing is owed; CALL to match. BET opens the betting; RAISE increases it. Tap BET or RAISE to choose an amount. Re-raises are allowed while legal.</li><li>The first blind is drawn 50/50, then positions alternate. Small blind acts first preflop; big blind acts first on later streets.</li><li>Opponent strength is fixed for the street; response odds follow the actual betting pressure. Opponent responses are shown above your actions and beside each bet size.</li><li>A fold ends the hand. Otherwise, the best five of seven wins at showdown. Ties split the matched pot; unmatched chips are returned.</li>`;
+ rules.innerHTML=`<li>Choose your SMALL BLIND. The BIG BLIND is twice that amount. Buy-in is 100 small blinds. FIGHT moves wallet funds to the table without changing TOTAL BALANCE. No top-ups at this table.</li><li>The deck is shuffled once at the start of each hand. Both players' hole cards and the remaining card order stay fixed. Reveal FLOP (3), TURN (1), RIVER (1), with a betting round at each stage.</li><li>CHECK when nothing is owed; CALL to match. BET opens the betting; RAISE increases it. Tap BET or RAISE to choose an amount. Re-raises are allowed while legal.</li><li>The first blind is drawn 50/50, then positions alternate. Small blind acts first preflop; big blind acts first on later streets.</li><li>The opponent uses its own cards, revealed community cards, betting history and the actual price to choose a move. It does not know your cards or unrevealed community cards. Response odds are shown above your actions and beside each bet size.</li><li>A fold ends the hand. Otherwise, the best five of seven wins at showdown. Ties split the matched pot; unmatched chips are returned.</li>`;
  const fees=document.createElement('details');fees.className='rules-details';fees.innerHTML='<summary>Table chips, opponents & payouts ⓘ</summary><p>The opponent starts every hand with the same table chips as you. Each hand independently draws an AGGRESSIVE or PASSIVE opponent with equal chance. The same type may appear again. Your chips keep actual winnings and losses. TOTAL BALANCE includes wallet funds and your remaining table chips. Bets reduce it; refunds and winnings increase it.</p><p>2× POT and 4× POT use the current pot before your action. Amounts show the chips you add now, with no extra call added. The minimum legal raise and your remaining stack apply. Equal amounts are combined.</p><p>Gold edges mark your best five; blue edges show the opponent’s revealed best five. Action odds are not your chance to win the pot.</p><p id="help-fee"></p>';
  rules.after(fees);
- document.querySelector('#help-dialog>p.muted').textContent='A 52-card heads-up poker game. Reloading returns to the buy-in screen and cashes out your remaining table chips. An unfinished hand is folded; an already all-in hand finishes normally. Your wallet and personal pools are kept.';
+ document.querySelector('#help-dialog>p.muted').textContent='A 52-card heads-up poker game. Reloading returns to the buy-in screen and cashes out your remaining table chips. An unfinished hand is folded; an already all-in hand finishes normally. Returns depend on the cards and play; there is no fixed 99% return guarantee.';
  const ledger=$('settlement'),details=document.createElement('details');details.className='result-accounting';details.innerHTML=`<summary>${icon('wallet')}Chip details <span>⌄</span></summary>`;ledger.replaceWith(details);details.append(ledger);
  const overview=document.createElement('div');overview.id='result-overview';overview.className='result-overview';details.before(overview);
 }
@@ -220,7 +220,7 @@ $('buyin-form').onsubmit=async e=>{e.preventDefault();if(busy||session||restoreE
    const transfer=buyInFromWallet(demoAssets,selectedBet);
    const nextConfig=tableConfig(entryBase,selectedBet,demoAssets),seed=entryEncounter.seed;
    const nextSession=createSession(nextConfig,seed,{firstSmallBlind:'random',outcomePools:personalPools,lastBossProfileId:previousBossProfileId});
-   if(nextConfig.outcome.mode!=='pooled-holdem'||nextSession.stacks.player!==transfer.chips)throw new Error('Table buy-in does not match the selected blinds. No balance was charged.');
+   if(nextConfig.outcome.mode!=='natural-holdem'||nextSession.stacks.player!==transfer.chips)throw new Error('Table buy-in does not match the selected blinds. No balance was charged.');
    busy=true;config=nextConfig;session=nextSession;demoAssets=transfer.balance;hand=null;handArchive=[];closedTable=null;lastResponse=null;drawLog=[];
    saveSettledPlayer();buyInPending=true;buyInDisplay={player:0,npc:0};$('buyin-dialog').close();render();
    setTableCue('buyin','BUYING IN',{detail:'CHIPS TO THE TABLE'});
@@ -463,6 +463,7 @@ function renderStreetOdds(){
  const button=$('street-odds-button');
  const visible=hand?.status==='playing'&&shownBoard===hand.board.length;
  button.hidden=true;
+ if(hand?.config.outcome.mode==='natural-holdem')return;
  if(!visible)return;
  const scenarios=getBossProbabilityScenarios(hand),p=scenarios.facing;
  const percentage=value=>Number((value*100).toFixed(2))+'%';
@@ -519,7 +520,9 @@ async function continuePlay(){
     setTableCue();$('game').dataset.activeSeat='npc';
     const source=responseSourceMatches(responseSource,hand)?responseSource:null;
     if(!source)clearResponseSource();
-    busy=true;const distribution=getActionDistribution(hand);const selected=sampleDistribution(distribution,hand.rng);const beforeStreet=hand.street;
+    busy=true;const distribution=getActionDistribution(hand);
+    const decisionRng=hand.config.outcome.mode==='natural-holdem'?hand.rng.clone():hand.rng;
+    const selected=sampleDistribution(distribution,decisionRng);const beforeStreet=hand.street;
     const entry={street:beforeStreet,distribution:distribution.map(a=>({...a})),selected:{...selected},roll:selected.roll};
     const hasDraw=!isCertainResponse(distribution);
     phase=hasDraw?'OPPONENT DECIDING':'OPPONENT ACTION';$('game').dataset.npcState=hasDraw?'thinking':selected.type;$('game').dataset.deciding=String(hasDraw);
@@ -545,7 +548,9 @@ async function continuePlay(){
       await delay(Math.max(0,motion.duration-sweepMs),{speed:1});
     }else{lastResponse=null;setTableCue('action',`OPPONENT ${responseActionLabel(selected.type)}`,{seat:'npc'});}
     const before=hand.board.length,historyStart=hand.history.length;
-    applyAction(hand,selected);saveSettledPlayer();drawLog.push(entry);$('game').dataset.npcState=selected.type;
+    applyAction(hand,selected);
+    if(hand.config.outcome.mode==='natural-holdem')hand.rng=hand.session.rng=decisionRng;
+    saveSettledPlayer();drawLog.push(entry);$('game').dataset.npcState=selected.type;
     // Use only the committed history event. Paid action text starts from the
     // same contribution notification as the actual chips; free actions start now.
     const actionEvent=hand.history.slice(historyStart).find(event=>event.actor==='npc');

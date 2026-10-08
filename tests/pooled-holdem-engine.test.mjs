@@ -35,15 +35,15 @@ function assertConservation(hand) {
   assert.equal(r.npc.netReturn, r.npc.gross);
 }
 
-test('the production default and raw API use pooled Holdem, including a big-blind-only override', () => {
-  assert.equal(DEFAULT_CONFIG.outcome.mode, 'pooled-holdem');
+test('the production default is natural Holdem while explicit pooled sessions retain their contract', () => {
+  assert.equal(DEFAULT_CONFIG.outcome.mode, 'natural-holdem');
   assert.equal(DEFAULT_CONFIG.buyIn, 500); assert.equal(DEFAULT_CONFIG.minBuyIn, 500);
   assert.equal(DEFAULT_CONFIG.maxRaises, null);
-  const settings = normalizeConfig({bigBlind: 20});
+  const settings = normalizeConfig({bigBlind: 20, outcome: {mode: 'pooled-holdem'}});
   assert.equal(settings.bigBlind, 20); assert.equal(settings.smallBlind, 10);
   assert.equal(settings.buyIn, 1000); assert.equal(settings.minBuyIn, 1000);
   assert.equal(settings.outcome.mode, 'pooled-holdem');
-  const session = createSession();
+  const session = createSession({outcome: {mode: 'pooled-holdem'}});
   assert.deepEqual(session.stacks, {player: 500, npc: 500});
   const hand = startHand(session);
   assert.equal(hand.pooledHoldem.model, 'pooled-holdem-v1'); assert.equal(hand._outcomeTree, undefined);

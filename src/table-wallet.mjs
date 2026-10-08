@@ -1,6 +1,7 @@
-import {createRng} from './poker.mjs?v=59';
-import {endHandForTableExit} from './engine.mjs?v=59';
-import {migrateOutcomePoolsWithoutJackpot} from './outcome-pools.mjs?v=59';
+import {createRng} from './poker.mjs?v=60';
+import {endHandForTableExit} from './engine.mjs?v=60';
+import {migrateOutcomePoolsWithoutJackpot} from './outcome-pools.mjs?v=60';
+import {assertNaturalHoldemIntegrity, lockNaturalHoldemDeal} from './natural-holdem.mjs?v=60';
 
 const round = value => Math.round((value + Number.EPSILON) * 1e6) / 1e6;
 const validMoney = value => Number.isFinite(value) && value >= 0 && Number.isSafeInteger(Math.round(value * 1e6));
@@ -31,7 +32,8 @@ export function closeSavedTable(profile) {
 /** Save the committed hand and RNG together; animation never becomes an account transaction. */
 export function snapshotTableSession(session) {
   if (!session) return null;
-  if (!['fixed-holdem', 'pooled-holdem'].includes(session.config.outcome.mode)) throw new TypeError('This table model does not support active-hand saves.');
+  if (!['natural-holdem', 'fixed-holdem', 'pooled-holdem'].includes(session.config.outcome.mode)) throw new TypeError('This table model does not support active-hand saves.');
+  if (session.config.outcome.mode === 'natural-holdem' && session.activeHand) assertNaturalHoldemIntegrity(session.activeHand);
   const {activeHand, rng, ...state} = session;
   const hand = activeHand ? Object.fromEntries(Object.entries(activeHand).filter(([key]) => !['session', 'rng'].includes(key))) : null;
   return structuredClone({version: 1, rngState: rng.state(), session: state, hand});
@@ -39,7 +41,7 @@ export function snapshotTableSession(session) {
 
 export function restoreTableSession(snapshot) {
   if (!snapshot || snapshot.version !== 1 || !Number.isInteger(snapshot.rngState)
-    || !['fixed-holdem', 'pooled-holdem'].includes(snapshot.session?.config?.outcome?.mode)) throw new TypeError('Invalid table snapshot.');
+    || !['natural-holdem', 'fixed-holdem', 'pooled-holdem'].includes(snapshot.session?.config?.outcome?.mode)) throw new TypeError('Invalid table snapshot.');
   const data = structuredClone(snapshot), session = data.session;
   if (!['player', 'npc'].every(seat => validMoney(session.stacks?.[seat]))) throw new TypeError('Invalid saved chips.');
   session.rng = createRng(data.rngState);
@@ -49,9 +51,15 @@ export function restoreTableSession(snapshot) {
       || !['player', 'npc'].every(seat => hand.holes?.[seat]?.length === 2 && validMoney(hand.stacks?.[seat]))) {
       throw new TypeError('Invalid saved hand.');
     }
+    if ((session.config.outcome.mode === 'natural-holdem' || hand.config?.outcome?.mode === 'natural-holdem')
+      && session.config.outcome.mode !== hand.config?.outcome?.mode) throw new TypeError('Saved table and hand models do not match.');
     hand.session = session;
     hand.rng = session.rng;
     hand.stacks = session.stacks;
+    if (session.config.outcome.mode === 'natural-holdem') {
+      assertNaturalHoldemIntegrity(hand);
+      lockNaturalHoldemDeal(hand);
+    }
     session.activeHand = hand;
   }
   return session;

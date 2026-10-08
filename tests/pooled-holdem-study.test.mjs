@@ -13,19 +13,18 @@ const near=(a,b)=>assert.ok(Math.abs(a-b)<1e-5,`${a} != ${b}`);
 const config={smallBlind:5,outcome:{mode:'pooled-holdem'}};
 function target(id){const children=new Map();return {id,innerHTML:'',children,querySelector(selector){if(!children.has(selector))children.set(selector,{innerHTML:''});return children.get(selector);}};}
 
-test('工具匯入遷移至無 JP 正式德州，保留 RTP、總池額、CD 與指定牌',()=>{
+test('歷史模型匯入正式工具改用自然德州，移除池控制與指定牌',()=>{
   for(const mode of ['legacy-deck','prebuilt-pools','fixed-holdem','pooled-holdem']){
     const source={smallBlind:20,bigBlind:40,buyIn:10000,targetRtp:.96,jackpotEnabled:true,
       boss:{mode:'legacy',profileId:'sniper'},deal:{player:{manual:['As','Kd']}},
       outcome:{mode,conversionRate:.97,initialPaidActionPools:[1,2,3],initialSpecialPools:[4,5,6],initialPaidActionCooldown:3}};
     const before=structuredClone(source),migrated=currentLabConfig(source);
     assert.deepEqual(source,before);
-    assert.equal(migrated.outcome.mode,'pooled-holdem');assert.equal(migrated.targetRtp,1);
+    assert.deepEqual(migrated.outcome,{mode:'natural-holdem'});assert.equal(migrated.targetRtp,1);
     assert.equal(migrated.smallBlind,20);assert.equal(migrated.bigBlind,40);assert.equal(migrated.buyIn,2000);
-    assert.equal(migrated.jackpotEnabled,false);assert.equal(migrated.outcome.conversionRate,.97);
-    assert.deepEqual(migrated.outcome.initialPaidActionPools,[5,7,9]);assert.deepEqual(migrated.outcome.initialSpecialPools,[0,0,0]);
-    assert.equal(migrated.outcome.initialPaidActionCooldown,3);assert.equal(migrated.boss.mode,'random');assert.equal(migrated.boss.profileId,'caller');
-    assert.deepEqual(migrated.deal.player.manual,['As','Kd']);assert.equal(migrated.deal.player.rerollChance,0);
+    assert.equal(migrated.jackpotEnabled,false);
+    assert.equal(migrated.boss.mode,'random');assert.equal(migrated.boss.profileId,'caller');
+    assert.deepEqual(migrated.deal.player.manual,[]);assert.equal(migrated.deal.player.rerollChance,0);
   }
 });
 

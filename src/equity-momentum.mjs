@@ -1,4 +1,4 @@
-import {equityPercent} from './win-rate-view.mjs?v=59';
+import {equityPercent} from './win-rate-view.mjs?v=60';
 
 const validEquity = value => typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 1;
 const side = value => value > .5 ? 1 : value < .5 ? -1 : 0;

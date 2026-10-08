@@ -1,7 +1,10 @@
-import {normalizeConfig, createSession, playAutomatedHand, syncOpponentBankroll, beginNewTable} from './engine.mjs?v=59';
-import {handEntryStatus} from './hand-entry.mjs?v=59';
-import {studyPlayerSeed} from './simulation-study.mjs?v=59';
-import {createPoolStudySummary, collectPoolStudyAudit, finishPoolStudySummary, combinePoolStudySummaries} from './probability-pools.mjs?v=59';
+import {normalizeConfig, createSession, playAutomatedHand, syncOpponentBankroll, beginNewTable} from './engine.mjs?v=60';
+import {handEntryStatus} from './hand-entry.mjs?v=60';
+import {studyPlayerSeed} from './simulation-study.mjs?v=60';
+import {NATURAL_HOLDEM_RULES} from './natural-holdem.mjs?v=60';
+import {getBossPolicyVersion} from './boss-profiles.mjs?v=60';
+import {labConfigSnapshot} from './probability-config.mjs?v=60';
+import {createPoolStudySummary, collectPoolStudyAudit, finishPoolStudySummary, combinePoolStudySummaries} from './probability-pools.mjs?v=60';
 
 const POLICIES = ['balanced', 'call', 'aggressive', 'tight'];
 
@@ -30,12 +33,17 @@ export function simulateRefundStudy(config = {}, {
   if (onProgress !== undefined && typeof onProgress !== 'function') throw new TypeError('進度回呼須為函式。');
 
   const normalized = normalizeConfig(config), pooled = ['prebuilt-pools','pooled-holdem'].includes(normalized.outcome.mode);
-  const holdem = ['fixed-holdem','pooled-holdem'].includes(normalized.outcome.mode);
+  const natural = normalized.outcome.mode === 'natural-holdem';
+  const holdem = natural || ['fixed-holdem','pooled-holdem'].includes(normalized.outcome.mode);
   const tableBuyIn = Math.round(normalized.smallBlind * 100 * 1e6) / 1e6;
   const report = {players, completedPlayers: 0, targetPlayers: 0, insufficientPlayers: 0,
     refundRate: 0, hands: 0, averageHands: 0, minHands: Infinity, maxHands: 0,
-    seed, policy, initialAsset, targetAsset, config: normalized,
+    seed, policy, initialAsset, targetAsset, config: labConfigSnapshot(normalized),
     outcomeModel: normalized.outcome.mode, playerResults: [], outcomePoolSummary: null,
+    ruleSet: natural ? NATURAL_HOLDEM_RULES.id : holdem ? 'heads-up-no-limit-v1' : 'heads-up-two-blinds-v1',
+    bossProfileVersion: getBossPolicyVersion(normalized),
+    ...(natural ? {rulesSnapshot: {...NATURAL_HOLDEM_RULES},
+      limitation: '退幣率是指定策略、BOSS 政策、種子及初始／目標資產下的有限玩家樣本，不是 RTP。未完成或中止研究不發布比例；沒有保證達標率。'} : {}),
     ...(holdem ? {tableBuyIn, tableEntries: 0, tableBuyIns: 0,
       assetModel: 'external-wallet-plus-table-chips',
       assetDefinition: '總資產＝外部錢包＋桌籌碼；每次帶入 100 小盲，桌籌碼歸零才重新帶入。帶入、離桌不計賭注或返還。'} : {})};

@@ -1,6 +1,6 @@
-import {previewResponse} from './engine.mjs?v=59';
-import {pct,esc} from './shared.mjs?v=59';
-import {icon} from './ui-icons.mjs?v=59';
+import {previewResponse} from './engine.mjs?v=60';
+import {pct,esc} from './shared.mjs?v=60';
+import {icon} from './ui-icons.mjs?v=60';
 
 /** Table-facing vocabulary only; the underlying action type stays unchanged. */
 export const responseActionLabel = type => ({fold:'FOLD',check:'CHECK',call:'CALL',bet:'BET',raise:'RAISE'}[type] || String(type).toUpperCase());
