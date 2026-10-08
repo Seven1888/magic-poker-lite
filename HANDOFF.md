@@ -1,12 +1,20 @@
 # v61 行動資訊調整
 
-2026-10-08。v61 本地實作、657／657 完整測試、267 檔建置與 Chrome 六種 viewport 驗收已完成。規格與本地證據見 [v61 行動資訊與流程](docs/24-v61-compact-action-feedback.md)、[發布紀錄](docs/06-mobile-and-deployment.md)。Git 與公開部署尚待本聊天室確認；下方 v60 為歷史發布。
+2026-10-08。v61 已推送 main、部署成功並通過公開驗收。本地完整測試 657／657、建置 267 檔；公開 145 個核心檔與 dist 一致，六種 viewport、三手牌局、字卡共存與重整冪等通過。規格與證據見 [v61 行動資訊與流程](docs/24-v61-compact-action-feedback.md)、[發布紀錄](docs/06-mobile-and-deployment.md)。下方 v60 為歷史發布。
+
+- 功能提交 [1af4285ebf3c00149a7e24481081948a3997d0ac](https://github.com/Seven1888/magic-poker-lite/commit/1af4285ebf3c00149a7e24481081948a3997d0ac)；[Actions 37749853288](https://github.com/Seven1888/magic-poker-lite/actions/runs/37749853288) 的 build／deploy 均 completed／success。
+- 本次後續文件提交只回填實際驗收證據；最終文件 SHA／成功 run 由建立新聊天室的交接訊息提供，不需接手重新追蹤發布。
 
 - 主機率框寬度收窄、高度為按鈕一半；CALL／CHECK 和預設 ALL IN 的 BET／RAISE 預覽各對齊本按鈕。BOSS 標頭改為柔和深棕灰。
 - 只顯示 FOLD 與 RAISE／BET 機率；FOLD 真為零才替換成 CALL／CHECK。細比例條保留原始完整機率。
 - 玩家正式行動字卡在對應按鈕；BOSS 字卡在臉部、手牌上方。雙方獨立保留、前景顯示、語音不阻塞；精簡中間提示與額外等待。
 - natural-holdem 數學仍為 v60，沒有改 BOSS 策略、RNG、牌、資產或保存。唯一專案仍為 Magic Poker Lite，同層其他遊戲永久唯讀。
 - 使用者要求「調整好更新上Git後請開新聊天室交接，讓新聊天室給我相關鏈結」。原聊天室確認 Git 與公開部署後才建立新聊天室。接手先唯讀 AGENTS、本文件、docs/24、docs/06；直接提供公開／本地遊戲、工具、規則、v61 規格、素材、Git 提交和成功 Actions 連結，然後等待新需求。不重做已完成工作、不另開聊天室、不需回訊息原聊天室。
+
+- [公開遊戲 v61](https://seven1888.github.io/magic-poker-lite/?v=61)／[工具](https://seven1888.github.io/magic-poker-lite/probability.html?v=61)／[規則](https://seven1888.github.io/magic-poker-lite/docs/04-game-flow-and-math.html?v=61)
+- [本地遊戲](http://127.0.0.1:4177/index.html?v=61)／[工具](http://127.0.0.1:4177/probability.html?v=61)／[規則](http://127.0.0.1:4177/docs/04-game-flow-and-math.html?v=61)
+- [GitHub](https://github.com/Seven1888/magic-poker-lite)／[v61 規格](https://github.com/Seven1888/magic-poker-lite/blob/main/docs/24-v61-compact-action-feedback.md)／[自然德州規格](https://github.com/Seven1888/magic-poker-lite/blob/main/docs/23-v60-natural-holdem.md)／[API](https://github.com/Seven1888/magic-poker-lite/blob/main/API-CONTRACT.md)
+- [雙聲線素材](https://github.com/Seven1888/magic-poker-lite/tree/main/assets/action-voice-v59)／[聲音來源](https://github.com/Seven1888/magic-poker-lite/blob/main/assets/action-voice-v59/voice-source.txt)／[按鈕素材](https://github.com/Seven1888/magic-poker-lite/tree/main/assets/action-buttons-v54)
 
 ---
 

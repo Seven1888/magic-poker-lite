@@ -1,6 +1,17 @@
 # v61 行動資訊：驗證與發布紀錄
 
-更新：2026-10-08。本地實作與驗證完成，Git／公開發布待確認。規格見 [v61 行動資訊與流程](24-v61-compact-action-feedback.md)。本輪修改窄機率框、字卡位置、顯示層次及流程節奏；自然德州規則／數學保持 v60。
+更新：2026-10-08。v61 已推送 main、部署成功並通過公開驗收。規格見 [v61 行動資訊與流程](24-v61-compact-action-feedback.md)。本輪修改窄機率框、字卡位置、顯示層次及流程節奏；自然德州規則／數學保持 v60。
+
+## v61 Git 與公開驗收
+
+- 功能提交 [1af4285ebf3c00149a7e24481081948a3997d0ac](https://github.com/Seven1888/magic-poker-lite/commit/1af4285ebf3c00149a7e24481081948a3997d0ac) 已推送 main；[Actions 37749853288](https://github.com/Seven1888/magic-poker-lite/actions/runs/37749853288) 的 build／deploy 均 completed／success，CI 測試與建置通過。
+- 公開 145 個核心檔 HTTP 200，文字正規化換行／WAV 二進位 hash 與 dist 一致，包含全部 src／styles、新規格與 12 個雙聲線 WAV。本機證據：`output/check-public-v61.mjs`、`output/public-v61-files.json`。
+- 公開六種 viewport 通過半高、中心對齊、原始機率細條與兩欄文字檢查，沒有水平溢出。393px 主畫面、選單、YOU／BOSS 字卡截圖已目視核對。
+- 公開實際走完三手（兩手 BOSS FOLD、一手攤牌），YOU／BOSS WAV 各啟動 5 次；記錄 28 個雙方字卡同時可見的畫面，卡片仍顯示時流程可操作。底牌／牌序鎖定、預覽隔離、兩次重整僅兌回一次均通過。
+- 最後成功單次遊戲驗收 errors／HTTPfailed 皆 0，有 2 次既有 `call.png` 圖片預載提示。首次 headed 驗收受約每秒一幀的背景節流影響，未捕捉字卡重疊而失敗；改用停用背景節流的獨立 headless Chrome，完全相同腳本與斷言重跑通過，未改正式程式或放寬檢查。
+- 公開工具／規則在 320／393／1440 共六組渲染檢查通過，無水平溢出，errors／HTTPfailed 皆 0。本輪不修改工具模擬／數學，規則標題保持 v60。
+- 本機證據：`output/playwright/public-v61-game.js`／`.log`、`public-v61-game-QA.json`、`public-v61-pages.log`、`public-v61-*.png`；首次紀錄為 `public-v61-game-first.log` 與 `public-v61-first-timing.log`。桌面 viewport／WebAudio 啟動不是實體 Android／喇叭聽感驗收，小樣本不是長期 RTP 認證。
+- 後續純文件提交回填以上已完成證據；最終文件 SHA 及成功 run 由原聊天室交接訊息提供，新聊天室不需重跑或追蹤發布。
 
 ## v61 本地驗證
 

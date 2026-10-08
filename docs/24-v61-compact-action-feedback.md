@@ -33,4 +33,5 @@
 - 連續重整兩次，舊桌結清一次且不重複兌回。遊戲最後成功驗收 0 瀏覽器錯誤、0 HTTP 失敗；有 1 個既有 Chrome 圖片預載提示。
 - 工具／規則在 320／393／1440 共六組渲染檢查通過，0 瀏覽器錯誤、0 HTTP 失敗；本輪沒有修改工具模擬或自然德州數學。
 - 證據：本機 `output/playwright/qa-v61-game-QA.json`、`qa-v61-game.js`／`.log`、`qa-v61-pages.js`／`.log` 及 `v61-*.png`。桌面 viewport 與 WebAudio 啟動不是實體手機或喇叭聽感驗證；牌局小樣本不代表長期 RTP 認證。
-- Git 推送、Actions 與公開部署的實際結果將記於 [發布紀錄](06-mobile-and-deployment.md)；確認完成後才依使用者要求開新聊天室交接連結。
+- 已推送 main：功能提交 `1af4285ebf3c00149a7e24481081948a3997d0ac`、Actions `37749853288` 的 build／deploy 均成功。公開 145 個核心檔與 dist 一致；六種 viewport、三手牌局、雙方字卡共存及重整冪等通過。公開工具／規則六組渲染檢查通過。
+- 公開完整結果、第一次受背景節流影響的驗收及最後相同斷言重跑通過的說明，見 [發布紀錄](06-mobile-and-deployment.md)。後續純文件提交回填證據，最終 SHA／run 隨新聊天室交接訊息提供。
