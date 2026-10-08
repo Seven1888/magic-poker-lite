@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createSession, startHand, legalActions, applyAction, previewResponse, cloneHand, getActionDistribution} from '../src/engine.mjs';
 import {snapshotTableSession} from '../src/table-wallet.mjs';
-import {actionResponsePreview, actionResponseMarkup, raiseMenuChoices, raiseSizeLabel} from '../src/action-options-view.mjs';
+import {actionResponsePreview, actionResponseMarkup, raiseMenuChoices, raiseSizeLabel, responseDisplayOutcomes, mainRaiseChoice} from '../src/action-options-view.mjs';
 
 const near = (actual, expected) => assert.ok(Math.abs(actual - expected) < 1e-12, `${actual} != ${expected}`);
 const create = (profileId = 'maniac', {mode = 'fixed-holdem', seed = 42, chips, outcome = {}} = {}) => {
@@ -104,7 +104,8 @@ test('each size shows its actual pressure response, with no raise against a larg
     near(actual.call, rows[2][1]/100);
     const markup = actionResponseMarkup(allIn, {compact: true});
     assert.match(markup, /data-response="call"><span>CALL<\/span>/);
-    assert.doesNotMatch(markup, /data-response="raise"/);
+    assert.match(markup, /button-response-key" data-response="raise"><span>RAISE<\/span><b>0%<\/b>/);
+    assert.doesNotMatch(markup, /button-response-key" data-response="call"/);
   }
 });
 
@@ -202,7 +203,7 @@ test('fold, missing state, NPC turns and settled hands do not advertise a new op
 
 test('response markup spells CALL in full and safely escapes attributes, outcome text and notes', () => {
   const normal = actionResponseMarkup({outcomes: [{type: 'call', probability: 1, label: '100%'}], note: ''}, {compact: true});
-  assert.match(normal, /class="button-response size-response"/);
+  assert.match(normal, /class="button-response size-response has-response-legend"/);
   assert.match(normal, /Opponent response: CALL 100%/);
   assert.match(normal, /<span>CALL<\/span><b>100%<\/b>/);
   const unsafe = actionResponseMarkup({outcomes: [{type: 'call"><img src=x>', label: '<svg onload="bad()">&\''}], note: ''});
@@ -212,4 +213,29 @@ test('response markup spells CALL in full and safely escapes attributes, outcome
   const note = actionResponseMarkup({outcomes: [], note: '<script>bad()</script>&"\''});
   assert.doesNotMatch(note, /<script\b/i);
   assert.match(note, /&lt;script&gt;bad\(\)&lt;\/script&gt;&amp;&quot;&#39;/);
+});
+
+test('compact labels keep FOLD when positive, switch to CALL or CHECK only at true zero, and never renormalize',()=>{
+ const preview=rows=>({outcomes:rows.map(([type,probability])=>({type,probability,label:`${Number((probability*100).toFixed(2))}%`})),note:''});
+ const mixed=preview([['fold',.2],['call',.75],['raise',.05]]);
+ assert.deepEqual(responseDisplayOutcomes(mixed).map(x=>[x.type,x.probability]),[['fold',.2],['raise',.05]]);
+ assert.deepEqual(responseDisplayOutcomes(preview([['call',.8],['raise',.2]])).map(x=>x.type),['call','raise']);
+ assert.deepEqual(responseDisplayOutcomes(preview([['check',.8],['bet',.2]])).map(x=>x.type),['check','bet']);
+ assert.equal(responseDisplayOutcomes(preview([['fold',.000001],['call',.999999]]))[0].type,'fold');
+ assert.deepEqual(responseDisplayOutcomes(preview([['fold',.98],['call',.02]]))[1],{type:'raise',probability:0,label:'0%'});
+ const html=actionResponseMarkup(mixed);
+ for(const [type,p] of [['fold',.2],['call',.75],['raise',.05]])assert.match(html,new RegExp(`data-probability="${p}" data-response="${type}"`));
+ assert.doesNotMatch(html,/button-response-key" data-response="call"/);
+});
+
+test('default aggressive preview shares the exact ALL IN choice and leaves natural cards and RNG unchanged',()=>{
+ for(const chips of [20,500]){
+  const hand=create('maniac',{mode:'natural-holdem',seed:0,chips});
+  const actions=raises(hand),before=snapshotTableSession(hand.session);
+  const chosen=mainRaiseChoice(actions);
+  assert.equal(chosen,raiseMenuChoices(actions)[0]);assert.equal(chosen.allIn,true);
+  assert.deepEqual(actionResponsePreview(hand,chosen),actionResponsePreview(hand,raiseMenuChoices(actions)[0]));
+  assert.deepEqual(snapshotTableSession(hand.session),before);
+ }
+ assert.equal(mainRaiseChoice([]),undefined);
 });

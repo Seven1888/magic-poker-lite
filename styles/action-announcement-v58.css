@@ -1,19 +1,22 @@
-/* Committed actions replace the existing 326–394px turn ribbon, above the board. */
+/* Seat-local feedback stays above draws/chips and never blocks input or the turn ribbon. */
 .game .action-announcement {
- position:absolute; top:326px; left:12px; right:12px; height:68px; z-index:32;
+ position:absolute; top:193px; left:50%; width:156px; height:54px; z-index:220;
+ transform:translate(-50%,-50%);
  display:flex; flex-direction:column; justify-content:center; align-items:center; gap:0;
- box-sizing:border-box; border:2px solid #d2a875; border-radius:10px;
- background:linear-gradient(100deg,#452421f5,#85352ff7 50%,#452421f5);
+ box-sizing:border-box; border:2px solid #bda079; border-radius:9px;
+ background:linear-gradient(100deg,#332726fa,#69453ffa 50%,#332726fa);
  box-shadow:inset 0 1px #fff0c938,0 4px 12px #070e1c80;
  color:#fff5df; pointer-events:none; overflow:hidden;
  animation:action-announcement-enter 160ms ease-out both;
 }
 .game .action-announcement[hidden] { display:none; }
-.game .action-announcement-actor { font-size:16px; line-height:19px; font-weight:800; letter-spacing:2px; }
-.game .action-announcement-verb { font-size:31px; line-height:35px; font-weight:900; letter-spacing:1px; white-space:nowrap; text-shadow:0 2px 2px #0008; }
+.game .action-announcement-actor { font-size:12px; line-height:15px; font-weight:800; letter-spacing:1.5px; color:#ded0b7; }
+.game .action-announcement-verb { font-size:25px; line-height:29px; font-weight:900; letter-spacing:.5px; white-space:nowrap; text-shadow:0 2px 2px #0008; }
+.game .action-announcement[data-actor='player'] { top:770px; width:106px; height:48px; }
+.game .action-announcement[data-actor='player'] .action-announcement-actor { font-size:10px; line-height:12px; }
+.game .action-announcement[data-actor='player'] .action-announcement-verb { font-size:23px; line-height:27px; }
 .game .action-announcement[data-action='fold'] { background:linear-gradient(100deg,#193c2ef5,#296849f7 50%,#193c2ef5); border-color:#8ecbaa; }
 .game .action-announcement:is([data-action='raise'],[data-action='bet'],[data-action='allin']) { background:linear-gradient(100deg,#312141f5,#664383f7 50%,#312141f5); border-color:#c7a1e5; }
-.game[data-action-announcement] .action-flow-strip { visibility:hidden; }
-@keyframes action-announcement-enter { from { opacity:0; scale:.94; } to { opacity:1; scale:1; } }
+@keyframes action-announcement-enter { from { opacity:0; transform:translate(-50%,-50%) scale(.94); } to { opacity:1; transform:translate(-50%,-50%) scale(1); } }
 .game .action-announcement[data-reduced-motion='true'] { animation:none; }
 @media(prefers-reduced-motion:reduce) { .game .action-announcement { animation:none; } }

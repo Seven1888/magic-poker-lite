@@ -17,7 +17,7 @@ export function actionAnnouncement(event) {
  * Presentation-only feedback. Call announce once after applyAction commits history.
  * Pass a per-table hand/history key, never the reusable legal action event.id.
  * announce resolves immediately; neither the card nor speech gates the game.
- * A new action replaces the preceding card and voice, avoiding a stale backlog.
+ * Each seat keeps its own card; only the newest action speaks, without a backlog.
  * unlock must run in a user gesture; setEnabled follows the sound-effects toggle.
  */
 export function createActionAnnouncements({root = globalThis.document, reducedMotion = false, holdMs = 1000} = {}) {
@@ -27,18 +27,45 @@ export function createActionAnnouncements({root = globalThis.document, reducedMo
   const stage = root.id === 'game' ? root : lookup('game');
   const schedule = view.setTimeout?.bind(view) || globalThis.setTimeout;
   const unschedule = view.clearTimeout?.bind(view) || globalThis.clearTimeout;
-  const buffers = new Map(), seenKeys = new Map();
+  const buffers = new Map(), seenKeys = new Map(), elements = new Map(), active = new Map();
   let seenEvents = new WeakMap();
-  let context, output, element, active = null, enabled = true, unlocked = false, destroyed = false;
+  let context, output, latest = null, enabled = true, unlocked = false, destroyed = false;
   let played = 0, announced = 0;
-  const canSpeak = record => active === record && !destroyed && !record.aborted && enabled && unlocked && !doc.hidden && record.voiceAllowed;
+  const canSpeak = record => latest === record && !destroyed && !record.aborted && enabled && unlocked && !doc.hidden && record.voiceAllowed;
+  function position(record) {
+    const element = elements.get(record.action.actor), stageRect = stage?.getBoundingClientRect?.();
+    if (!element?.style || !stageRect?.width || !stageRect.height) return;
+    const width = stage.offsetWidth || stage.clientWidth || stageRect.width;
+    const height = stage.offsetHeight || stage.clientHeight || stageRect.height;
+    const scaleX = stageRect.width / width, scaleY = stageRect.height / height;
+    const anchor = record.action.actor === 'npc' ? lookup('npc-cards')
+      : lookup('action-buttons')?.querySelectorAll?.('.art-action')?.[record.slot];
+    const rect = anchor?.getBoundingClientRect?.();
+    // During settlement the controls may be rebuilt without buttons. Keep the
+    // committed slot's last coordinates rather than jumping to a different role.
+    if (!rect?.width || !rect.height) return;
+    const boss = record.action.actor === 'npc';
+    const cardWidth = boss ? 156 : Math.max(72, rect.width / scaleX - 12);
+    const cardHeight = boss ? 54 : 48;
+    const x = (rect.left + rect.width / 2 - stageRect.left) / scaleX;
+    const y = boss ? (rect.top - stageRect.top) / scaleY - 16 - cardHeight / 2
+      : (rect.top + rect.height / 2 - stageRect.top) / scaleY;
+    element.style.left = `${Math.max(cardWidth / 2 + 4, Math.min(width - cardWidth / 2 - 4, x))}px`;
+    element.style.top = `${Math.max(cardHeight / 2 + 4, y)}px`;
+    element.style.width = `${cardWidth}px`;
+    element.style.height = `${cardHeight}px`;
+    element.dataset.slot = boss ? 'boss-face' : String(record.slot);
+  }
+  function reposition() { for (const record of active.values()) if (!record.cardDone) position(record); }
   function show(record) {
     if (!stage || !doc.createElement) return;
+    let element = elements.get(record.action.actor);
     if (!element) {
-      element = doc.createElement('div'); element.id = 'action-announcement';
+      element = doc.createElement('div'); element.id = `action-announcement-${record.action.actor}`;
       element.className = 'action-announcement';
       element.setAttribute('role', 'status'); element.setAttribute('aria-live', 'polite');
       element.setAttribute('aria-atomic', 'true'); stage.append(element);
+      elements.set(record.action.actor, element);
     }
     element.textContent = '';
     const actor = doc.createElement('span'), action = doc.createElement('strong');
@@ -46,12 +73,12 @@ export function createActionAnnouncements({root = globalThis.document, reducedMo
     action.className = 'action-announcement-verb'; action.textContent = record.action.label;
     element.append(actor, action); element.dataset.action = record.action.type;
     element.dataset.actor = record.action.actor; element.dataset.reducedMotion = String(reducedMotion);
-    element.hidden = false; stage.dataset.actionAnnouncement = record.action.type;
+    element.hidden = false; position(record);
     announced++;
   }
-  function hide() {
+  function hide(actor) {
+    const element = elements.get(actor);
     if (element) element.hidden = true;
-    if (stage?.dataset) delete stage.dataset.actionAnnouncement;
   }
   function loadBuffer(actor, type) {
     if (!context?.decodeAudioData || !view.fetch) return Promise.resolve(null);
@@ -125,16 +152,17 @@ export function createActionAnnouncements({root = globalThis.document, reducedMo
     await speakFallback(record);
   }
   function releaseIfFinished(record) {
-    if (active === record && record.cardDone && record.voiceDone) active = null;
+    if (active.get(record.action.actor) === record && record.cardDone && record.voiceDone) active.delete(record.action.actor);
+    if (latest === record && record.cardDone && record.voiceDone) latest = null;
   }
   function present(record) {
-    active = record; show(record);
+    active.set(record.action.actor, record); latest = record; show(record);
     let timer;
     const clearCardTimer = () => { unschedule(timer); record.cleanups.delete(clearCardTimer); };
     record.cleanups.add(clearCardTimer);
     timer = schedule(() => {
       clearCardTimer(); record.cardDone = true;
-      if (active === record) hide();
+      if (active.get(record.action.actor) === record) hide(record.action.actor);
       releaseIfFinished(record);
     }, Math.max(800, Number(holdMs) || 1000));
     // This task is detached from the caller: audio failures and durations cannot
@@ -153,9 +181,14 @@ export function createActionAnnouncements({root = globalThis.document, reducedMo
     if (key !== undefined) seenKeys.set(String(key), promise);
     // Returning from the background never replays actions performed while hidden.
     if (doc.hidden) return promise;
-    cancel();
+    // A quick BOSS response must not erase the player's still-readable card.
+    // Speech stays single-speaker, and a slow prior load cannot speak later.
+    if (latest) { latest.voiceAllowed = false; latest.abort(); latest.stopVoice?.(); }
+    const previous = active.get(action.actor);
+    if (previous) cancelRecord(previous);
     let abort;
-    const record = {action, voiceAllowed: enabled && unlocked, aborted: false, cardDone: false, voiceDone: false, cleanups: new Set(),
+    const slot = event.type === 'fold' ? 0 : ['call', 'check'].includes(event.type) ? 1 : 2;
+    const record = {action, slot, voiceAllowed: enabled && unlocked, aborted: false, cardDone: false, voiceDone: false, cleanups: new Set(),
       cancelled: new Promise(done => { abort = done; }), abort: () => abort(null)};
     present(record); return promise;
   }
@@ -176,16 +209,17 @@ export function createActionAnnouncements({root = globalThis.document, reducedMo
   function setEnabled(value) {
     enabled = !!value;
     if (!enabled) {
-      if (active) { active.voiceAllowed = false; active.stopVoice?.(); }
+      for (const record of active.values()) { record.voiceAllowed = false; record.abort(); record.stopVoice?.(); }
     }
   }
+  function cancelRecord(record) {
+    if (active.get(record.action.actor) === record) { active.delete(record.action.actor); hide(record.action.actor); }
+    if (latest === record) latest = null;
+    record.aborted = true; record.abort();
+    for (const cleanup of [...record.cleanups]) cleanup();
+  }
   function cancel({resetKeys = false} = {}) {
-    const records = active ? [active] : [];
-    active = null; hide();
-    for (const record of records) {
-      record.aborted = true; record.abort();
-      for (const cleanup of [...record.cleanups]) cleanup();
-    }
+    for (const record of [...active.values()]) cancelRecord(record);
     if (resetKeys) { seenKeys.clear(); seenEvents = new WeakMap(); }
   }
   function suspend() {
@@ -194,13 +228,17 @@ export function createActionAnnouncements({root = globalThis.document, reducedMo
   }
   const visibility = () => { if (doc.hidden) suspend(); };
   doc.addEventListener?.('visibilitychange', visibility); view.addEventListener?.('pagehide', suspend);
+  view.addEventListener?.('resize', reposition);
   function destroy() {
     if (destroyed) return;
     destroyed = true; cancel(); unlocked = false;
     doc.removeEventListener?.('visibilitychange', visibility); view.removeEventListener?.('pagehide', suspend);
-    element?.remove(); element = null; buffers.clear(); seenKeys.clear();
+    view.removeEventListener?.('resize', reposition);
+    for (const element of elements.values()) element.remove();
+    elements.clear(); buffers.clear(); seenKeys.clear();
     if (context && context.state !== 'closed') { try { Promise.resolve(context.close()).catch(() => {}); } catch {} }
   }
-  return {announce, unlock, setEnabled, cancel, destroy,
-    getState: () => ({enabled, unlocked, active: active?.action || null, queued: 0, announced, played, destroyed})};
+  return {announce, unlock, setEnabled, cancel, destroy, reposition,
+    getState: () => ({enabled, unlocked, active: latest?.action || null,
+      cards: [...active.values()].filter(record => !record.cardDone).map(record => record.action), queued: 0, announced, played, destroyed})};
 }

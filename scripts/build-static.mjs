@@ -19,6 +19,7 @@ for (const word of ['call','check','bet','raise','allin','fold']) files.add(`ass
 files.add('assets/action-voice-v59/voice-source.txt');
 files.add('docs/22-v59-feedback-and-rtp-audit.md');
 files.add('docs/23-v60-natural-holdem.md');
+files.add('docs/24-v61-compact-action-feedback.md');
 for (const seat of ['player','boss']) {
   for (const word of ['call','check','bet','raise','allin','fold']) files.add(`assets/action-voice-v59/${seat}/${word}.wav`);
 }

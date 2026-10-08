@@ -24,16 +24,26 @@ export function actionResponseMarkup(preview, {compact = false} = {}) {
   const isPhase = preview.outcomes.length === 0;
   const description = preview.outcomes.map(row => `${row.type.toUpperCase()} ${row.label}`).join(', ') || preview.note;
   const probability = row => Number.isFinite(row.probability) ? Math.max(0, Math.min(1, row.probability)) : 0;
-  // Fill the whole frame with raw odds. Only move labels off individual slices
-  // when their size or precision would make that text unreadable.
-  const needsLegend = preview.outcomes.length > 1;
+  const needsLegend = !isPhase;
   const longPercent = preview.outcomes.some(row => String(row.label).length > 4);
-  const labelLayout = preview.outcomes.length > 2 || longPercent || preview.outcomes.some(row => probability(row) < .3) ? 'overlay' : 'segments';
   const copy = row => `<span>${esc(row.type.toUpperCase())}</span><b>${esc(row.label)}</b>`;
   const track = `<span class="button-response-outcomes">${preview.outcomes.map(row => `<span class="button-response-outcome" style="flex:0 0 ${probability(row)*100}%" data-probability="${probability(row)}" data-response="${esc(row.type)}">${copy(row)}</span>`).join('') || `<span class="button-response-note">${esc(preview.note)}</span>`}</span>`;
-  const content = needsLegend ? `<span class="button-response-body" data-label-layout="${labelLayout}">${track}<span class="button-response-legend" aria-hidden="true">${preview.outcomes.map(row => `<span class="button-response-key" data-response="${esc(row.type)}">${copy(row)}</span>`).join('')}</span></span>` : track;
+  const content = needsLegend ? `<span class="button-response-body" data-label-layout="compact">${track}<span class="button-response-legend" aria-hidden="true">${responseDisplayOutcomes(preview).map(row => `<span class="button-response-key" data-response="${esc(row.type)}">${copy(row)}</span>`).join('')}</span></span>` : track;
   return `<span class="button-response${compact?' size-response':''}${isPhase?' phase-response':''}${needsLegend?' has-response-legend':''}" data-outcome-count="${preview.outcomes.length}" data-long-percent="${longPercent}" aria-label="${isPhase?'Next phase':'Opponent response'}: ${esc(description)}">${isPhase?'':'<small class="button-response-title">BOSS</small>'}${content}</span>`;
 }
+
+/** Select readable labels only. The full original distribution still owns the strip. */
+export function responseDisplayOutcomes(preview){
+  const outcomes=preview?.outcomes||[],find=type=>outcomes.find(row=>row.type===type);
+  if(!outcomes.length)return [];
+  const fold=find('fold'),passive=find('call')||find('check');
+  const first=fold?.probability>0?fold:passive||fold||{type:'check',probability:0,label:'0%'};
+  const attack=find('raise')||find('bet')||{type:find('check')?'bet':'raise',probability:0,label:'0%'};
+  return [first,attack];
+}
+
+/** The main attack preview uses the same all-in quote as the first menu choice. */
+export function mainRaiseChoice(actions){return raiseMenuChoices(actions)[0];}
 
 /** Keep the largest choice on top without changing the quoted action identity. */
 export function raiseMenuChoices(actions) {

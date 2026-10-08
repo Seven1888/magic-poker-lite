@@ -56,12 +56,41 @@ export function actionFlowState({mode='',label='',seat='',detail='',actor='',pla
  return view('deal','READY TO PLAY','CHOOSE YOUR BET');
 }
 
+/** Keep central guidance for meaningful transitions; seat cards own committed actions. */
+export function essentialActionFlowState(input={},previous=null){
+ const {mode='',label='',actor='',playing=false,settled=false}=input;
+ if(['action','contribution'].includes(mode))return null;
+ if(['refund','bonus','refresh'].includes(mode))return previous?.step==='complete'?previous:null;
+ if(mode==='board-deal'){
+  const street=/\b(FLOP|TURN|RIVER)\b/i.exec(label)?.[1].toUpperCase();
+  return view('deal','',street?`DEAL ${street}`:'DEALING');
+ }
+ if(mode==='showdown')return view('deal','','SHOWDOWN');
+ if(mode==='hole-deal')return view('deal','',label==='DRAWING YOUR BLIND'?label:'DEALING');
+ if(mode==='buyin')return view('deal','','BUYING IN');
+ if(mode==='payout'){
+  const result=actionFlowState(input,previous);
+  return view('complete','',result.verb);
+ }
+ if(settled)return previous?.step==='complete'?previous:view('complete','','HAND COMPLETE');
+ if(playing)return actor==='player'?view('you','','YOUR TURN'):null;
+ return view('deal','','CHOOSE BLINDS');
+}
+
 /** Persistent, read-only turn panel; unchanged renders do not re-announce. */
-export function createActionFlow({root=globalThis.document}={}){
+export function createActionFlow({root=globalThis.document,compact=false}={}){
  const element=root.getElementById('action-flow');
  let previous=null,previousKey='',previousMessage='',blind=null;
  function paint(current){
   if(!element)return;
+  if(!current){
+   element.hidden=true;
+   element.setAttribute('aria-label','');element.setAttribute('title','');
+   const announcement=element.querySelector?.('.action-flow-announcement');
+   if(announcement)announcement.textContent='';
+   previousKey='';previousMessage='';return;
+  }
+  element.hidden=false;
   const key=JSON.stringify(current);
   if(key===previousKey)return;
   previousKey=key;
@@ -84,7 +113,7 @@ export function createActionFlow({root=globalThis.document}={}){
   previousMessage=current.message;
  }
  function render(input={}){
-  previous=actionFlowState(input,previous);
+  previous=compact?essentialActionFlowState(input,previous):actionFlowState(input,previous);
   if(!blind)paint(previous);
  }
  /** Hold the same ribbon through the draw; ordinary re-renders cannot erase it. */
@@ -93,7 +122,7 @@ export function createActionFlow({root=globalThis.document}={}){
    blind=null;
    // At a successful flight endpoint the next game phase updates the ribbon in
    // the same task. Do not briefly announce DRAWING YOUR BLIND a second time.
-   if(restore)paint(previous||actionFlowState());
+   if(restore)paint(compact?previous:previous||actionFlowState());
    return;
   }
   if(result.phase==='drawing')blind={...view('deal','','DRAWING YOUR BLIND'),blindDraw:'drawing'};

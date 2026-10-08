@@ -17,12 +17,13 @@ function fixture({audio = true, failFetch = false, stuckFetch = false, voiceMs =
     emit(name) { for (const fn of this.listeners.get(name) || []) fn(); }
   }
   class Element {
-    constructor() { this.children = []; this.dataset = {}; this.attrs = {}; this.hidden = false; this.text = ''; }
+    constructor(rect = {}) { this.children = []; this.dataset = {}; this.attrs = {}; this.style = {}; this.hidden = false; this.text = ''; this.rect = rect; }
     append(...nodes) { nodes.forEach(node => { node.parent = this; this.children.push(node); }); }
     setAttribute(name, value) { this.attrs[name] = value; }
     remove() { this.parent.children = this.parent.children.filter(node => node !== this); }
     set textContent(value) { this.text = value; this.children = []; }
     get textContent() { return this.text + this.children.map(node => node.textContent).join(' '); }
+    getBoundingClientRect() { return this.rect; }
   }
   class AudioContext {
     constructor() { this.state = 'suspended'; this.destination = {}; contexts.push(this); }
@@ -48,12 +49,16 @@ function fixture({audio = true, failFetch = false, stuckFetch = false, voiceMs =
       cancel() { this.cancellations++; for (const utterance of utterances) clearTimeout(utterance.timer); }
     }
   });
-  const stage = new Element(); stage.id = 'game';
+  const stage = new Element({left:100, top:20, width:200, height:400}); stage.id = 'game'; stage.offsetWidth = 400; stage.offsetHeight = 800;
+  const npcCards = new Element({left:163, top:138, width:74, height:42});
+  const buttons = [0,1,2].map(index => new Element({left:106 + index * 64, top:385, width:58, height:33}));
+  const controls = {buttons, querySelectorAll() { return this.buttons; }};
   const doc = Object.assign(new Target(), {defaultView: view, hidden: false,
-    createElement: () => new Element(), getElementById: id => id === 'game' ? stage : null});
+    createElement: () => new Element(), getElementById: id => ({game:stage, 'npc-cards':npcCards, 'action-buttons':controls})[id]});
   const announcements = createActionAnnouncements({root: doc});
-  return {announcements, doc, view, stage, sources, utterances, fetches, timers, contexts,
-    get card() { return stage.children[0]; },
+  return {announcements, doc, view, stage, sources, utterances, fetches, timers, contexts, controls, npcCards,
+    get card() { return stage.children.find(node => node.dataset.actor === announcements.getState().active?.actor) || stage.children.at(-1); },
+    cardFor(actor) { return stage.children.find(node => node.dataset.actor === actor); },
     async tick(ms) {
       const target = now + ms;
       await flush();
@@ -106,7 +111,7 @@ test('each action has valid local mono speech assets with distinct player and BO
   }
 });
 
-test('announcements return immediately; new actions replace speech without a queue and select the correct seat recording', async () => {
+test('announcements return immediately; each seat retains its card while speech uses only the latest seat recording', async () => {
   const f = fixture({voiceMs: 2500}); await f.announcements.unlock(); await flush();
   const a = {actor:'player', type:'check', id:'check'}, b = {actor:'npc', type:'check', id:'check'};
   const first = f.announcements.announce(a, {key:'table1:hand1:2'});
@@ -121,10 +126,13 @@ test('announcements return immediately; new actions replace speech without a que
   assert.equal(await second, true);
   await flush();
   assert.equal(f.card.textContent, 'BOSS CHECK'); assert.equal(f.sources.length, 2);
+  assert.equal(f.cardFor('player').textContent, 'YOU CHECK');
+  assert.equal(f.cardFor('player').hidden, false, 'the BOSS response leaves the player card readable');
   assert.equal(f.sources[0].stopped, true, 'outdated speech stops before the next speaker starts');
   assert.match(f.sources[1].buffer.url, /action-voice-v59\/boss\/check\.wav$/);
   assert.equal(f.sources[1].startedAt, 100); assert.equal(f.announcements.getState().queued, 0);
-  await f.tick(999); assert.equal(f.card.hidden, false);
+  await f.tick(900); assert.equal(f.cardFor('player').hidden, true); assert.equal(f.cardFor('npc').hidden, false);
+  await f.tick(99); assert.equal(f.card.hidden, false);
   await f.tick(1); assert.equal(f.card.hidden, true);
   assert.equal(f.sources[1].stopped, false, 'the readable card timer is independent of a longer voice');
   assert.equal(f.stage.dataset.actionAnnouncement, undefined); assert.equal(f.announcements.getState().announced, 2);
@@ -227,8 +235,57 @@ test('destroy releases timers, audio and listeners and cannot be restarted', asy
   assert.equal(await first, true); assert.equal(await second, true); assert.equal(f.stage.children.length, 0);
   assert.equal(f.sources[0].stopped, true); assert.equal(f.contexts[0].state, 'closed'); assert.equal(f.timers.size, 0);
   assert.equal(f.doc.listeners.get('visibilitychange').size, 0); assert.equal(f.view.listeners.get('pagehide').size, 0);
+  assert.equal(f.view.listeners.get('resize').size, 0);
   assert.equal(await f.announcements.unlock(), false);
   assert.equal(await f.announcements.announce({actor:'player',type:'check'}), false);
+});
+
+test('seat anchors use scaled stage coordinates and short all-in calls stay at the CALL slot', async () => {
+  const f = fixture();
+  await f.announcements.announce({actor:'player',type:'call',allIn:true}, {key:'1:1'});
+  const player = f.cardFor('player');
+  assert.equal(player.textContent, 'YOU ALL IN'); assert.equal(player.dataset.slot, '1');
+  assert.equal(player.style.left, '198px'); assert.equal(player.style.top, '763px');
+  assert.equal(player.style.width, '104px'); assert.equal(player.style.height, '48px');
+  await f.announcements.announce({actor:'npc',type:'raise'}, {key:'1:2'});
+  const boss = f.cardFor('npc');
+  assert.equal(boss.dataset.slot, 'boss-face'); assert.equal(boss.style.left, '200px');
+  assert.equal(boss.style.top, '193px');
+  assert.ok(Number.parseFloat(boss.style.top) + 27 < (f.npcCards.rect.top - f.stage.rect.top) / .5);
+  assert.equal(f.announcements.getState().cards.length, 2);
+  f.announcements.cancel(); assert.equal(player.hidden, true); assert.equal(boss.hidden, true);
+  assert.equal(f.timers.size, 0);
+});
+
+test('redraw and resize reposition the committed button slot without replay or anchor-role changes', async () => {
+  const f = fixture();
+  await f.announcements.announce({actor:'player',type:'raise',allIn:true}, {key:'1:1'});
+  const player = f.cardFor('player'), originalLeft = player.style.left;
+  assert.equal(player.dataset.slot, '2'); assert.equal(player.textContent, 'YOU ALL IN');
+  f.controls.buttons = f.controls.buttons.map((button, index) => ({
+    dataset:{action:index === 1 ? 'call' : 'choose-size'},
+    getBoundingClientRect: () => ({...button.rect,left:button.rect.left - 5})
+  }));
+  f.announcements.reposition();
+  assert.equal(Number.parseFloat(player.style.left), Number.parseFloat(originalLeft) - 10);
+  assert.equal(player.dataset.slot, '2'); assert.equal(f.announcements.getState().announced, 1);
+  const lastTop = player.style.top, lastLeft = player.style.left;
+  f.controls.buttons = []; f.view.emit('resize');
+  assert.equal(player.style.top, lastTop); assert.equal(player.style.left, lastLeft);
+  await f.tick(1000); assert.equal(player.hidden, true);
+});
+
+test('same-seat replacement restarts only that seat card and stale timers cannot hide its replacement', async () => {
+  const f = fixture();
+  await f.announcements.announce({actor:'player',type:'check'}, {key:'1:1'});
+  await f.announcements.announce({actor:'npc',type:'bet'}, {key:'1:2'});
+  await f.tick(400);
+  await f.announcements.announce({actor:'player',type:'fold'}, {key:'1:3'});
+  assert.equal(f.cardFor('player').dataset.slot, '0');
+  await f.tick(600);
+  assert.equal(f.cardFor('npc').hidden, true); assert.equal(f.cardFor('player').hidden, false);
+  assert.equal(f.cardFor('player').textContent, 'YOU FOLD');
+  await f.tick(400); assert.equal(f.cardFor('player').hidden, true); assert.equal(f.timers.size, 0);
 });
 
 test('new-table cancellation can reset hand/history keys without replaying the old table', async () => {

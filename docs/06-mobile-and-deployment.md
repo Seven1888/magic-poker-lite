@@ -1,3 +1,25 @@
+# v61 行動資訊：驗證與發布紀錄
+
+更新：2026-10-08。本地實作與驗證完成，Git／公開發布待確認。規格見 [v61 行動資訊與流程](24-v61-compact-action-feedback.md)。本輪修改窄機率框、字卡位置、顯示層次及流程節奏；自然德州規則／數學保持 v60。
+
+## v61 本地驗證
+
+- 完整 `npm test`：657／657，0 失敗／跳過，33,073.3462 ms；本機 `output/tests-v61.log`。之後僅修正字卡 CSS 進場中心偏移並重跑瀏覽器驗收。
+- `npm run build`：267 個公開檔；`git diff --check` 通過。包含 v61 樣式、模組與新規格。
+- Chrome 六種 viewport：320×900、375×900、393×852、412×900、1440×1000、320×640。主框與按鈕高度比約 0.5、中心對齊、寬度在按鈕內；選單兩欄機率文字無裁切、細色帶比例誤差小於 0.001，沒有水平溢出。主 BET／RAISE 預覽與選單 ALL IN 相同。
+- 真實按鈕走完三手，兩次 BOSS FOLD 與一次攤牌。每步底牌／牌序保持、預覽不改保存；YOU／BOSS WAV 各實際啟動 5 次。兩方字卡可同時保留，玩家在對應按鈕、BOSS 在手牌上方；卡片仍顯示時流程已可操作，沒有舊 BOSS 重複浮字。
+- 連續兩次重整只結清舊桌一次，`table: null`、餘額保持，沒有重複兌回。最後單次遊戲驗收 0 errors、0 HTTPfailed，有 1 個既有 `call.png` 圖片預載 warning。
+- 工具與規則在 320／393／1440 共六組渲染檢查通過、無水平溢出、0 errors／HTTPfailed。此輪不修改工具或數學，沒有重新執行工具模擬驗證。
+- 證據：本機 `output/playwright/qa-v61-game.js`／`.log`、`qa-v61-game-QA.json`、`qa-v61-pages.js`／`.log`、`v61-*.png`。桌面 viewport／WebAudio 啟動不等於實體 Android／喇叭聽感驗收，小樣本不等於長期 RTP 認證。
+
+## v61 入口
+
+- [公開遊戲](https://seven1888.github.io/magic-poker-lite/?v=61)／[工具](https://seven1888.github.io/magic-poker-lite/probability.html?v=61)／[規則](https://seven1888.github.io/magic-poker-lite/docs/04-game-flow-and-math.html?v=61)
+- [本地遊戲](http://127.0.0.1:4177/index.html?v=61)／[工具](http://127.0.0.1:4177/probability.html?v=61)／[規則](http://127.0.0.1:4177/docs/04-game-flow-and-math.html?v=61)
+- [GitHub](https://github.com/Seven1888/magic-poker-lite)／[Actions](https://github.com/Seven1888/magic-poker-lite/actions)／[交接](../HANDOFF.md)
+
+---
+
 # v60 自然牌局：驗證與發布紀錄
 
 更新：2026-10-08。v60功能已推送main並部署成功。正式模式為natural-holdem：一次均勻洗牌、整手鎖牌、BOSS專用資訊與連續下注壓力策略、真牌與普通FOLD結算。本版不保證99% RTP；規則見 [v60規格](23-v60-natural-holdem.md)。
