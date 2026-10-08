@@ -1,9 +1,12 @@
-/* Compact action odds: the complete 33px frame is half a 66px action button. */
+/* CALL keeps its centered slot while its complete visible button shrinks 10%. */
+.game .controls .action-slot>.art-action.call { scale:.9; }
+
+/* The extra 3px lets the 20% larger percentages fit above the original strip. */
 .game .controls .button-response,
 .game .controls .action-slot>.button-response,
 .game .controls .action-slot:is([data-action-slot='call'],[data-action-slot='check'])>.button-response,
 .game .controls .raise-slot>.button-response {
- --boss-frame:#38302d; box-sizing:border-box; width:min(110px,100%); height:33px; min-height:33px;
+ --boss-frame:#38302d; box-sizing:border-box; width:min(110px,100%); height:36px; min-height:36px;
  left:50%; right:auto; top:auto; bottom:calc(100% - 2px); transform:translateX(-50%);
  display:flex; flex-direction:column; padding:0; gap:0; border:0; border-radius:2px;
  background:#070707; box-shadow:0 1px 3px #0008; overflow:hidden;
@@ -32,7 +35,7 @@
 .game .controls .action-slot>.button-response .button-response-key>b,
 .game .controls .action-slot>.button-response[data-outcome-count][data-long-percent] .button-response-key>b,
 .game .controls .raise-options .button-response[data-outcome-count][data-long-percent] .button-response-key>b {
- color:#fff; font-size:11px; line-height:11px; font-weight:800; letter-spacing:0; text-shadow:none;
+ color:#fff; font-size:13.2px; line-height:13.2px; font-weight:800; letter-spacing:0; text-shadow:none;
 }
 .game .controls .action-slot .button-response .button-response-key[data-response='fold']>span { color:#00d379; }
 .game .controls .action-slot .button-response .button-response-key:is([data-response='call'],[data-response='check'])>span { color:#ff797c; }
@@ -52,7 +55,7 @@
 .game .controls .phase-response .button-response-note { font-size:11px; line-height:14px; }
 .game .controls .raise-options { width:calc(200% + 8px); left:auto; right:0; padding:5px 0 8px; gap:5px; }
 .game .controls .raise-option-row { grid-template-columns:minmax(0,1fr) calc((100% - 8px)/2); gap:8px; align-items:center; justify-items:center; }
-.game .controls .raise-options .button-response { position:static; width:110px; max-width:100%; height:33px; min-height:33px; transform:none; }
+.game .controls .raise-options .button-response { position:static; width:110px; max-width:100%; height:36px; min-height:36px; transform:none; }
 .game .controls .raise-options button { width:100%; height:48px; min-height:48px; padding:3px; }
 .game .controls .raise-options strong { font-size:17px; line-height:20px; }
 .game .controls .raise-options small { font-size:10px; line-height:12px; }

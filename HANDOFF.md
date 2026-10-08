@@ -1,5 +1,7 @@
 # v61 行動資訊調整
 
+2026-10-08 追加 v61.1：使用者要求 CALL 按鈕縮小 10%、對手行為機率放大 20% 並上 Git。CALL 中心縮為 90%，機率百分比 11→13.2px，框高 33→36px 避免裁切；CHECK 與其他按鈕保持。已完成本輪 657／657 測試、267 檔建置及六種 viewport 驗收，細節見 docs/24 與 docs/06 的 v61.1 區段。本輪未要求另開聊天室，提交與成功部署連結留於此聊天室交付。
+
 2026-10-08。v61 已推送 main、部署成功並通過公開驗收。本地完整測試 657／657、建置 267 檔；公開 145 個核心檔與 dist 一致，六種 viewport、三手牌局、字卡共存與重整冪等通過。規格與證據見 [v61 行動資訊與流程](docs/24-v61-compact-action-feedback.md)、[發布紀錄](docs/06-mobile-and-deployment.md)。下方 v60 為歷史發布。
 
 - 功能提交 [1af4285ebf3c00149a7e24481081948a3997d0ac](https://github.com/Seven1888/magic-poker-lite/commit/1af4285ebf3c00149a7e24481081948a3997d0ac)；[Actions 37749853288](https://github.com/Seven1888/magic-poker-lite/actions/runs/37749853288) 的 build／deploy 均 completed／success。
